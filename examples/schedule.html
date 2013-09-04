@@ -1,0 +1,58 @@
+<html>
+<head>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+    <script type="text/javascript" src="../jquery.sheet.js"></script>
+
+    <script type="text/javascript">
+        $.sheet.preLoad();
+        $(function() {
+		$('#sheet')
+		.html($.sheet.dts.toTables.json())
+		.sheet({
+			formulaFunctions: {
+				RANDRANGE: function() {
+					var range = arguments[0],
+						args = arguments[1],
+						rand = function() {
+							var r = Math.floor(Math.random() * range.length),
+								isAMatch = false;
+							for(var i = 1; i < args.length; i++) {
+								if (range[r] == args[i]) {
+									isAMatch = true;
+								}
+							}
+						
+							if (isAMatch) {
+								r = rand();
+							}
+						
+							return r;
+						},
+						result = '';
+					if (range) {
+						result = range[rand()];
+					}
+				
+					return result;
+				},
+				RANGELOP: function(range, lop) {
+					return range;
+				}
+			}
+		});
+        });
+    </script>
+</head>
+<body>
+<div id="sheet" style="height: 500px;"></div>
+</body>
+</html>

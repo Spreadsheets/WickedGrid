@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>jQuery.sheet - The Ajax Spreadsheet</title>
+    <script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+    <script type="text/javascript" src="../jquery.sheet.js"></script>
+    <script type="text/javascript">
+        $.sheet.preLoad('../');
+        $(function() {
+            $('#sheetParent').sheet();
+        });
+    </script>
+</head>
+<body>
+<div id="sheetParent" title="Charts">
+    <table style="width: 1401px; " title="Charts" class="jSheet ui-widget-content" id="jSheet_0_0" border="1px" cellpadding="0" cellspacing="0">
+        <colgroup>
+            <col style="width: 243px; "/>
+            <col style="width: 204px; "/>
+            <col style="width: 594px; "/>
+            <col style="width: 120px; "/>
+            <col style="width: 120px; "/>
+            <col style="width: 120px; "/>
+        </colgroup>
+        <tbody>
+            <tr style="height: 18px;">
+                <td class="styleBold styleCenter">Chart Type</td>
+                <td class="styleBold  styleCenter">Example</td>
+                <td class="styleBold  styleCenter">Chart</td>
+                <td class="styleBold styleCenter">Sample Data</td>
+                <td class="styleBold styleCenter">Sample Legends</td>
+                <td class="styleBold styleCenter">Sample Years</td>
+            </tr>
+            <tr style="height: 256px;">
+                <td>Simple Vertical Bar Chart</td>
+                <td>"=BARCHART(D2:D8)"</td>
+                <td class="styleCenter" data-formula="=BARCHART(D2:D8)"></td>
+                <td>1</td>
+                <td>Nov</td>
+                <td>2006</td>
+            </tr>
+            <tr style="height: 215px;">
+                <td>Simple Horizontal Bar Chart</td>
+                <td>"=HBARCHART(D2:D8)"</td>
+                <td class="styleCenter" data-formula="=HBARCHART(D2:D8)"></td>
+                <td>2</td>
+                <td>Dec</td>
+                <td>2007</td>
+            </tr>
+            <tr style="height: 167px;">
+                <td>Simple Line Chart</td>
+                <td>"=LINECHART(D2:D8, F2:F6)"</td>
+                <td class="styleCenter" data-formula="=LINECHART(D2:D8, F2:F6)"></td>
+                <td>5</td>
+                <td>Mar</td>
+                <td>2008</td>
+            </tr>
+            <tr style="height: 212px;">
+                <td>Simple Pie Chart</td>
+                <td>"=PIECHART(D2:D8)"</td>
+                <td class="styleCenter" data-formula="=PIECHART(D2:D8, E2:E8)"></td>
+                <td>7</td>
+                <td>May</td>
+                <td>2009</td>
+            </tr>
+            <tr style="height: 22px; ">
+                <td></td>
+                <td></td>
+                <td class="styleCenter"></td>
+                <td>7.5</td>
+                <td>June</td>
+                <td>2010</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>8</td>
+                <td>July</td>
+                <td>2011</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td >8</td>
+                <td >August</td>
+                <td >2012</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>jQuery.sheet - The Ajax Spreadsheet</title>
+	<script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+	<script type="text/javascript" src="../jquery.sheet.js"></script>
+	<script type="text/javascript">
+		$.sheet.preLoad('../');
+        $(function() {
+            $('#sheetParent').sheet({
+                allowCellsLineBreaks: false
+            });
+        });
+    </script>
+</head>
+<body>
+<div id="sheetParent" title="Cell Value Behavior">
+    <table title="Cell Value Behaviour">
+        <tbody>
+        <tr>
+            <td class="styleBold styleCenter">Function</td>
+            <td class="styleBold styleCenter">Execution</td>
+            <td class="styleBold styleCenter">Desired Result</td>
+            <td class="styleBold styleCenter">Correct?</td>
+            <td class="styleBold styleCenter">Notes</td>
+        </tr>
+        <tr>
+            <td>Bracket Handling</td>
+            <td data-formula="='<b>b</b>'"></td>
+            <td>&lt;b&gt;b&lt;/b&gt;</td>
+            <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>Concat with format</td>
+            <td data-formula="=CONCATENATE('Dollar Amount: ',DOLLAR(SUM(200)))"></td>
+            <td>Dollar Amount: 200</td>
+            <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td>For now concatenation makes formatting cells somewhat difficult, so for the time being the formatting is lost on concatenation. Same as example below.</td>
+        </tr>
+        <tr>
+            <td>Concat operator with format</td>
+            <td data-formula="='Dollar Amount: ' + DOLLAR(SUM(200))"></td>
+            <td>Dollar Amount: 200</td>
+            <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>Line Breaks</td>
+            <td data-formula="='Test
+
+
+Test'"></td>
+            <td>Test
+
+
+Test</td>
+            <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

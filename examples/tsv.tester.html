@@ -1,0 +1,91 @@
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="-1">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<script src="../jquery-1.10.2.min.js"></script>
+	<script src="../parser/tsv/tsv.js"></script>
+	<script>
+        var pA = tsv.performAction,
+                lA = tsv.lexer.performAction;
+
+        tsv.performAction = function(yytext,yyleng,yylineno,yy,yystate,$$,_$) {
+            return pA.call(this,yytext,yyleng,yylineno,yy,yystate,$$,_$);
+        };
+
+        tsv.lexer.performAction = function(yy,yy_,$avoiding_name_collisions,YY_START) {
+            return lA.call(this,yy,yy_,$avoiding_name_collisions,YY_START);
+        };
+
+		$(function() {
+			function test(string, expected) {
+				var arr = tsv.parse(string),
+                        same = true;
+                console.log({output: arr});
+				$.each(arr, function(i) {
+					$.each(arr[i], function(j) {
+						if (expected[i] != undefined && expected[i][j] != undefined && arr[i][j] != expected[i][j]) {
+                            console.log({expected: expected[i][j], got: arr[i][j]});
+							same = false;
+						}
+					});
+				});
+				$('table').append('<tr><td><pre>"' + string + '"</pre></td><td>' + (same ? 'SUCCESS' : 'FAILURE') + '</td></tr>');
+			}
+
+			test("test'test'test\ntest'test'test", [["test'test'test"], ["test'test'test"]]);
+			test('"Test\nTest\nTest"\ttest\t\ntest\t\t\n\t\t\n\t\t\n\t\t\n\t\ttest\n',[['Test\nTest\nTest', 'test', ''],['test', '', ''], ['','',''], ['','',''], ['','',''], ['', '', 'test']]);
+			test('"Test\nTest\nTest"\tte"st\t\ntest\t\t\n\t\t\n\t\t\n\t\t\n\t\ttest\n',[['Test\nTest\nTest', 'te"st', ''],['test', '', ''], ['','',''], ['','',''], ['','',''], ['', '', 'test']]);
+			test("There are many variation's of passages of Lorem Ipsum available", [["There are many variation's of passages of Lorem Ipsum available"]]);
+			test("There are many variation's of passages of Lore'm Ipsum available", [["There are many variation's of passages of Lore'm Ipsum available"]]);
+			test("There are many variation's of passages of Lore'm Ipsum availa`ble", [["There are many variation's of passages of Lore'm Ipsum availa`ble"]]);
+			test("There are many variation's of passages of Lore'm Ipsum av`aila`ble", [["There are many variation's of passages of Lore'm Ipsum av`aila`ble"]]);
+			test('Chart Type\tExample\nSimple Vertical Bar Chart\t"=BARCHART(D2:D8)"', [["Chart Type", "Example"], ["Simple Vertical Bar Chart","=BARCHART(D2:D8)"]]);
+            test($('#bulletTest1').val(),
+                    [
+                        ["• No new test cases were created.  Confirmed the new style appeared everywhere in application.  Did adhoc testing for functionality"],
+                        ["• Going to be assigned to Natalia"],
+                        [""],
+                        ["• A tab has been added to the 'Quirks Mode Fix' doc called 'Tab Confirmation'.  I started mapping the tabs, but Andrew is going to provide a list of all the tab updates"],
+                        ["• Had a review with Sameer.\n• Started QA Review Doc\n• all features aren't finalized yet"],
+                        ["• Need to format spreadsheet and add to test suite"],
+                        [""]
+                    ]);
+			test("• No new test cases were created.  Confirmed the new style appeared everywhere in application.  Did adhoc testing for functionality\n• Going to be assigned to Natalia\n\n• A tab has been added to the 'Quirks Mode Fix' doc called 'Tab Confirmation'.  I started mapping the tabs, but Andrew is going to provide a list of all the tab updates\n\t\t\t\"• Had a review with Sameer.  \n• Started QA Review Doc\n• all features aren't finalized yet\"\n• Need to format spreadsheet and add to test suite\n\t\t", [[]]);
+
+
+            //here is the one that is failing
+            test("Test\t1\t1\t1\t1\n\t22\t2\t2\t2\n\t3\t3\t3\t3\n\t4\t4\t4\t4\n\t5\t5\t5\t5",
+                    [
+                        ["Test", "1", "1", "1", '1'],
+                        ['', '22', '2', '2', '2'],
+                        ['', '3', '3', '3', '3'],
+                        ['', '4', '4', '4', '4'],
+                        ['', '5', '5', '5', '5']
+                    ]
+            );
+		});
+	</script>
+</head>
+<body>
+<table>
+	<tr>
+		<th>Test</th>
+		<th>Result</th>
+	</tr>
+</table>
+
+<textarea id="bulletTest1">• No new test cases were created.  Confirmed the new style appeared everywhere in application.  Did adhoc testing for functionality
+• Going to be assigned to Natalia
+
+• A tab has been added to the 'Quirks Mode Fix' doc called 'Tab Confirmation'.  I started mapping the tabs, but Andrew is going to provide a list of all the tab updates
+"• Had a review with Sameer.
+• Started QA Review Doc
+• all features aren't finalized yet"
+• Need to format spreadsheet and add to test suite
+
+</textarea>
+</body>
+</html>

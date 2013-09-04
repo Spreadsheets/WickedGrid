@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>jQuery.sheet - The Ajax Spreadsheet</title>
+	<script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+	<script type="text/javascript" src="../jquery.sheet.js"></script>
+	<script type="text/javascript">
+		$.sheet.preLoad('../');
+        $(function() {
+            $('#sheetParent').sheet();
+        });
+    </script>
+</head>
+<body>
+<div id="sheetParent" title="Financial">
+    <table title="Financial">
+        <tbody>
+            <tr>
+                <td class="styleBold styleCenter">Function</td>
+                <td class="styleBold styleCenter">Execution</td>
+                <td class="styleBold styleCenter">Desired Result</td>
+                <td class="styleBold styleCenter">Correct?</td>
+                <td class="styleBold styleCenter">Notes</td>
+            </tr>
+            <tr>
+                <td>FV</td>
+                <td data-formula="=FV(7.5%/12, 2*12, -250, -5000, 1)"></td>
+                <td>12298.46381980343</td>
+                <td data-formula="=IF(B2 = C2, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>IPMT</td>
+                <td data-formula="=IPMT(10%, 3, 3, 8000)"></td>
+                <td>-292.4471299093658</td>
+                <td data-formula="=IF(B3 = C3, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>IPMT</td>
+                <td data-formula="=IPMT(3.5%/4, 2, 8, 10000, 5000, true)"></td>
+                <td>-70.96865039555856</td>
+                <td data-formula="=IF(B4 = C4, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>IPMT</td>
+                <td data-formula="=IPMT(5%/12, 1, 60, 50000)"></td>
+                <td>-208.33333333333334</td>
+                <td data-formula="=IF(B5 = C5, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>NPER</td>
+                <td data-formula="=NPER(12%/12, -100, -1000, 10000, TRUE)"></td>
+                <td>59.67386567429457</td>
+                <td data-formula="=IF(B6 = C6, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>NPER</td>
+                <td data-formula="=NPER(12%/12, -100, -1000, 10000)"></td>
+                <td>60.08212285376166</td>
+                <td data-formula="=IF(B7 = C7, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>NPV</td>
+                <td data-formula="=NPV(10%, -10000, 3000, 4200, 6800)"></td>
+                <td>1188.4434123352207</td>
+                <td data-formula="=IF(B8 = C8, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>PMT</td>
+                <td data-formula="=PMT(8%/12, 10, 10000)"></td>
+                <td>-1037.0320893591604</td>
+                <td data-formula="=IF(B9 = C9, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>PV</td>
+                <td data-formula="=PV(0.075/12, 2*12, 250, 0, 0)"></td>
+                <td>-5555.605845933733</td>
+                <td data-formula="=IF(B10 = C10, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>PV</td>
+                <td data-formula="=PV(0.06/52, 4*52, 50, 0, 1)"></td>
+                <td>-9252.072719338317</td>
+                <td data-formula="=IF(B11 = C11, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>RATE</td>
+                <td data-formula="=RATE(2*12, -250, 5000)"></td>
+                <td>0.015130843902309656</td>
+                <td data-formula="=IF(B12 = C12, TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

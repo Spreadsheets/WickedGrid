@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="-1">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<title>jQuery.sheet - The Ajax Spreadsheet</title>
+	<script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+	<script type="text/javascript" src="../jquery.sheet.js"></script>
+	<script type="text/javascript">
+		$.sheet.preLoad('../');
+		$(function() {
+			$('#sheetParent').sheet();
+		});
+	</script>
+</head>
+<body>
+<div id="sheetParent" title="Information Functions">
+	<table title="Information Functions">
+		<tbody>
+		<tr>
+			<td class="styleBold styleCenter">Function</td>
+			<td class="styleBold styleCenter">Execution</td>
+			<td class="styleBold styleCenter">Desired Result</td>
+			<td class="styleBold styleCenter">Correct?</td>
+			<td class="styleBold styleCenter">Notes</td>
+		</tr>
+		<tr>
+			<td>ISNUMBER</td>
+			<td data-formula="=ISNUMBER(100)"></td>
+			<td data-formula="=TRUE()"></td>
+			<td data-formula="=IF(B2 = C2, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>ISNUMBER</td>
+			<td data-formula="=ISNUMBER('test')"></td>
+			<td data-formula="=FALSE()"></td>
+			<td data-formula="=IF(B3 = C3, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		</tbody>
+	</table>
+</div>
+</body>
+</html>

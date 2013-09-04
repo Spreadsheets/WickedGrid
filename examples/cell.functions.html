@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>jQuery.sheet - The Ajax Spreadsheet</title>
+    <script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+    <script type="text/javascript" src="../jquery.sheet.js"></script>
+    <script type="text/javascript">
+        $.sheet.preLoad('../');
+        $(function() {
+            $('#sheetParent').sheet();
+        });
+    </script>
+</head>
+<body>
+<div id="sheetParent" title="Cell Types">
+    <table>
+
+    </table>
+</div>
+</body>
+</html>

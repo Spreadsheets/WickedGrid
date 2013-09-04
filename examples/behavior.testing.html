@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+    <script type="text/javascript" src="../jquery.sheet.js"></script>
+
+    <script type="text/javascript">
+        $.sheet.preLoad('../');
+        $(function(){
+            var me = $('#sheetParent').sheet(),
+                jS = me.getSheet(),
+                tests = $('#tests'),
+                proceed = true,
+                i = 0,
+                test = function (name, fn, fnExpected) {
+                    i++;
+                    if (proceed == false)
+                    {
+                        return;
+                    }
+                    $('<tr></tr>')
+                            .appendTo(tests)
+                            .append('<td>' + i + ' : ' + name + '</td>')
+                            .append('<td>' + fnExpected(fn()) + '</td>');
+
+                    proceed = confirm('Proceed with next test?');
+                },
+                tdAtPos = function(td, rowIndex, cellIndex) {
+                    console.log(td);
+                    if (
+                        td[0].cellIndex == cellIndex &&
+                        td[0].parentNode.rowIndex == rowIndex) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                },
+                getCell = function (sheet, row, col) {
+                    var cell = jS.spreadsheets[sheet][row][col];
+                    return cell;
+                },
+                setFormula = function (sheet, row, col, val, fn) {
+                    fn = fn || function () {};
+                    var cell = getCell(sheet, row, col);
+                    cell.formula = val;
+                    cell.calcLast = 0;
+                    fn(cell);
+
+                    jS.updateCellValue(sheet, row, col);
+                },
+                setValue = function (sheet, row, col, val, fn) {
+                    fn = fn || function () {};
+                    var cell = getCell(sheet, row, col);
+                    cell.value = val;
+                    cell.calcLast = 0;
+                    fn(cell);
+
+                    jS.updateCellValue(sheet, row, col);
+                },
+                td = jS.obj.table().find('td').last().css('background-color', 'yellow');
+
+            test('Adding cells to end', function () {
+                jS.controlFactory.addRow();
+                jS.controlFactory.addColumn();
+            }, function () {
+	            console.log(jS.obj.table().find('td').length);
+                if (tdAtPos(td, 1, 1) && jS.obj.table().find('td').length == (3 * 3)) {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Adding cells before first cell', function () {
+                jS.controlFactory.addRow(1, true);
+                jS.controlFactory.addColumn(1, true);
+            }, function () {
+                if (tdAtPos(td, 2, 2) && jS.obj.table().find('td').length == (4 * 4)) {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Adding cells after first cell, but before end', function () {
+                jS.controlFactory.addRow(2);
+                jS.controlFactory.addColumn(2);
+            }, function () {
+                if (
+                    tdAtPos(td, 2, 2) &&
+                    tdAtPos(jS.obj.table().find('td').last(), 4, 4) &&
+                    jS.obj.table().find('td').length == (5 * 5)
+                ) {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Deleting cells at beginning', function () {
+                jS.deleteRow(1);
+                jS.deleteColumn(1);
+            }, function () {
+	            console.log(tdAtPos(td, 1, 1));
+	            console.log(jS.obj.table()[0]);
+                if (
+                    tdAtPos(td, 1, 1) &&
+                    jS.obj.table().find('td').length == (4 * 4)
+                ) {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Deleting cells at end', function () {
+                var size = jS.sheetSize();
+                jS.deleteRow(size.rows);
+                jS.deleteColumn(size.cols);
+            }, function () {
+                if (
+                    tdAtPos(td, 1, 1) &&
+                    jS.obj.table().find('td').length == (3 * 3)
+                ) {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Shift formulas down between dependency and dependent', function() {
+                me.html($.sheet.makeTable({rows: 2, cols: 2})).sheet();
+                jS = me.getSheet();
+                setValue(0, 2, 2, '100');
+                setFormula(0, 1, 1, 'B2');
+
+
+                jS.controlFactory.addRow(1);
+                jS.controlFactory.addColumn(1);
+            }, function() {
+                var cell = jS.spreadsheets[0][1][1];
+                if (cell.formula == 'C3') {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Shift formulas up between dependency and dependent', function() {
+                jS.deleteRow(2);
+                jS.deleteColumn(2);
+            }, function() {
+                var cell = jS.spreadsheets[0][1][1];
+                if (cell.formula == 'B2') {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Shift formulas down before dependency and dependent', function() {
+                jS.controlFactory.addRow(1, true);
+                jS.controlFactory.addColumn(1, true);
+            }, function() {
+                var cell = jS.spreadsheets[0][2][2];
+                if (cell.formula == 'C3') {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Shift formulas up before dependency and dependent', function() {
+                jS.deleteRow(1);
+                jS.deleteColumn(1);
+            }, function () {
+                var cell = jS.spreadsheets[0][1][1];
+                if (cell.formula === 'B2') {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Disappearing dependency', function () {
+                jS.controlFactory.addRow(1);
+                jS.controlFactory.addColumn(1);
+
+                setFormula(0, 1, 1, 'B2');
+
+                jS.deleteRow(2);
+                jS.deleteColumn(2);
+
+                jS.controlFactory.addRow(1);
+                jS.controlFactory.addColumn(1);
+
+                jS.deleteRow(2);
+                jS.deleteColumn(2);
+            }, function () {
+                var cell = jS.spreadsheets[0][1][1];
+                if (cell.formula === '#REF!#REF!') {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+            test('Insert row after a dependency the is positioned after the row and dependency', function() {
+                me.html($.sheet.makeTable({rows: 25, cols: 5})).sheet();
+                jS = me.getSheet();
+
+                setValue(0, 5, 1, 100);
+                setFormula(0, 8, 3, 'A5');
+
+                td = jS.obj.table().find('tr:eq(6) td:eq(1)').css('background-color', 'yellow');
+                jS.controlFactory.addRow(5);
+                jS.controlFactory.addColumn(1);
+            }, function() {
+                var cell = jS.spreadsheets[0][9][4];
+                if (cell.formula === 'A5') {
+                    return 'SUCCESS';
+                }
+                return 'FAILURE';
+            });
+
+        });
+    </script>
+</head>
+<body>
+<table style="width: 100%;">
+    <tr>
+        <td style="width: 50%;">
+            <table id="tests">
+                <tr>
+                    <th>Test Name</th>
+                    <th>Result</th>
+                </tr>
+            </table>
+        </td>
+        <td>
+            <div id="sheetParent">
+                <table>
+                    <tr>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

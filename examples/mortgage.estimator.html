@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>jQuery.sheet - The Ajax Spreadsheet</title>
+    <script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+    <script type="text/javascript" src="../jquery.sheet.js"></script>
+    <script type="text/javascript">
+        $.sheet.preLoad('../');
+        $(function() {
+            $('#sheetParent')
+                .height($(window).height() * 0.80)
+                .sheet();
+        });
+    </script>
+</head>
+<body>
+    <div id="sheetParent" title="Mortgage Estimator">
+        <table title="Mortgage Estimator">
+            <colgroup>
+                <col style="width: 245px;">
+                <col style="width: 120px;">
+                <col style="width: 120px;">
+                <col style="width: 120px;">
+                <col style="width: 120px;">
+                <col style="width: 120px;">
+            </colgroup>
+            <tbody>
+                <tr style="height: 18px;">
+                    <td>Compound Period</td>
+                    <td data-formula="=DROPDOWN(12,2)" style="background-color: yellow;">12</td>
+                    <td colspan="3" class="styleCenter" style="color: gray; font-size: .5em;">Enter 12 for US mortgages and 2 for Canadian mortgages.</td>
+                    <td style="display: none;"></td>
+                    <td style="display: none;"></td>
+                    <td></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td class="styleBold">Mortgage Information</td>
+                    <td>Option #1</td>
+                    <td>Option #2</td>
+                    <td>Option #3</td>
+                    <td>Option #4</td>
+                    <td>Option #5</td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Loan Amount</td>
+                    <td style="background-color: yellow;" data-celltype="currency">150000</td>
+                    <td style="background-color: yellow;" data-celltype="currency"></td>
+                    <td style="background-color: yellow;" data-celltype="currency"></td>
+                    <td style="background-color: yellow;" data-celltype="currency"></td>
+                    <td style="background-color: yellow;" data-celltype="currency"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Annual Interest Rate</td>
+                    <td style="background-color: yellow;">4.5%</td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Term of Loan (in Years)</td>
+                    <td data-formula="DROPDOWN(30,20,15,10,5,3)" style="background-color: yellow;">30</td>
+                    <td data-formula="DROPDOWN(30,20,15,10,5,3)" style="background-color: yellow;">30</td>
+                    <td data-formula="DROPDOWN(30,20,15,10,5,3)" style="background-color: yellow;">30</td>
+                    <td data-formula="DROPDOWN(30,20,15,10,5,3)" style="background-color: yellow;">30</td>
+                    <td data-formula="DROPDOWN(30,20,15,10,5,3)" style="background-color: yellow;">30</td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td class="styleBold">Payment</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Monthly Interest Rate</td>
+                    <td data-formula="=IF(COUNTA(B4:B6)<3,' --- ',((1+B5/$B$1)^($B$1/12))-1)" data-celltype="percent"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6)<3,' --- ',((1+C5/$B$1)^($B$1/12))-1)" data-celltype="percent"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6)<3,' --- ',((1+D5/$B$1)^($B$1/12))-1)" data-celltype="percent"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6)<3,' --- ',((1+E5/$B$1)^($B$1/12))-1)" data-celltype="percent"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6)<3,' --- ',((1+F5/$B$1)^($B$1/12))-1)" data-celltype="percent"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Monthly Payment (PI)</td>
+                    <td data-formula="=IF(COUNTA(B4:B6)<3,' --- ',PMT(B9,B6*12,-B4))"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6)<3,' --- ',PMT(C9,C6*12,-C4))"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6)<3,' --- ',PMT(D9,D6*12,-D4))"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6)<3,' --- ',PMT(E9,E6*12,-E4))"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6)<3,' --- ',PMT(F9,F6*12,-F4))"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Extra Monthly Payment</td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Total MONTHLY PAYMENT</td>
+                    <td data-formula="=IF(COUNTA(B4:B6)<3,' --- ',B10+B11)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6)<3,' --- ',C10+C11)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6)<3,' --- ',D10+D11)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6)<3,' --- ',E10+E11)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6)<3,' --- ',F10+F11)" data-celltype="currency"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td  class="styleBold">Totals</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Number of Payments</td>
+                    <td data-formula="=IF(COUNTA(B4:B6)<3,' --- ',NPER(B9,-B12,B4))"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6)<3,' --- ',NPER(C9,-C12,C4))"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6)<3,' --- ',NPER(D9,-D12,D4))"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6)<3,' --- ',NPER(E9,-E12,E4))"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6)<3,' --- ',NPER(F9,-F12,F4))"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Number of Years to Payoff</td>
+                    <td data-formula="=IF(COUNTA(B4:B6)<3,' --- ',B15/12)"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6)<3,' --- ',C15/12)"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6)<3,' --- ',D15/12)"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6)<3,' --- ',E15/12)"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6)<3,' --- ',F15/12)"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Total Payments</td>
+                    <td data-formula="=IF(COUNTA(B4:B6)<3,' --- ',B15*B12)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6)<3,' --- ',C15*C12)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6)<3,' --- ',D15*D12)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6)<3,' --- ',E15*E12)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6)<3,' --- ',F15*F12)" data-celltype="currency"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Total INTEREST</td>
+                    <td data-formula="=IF(COUNTA(B4:B6)<3,' --- ',B17-B4)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6)<3,' --- ',C17-C4)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6)<3,' --- ',D17-D4)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6)<3,' --- ',E17-E4)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6)<3,' --- ',F17-F4)" data-celltype="currency"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>BALANCE at Year ?</td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Outstanding Balance</td>
+                    <td data-formula="=IF(COUNTA(B4:B6,B20)<3,' --- ',-FV(B9,B20*12,-B12,B4))"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6,C20)<3,' --- ',-FV(C9,C20*12,-C12,C4))"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6,D20)<3,' --- ',-FV(D9,D20*12,-D12,D4))"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6,E20)<3,' --- ',-FV(E9,E20*12,-E12,E4))"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6,F20)<3,' --- ',-FV(F9,F20*12,-F12,F4))"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Interest Paid</td>
+                    <td data-formula="=IF(COUNTA(B4:B6,B20)<3,' --- ',B20*12*B12-(B4-B21))" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6,C20)<3,' --- ',C20*12*C12-(C4-C21))" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6,D20)<3,' --- ',D20*12*D12-(D4-D21))" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6,E20)<3,' --- ',E20*12*E12-(E4-E21))" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6,F20)<3,' --- ',F20*12*F12-(F4-F21))" data-celltype="currency"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td>Original Down Payment</td>
+                    <td style="background-color: yellow;" data-celltype="currency">10000</td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                    <td style="background-color: yellow;"></td>
+                </tr>
+                <tr style="height: 18px;">
+                    <td class="styleBold">Equity</td>
+                    <td data-formula="=IF(COUNTA(B4:B6,B20)<3,' --- ',B4-B21+B23)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(C4:C6,C20)<3,' --- ',C4-C21+C23)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(D4:D6,D20)<3,' --- ',D4-D21+D23)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(E4:E6,E20)<3,' --- ',E4-E21+E23)" data-celltype="currency"></td>
+                    <td data-formula="=IF(COUNTA(F4:F6,F20)<3,' --- ',F4-F21+F23)" data-celltype="currency"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

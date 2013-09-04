@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>jQuery.sheet - The Ajax Spreadsheet</title>
+    <script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+    <script type="text/javascript" src="../jquery.sheet.js"></script>
+    <script type="text/javascript">
+        $.sheet.preLoad('../');
+        $(function() {
+            $('#sheetParent').sheet();
+        });
+    </script>
+</head>
+<body>
+<div id="sheetParent" title="Inputs">
+    <TABLE title="Inputs">
+        <COLGROUP>
+            <COL width="197px" style="width: 197px; "/>
+            <COL width="206px" style="width: 206px; "/>
+            <COL width="132px" style="width: 132px; "/>
+            <COL width="120px" style="width: 120px; "/>
+            <COL width="120px" style="width: 120px; "/>
+        </COLGROUP>
+        <TBODY>
+        <TR height="18px" style="height: 18px;">
+            <TD >Inputs are for capturing fixed data, such as a drop down list (DROPDOWN), or a checkbox (CHECKBOX)</TD>
+            <TD></TD>
+            <TD></TD>
+            <TD></TD>
+            <TD></TD>
+        </TR>
+        <TR height="18px" style="height: 18px;">
+            <TD class="styleBold" >Input Type</TD>
+            <TD class="styleBold" >Example</TD>
+            <TD class="styleBold"></TD>
+            <TD class="styleBold" >Data Number</TD>
+            <TD class="styleBold" >Data String</TD>
+        </TR>
+        <TR height="18px" style="height: 18px;">
+            <TD >Select List</TD>
+            <TD >"=DROPDOWN(D3:D10)"</TD>
+            <TD data-formula="=DROPDOWN(D3:D10)">4</TD>
+            <TD >34</TD>
+            <TD >Lorem</TD>
+        </TR>
+        <TR height="18px" style="height: 18px;">
+            <TD >Radio List</TD>
+            <TD >"=RADIO(E3:E10)"</TD>
+            <TD data-formula="=RADIO(E3:E10)">Donec</TD>
+            <TD >-20</TD>
+            <TD >Proin</TD>
+        </TR>
+        <TR height="18px" style="height: 18px;">
+            <TD >Checkbox</TD>
+            <TD >"=CHECKBOX(E3)"</TD>
+            <TD data-formula="=CHECKBOX(E3)">true</TD>
+            <TD >123</TD>
+            <TD >Aliquam</TD>
+        </TR>
+        <TR height="18px" style="height: 18px;">
+            <TD >Get Select List Value</TD>
+            <TD >"=C3"</TD>
+            <TD data-formula="=C3" >4</TD>
+            <TD >123</TD>
+            <TD >Quisque</TD>
+        </TR>
+        <TR height="18px" style="height: 18px;">
+            <TD >Get Radio List Value</TD>
+            <TD >"=C4"</TD>
+            <TD data-formula="=C4">Donec</TD>
+            <TD >4</TD>
+            <TD >Aliquam</TD>
+        </TR>
+        <TR height="18px" style="height: 18px;">
+            <TD >Get Checkbox Value</TD>
+            <TD >"=C5"</TD>
+            <TD data-formula="=C5" >false</TD>
+            <TD >534456</TD>
+            <TD >Vivamus</TD>
+        </TR>
+        <TR height="18px" style="height: 18px;">
+            <TD ></TD>
+            <TD ></TD>
+            <TD ></TD>
+            <TD >3</TD>
+            <TD >Etiam</TD>
+        </TR>
+        <TR height="18px" style="height: 18px;">
+            <TD ></TD>
+            <TD ></TD>
+            <TD ></TD>
+            <TD >1</TD>
+            <TD >Donec</TD>
+        </TR>
+        </TBODY>
+    </TABLE>
+</div>
+</body>
+</html>

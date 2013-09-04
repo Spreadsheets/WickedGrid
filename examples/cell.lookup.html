@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>jQuery.sheet - The Ajax Spreadsheet</title>
+    <script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+    <script type="text/javascript" src="../jquery.sheet.js"></script>
+    <script type="text/javascript">
+        $.sheet.preLoad('../');
+        $(function() {
+            var data = tsv.parse("Density	Viscosity	Temperature\n\
+0.457	3.55	500\n\
+0.525	3.25	400\n\
+0.616	2.93	300\n\
+0.675	2.75	250\n\
+0.746	2.57	200\n\
+0.835	2.38	150\n\
+0.946	2.17	100\n\
+1.09	1.95	50\n\
+1.29	1.71	0"),
+                    table = document.createElement('table'),
+                    tr,
+                    td,
+                    row,
+                    col;
+
+            table.setAttribute('title', 'Lookup Data');
+
+            while(data.length) {
+                row = data.shift();
+                tr = document.createElement('tr');
+                table.appendChild(tr);
+                while(row.length) {
+                    col = row.shift();
+                    td = document.createElement('td');
+                    td.innerHTML = col;
+                    tr.appendChild(td);
+                }
+            }
+            $('#sheetParent')
+                    .append(table)
+                    .sheet();
+        });
+    </script>
+</head>
+<body>
+<div id="sheetParent" title="Cell Lookup">
+    <table title="Test">
+        <tr>
+            <td class="styleBold styleCenter">Function</td>
+            <td class="styleBold styleCenter">Execution</td>
+            <td class="styleBold styleCenter">Desired Result</td>
+            <td class="styleBold styleCenter">Correct?</td>
+            <td class="styleBold styleCenter">Notes</td>
+        </tr>
+        <tr>
+            <td>VLOOKUP</td>
+            <td data-formula="VLOOKUP(1,SHEET2!A2:C10,2)"></td>
+            <td>2.17</td>
+            <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>VLOOKUP</td>
+            <td data-formula="=VLOOKUP(1,SHEET2!A2:C10,3,TRUE)"></td>
+            <td>100</td>
+            <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>VLOOKUP</td>
+            <td data-formula="=VLOOKUP(0.7,SHEET2!A2:C10,3,FALSE)"></td>
+            <td></td>
+            <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>VLOOKUP</td>
+            <td data-formula="VLOOKUP(0.1,SHEET2!A2:C10,2,TRUE)"></td>
+            <td>1.71</td>
+            <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>HLOOKUP</td>
+            <td data-formula="HLOOKUP('Density',SHEET2!A1:C10,2,TRUE)"></td>
+            <td>0.457</td>
+            <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>HLOOKUP</td>
+            <td data-formula="HLOOKUP('Viscosity',SHEET2!A1:C10,1,TRUE)"></td>
+            <td>Viscosity</td>
+            <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>HLOOKUP</td>
+            <td data-formula="HLOOKUP('Temperature',SHEET2!A1:C10,6,TRUE)"></td>
+            <td>200</td>
+            <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>HLOOKUP</td>
+            <td data-formula="HLOOKUP('Test',SHEET2!A1:C10,2,TRUE)"></td>
+            <td></td>
+            <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+            <td></td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

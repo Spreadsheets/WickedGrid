@@ -1,0 +1,468 @@
+/* Controls styling */
+.jSParent .jSLoc
+{
+	border-width: 0px ! important;
+	background: none ! important;
+	width: 35px;
+	text-align: right;
+}
+
+.jSParent .jSFormula
+{
+	width: 99%;
+    height: 17px;
+}
+
+.jSParent .jSFormulaParent
+{
+	border: none ! important;
+}
+
+.jSParent .jSHeader, .jSHeader table
+{
+	padding: 0px ! important;
+	border: none ! important;
+	width: 100%; 
+	margin: 0px;
+}
+
+.jSParent .jSHeader img
+{
+	border: none;
+}
+
+/* Menu */
+.jSParent .jSBarHelper {
+	height: 0px;
+	border: none ! important;
+	width: 0px;
+}
+.jSParent .jSBarTopMenuButton {
+	width: inherit ! important;
+	height: 0px ! important;
+	float: right;
+	margin-right: 30px;
+}
+.jSParent .jSBarTopMenuButton * {
+	position: absolute;
+	height: 16px ! important;
+	width: 18px ! important;
+	background-color: inherit ! important;
+}
+
+.jSParent .jSMenuFixed {
+	position: relative ! important;
+}
+
+.jSTdMenu {
+	padding: 3px;
+	background-image: none ! important;
+	border: none ! important;
+	position: absolute;
+	z-index: 1001;
+	width: 200px;
+}
+.jSTdMenu div
+{
+	border-width: 0px ! important;
+    cursor: pointer;
+}
+.jSMenu {
+	padding: 3px;
+	background-image: none ! important;
+	border: none ! important;
+	position: absolute;
+	z-index: 1001;
+}
+.jSMenu *
+{
+	border-color: inherit ! important;
+	border-width: 1px;
+	text-decoration: none ! important;
+	width: auto;
+}
+
+.jSMenu ul,.jSMenu div
+{
+	cursor: pointer;
+	padding: 0px ! important;
+	margin: 0px ! important;
+	border: none ! important;
+	z-index: 1001;
+	position:relative;
+	margin:0;
+	padding:0;
+	list-style:none;
+	list-style-position:outside;
+}
+
+.jSMenu a
+{
+	padding:0px 5px;
+}
+
+.jSMenu li
+{
+	float:left;
+	position:relative;
+	border: none;
+	background-image: none;
+	border-width: 1px;
+	width: inherit;
+}
+.jSMenu li:hover,.jSMenu div:hover .jSTdMenu div:hover {
+	background-image: inherit;
+}
+
+.jSMenu ul ul {
+	position:absolute;
+	display:none;
+	width:12em;
+	top:1.5em;
+}
+
+.jSMenu li ul a{
+	width:12em;
+	height:auto;
+	float:left;
+}
+
+.jSMenu ul ul{
+	top:auto;
+}
+
+.jSMenu li ul ul {
+	left:12em;
+	margin:0px 0 0 10px;
+}
+
+.jSMenu li:hover ul ul, .jSMenu li:hover ul ul ul, .jSMenu li:hover ul ul ul ul{
+	display:none;
+}
+.jSMenu li:hover ul, .jSMenu li li:hover ul, .jSMenu li li li:hover ul, .jSMenu li li li li:hover ul{
+	display:block;
+}
+
+#global-zeroclipboard-html-bridge {
+	opacity:0.01;
+	filter:alpha(opacity=1);
+}
+
+.jSParent .jSUI
+{
+	width: inherit ! important;
+	border-color: inherit ! important;
+}
+.jSParent .jSTabContainer
+{
+	vertical-align: bottom;
+	text-align: left ! important;
+}
+.jSParent .jSTabContainer span
+{
+	
+	padding: 2px 5px 0 5px ! important;
+	cursor: pointer;
+}
+.jSParent .jSTab {
+	cursor: pointer;
+}
+.jSParent .jSTabContainer *, .Div *
+{
+	font-size: 1em ! important;
+}
+
+.jSParent .jSScroll {
+	position: absolute;
+	overflow: scroll;
+	height: inherit;
+	width: inherit;
+}
+
+/* Sheet styling */
+.jSParent .jS
+{
+	position: absolute;
+    table-layout: fixed;
+    empty-cells: show;
+	background-image: none ! important;
+	border-color: inherit ! important;
+	border-width: 1px 1px 0px 0px ! important;
+	cursor: cell;
+	width: 0px ! important;
+}
+.jSParent .jS tbody
+{
+	background-color: transparent;
+	color: inherit ! important;
+	border-color: inherit ! important;
+}
+
+.jSParent .jS colgroup {
+	border-color: inherit ! important;
+}
+.jSParent .jS col {
+	background-image: none ! important;
+	border-color: inherit ! important;
+}
+
+.jSParent .jS tr {
+	border-color: inherit ! important;
+	color:  inherit ! important;
+	background-image: none ! important;
+}
+.jSParent .jS td {
+	height: inherit;
+	border-width: 0px 0px 1px 1px ! important;
+	border-color: inherit;
+	padding: 0px ! important;
+	border-style: solid ! important;
+	margin: 0px ! important;
+	font-size: 1em;
+	background-image: none ! important;
+	-moz-border-radius: 0px 0px 1px 1px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	-ms-text-overflow: ellipsis;
+}
+
+.jSParent .jS td.jSBarCorner {
+	border-width: 0px 0px 1px 0px;
+}
+
+.jSParent .jS td.jSBarLeft {
+	border-width: 0px 0px 1px 1px;
+}
+
+.jSParent .jS td.jSBarTop {
+	border-width: 0px 0px 1px 1px;
+}
+
+.jSParent .jSCellHighighted {
+	background-image: none ! important;
+}
+
+.jSParent .jSError {
+	text-align: left;
+	overflow: hidden;
+	padding: 0px;
+	margin: 0px;
+}
+
+/* Containers styleing*/
+.jSParent .jSBarCorner
+{
+	cursor: pointer;
+}
+
+.jSParent .jSEditPane
+{
+    overflow: hidden ! important;
+	background-image: none ! important;
+	border-width: 0px ! important;
+	position: absolute ! important;
+}
+
+.jSParent .jSEnclosure {
+	border-width: 0px ! important;
+	position: absolute;
+}
+/* Bar item styling */
+
+.jSParent .jSBarTopParent
+{
+	font-size: 0.8em ! important;
+	text-align: center;
+	cursor: pointer ! important;
+	height: 18px;
+	border-width: 0px ! important;
+}
+
+.jSParent .jSBarController {
+	border: none ! important;
+	position: absolute ! important;
+}
+
+.jSParent .jSBarTopParent .jSBarController .ui-resizable-handle {
+	width: 10px;
+	top: -3px;
+	right: -6px;
+	border-top-width: 0px;
+	border-bottom-width: 0px;
+}
+
+.jSParent .jSBarLeft {
+	border-left-width: 0px ! important;
+}
+.jSParent .jSBarLeft .jSBarController {
+	height: 0px;
+	position: absolute;
+}
+.jSParent .jSBarLeft .jSBarController .ui-resizable-handle {
+	display: inline ! important;
+	height: 10px;
+	border: none ! important;
+	padding-left:1px;
+}
+
+.jSParent .jSBarController .ui-resizable-handle {
+	border-width: 0px;
+}
+
+.jSParent .jSBarController .ui-resizable-handle:hover {
+	background: inherit;
+}
+
+.jSParent .jSBarControllerChild {
+	background: inherit;
+	top: 3px ! important;
+	left: 0px;
+}
+
+.jSParent .jSBarControllerChild .ui-resizable-handle {
+	border-left-width: 1px;
+	border-right-width: 1px;
+}
+
+.jSParent .jSBarHandleFreezeTop
+{
+	top: 1px ! important;
+	cursor: move ! important;
+	width: 10px;
+	position: absolute;
+	background-image: none ! important;
+}
+
+.jSParent .jSBarHandleFreezeLeft
+{
+	left: 1px ! important;
+	cursor: move ! important;
+	height: 10px;
+	position: absolute;
+	background-image: none ! important;
+}
+.jSParent .jSBarLeft
+{
+	font-size: 0.8em ! important;
+	text-align: center;
+	vertical-align: middle ! important;
+	cursor: pointer ! important;
+	overflow: visible ! important;
+}
+
+.jSInPlaceEdit
+{
+	position: absolute;
+	background-image: none ! important;
+}
+
+.colorPickers *
+{
+	display: inline-block;
+	width: 16px ! important;
+	height: 16px ! important;
+	background-color: transparent ! important;
+}
+
+.jSFullScreen
+{
+	top: 0px;
+	left: 0px;
+	position: fixed;
+	top: expression(eval(document.body.scrollTop) + "px");
+	left: expression(eval(document.body.scrollLeft) + "px");
+}
+
+.jSFullScreen > .ui-resizable-handle {
+	display: none;
+}
+
+.jSParent .jSAutoFiller
+{
+	position: absolute;
+	height: 8px;
+	width: 8px;
+	top: 0px;
+	left: 0px;
+	cursor: crosshair ! important;
+	display: none;
+}
+
+.jSParent .jSTitle
+{
+	width: auto;
+	text-align: center;
+	border: none ! important;
+}
+
+.jSParent .jSChart
+{
+	width: inherit;
+	height: inherit;
+}
+
+.jSParent .jSChart svg {
+	position: relative ! important;
+}
+
+.jSParent .jSDropdown {
+	cursor: pointer;
+	width: 100%;
+}
+.jSParent .jSCheckbox, .jSCheckbox * {
+	cursor: pointer;
+}
+.jSParent .jSRadio, .jSRadio * {
+	cursor: pointer;
+}
+
+.jSHide {
+	display: none ! important;
+}
+
+.bodyNoScroll
+{
+	overflow: hidden ! important;
+}
+
+
+
+/* Cell styler classes */
+.styleBold
+{ font-weight: bold; }
+.styleItalics	
+{ font-style: italic; }
+.styleUnderline	
+{ text-decoration: underline; }
+.styleLineThrough
+{ text-decoration: line-through;}
+.styleLeft		
+{ text-align: left; }
+.styleRight		
+{ text-align: right; }
+.styleCenter	
+{ text-align: center; }
+.styleTop		
+{ vertical-align: top; }
+.styleMiddle	
+{ vertical-align: middle; }
+.styleBottom	
+{ vertical-align: bottom; }
+.styleUpper 		
+{ text-transform: uppercase; }
+.styleCapital 	
+{ text-transform: capitalize; }
+.styleLower 		
+{ text-transform: lowercase; }
+.styleHidden 	
+{ display: none; }
+.styleWrap
+{
+	white-space: pre-wrap ! important;       /* css-3 */
+	white-space: -moz-pre-wrap ! important;  /* Mozilla, since 1999 */
+	white-space: -pre-wrap ! important;      /* Opera 4-6 */
+	white-space: -o-pre-wrap ! important;    /* Opera 7 */
+	word-wrap: break-word;
+	-ms-text-overflow: clip;
+}

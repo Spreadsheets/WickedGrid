@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="-1">
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+        <meta content="utf-8" http-equiv="encoding">
+
+        <script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+        <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+        <script type="text/javascript" src="../jquery.sheet.js"></script>
+        <script type="text/javascript">
+	        $.sheet.preLoad('../');
+            $(function(){
+	            var gC = $('#growlContainer');
+	            function growl(msg) {
+		            var $msg = $('<div style="background-color: #adff2f;" />').text(msg);
+		            gC.prepend(
+				            $msg
+		            );
+		            $msg.fadeOut(5000, function() {
+			            $msg.remove();
+		            });
+	            }
+				$('#jQuerySheet0')
+					//Note these events don't yet work as triggers.  Also, you can use them as settings as well.
+						.bind('sheetAddRow', function() {
+							growl('A row was added!');
+						})
+						.bind('sheetAddColumn', function() {
+							growl('A column was added!')
+						})
+						.bind('sheetSwitch', function() {
+							growl('A sheet was switched!')
+						})
+						.bind('sheetRename', function() {
+							growl('A sheet was renamed!')
+						})
+						.bind('sheetTabSortStart', function() {
+							growl('A sheet is starting to be sorted!')
+						})
+						.bind('sheetTabSortUpdate', function() {
+							growl('A sheet was sorted!')
+						})
+						.bind('sheetFormulaKeydown', function() {
+							growl('Formula keydown!')
+						})
+						.bind('sheetCellEdit', function() {
+							growl('A cell is being edited!')
+						})
+						.bind('sheetCellEdited', function() {
+							growl('A cell was edited!')
+						})
+						.bind('sheetCalculation', function() {
+							growl('A sheet was calculated!')
+						})
+						.bind('sheetAdd', function() {
+							growl('A sheet was added!')
+						})
+						.bind('sheetDelete', function() {
+							growl('A sheet was deleted!')
+						})
+						.bind('sheetDeleteRow', function() {
+							growl('A row was deleted!')
+						})
+						.bind('sheetDeleteColumn', function() {
+							growl('A column was deleted!')
+						})
+						.bind('sheetOpen', function() {
+							growl('A sheet was opened!')
+						})
+						.bind('sheetAllOpened', function() {
+							growl('All the sheets were opened in an instance!')
+						})
+						.bind('sheetSave', function() {
+							growl('A sheet was saved!')
+						})
+						.bind('sheetFullScreen', function() {
+							growl('A sheet went fullscreen!')
+						})
+						.sheet();
+            });
+        </script>
+    </head>
+    <body>
+        <table style="width: 100%;">
+	        <tr>
+		        <td style="width: 80%;vertical-align: top;">
+			        <div id="jQuerySheet0" >
+				        <table>
+					        <tr>
+						        <td></td>
+					        </tr>
+				        </table>
+			        </div>
+		        </td>
+		        <td id="growlContainer" style="vertical-align: top;"></td>
+	        </tr>
+        </table>
+
+    </body>
+</html>

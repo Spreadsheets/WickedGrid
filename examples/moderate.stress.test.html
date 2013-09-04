@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="-1">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<title>jQuery.sheet - The Ajax Spreadsheet</title>
+	<script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+	<script type="text/javascript" src="../jquery.sheet.js"></script>
+	<script type="text/javascript">
+		$.sheet.preLoad('../');
+		$(function() {
+            if (confirm('There are ' + (1000 * 26) + ' cells in this spreadsheet, each with a formula (RAND()*PI()).  This particular spreadsheet is usually used to find what makes jQuery.sheet slow, and make it faster.  It may take some time, proceed?')) {
+                var table = $.sheet.makeTable({cols: 26, rows: 1000}),
+                        tds = table.getElementsByTagName('td'),
+                        i = tds.length - 1;
+
+                do {
+                    tds[i].setAttribute('data-formula', 'RAND()*PI()');
+                } while (i-- > 1);
+
+
+                $('#sheetParent')
+                    .html(table)
+                    .sheet();
+            } else {
+                $('#sheetParent').html('Refresh page to begin loading spreadsheet');
+            }
+		});
+	</script>
+</head>
+<body>
+<div id="sheetParent" title="Moderate Stress Test"></div>
+</body>
+</html>

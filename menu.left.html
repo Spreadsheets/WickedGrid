@@ -1,0 +1,178 @@
+<ul>
+	<li>
+		<a href="#">File</a>
+		<ul>
+			<li><a onclick="this.jS.newSheet(); return false;" title="Creates a new spreadsheet.">New</a></li>
+		</ul>
+	</li>
+	<li>
+		<a href="#">Edit</a>
+		<ul>
+            <li><a onclick="this.jS.undo.manager.undo(); return false;">Undo</a></li>
+            <li><a onclick="this.jS.undo.manager.redo(); return false;">Redo</a></li>
+            <li><a class="jSCut">Cut</a></li>
+            <li><a class="jSCopy">Copy</a></li>
+            <li><a class="jSPaste">Paste</a></li>
+            <li><a onclick="this.jS.merge(); return false;">Merge</a></li>
+            <li><a onclick="this.jS.unmerge(); return false;">Un-Merge</a></li>
+            <li><a onclick="this.jS.cellFind(); return false;">Find</a></li>
+			<li>
+				<a href="#">Cell</a>
+				<ul>
+					<li><a onclick="this.jS.setCellRef(); return false;">Set Reference</a></li>
+				</ul>
+			</li>
+			<li>
+				<a menu="menuEditRow_menuInstance">Row</a>
+				<ul>
+					<li><a onclick="this.jS.controlFactory.addRow(); return false;" title="Adds an additional row to bottom of the spreadsheet.">Add Row</a></li>
+					<li><a onclick="this.jS.controlFactory.addRowMulti(); return false;" title="Adds an additional rows to bottom of the spreadsheet.">Add Multi-Rows</a></li>
+					<li><a onclick="this.jS.deleteRow(); return false;" title="Deletes the current rows that are associated with highlighted cells.">Delete Row(s)</a></li>
+					<li><a onclick="this.jS.controlFactory.addRow(this.jS.cellLast.row, true); return false;" title="Inserts an additional row after currently selected row.">Insert Row Before</a></li>
+					<li><a onclick="this.jS.controlFactory.addRow(this.jS.cellLast.row); return false;" title="Inserts an additional row after currently selected row.">Insert Row After</a></li>
+					<li><a onclick="this.jS.toggleHide.rowShowAll();" title="Show all the hidden rows.">Show All</a></li>
+					<li><a onclick="this.jS.toggleHide.row();" title="Hides or shows the currently selected row.">Toggle Hide Row</a></li>
+				</ul>
+			</li>
+			<li>
+				<a menu="menuEditColumn_menuInstance">Column</a>
+				<ul>
+					<li><a onclick="this.jS.controlFactory.addColumn(); return false;" title="Adds an additional column to the right of the spreadsheet.">Add Column</a></li>
+					<li><a onclick="this.jS.controlFactory.addColumnMulti(); return false;" title="Adds an additional columns to the right of the spreadsheet.">Add Multi-Columns</a></li>
+					<li><a onclick="this.jS.deleteColumn(); return false;" title="Deletes the current columns that are associated with highlighted cells.">Delete Column(s)</a></li>
+					<li><a onclick="this.jS.controlFactory.addColumn(this.jS.cellLast.col, true); return false;" title="Inserts an additional column after currently selected column.">Insert Column Before</a></li>
+					<li><a onclick="this.jS.controlFactory.addColumn(this.jS.cellLast.col); return false;" title="Inserts an additional column after currently selected column.">Insert Column After</a></li>
+					<li><a onclick="this.jS.fillUpOrDown(); return false;" title="Fill down current cell value.">Fill Down</a></li>
+					<li><a onclick="this.jS.fillUpOrDown(true); return false;" title="Fill up current cell value.">Fill Up</a></li>
+					<li><a onclick="this.jS.toggleHide.columnShowAll();" title="Show all the hidden columns.">Show All</a></li>
+					<li><a onclick="this.jS.toggleHide.column();" title="Hides or shows the currently selected column.">Toggle Hide Column</a></li>
+				</ul>
+			</li>
+			<li>
+				<a>Sheet</a>
+				<ul>
+					<li><a onclick="this.jS.addSheet(); return false;" title="Add new spreadsheet.">Add Spreadsheet</a></li>
+					<li><a onclick="this.jS.deleteSheet(); return false;" title="Delete the current spreadsheet.">Delete Spreadsheet</a></li>
+					<li><a onclick="this.jS.calc(); return false;" title="Re-Calculates the current sheet">Refresh Calculations</a></li>
+					<li><a onclick="this.jS.sheetTab(); return false;" title="Change the title of the sheet.">Title</a></li>
+                    <li><a onclick="this.jS.toggleState(); return false;">Toggle Edit & ReadOnly</a></li>
+				</ul>
+			</li>
+			<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val()); return false;">Get Cell Range</a></li>
+			<li>
+				<a href="#">Wrap Cell Range</a>
+				<ul>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'SUM'); return false;" title="Wrap with SUM">SUM()</a></li>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'CEILING'); return false;" title="Wrap with CEILING">CEILING()</a></li>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'COUNT'); return false;" title="Wrap with COUNT">COUNT()</a></li>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'MAX'); return false;" title="Wrap with MAX">MAX()</a></li>
+					<li><a onclick="this.jS.getTdRange(null, this.jS.obj.formula().val(), 'MIN'); return false;" title="Wrap with MIN">MIN()</a></li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+	<li>
+		<a href="#">View</a>
+		<ul>
+			<li><a onclick="$(this.jS.tables()).viewSource(true); return false;" title="Shows the HTML that makes up the current spreadsheet.">Pretty Source</a></li>
+			<li><a onclick="$(this.jS.tables()).viewSource(); return false;" title="Shows the compact HTML that makes up the current spreadsheet.">Compact Source</a></li>
+			<li><a onclick="$($.sheet.dts.fromTables.xml(this.jS)).viewSource(true); return false;">As XML</a></li>
+			<li><a onclick="$.print(JSON.stringify($.sheet.dts.fromTables.json(this.jS))); return false;">As JSON</a></li>
+			<li>
+				<a>Function Reference</a>
+				<ul>
+					<li>
+						<a href="#">Math & Standard</a>
+						<ul>
+							<li><a title="Returns the absolute value of a number">ABS()</a></li>
+							<li><a title="Returns a rounded number">AVG(), AVERAGE()</a></li>
+							<li><a title="Returns a number rounded up based on a multiple of significance">CEILING()</a></li>
+							<li><a title="Counts the number of cells that contain a value">COUNT()</a></li>
+							<li><a title="Counts full days from a specific date - format(YYYY,MM,DD)">DAYSFROM()</a></li>
+							<li><a title="Converts a number to text, using a currency format - options(number, decimals, symbol)">DOLLAR()</a></li>
+							<li><a title="Returns a logical value of FALSE">FALSE()</a></li>
+							<li><a title="Returns a text representation of a number rounded to a specified number of decimal places - options(number, decimals, useCommas)">FIXED()</a></li>
+							<li><a title="Returns a number rounded down based on a multiple of significance">FLOOR()</a></li>
+							<li><a title="Creates and executes a javascript function. example: FN(alert('Hello World')), this will execute when sheet compiles.">FN()</a></li>
+							<li><a title="Returns the integer portion of a number">INT()</a></li>
+							<li><a title="Returns the largest value from the numbers provided">MAX()</a></li>
+							<li><a title="Returns the smallest value from the numbers provided">MIN()</a></li>
+							<li><a title="Converts a value to a number">N()</a></li>
+							<li><a title="Gets full date of today">NOW()</a></li>
+							<li><a title="Returns the mathematical constant called pi, which is 3.14159265358979">PI()</a></li>
+							<li><a title="Returns the result of a number raised to a given power">POWER(x, y)</a></li>
+							<li><a title="Returns a random number that is greater than or equal to 0 and less than 1">RAND(), RND()</a></li>
+							<li><a title="Returns a number rounded to a specified number of digits">ROUND()</a></li>
+							<li><a title="Returns all of the values in each of the specified cells and added together">SUM()</a></li>
+							<li><a title="Gets full date of today">TODAY()</a></li>
+							<li><a title="Returns a logical value of TRUE">TRUE()</a></li>
+							<li><a title="Converts a text value that represents a number to a number">VALUE()</a></li>
+						</ul>
+					</li>
+					<li>
+						<a href="#">Chart</a>
+						<ul>
+							<li><a href="#" title="Simple verticle style bar chart.">BARCHART()</a></li>
+							<li><a href="#" title="Simple horizontal style bar chart.">HBARCHART()</a></li>
+							<li><a href="#" title="Simple line style bar chart.">LINECHART()</a></li>
+							<li><a href="#" title="Simple pie style bar chart.">PIECHART()</a></li>
+						</ul>
+					</li>
+					<li>
+						<a href="#">Inputs</a>
+						<ul>
+							<li><a href="#">DROPDOWN()</a></li>
+							<li><a href="#">RADIO()</a></li>
+							<li><a href="#">CHECKBOX()</a></li>
+						</ul>
+					</li>
+					<li>
+						<a href="#">Finance</a>
+						<ul>
+							<li><a href="#">COMINGSOON()</a></li>
+						</ul>
+					</li>
+					<li>
+						<a href="#">Advanced Math</a>
+						<ul>
+							<li><a href="#">COMINGSOON()</a></li>
+						</ul>
+					</li>
+				</ul>
+			</li>
+			<li><a onclick="this.jS.toggleFullScreen();">Toggle Full Screen</a></li>
+		</ul>
+	</li>
+	<li>
+		<a href="#">Format</a>
+		<ul>
+            <li><a onclick="this.jS.cellTypeToggle('percent')">Percent</a></li>
+            <li><a onclick="this.jS.cellTypeToggle('number')">Number</a></li>
+			<li><a onclick="this.jS.cellTypeToggle('date')">Date</a></li>
+			<li><a onclick="this.jS.cellTypeToggle('time')">Time</a></li>
+			<li><a onclick="this.jS.cellTypeToggle('currency')">Currency</a></li>
+            <li><a onclick="this.jS.cellTypeToggle(null)">Remove Format</a></li>
+		</ul>
+	</li>
+	<li>
+		<a href="#">Style</a>
+		<ul>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleBold'); return false;">Bold</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleItalics'); return false;">Italics</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleUnderline', 'styleLineThrough'); return false;">Underline</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleLineThrough', 'styleUnderline'); return false;">Strike Through</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleLeft', 'styleCenter styleRight'); return false;">Left</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleCenter', 'styleLeft styleRight'); return false;">Center</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleRight', 'styleLeft styleCenter'); return false;">Right</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleUpper', 'styleCapital styleLower'); return false;">Uppercase</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleCapital', 'styleUpper styleLower'); return false;">Capitalize</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleLower', 'styleCapital styleUpper'); return false;">Lowercase</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleTop', 'styleMiddle styleBottom'); return false;">Top</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleMiddle', 'styleTop styleBottom'); return false;">Middle</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleBottom', 'styleTop styleMiddle'); return false;">Bottom</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.fontReSize('up'); return false;">Font Size +</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.fontReSize('down'); return false;">Font Size -</a></li>
+			<li><a class="cellStyleToggle" onclick="this.jS.cellStyleToggle('styleWrap'); return false;">Wrap</a></li>
+		</ul>
+	</li>
+</ul>

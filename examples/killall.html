@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="-1">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<title>jQuery.sheet - The Ajax Spreadsheet</title>
+	<script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+	<script type="text/javascript" src="../jquery.sheet.js"></script>
+	<script type="text/javascript">
+		$.sheet.preLoad('../');
+		$(function() {
+			var times = 0;
+			$('<div />').load('financial.html #sheetParent table', function() {
+				var html = $(this).html(),
+                    parent = $('#sheetParent');
+
+				for (var i = 0; i < 5; i++) {
+                    parent
+						.html(html)
+						.sheet();
+
+					$.sheet.killAll();
+					times++;
+				}
+
+                parent
+                    .html(html)
+                    .sheet();
+
+				$('<div>You just killed this sheet ' + times + ' times</div>').dialog({modal: true});
+			});
+		});
+	</script>
+</head>
+<body>
+<div id="sheetParent" title="Killall">
+
+</div>
+</body>
+</html>

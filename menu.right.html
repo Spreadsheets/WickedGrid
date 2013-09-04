@@ -1,0 +1,48 @@
+<div style="text-align: center;">
+    <a href="#" onclick="this.jS.cellStyleToggle('styleBold'); return false;" title="Bold">
+        <img alt="Bold" src="images/text_bold.png"/></a>
+    <a href="#" onclick="this.jS.cellStyleToggle('styleItalics'); return false;" title="Italic">
+        <img alt="Italic" src="images/text_italic.png"/></a>
+    <a href="#" onclick="this.jS.cellStyleToggle('styleUnderline', 'styleLineThrough'); return false;" title="Underline">
+        <img alt="Underline" src="images/text_underline.png"/></a>
+    <a href="#" onclick="this.jS.cellStyleToggle('styleLineThrough', 'styleUnderline'); return false;" title="Strike Through">
+        <img alt="Strike Through" src="images/text_strikethrough.png"/></a>
+    <a href="#" onclick="this.jS.cellStyleToggle('styleLeft', 'styleCenter styleRight'); return false;" title="Align Left">
+        <img alt="Align Left" src="images/text_align_left.png"/></a>
+    <a href="#" onclick="this.jS.cellStyleToggle('styleCenter', 'styleLeft styleRight'); return false;" title="Align Center">
+        <img alt="Align Center" src="images/text_align_center.png"/></a>
+    <a href="#" onclick="this.jS.cellStyleToggle('styleRight', 'styleLeft styleCenter'); return false;" title="Align Right">
+        <img alt="Align Right" src="images/text_align_right.png"/></a>
+	<a href="#" onclick="this.jS.cellStyleToggle('styleWrap'); return false;" title="Wrap Text">
+		<img alt="Web Link" src="images/text_horizontalrule.png"/></a>
+    <a href="#" onclick="this.jS.merge(); return false;" title="Merge Cells">
+        <img alt="Fill Down" src="images/mergecell.png"/></a>
+    <a href="#" onclick="this.jS.unmerge(); return false;" title="Un-Merge Cells">
+        <img alt="Fill Down" src="images/mergecell.png"/></a>
+    <a href="#" onclick="this.jS.toggleHide.rowShowAll(); return false;" title="Show All Rows">
+        <img alt="Fill Down" src="images/show_table_row.png"/></a>
+    <a href="#" onclick="this.jS.toggleHide.columnShowAll(); return false;" title="Show All Columns">
+        <img alt="Fill Down" src="images/show_table_column.png"/></a>
+    <a href="#" onclick="this.jS.fillUpOrDown(); return false;" title="Fill Down">
+        <img alt="Fill Up" src="images/arrow_down.png"/></a>
+    <a href="#" onclick="this.jS.fillUpOrDown(true); return false;" title="Fill Up">
+        <img alt="Fill Up" src="images/arrow_up.png"/></a>
+    <a href="#" onclick="this.jS.sort(); return false" title="Sort Ascending" style="display: none;">
+        <img alt="Sort Ascending" src="images/sort_up.png"/></a>
+    <a href="#" onclick="this.jS.sort(true); return true;" title="Sort Descending" style="display: none;">
+        <img alt="Sort Descending" src="images/sort_down.png"/></a>
+    <span class="colorPickers">
+        <input title="Foreground color" class="colorPickerFont" style="background-image: url('images/palette.png') ! important; width: 16px; height: 16px;"/>
+        <input title="Background Color" class="colorPickerCell" style="background-image: url('images/palette_bg.png') ! important; width: 16px; height: 16px;"/>
+    </span>
+    <a href="#" onclick="this.jS.obj.formula().val('=HYPERLINK(\'' + prompt('Enter Web Address', 'http://www.visop-dev.com/') + '\')').keydown(); return false;" title="HyperLink">
+        <img alt="Web Link" src="images/page_link.png"/></a>
+    <a href="#" onclick="this.jS.getTdRange(null, this.jS.obj.formula().val()); return false;" title="Get Cell Range">
+        <img alt="Get Cell Range" src="images/sheet_get_range.png"/></a>
+    <a href="#" onclick="this.jS.calc(this.jS.i, true); return false;" title="Refresh Calculations">
+        <img alt="Refresh Calculations" src="images/arrow_refresh.png"/></a>
+    <a href="#" onclick="this.jS.cellFind(); return false;" title="Find">
+        <img alt="Find" src="images/find.png"/></a>
+    <a href="#" onclick="this.jS.toggleFullScreen(); return false;" title="Toggle Full Screen">
+        <img alt="Toggle Full Screen" src="images/arrow_out.png"/></a><!--<a href="#" onclick="insertAt('jSheetControls_formula', '~np~text~'+'/np~');return false;" title="Non-parsed"><img alt="Non-parsed" src="images/noparse.png"/></a>-->
+</div>

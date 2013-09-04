@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="-1">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<title>jQuery.sheet - The Ajax Spreadsheet</title>
+	<script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+	<script type="text/javascript" src="../jquery.sheet.js"></script>
+	<script type="text/javascript">
+		$.sheet.preLoad('../');
+		$(function() {
+			$('#sheetParent').sheet();
+		});
+	</script>
+</head>
+<body>
+<div id="sheetParent" title="Logical Functions">
+	<table title="Logical Functions">
+		<tbody>
+		<tr>
+			<td class="styleBold styleCenter">Function</td>
+			<td class="styleBold styleCenter">Execution</td>
+			<td class="styleBold styleCenter">Desired Result</td>
+			<td class="styleBold styleCenter">Correct?</td>
+			<td class="styleBold styleCenter">Notes</td>
+		</tr>
+		<tr>
+			<td>AND</td>
+			<td data-formula="=AND(true,true,true,true)"></td>
+			<td data-formula="=TRUE()"></td>
+			<td data-formula="=IF(B2 = C2, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>AND</td>
+			<td data-formula="=AND(true,false,true,true)"></td>
+			<td data-formula="=FALSE()"></td>
+			<td data-formula="=IF(B3 = C3, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>FALSE</td>
+			<td data-formula="=FALSE()"></td>
+			<td data-formula="=FALSE()"></td>
+			<td data-formula="=IF(B4 = C4, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>TRUE</td>
+			<td data-formula="=TRUE()"></td>
+			<td data-formula="=TRUE()"></td>
+			<td data-formula="=IF(B5 = C5, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>IF</td>
+			<td data-formula="=IF(TRUE(),TRUE(),FALSE())"></td>
+			<td data-formula="=TRUE()"></td>
+			<td data-formula="=IF(B6 = C6, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>IF</td>
+			<td data-formula="=IF(FALSE(),TRUE(),FALSE())"></td>
+			<td data-formula="=FALSE()"></td>
+			<td data-formula="=IF(B7 = C7, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>NOT</td>
+			<td data-formula="=NOT(FALSE())"></td>
+			<td data-formula="=TRUE()"></td>
+			<td data-formula="=IF(B8 = C8, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>NOT</td>
+			<td data-formula="=NOT(TRUE())"></td>
+			<td data-formula="=FALSE()"></td>
+			<td data-formula="=IF(B9 = C9, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>OR</td>
+			<td data-formula="=OR(TRUE(), FALSE())"></td>
+			<td data-formula="=TRUE()"></td>
+			<td data-formula="=IF(B10 = C10, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>OR</td>
+			<td data-formula="=OR(FALSE(), FALSE())"></td>
+			<td data-formula="=FALSE()"></td>
+			<td data-formula="=IF(B11 = C11, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		</tbody>
+	</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="-1">
+	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<title>jQuery.sheet - The Ajax Spreadsheet</title>
+	<script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+	<script type="text/javascript" src="../jquery.sheet.js"></script>
+	<script type="text/javascript">
+		$.sheet.preLoad('../');
+		$(function() {
+			$('#sheetParent').sheet();
+		});
+	</script>
+</head>
+<body>
+<div id="sheetParent" title="String Functions">
+	<table title="String Functions">
+		<tbody>
+            <tr>
+                <td class="styleBold styleCenter">Function</td>
+                <td class="styleBold styleCenter">Execution</td>
+                <td class="styleBold styleCenter">Desired Result</td>
+                <td class="styleBold styleCenter">Correct?</td>
+                <td class="styleBold styleCenter">Notes</td>
+            </tr>
+            <tr>
+                <td>ASC</td>
+                <td data-formula="=ASC('Wednesday')"></td>
+                <td>87</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>ASC</td>
+                <td data-formula="=ASC('W')"></td>
+                <td>87</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>ASC</td>
+                <td data-formula="=ASC('x')"></td>
+                <td>120</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CHAR</td>
+                <td data-formula="=CHAR(118)"></td>
+                <td>v</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CHAR</td>
+                <td data-formula="=CHAR(64)"></td>
+                <td>@</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CHAR</td>
+                <td data-formula="=CHAR(72)"></td>
+                <td>H</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CHAR</td>
+                <td data-formula="=CHAR(109)"></td>
+                <td>m</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>CLEAN</td>
+                <td data-formula="=CLEAN(THISROWCELL('E'))"></td>
+                <td>test</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td data-formula="=CHAR(9)&'test'&CHAR(10)"></td>
+            </tr>
+            <tr>
+                <td>CODE</td>
+                <td data-formula="=CODE(THISROWCELL('E'))"></td>
+                <td>116</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td>t</td>
+            </tr>
+            <tr>
+                <td>CONCATENATE</td>
+                <td data-formula="=CONCATENATE('a', ' ', 'complete', ' ', 'string')"></td>
+                <td>a complete string</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>DOLLAR</td>
+                <td data-formula="=DOLLAR(12312.23)"></td>
+                <td>12312.23</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>DOLLAR</td>
+                <td data-formula="=DOLLAR(12312.23, 0)"></td>
+                <td>12312.23</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>DOLLAR</td>
+                <td data-formula="=DOLLAR(12312.23, 4)"></td>
+                <td>12312.23</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>FIXED</td>
+                <td data-formula="=FIXED(12312.23, 1, true)"></td>
+                <td>12312.2</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>FIXED</td>
+                <td data-formula="=FIXED(12312.23, 1, false)"></td>
+                <td>12312.2</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>FIXED</td>
+                <td data-formula="=FIXED(35124.45, 0, true)"></td>
+                <td>35124</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>LEFT</td>
+                <td data-formula="=LEFT('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz', 5)"></td>
+                <td>AaBbC</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>LEFT</td>
+                <td data-formula="=LEFT('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz')"></td>
+                <td>A</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>LEN</td>
+                <td data-formula="=LEN('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz')"></td>
+                <td>52</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>LOWER</td>
+                <td data-formula="=LOWER('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz')"></td>
+                <td>aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>MID</td>
+                <td data-formula="=MID('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz', 5, 4)"></td>
+                <td>CcDd</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>REPLACE</td>
+                <td data-formula="=REPLACE('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz', 5, 4, ':)')"></td>
+                <td>AaBb:)EeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>REPT</td>
+                <td data-formula="=REPT('abcd', 3)"></td>
+                <td>abcdabcdabcd</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>REPT</td>
+                <td data-formula="=REPT('abcd', 3)"></td>
+                <td>abcdabcdabcd</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>RIGHT</td>
+                <td data-formula="=RIGHT('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz', 5)"></td>
+                <td>xYyZz</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SEARCH</td>
+                <td data-formula="=SEARCH('KkLl', 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz')"></td>
+                <td>21</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SEARCH</td>
+                <td data-formula="=SEARCH('KkLl', 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz', 21)"></td>
+                <td>21</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SEARCH</td>
+                <td data-formula="=SEARCH('KkLl', 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz', 22)"></td>
+                <td>#VALUE!</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SUBSTITUTE</td>
+                <td data-formula="=SUBSTITUTE('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz', 'AaBb', 'AABB')"></td>
+                <td>AABBCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SUBSTITUTE</td>
+                <td data-formula="=SUBSTITUTE('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz', 'AaBb', 'AABB', 1)"></td>
+                <td>AABBCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>SUBSTITUTE</td>
+                <td data-formula="=SUBSTITUTE('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz', 'AaBb', 'AABB', 2)"></td>
+                <td>AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>UPPER</td>
+                <td data-formula="=UPPER('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz')"></td>
+                <td>AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQRRSSTTUUVVWWXXYYZZ</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>VALUE</td>
+                <td data-formula="=VALUE('987.65')"></td>
+                <td>987.65</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>VALUE</td>
+                <td data-formula="=VALUE('AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz')"></td>
+                <td>#VALUE!</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>VALUE</td>
+                <td data-formula="=VALUE(9.0)"></td>
+                <td>9</td>
+                <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+                <td></td>
+            </tr>
+		</tbody>
+	</table>
+</div>
+</body>
+</html>
