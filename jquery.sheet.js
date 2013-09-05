@@ -1139,8 +1139,7 @@ jQuery = jQuery || window.jQuery;
                 scrollStyle.innerHTML = '#scrollTester div:nth-child(2) { display: none; }';
             }
 
-            if ($(scrollItem2).is(':visible')) {//this is where we check IE8 compatibility
-                this.max = 60;
+            if (this.max) {//this is where we check IE8 compatibility
                 this.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
                     var style = [],
                         index = indexes.length;
@@ -10629,13 +10628,21 @@ jQuery = jQuery || window.jQuery;
         },
         /**
          * html function
+         * @param [pre] text before
+         * @param [post] test after
          * @returns {string}
          * @memberOf jFN
          */
-        CALCTIME:function () {
-            var cell = this;
-            this.s.parent.one('sheetCalculation', function () {
-                cell.td.text(cell.jS.time.diff());
+        CALCTIME:function (pre, post) {
+            pre = pre || '';
+            post = post || '';
+
+            var cell = this,
+                jS = this.jS;
+
+            this.jS.s.parent.one('sheetCalculation', function () {
+                jS.time.last = jS.calcLast;
+                cell.td.text(pre + jS.time.diff() + post);
             });
             return "";
         },
@@ -11174,6 +11181,7 @@ jQuery = jQuery || window.jQuery;
 
     //IE8 fix
     if (!Array.prototype.indexOf) {
+        $.sheet.max = 60;
         Array.prototype.indexOf = function(obj, start) {
             for (var i = (start || 0), j = this.length; i < j; i++) {
                 if (this[i] === obj) { return i; }
