@@ -3985,7 +3985,7 @@ jQuery = jQuery || window.jQuery;
                         cellEditAbandon:function (skipCalc) {
                             (jS.obj.inPlaceEdit().destroy || emptyFN)();
                             jS.themeRoller.bar.clearActive();
-                            jS.themeRoller.cell.clearHighlighted(null, true);
+                            jS.themeRoller.cell.clearHighlighted.call($([]), null, true);
 
                             if (!skipCalc) {
                                 jS.calc();
@@ -4026,53 +4026,54 @@ jQuery = jQuery || window.jQuery;
 
                             switch (e.keyCode) {
                                 case key.UP:
-                                    if (grid.start.row < loc.row) {
-                                        start.row = grid.start.row;
+                                    if (start.row < loc.row) {
                                         start.row--;
                                         start.row = math.max(start.row, 1);
                                         break;
                                     }
 
-                                    end.row = grid.end.row;
                                     end.row--;
                                     end.row = math.max(end.row, 1);
 
                                     break;
                                 case key.DOWN:
-                                    if (grid.start.row <= start.row) {
-                                        start.row = grid.start.row;
+                                    //just beginning the highlight
+                                    if (start.row === start.end) {
                                         start.row++;
                                         start.row = math.min(start.row, size.rows);
                                         break;
                                     }
 
-                                    end.row = grid.end.row;
+                                    //if the highlight is above the active cell, then we have selected up and need to move down
+                                    if (start.row < loc.row) {
+                                        start.row++;
+                                        start.row = math.max(start.row, 1);
+                                        break;
+                                    }
+
+                                    //otherwise we increment the row, and limit it to the size of the total grid
                                     end.row++;
                                     end.row = math.min(end.row, size.rows);
 
                                     break;
                                 case key.LEFT:
-                                    if (grid.start.col < loc.col) {
-                                        start.col = grid.start.col;
+                                    if (start.col < loc.col) {
                                         start.col--;
                                         start.col = math.max(start.col, 1);
                                         break;
                                     }
 
-                                    end.col = grid.end.col;
                                     end.col--;
                                     end.col = math.max(end.col, 1);
 
                                     break;
                                 case key.RIGHT:
-                                    if (grid.start.col < loc.col) {
-                                        start.col = grid.start.col;
+                                    if (start.col < loc.col) {
                                         start.col++;
                                         start.col = math.min(start.col, size.cols);
                                         break;
                                     }
 
-                                    end.col = grid.end.col;
                                     end.col++;
                                     end.col = math.min(end.col, size.cols);
 
@@ -5311,10 +5312,11 @@ jQuery = jQuery || window.jQuery;
                      * @param {Function} fn the function to apply to a cell
                      * @param {Object} firstLoc expects keys row,col, the cell to start at
                      * @param {Object} lastLoc expects keys row,col, the cell to end at
-                     * @param {Boolean} [ordered]
+                     * @param {Boolean} [ordered] is what you are sending to this method already sorted?
+                     * @param {Boolean} [increment] use increment rather than decrement, which is a bit slower
                      * @memberOf jS
                      */
-                    cycleCellArea:function (fn, firstLoc, lastLoc, ordered) {
+                    cycleCellArea:function (fn, firstLoc, lastLoc, ordered, increment) {
                         var grid = {start:{}, end: {}},
                             rowIndex,
                             colIndex,
@@ -5322,8 +5324,8 @@ jQuery = jQuery || window.jQuery;
                             cell,
                             i = jS.i,
                             o = {cell: [], td: []},
-                            sheet = jS.spreadsheets[i];
-
+                            sheet = jS.spreadsheets[i],
+                            arrayMethod = (increment ? 'unshift' : 'push');
 
                         if (ordered) {
                             grid.start = firstLoc;
@@ -5344,8 +5346,8 @@ jQuery = jQuery || window.jQuery;
                                 if (row) {
                                     cell = row[colIndex] || null;
                                     if (cell) {
-                                        o.cell.push(cell);
-                                        o.td.push(cell.td[0]);
+                                        o.cell[arrayMethod](cell);
+                                        o.td[arrayMethod](cell.td[0]);
                                     }
                                 }
                             } while (colIndex-- > grid.start.col);
@@ -5477,23 +5479,22 @@ jQuery = jQuery || window.jQuery;
 
                             /**
                              * Highlights object
-                             * @param {jQuery|HTMLElement} obj td object
-                             * @param {Boolean} [addToHighlighted]
+                             * @param {jQuery|HTMLElement} [obj] td object
                              * @memberOf jS.themeRoller.cell
                              */
-                            setHighlighted:function (obj, addToHighlighted) {
+                            setHighlighted:function (obj) {
+                                obj = obj || $([]);
+
                                 var i,
                                     _obj = jS.highlightedLast.obj,
                                     x = jS.obj.scrollStyleX();
 
-                                if (_obj && _obj.length && !addToHighlighted) {
+                                if (_obj && _obj.length > 0) {
                                     i = _obj.length - 1;
                                     do {
                                         _obj[i].isHighlighted = false;
                                     } while (i-- > 0);
-                                }
 
-                                if (obj && obj.length > 0) {
                                     i = obj.length - 1;
                                     do {
                                         if (!obj[i].isHighlighted) {
@@ -5505,13 +5506,8 @@ jQuery = jQuery || window.jQuery;
                                     } while (i-- > 0);
                                 }
 
-                                if (addToHighlighted) {
-                                    jS.highlightedLast.obj = jS.highlightedLast.obj.add(obj);
-                                } else {
-                                    jS.themeRoller.cell.clearHighlighted(_obj);
 
-                                    if (obj) jS.highlightedLast.obj = obj;
-                                }
+                                jS.themeRoller.cell.clearHighlighted.call(obj, _obj);
 
                                 x.touch(); //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
                             },
@@ -5546,8 +5542,11 @@ jQuery = jQuery || window.jQuery;
                                     }
                                 }
 
-                                jS.highlightedLast.obj = $([]);
-
+                                if (this.length) {
+                                    jS.highlightedLast.obj = this;
+                                } else {
+                                    jS.highlightedLast.obj = $([]);
+                                }
                             }
                         },
 
@@ -6035,7 +6034,7 @@ jQuery = jQuery || window.jQuery;
                                         //highlight the cells
                                         jS.cycleCellArea(function (o) {
                                             jS.themeRoller.cell.setHighlighted(o.td);
-                                        }, loc, locEnd);
+                                        }, loc, locEnd, false, true);
                                     }
 
                                     locTrack.last = locEnd;
