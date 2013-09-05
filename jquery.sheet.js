@@ -3985,7 +3985,7 @@ jQuery = jQuery || window.jQuery;
                         cellEditAbandon:function (skipCalc) {
                             (jS.obj.inPlaceEdit().destroy || emptyFN)();
                             jS.themeRoller.bar.clearActive();
-                            jS.themeRoller.cell.clearHighlighted.call($([]), null, true);
+                            jS.themeRoller.cell.clearHighlighted(null, true);
 
                             if (!skipCalc) {
                                 jS.calc();
@@ -5486,15 +5486,18 @@ jQuery = jQuery || window.jQuery;
                                 obj = obj || $([]);
 
                                 var i,
-                                    _obj = jS.highlightedLast.obj,
+                                    oldObjects = jS.highlightedLast.obj,
                                     x = jS.obj.scrollStyleX();
 
-                                if (_obj && _obj.length > 0) {
-                                    i = _obj.length - 1;
+                                //_obj is the old selected items
+                                if (oldObjects && oldObjects.length > 0) {
+                                    i = oldObjects.length - 1;
                                     do {
-                                        _obj[i].isHighlighted = false;
+                                        oldObjects[i].isHighlighted = false;
                                     } while (i-- > 0);
+                                }
 
+                                if (obj.length > 0) {
                                     i = obj.length - 1;
                                     do {
                                         if (!obj[i].isHighlighted) {
@@ -5506,8 +5509,7 @@ jQuery = jQuery || window.jQuery;
                                     } while (i-- > 0);
                                 }
 
-
-                                jS.themeRoller.cell.clearHighlighted.call(obj, _obj);
+                                jS.themeRoller.cell.clearHighlighted.call(obj, oldObjects);
 
                                 x.touch(); //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
                             },
