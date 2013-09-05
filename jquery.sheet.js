@@ -5011,6 +5011,7 @@ jQuery = jQuery || window.jQuery;
 
                                     fn();
                                 } while (i--);
+                                return true;
                             }
                         }
 
