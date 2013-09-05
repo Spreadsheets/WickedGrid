@@ -6877,6 +6877,7 @@ jQuery = jQuery || window.jQuery;
                      * Calculates just the dependencies of a single cell, and their dependencies recursivley
                      * @param {Date} last
                      * @param {Boolean} skipUndoable
+                     * @memberOf jS
                      */
                     calcDependencies:function (last, skipUndoable) {
                         last = last || new Date();
