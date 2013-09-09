@@ -23,18 +23,18 @@
 
 			/**
 			 * Create a table from json
-			 * @param {Array} json array of spreadsheets - schema:
+			 * @param {Array} json array of spreadsheets - schema:<pre>
 			 * [{ // sheet 1, can repeat
 			 *  "title": "Title of spreadsheet",
 			 *  "metadata": {
 			 *      "widths": [
-			 *          "120px", //widths for each column, required
-			 *          "80px"
+			 *          120, //widths for each column, required
+			 *          80
 			 *      ]
 			 *  },
 			 *  "rows": [
 			 *      { // row 1, repeats for each column of the spreadsheet
-			 *          "height": "18px", //optional
+			 *          "height": 18, //optional
 			 *          "columns": [
 			 *              { //column A
 			 *                  "class": "css classes", //optional
@@ -46,7 +46,7 @@
 			 *          ]
 			 *      },
 			 *      { // row 2
-			 *          "height": "18px", //optional
+			 *          "height": 18, //optional
 			 *          "columns": [
 			 *              { // column A
 			 *                  "class": "css classes", //optional
@@ -58,7 +58,7 @@
 			 *          ]
 			 *      }
 			 *  ]
-			 * }]
+			 * }]</pre>
 			 * @returns {*|jQuery|HTMLElement} a simple html table
 			 * @memberOf jQuery.sheet.dts.toTables
 			 */
@@ -134,41 +134,45 @@
 
 			/**
 			 *
-			 * @param {String|jQuery|HTMLElement} xml - schema:
-			 * &lt;spreadsheets&gt;
-			 *     &lt;spreadsheet title="spreadsheet title"&gt;
-			 *         &lt;metadata&gt;
-			 *             &lt;widths&gt;
-			 *                 &lt;width&gt;120px&lt;/width&gt;
-			 *                 &lt;width&gt;80px&lt;/width&gt;
-			 *             &lt;/widths&gt;
-			 *         &lt;/metadata&gt;
-			 *         &lt;rows&gt;
-			 *             &lt;row height="15px"&gt;
-			 *                  &lt;columns&gt;
-			 *                      &lt;column&gt;
-			 *                          &lt;formula&gt;=cell formula&lt;/formula&gt;
-			 *                          &lt;value&gt;cell value&lt;/value&gt;
-			 *                          &lt;style&gt;cells style&lt;/style&gt;
-			 *                          &lt;class&gt;cells class&lt;/class&gt;
-			 *                      &lt;/column&gt;
-			 *                      &lt;column&gt;&lt;/column&gt;
-			 *                  &lt;/columns&gt;
-			 *              &lt;/row&gt;
-			 *             &lt;row height="15px"&gt;
-			 *                  &lt;columns&gt;
-			 *                      &lt;column&gt;
-			 *                          &lt;formula&gt;=cell formula&lt;/formula&gt;
-			 *                          &lt;value&gt;cell value&lt;/value&gt;
-			 *                          &lt;style&gt;cells style&lt;/style&gt;
-			 *                          &lt;class&gt;cells class&lt;/class&gt;
-			 *                      &lt;/column&gt;
-			 *                      &lt;column&gt;&lt;/column&gt;
-			 *                  &lt;/columns&gt;
-			 *              &lt;/row&gt;
-			 *         &lt;/rows&gt;
-			 *     &lt;/spreadsheet&gt;
-			 * &lt;/spreadsheets&gt;
+			 * @param {String|jQuery|HTMLElement} xml - schema:<textarea disabled=disabled>
+			 * <spreadsheets>
+			 *     <spreadsheet title="spreadsheet title">
+			 *         <metadata>
+			 *             <widths>
+			 *                 <width>120</width>
+			 *                 <width>80</width>
+			 *             </widths>
+             *             <frozenAt>
+             *                 <row>0</row>
+             *                 <col>0</col>
+             *             </frozenAt>
+			 *         </metadata>
+			 *         <rows>
+			 *             <row height=15>
+			 *                  <columns>
+			 *                      <column>
+			 *                          <formula>=cell formula</formula>
+			 *                          <value>cell value</value>
+			 *                          <style>cells style</style>
+			 *                          <class>cells class</class>
+			 *                      </column>
+			 *                      <column></column>
+			 *                  </columns>
+			 *              </row>
+			 *             <row height=15>
+			 *                  <columns>
+			 *                      <column>
+			 *                          <formula>=cell formula</formula>
+			 *                          <value>cell value</value>
+			 *                          <style>cells style</style>
+			 *                          <class>cells class</class>
+			 *                      </column>
+			 *                      <column></column>
+			 *                  </columns>
+			 *              </row>
+			 *         </rows>
+			 *     </spreadsheet>
+			 * </spreadsheets></textarea>
 			 * @returns {*|jQuery|HTMLElement} a simple html table
 			 * @memberOf jQuery.sheet.dts.toTables
 			 */
@@ -264,14 +268,15 @@
 			 * Create a table from json
 			 * @param {Object} jS required, the jQuery.sheet instance
 			 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
-			 * @returns {Array}  - schema:
+			 * @returns {Array}  - schema:<pre>
 			 * [{ // sheet 1, can repeat
 			 *  "title": "Title of spreadsheet",
 			 *  "metadata": {
 			 *      "widths": [
 			 *          "120px", //widths for each column, required
 			 *          "80px"
-			 *      ]
+			 *      ],
+			 *      "frozenAt": {row: 0, col: 0}
 			 *  },
 			 *  "rows": [
 			 *      { // row 1, repeats for each column of the spreadsheet
@@ -299,7 +304,7 @@
 			 *          ]
 			 *      }
 			 *  ]
-			 * }]
+			 * }]</pre>
 			 * @memberOf jQuery.sheet.dts.fromTables
 			 */
 			json: function(jS, doNotTrim) {
@@ -402,41 +407,41 @@
 			 * Create a table from xml
 			 * @param {Object} jS the jQuery.sheet instance
 			 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
-			 * @returns {String} - schema:
-			 * &lt;spreadsheets&gt;
-			 *     &lt;spreadsheet title="spreadsheet title"&gt;
-			 *         &lt;metadata&gt;
-			 *             &lt;widths&gt;
-			 *                 &lt;width&gt;120px&lt;/width&gt;
-			 *                 &lt;width&gt;80px&lt;/width&gt;
-			 *             &lt;/widths&gt;
-			 *         &lt;/metadata&gt;
-			 *         &lt;rows&gt;
-			 *             &lt;row height="15px"&gt;
-			 *                  &lt;columns&gt;
-			 *                      &lt;column&gt;
-			 *                          &lt;formula&gt;=cell formula&lt;/formula&gt;
-			 *                          &lt;value&gt;cell value&lt;/value&gt;
-			 *                          &lt;style&gt;cells style&lt;/style&gt;
-			 *                          &lt;class&gt;cells class&lt;/class&gt;
-			 *                      &lt;/column&gt;
-			 *                      &lt;column&gt;&lt;/column&gt;
-			 *                  &lt;/columns&gt;
-			 *              &lt;/row&gt;
-			 *             &lt;row height="15px"&gt;
-			 *                  &lt;columns&gt;
-			 *                      &lt;column&gt;
-			 *                          &lt;formula&gt;=cell formula&lt;/formula&gt;
-			 *                          &lt;value&gt;cell value&lt;/value&gt;
-			 *                          &lt;style&gt;cells style&lt;/style&gt;
-			 *                          &lt;class&gt;cells class&lt;/class&gt;
-			 *                      &lt;/column&gt;
-			 *                      &lt;column&gt;&lt;/column&gt;
-			 *                  &lt;/columns&gt;
-			 *              &lt;/row&gt;
-			 *         &lt;/rows&gt;
-			 *     &lt;/spreadsheet&gt;
-			 * &lt;/spreadsheets&gt;
+			 * @returns {String} - schema:<textarea disabled=disabled>
+			 * <spreadsheets>
+			 *     <spreadsheet title="spreadsheet title">
+			 *         <metadata>
+			 *             <widths>
+			 *                 <width>120px</width>
+			 *                 <width>80px</width>
+			 *             </widths>
+			 *         </metadata>
+			 *         <rows>
+			 *             <row height="15px">
+			 *                  <columns>
+			 *                      <column>
+			 *                          <formula>=cell formula</formula>
+			 *                          <value>cell value</value>
+			 *                          <style>cells style</style>
+			 *                          <class>cells class</class>
+			 *                      </column>
+			 *                      <column></column>
+			 *                  </columns>
+			 *              </row>
+			 *             <row height="15px">
+			 *                  <columns>
+			 *                      <column>
+			 *                          <formula>=cell formula</formula>
+			 *                          <value>cell value</value>
+			 *                          <style>cells style</style>
+			 *                          <class>cells class</class>
+			 *                      </column>
+			 *                      <column></column>
+			 *                  </columns>
+			 *              </row>
+			 *         </rows>
+			 *     </spreadsheet>
+			 * </spreadsheets></textarea>
 			 * @memberOf jQuery.sheet.dts.fromTables
 			 */
 			xml: function(jS, doNotTrim) {
