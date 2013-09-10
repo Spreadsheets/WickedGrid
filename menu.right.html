@@ -35,7 +35,31 @@
         <input title="Foreground color" class="colorPickerFont" style="background-image: url('images/palette.png') ! important; width: 16px; height: 16px;"/>
         <input title="Background Color" class="colorPickerCell" style="background-image: url('images/palette_bg.png') ! important; width: 16px; height: 16px;"/>
     </span>
-    <a href="#" onclick="this.jS.obj.formula().val('=HYPERLINK(\'' + prompt('Enter Web Address', 'http://www.visop-dev.com/') + '\')').keydown(); return false;" title="HyperLink">
+    <a href="#" onclick="
+            var jS = this.jS,
+                cell = ((this.jS.obj.tdActive()[0] || {}).jSCell || {}),
+                url = prompt('Enter Web Address', 'http://www.visop-dev.com/'),
+                args = [],
+                doubleQuote = String.fromCharCode(34);
+
+            if (!url) {
+                return false;
+            }
+
+            cell.calcLast = 0;
+            args.push(doubleQuote + url + doubleQuote);
+
+            if (cell.value) {
+                args.push(doubleQuote + cell.value + doubleQuote);
+                cell.value = '';
+            }
+
+            cell.formula = 'HYPERLINK(' + args.join(',') + ')';
+
+            jS.setDirty(true);
+            jS.calcDependencies.call(cell);
+            return false;
+        " title="HyperLink">
         <img alt="Web Link" src="images/page_link.png"/></a>
     <a href="#" onclick="this.jS.getTdRange(null, this.jS.obj.formula().val()); return false;" title="Get Cell Range">
         <img alt="Get Cell Range" src="images/sheet_get_range.png"/></a>
