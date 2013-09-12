@@ -3291,9 +3291,11 @@ jQuery = jQuery || window.jQuery;
 
                             pane.table = table;
                             pane.enclosure = enclosure;
+                            pane.$enclosure = $enclosure;
 
                             table.pane = pane;
                             table.enclosure = enclosure;
+                            table.$enclosure = $enclosure;
 
                             jS.controls.pane[jS.i] = pane;
                             jS.controls.panes = jS.obj.panes().add(pane);
@@ -6038,6 +6040,28 @@ jQuery = jQuery || window.jQuery;
                                             jS.themeRoller.cell.setHighlighted(o.td);
                                         }, loc, locEnd, false, true);
                                     }
+                                    jS.followMe($(e.target));
+                                    var mouseY = e.clientY,
+                                        mouseX = e.clientX,
+                                        offset = pane.$enclosure.offset(),
+                                        cellLoc = jS.getTdLocation(e.target),
+                                        up = cellLoc.row,
+                                        left = cellLoc.col,
+                                        move = false,
+                                        previous;
+                                    if(mouseY > offset.top){
+                                        move = true;
+                                        up--
+                                    }
+                                    if(mouseX > offset.left){
+                                        move = true;
+                                        left--
+                                    }
+                                    if(move){
+                                        previous = jS.spreadsheets[jS.i][up][left];
+                                        jS.followMe($(previous.td));
+                                    }
+
 
                                     locTrack.last = locEnd;
                                     return true;
@@ -8193,17 +8217,26 @@ jQuery = jQuery || window.jQuery;
                         };
                     },
 
+                    test: function() {
+                        var s = jS.highlighted(true);
+//                        console.log(s);
+                        console.log(jS.obj.enclosure())
+                    },
+
+
                     /**
                      * Sorts what is highlighted, and updates accordingly
                      * @param {Boolean} [reversed]
                      * @memberOf jS
                      */
                     sort:function (reversed) {
+
                         var selected = jS.highlighted(true),
                             length = selected.length,
                             i =  0,
                             num = [],
-                            cell;
+                            cell,
+                            date = new Date();
 
                         while(i<length){
                             num.push(selected[i].value);
@@ -8215,13 +8248,14 @@ jQuery = jQuery || window.jQuery;
                         else{
                             num.sort(function(a,b){return b-a});
                         }
+                        jS.undo.createCells(selected);
                         while(selected.length){
                             cell = selected.pop();
                             cell.value = num[selected.length];
                             cell.calcLast = 0;
-                            jS.updateCellValue.call(cell);
-                            jS.updateCellDependencies.call(cell);
-                        }
+                            jS.calcDependencies.call(cell, date, true);
+                       }
+                        jS.undo.createCells(selected);
                     },
 
                     /**
