@@ -4471,16 +4471,19 @@ jQuery = jQuery || window.jQuery;
                     /**
                      *
                      * @param {Number} start index to start from
+                     * @param {Number} [end] index to end at
                      * @memberOf jS
                      */
-                    refreshRowLabels:function (start) {
+                    refreshRowLabels:function (start, end) {
                         start = start || 0;
 
                         var tds = jS.controls.bar.y.td[jS.i];
 
                         if (!tds) return;
 
-                        for (var i = start; i < tds.length; i++) {
+                        end = end || tds.length;
+
+                        for (var i = start; i < end; i++) {
                             if (i) {
                                 $(tds[i]).text(tds[i][0].parentNode.rowIndex);
                             }
@@ -8231,29 +8234,67 @@ jQuery = jQuery || window.jQuery;
                     sort:function (reversed) {
 
                         var selected = jS.highlighted(true),
+                            trSibling = selected[0].td.parent().prev(),
                             length = selected.length,
+                            date = new Date(),
+                            isNum = true,
+                            vals = [],
                             i =  0,
-                            num = [],
+                            offset,
                             cell,
-                            date = new Date();
+                            val,
+                            td;
 
                         while(i<length){
-                            num.push(selected[i].value);
-                            i++
+                            cell = selected[i];
+                            td = cell.td[0];
+                            if(!isNaN(cell.value)){
+                                val = (new Number(cell.value.valueOf()));
+                            }
+                            else{
+                                isNum = false;
+                                val = (new String(cell.value.valueOf()));
+                            }
+                            val.loc = jS.getTdLocation(td);
+                            val.row = td.parentNode;
+                            val.col = td;
+                            val.cell = cell;
+                            vals.push(val);
+                            i++;
                         }
+
+
                         if(reversed){
-                            num.sort(function(a,b){return a-b});
+                            if(isNum == true){
+                                vals.sort(function(a,b){return a-b});
+                            }
+                            else{
+                                vals.sort();
+                            }
                         }
+
                         else{
-                            num.sort(function(a,b){return b-a});
+                            if(isNum == false){
+                                vals.sort(function(a,b){return b-a});
+                            }
+                            else{
+                                vals.sort();
+                                vals.reverse();
+                            }
                         }
+
                         jS.undo.createCells(selected);
-                        while(selected.length){
-                            cell = selected.pop();
-                            cell.value = num[selected.length];
+                        while(offset = vals.length){
+                            val = vals.pop();
+                            cell = val.cell;
+                            cell.value = val.valueOf();
                             cell.calcLast = 0;
+                            val.row.parentNode.removeChild(val.row);
+                            trSibling.after(val.row);
                             jS.calcDependencies.call(cell, date, true);
+                            val.row.children[0].innerHTML = trSibling[0].rowIndex + offset;
                        }
+
                         jS.undo.createCells(selected);
                     },
 
