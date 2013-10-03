@@ -8303,7 +8303,7 @@ jQuery = jQuery || window.jQuery;
                             cell.calcLast = 0;
                             val.row.parentNode.removeChild(val.row);
                             trSibling.after(val.row);
-                            val.row.children[0].innerHTML = trSibling[0].rowIndex + offset - 1;
+                            val.row.children[0].innerHTML = trSibling[0].rowIndex + offset;
                             jS.spreadsheets[jS.i].splice(trSibling[0].rowIndex + 1, 0, row[0]);
                             jS.calcDependencies.call(cell, date, true);
                         }
