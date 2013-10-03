@@ -5964,6 +5964,7 @@ jQuery = jQuery || window.jQuery;
                      * @memberOf jS
                      */
                     cellSetActive:function (td, loc, isDrag, directional, fnDone, doNotClearHighlighted) {
+                        loc = loc || jS.getTdLocation(td);
                         if (loc.col != u) {
                             jS.cellLast.td = td; //save the current cell/td
 
@@ -6052,6 +6053,10 @@ jQuery = jQuery || window.jQuery;
                                         move = false,
                                         previous;
 
+                                    if (n(up) || n(left)) {
+                                        return false;
+                                    }
+
                                     if(mouseY > offset.top){
                                         move = true;
                                         up--
@@ -6061,6 +6066,9 @@ jQuery = jQuery || window.jQuery;
                                         left--
                                     }
                                     if(move){
+                                        if (up < 1 || left < 1) {
+                                            return false;
+                                        }
                                         previous = jS.spreadsheets[jS.i][up][left];
                                         jS.followMe($(previous.td));
                                     }
@@ -7325,6 +7333,7 @@ jQuery = jQuery || window.jQuery;
                             }
 
                             var tdPos = $td.position();
+
                             jS.obj.autoFiller()
                                 .show()
                                 .css('top', ((tdPos.top + (h || $td.height()) - 3) + 'px'))
@@ -8266,15 +8275,6 @@ jQuery = jQuery || window.jQuery;
 
 
                         if(reversed){
-                            if(isNum == true){
-                                vals.sort(function(a,b){return a-b});
-                            }
-                            else{
-                                vals.sort();
-                            }
-                        }
-
-                        else{
                             if(isNum == false){
                                 vals.sort(function(a,b){return b-a});
                             }
@@ -8284,8 +8284,18 @@ jQuery = jQuery || window.jQuery;
                             }
                         }
 
+                        else
+                        {
+                            if(isNum == true){
+                                vals.sort(function(a,b){return a-b});
+                            }
+                            else{
+                                vals.sort();
+                            }
+                        }
+
                         jS.undo.createCells(selected);
-                        while(offset = vals.length){
+                        while(offset = vals.length)                            {
                             val = vals.pop();
                             row = jS.spreadsheets[jS.i].splice(val.row.rowIndex, 1);
                             cell = val.cell;
@@ -8308,41 +8318,41 @@ jQuery = jQuery || window.jQuery;
                      */
                     sortHorizontal:function (reversed) {
 
-                        var trs = jS.obj.pane().table.children[1].children,
-                            selected = jS.highlighted(true),
-                            index = selected[0].td.prev()[0].cellIndex,
-                            length = selected.length,
+                        var selected = jS.highlighted(true),
+                            tdSibling = selected[0].td[0],
+                            tdSiblingIndex = tdSibling.cellIndex,
+                            colGroup = tdSibling.table.colGroup,
                             size = jS.sheetSize().rows,
+                            length = selected.length,
                             date = new Date(),
                             isNum = true,
-                            rows = [],
                             vals = [],
-                            col = [],
                             offset,
                             i = 0,
-                            x = 0,
+                            x,
                             cell,
                             val,
                             tr,
                             td;
 
                         while(i<length){
+                            x = 0;
                             cell = selected[i];
                             td = cell.td[0];
                             if(!isNaN(cell.value)){
-                                val = (new Number(cell.value.valueOf()));
+                                val = new Number(cell.value.valueOf());
                             }
                             else{
                                 isNum = false;
-                                val = (new String(cell.value.valueOf()));
+                                val = new String(cell.value.valueOf());
                             }
-                            val.cols = [];
+                            val.tds = [];
                             val.loc = jS.getTdLocation(td);
-                            val.row = td.parentNode;
-                            val.col = td;
+                            val.tr = td.parentNode;
+                            val.td = td;
                             val.cell = cell;
                             while(x <= size){
-                                val.cols.push(jS.obj.pane().table.children[1].children[x].children[td.cellIndex]);
+                                val.tds.push(jS.obj.pane().table.children[1].children[x].children[td.cellIndex]);
                                 x++;
                             }
                             vals.push(val);
@@ -8352,15 +8362,6 @@ jQuery = jQuery || window.jQuery;
 
 
                         if(reversed){
-                            if(isNum == true){
-                                vals.sort(function(a,b){return a-b});
-                            }
-                            else{
-                                vals.sort();
-                            }
-                        }
-
-                        else{
                             if(isNum == false){
                                 vals.sort(function(a,b){return b-a});
                             }
@@ -8370,34 +8371,32 @@ jQuery = jQuery || window.jQuery;
                             }
                         }
 
-//                        jS.undo.createCells(selected);
+                        else
+                        {
+                            if(isNum == true){
+                                vals.sort(function(a,b){return a-b});
+                            }
+                            else{
+                                vals.sort();
+                            }
+                        }
+
+                        jS.undo.createCells(selected);
                         while(vals.length){
                             val = vals.pop();
-                            while(val.cols.length > 1){
-                                cell = val.cols.pop();
-                                offset = val.cols.length;
-                                col = [jS.spreadsheets[jS.i][offset].splice(cell.cellIndex, 1)];
-                                tr = cell.parentNode;
-                                tr.removeChild(cell);
-                                $(tr.children[index]).after(cell);
-                                jS.spreadsheets[jS.i][offset].splice(cell.cellIndex, 1);
-                                jS.spreadsheets[jS.i][offset].splice(cell.cellIndex, 0, col[0]);
-//                                jS.calcDependencies.call(cell, date, true);
+                            while(val.tds.length > 1){
+                                td = val.tds.pop();
+                                tr = td.parentNode;
+                                cell = jS.spreadsheets[jS.i][tr.rowIndex].splice(td.cellIndex, 1);
+                                tr.insertBefore(td, tr.children[tdSiblingIndex]);
+                                td.col = colGroup.children[vals.length + td.cellIndex - 1];
+                                td.barTop = td.col.bar;
+                                cell.value = td.jSCell.value;
+                                cell.calcLast = date;
+                                jS.spreadsheets[jS.i][tr.rowIndex].splice(td.cellIndex, 0, cell[0]);
+                                jS.calcDependencies.call(cell, date, true);
                             }
-                            cell = val.col;
-                            cell.value = val.valueOf();
-                            cell.calcLast = 0;
                         }
-//                        val = vals.pop();
-//                        row = jS.spreadsheets[jS.i].splice(val.row.rowIndex, 1);
-//                        cell = val.cell;
-//                        cell.value = val.valueOf();
-//                        cell.calcLast = 0;
-//                        val.row.parentNode.removeChild(val.row);
-//                        trSibling.after(val.row);
-//                        val.row.children[0].innerHTML = trSibling[0].rowIndex + offset - 1;
-//                        jS.spreadsheets[jS.i].splice(trSibling[0].rowIndex + 1, 0, row[0]);
-//                        jS.calcDependencies.call(cell, date, true);
                         jS.undo.createCells(selected);
                     },
 
