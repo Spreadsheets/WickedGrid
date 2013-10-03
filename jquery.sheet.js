@@ -6051,6 +6051,7 @@ jQuery = jQuery || window.jQuery;
                                         left = cellLoc.col,
                                         move = false,
                                         previous;
+
                                     if(mouseY > offset.top){
                                         move = true;
                                         up--
@@ -6063,7 +6064,6 @@ jQuery = jQuery || window.jQuery;
                                         previous = jS.spreadsheets[jS.i][up][left];
                                         jS.followMe($(previous.td));
                                     }
-
 
                                     locTrack.last = locEnd;
                                     return true;
@@ -8227,11 +8227,11 @@ jQuery = jQuery || window.jQuery;
 
 
                     /**
-                     * Sorts what is highlighted, and updates accordingly
+                     * Sorts what is highlighted vertically, and updates accordingly
                      * @param {Boolean} [reversed]
                      * @memberOf jS
                      */
-                    sort:function (reversed) {
+                    sortVertical:function (reversed) {
 
                         var selected = jS.highlighted(true),
                             trSibling = selected[0].td.parent().prev(),
@@ -8239,8 +8239,9 @@ jQuery = jQuery || window.jQuery;
                             date = new Date(),
                             isNum = true,
                             vals = [],
-                            i =  0,
+                            row = [],
                             offset,
+                            i = 0,
                             cell,
                             val,
                             td;
@@ -8286,15 +8287,117 @@ jQuery = jQuery || window.jQuery;
                         jS.undo.createCells(selected);
                         while(offset = vals.length){
                             val = vals.pop();
+                            row = jS.spreadsheets[jS.i].splice(val.row.rowIndex, 1);
                             cell = val.cell;
                             cell.value = val.valueOf();
                             cell.calcLast = 0;
                             val.row.parentNode.removeChild(val.row);
                             trSibling.after(val.row);
+                            val.row.children[0].innerHTML = trSibling[0].rowIndex + offset - 1;
+                            jS.spreadsheets[jS.i].splice(trSibling[0].rowIndex + 1, 0, row[0]);
                             jS.calcDependencies.call(cell, date, true);
-                            val.row.children[0].innerHTML = trSibling[0].rowIndex + offset;
-                       }
+                        }
 
+                        jS.undo.createCells(selected);
+                    },
+
+                    /**
+                     * Sorts what is highlighted horizontally, and updates accordingly
+                     * @param {Boolean} [reversed]
+                     * @memberOf jS
+                     */
+                    sortHorizontal:function (reversed) {
+
+                        var trs = jS.obj.pane().table.children[1].children,
+                            selected = jS.highlighted(true),
+                            index = selected[0].td.prev()[0].cellIndex,
+                            length = selected.length,
+                            size = jS.sheetSize().rows,
+                            date = new Date(),
+                            isNum = true,
+                            rows = [],
+                            vals = [],
+                            col = [],
+                            offset,
+                            i = 0,
+                            x = 0,
+                            cell,
+                            val,
+                            tr,
+                            td;
+
+                        while(i<length){
+                            cell = selected[i];
+                            td = cell.td[0];
+                            if(!isNaN(cell.value)){
+                                val = (new Number(cell.value.valueOf()));
+                            }
+                            else{
+                                isNum = false;
+                                val = (new String(cell.value.valueOf()));
+                            }
+                            val.cols = [];
+                            val.loc = jS.getTdLocation(td);
+                            val.row = td.parentNode;
+                            val.col = td;
+                            val.cell = cell;
+                            while(x <= size){
+                                val.cols.push(jS.obj.pane().table.children[1].children[x].children[td.cellIndex]);
+                                x++;
+                            }
+                            vals.push(val);
+                            i++;
+
+                        }
+
+
+                        if(reversed){
+                            if(isNum == true){
+                                vals.sort(function(a,b){return a-b});
+                            }
+                            else{
+                                vals.sort();
+                            }
+                        }
+
+                        else{
+                            if(isNum == false){
+                                vals.sort(function(a,b){return b-a});
+                            }
+                            else{
+                                vals.sort();
+                                vals.reverse();
+                            }
+                        }
+
+//                        jS.undo.createCells(selected);
+                        while(vals.length){
+                            val = vals.pop();
+                            while(val.cols.length > 1){
+                                cell = val.cols.pop();
+                                offset = val.cols.length;
+                                col = [jS.spreadsheets[jS.i][offset].splice(cell.cellIndex, 1)];
+                                tr = cell.parentNode;
+                                tr.removeChild(cell);
+                                $(tr.children[index]).after(cell);
+                                jS.spreadsheets[jS.i][offset].splice(cell.cellIndex, 1);
+                                jS.spreadsheets[jS.i][offset].splice(cell.cellIndex, 0, col[0]);
+//                                jS.calcDependencies.call(cell, date, true);
+                            }
+                            cell = val.col;
+                            cell.value = val.valueOf();
+                            cell.calcLast = 0;
+                        }
+//                        val = vals.pop();
+//                        row = jS.spreadsheets[jS.i].splice(val.row.rowIndex, 1);
+//                        cell = val.cell;
+//                        cell.value = val.valueOf();
+//                        cell.calcLast = 0;
+//                        val.row.parentNode.removeChild(val.row);
+//                        trSibling.after(val.row);
+//                        val.row.children[0].innerHTML = trSibling[0].rowIndex + offset - 1;
+//                        jS.spreadsheets[jS.i].splice(trSibling[0].rowIndex + 1, 0, row[0]);
+//                        jS.calcDependencies.call(cell, date, true);
                         jS.undo.createCells(selected);
                     },
 
