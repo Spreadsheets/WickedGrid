@@ -8234,6 +8234,22 @@ jQuery = jQuery || window.jQuery;
                         console.log(jS.obj.enclosure())
                     },
 
+                    sortVerticalSelectAscending:function() {
+                        if (confirm('Do you want to extend your selection?')) {
+                            jS.sortVertical(); return true;
+                        } else {
+                            jS.sortVerticalSingle(false); return true
+                        }
+                    },
+
+                    sortVerticalSelectDescending:function() {
+                        if (confirm('Do you want to extend your selection?')) {
+                            jS.sortVertical(); return false;
+                        } else {
+                            jS.sortVerticalSingle(true); return false
+                        }
+                    },
+
 
                     /**
                      * Sorts what is highlighted vertically, and updates accordingly
@@ -8309,6 +8325,52 @@ jQuery = jQuery || window.jQuery;
                         }
 
                         jS.undo.createCells(selected);
+                    },
+
+                    /**
+                     * Sorts a single column
+                     * @param reversed
+                     */
+                    sortVerticalSingle: function (reversed) {
+                        var selected = jS.highlighted(true),
+                            length = selected.length,
+                            i =  0,
+                            num = [],
+                            cell;
+
+                        while(i<length){
+                            num.push(selected[i].value);
+                            i++
+                        }
+                        if(reversed){
+                            num.sort(function(a,b){return b-a});
+                        }
+                        else{
+                            num.sort(function(a,b){return a-b});
+                        }
+                        while(selected.length){
+                            cell = selected.pop();
+                            cell.value = num[selected.length];
+                            cell.calcLast = 0;
+                            jS.updateCellValue.call(cell);
+                            jS.updateCellDependencies.call(cell);
+                        }
+                    },
+
+                    sortHorizontalSelectAscending:function() {
+                        if (confirm('Do you want to extend your selection?')) {
+                            jS.sortHorizontal(); return true;
+                        } else {
+                            jS.sortHorizontalSingle(false); return true;
+                    }
+                    },
+
+                    sortHorizontalSelectDescending:function() {
+                        if (confirm('Do you want to extend your selection?')) {
+                            jS.sortHorizontal(); return false;
+                        } else {
+                            jS.sortHorizontalSingle(true); return false;
+                        }
                     },
 
                     /**
@@ -8398,6 +8460,36 @@ jQuery = jQuery || window.jQuery;
                             }
                         }
                         jS.undo.createCells(selected);
+                    },
+
+                    /**
+                     * Sorts a single row
+                     * @param reversed
+                     */
+                    sortHorizontalSingle: function (reversed) {
+                        var selected = jS.highlighted(true),
+                            length = selected.length,
+                            i =  0,
+                            num = [],
+                            cell;
+
+                        while(i<length){
+                            num.push(selected[i].value);
+                            i++
+                        }
+                        if(reversed){
+                            num.sort(function(a,b){return b-a});
+                        }
+                        else{
+                            num.sort(function(a,b){return a-b});
+                        }
+                        while(selected.length){
+                            cell = selected.pop();
+                            cell.value = num[selected.length];
+                            cell.calcLast = 0;
+                            jS.updateCellValue.call(cell);
+                            jS.updateCellDependencies.call(cell);
+                        }
                     },
 
                     /**
