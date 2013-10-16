@@ -37,6 +37,7 @@
 			 *          "height": 18, //optional
 			 *          "columns": [
 			 *              { //column A
+			 *                  "cellType":"", //optional
 			 *                  "class": "css classes", //optional
 			 *                  "formula": "=cell formula", //optional
 			 *                  "value": "value", //optional
@@ -49,6 +50,7 @@
 			 *          "height": 18, //optional
 			 *          "columns": [
 			 *              { // column A
+			 *                  "cellType":"", //optional
 			 *                  "class": "css classes", //optional
 			 *                  "formula": "=cell formula", //optional
 			 *                  "value": "value", //optional
@@ -151,6 +153,7 @@
 			 *             <row height=15>
 			 *                  <columns>
 			 *                      <column>
+             *                          <cellType></cellType>
 			 *                          <formula>=cell formula</formula>
 			 *                          <value>cell value</value>
 			 *                          <style>cells style</style>
@@ -162,6 +165,7 @@
 			 *             <row height=15>
 			 *                  <columns>
 			 *                      <column>
+             *                          <cellType></cellType>
 			 *                          <formula>=cell formula</formula>
 			 *                          <value>cell value</value>
 			 *                          <style>cells style</style>
@@ -283,6 +287,7 @@
 			 *          "height": "18px", //optional
 			 *          "columns": [
 			 *              { //column A
+			 *                  "cellType":"", //optional
 			 *                  "class": "css classes", //optional
 			 *                  "formula": "=cell formula", //optional
 			 *                  "value": "value", //optional
@@ -295,6 +300,7 @@
 			 *          "height": "18px", //optional
 			 *          "columns": [
 			 *              { // column A
+			 *                  "cellType":"", //optional
 			 *                  "class": "css classes", //optional
 			 *                  "formula": "=cell formula", //optional
 			 *                  "value": "value", //optional
@@ -420,6 +426,7 @@
 			 *             <row height="15px">
 			 *                  <columns>
 			 *                      <column>
+             *                          <cellType></cellType>
 			 *                          <formula>=cell formula</formula>
 			 *                          <value>cell value</value>
 			 *                          <style>cells style</style>
@@ -431,6 +438,7 @@
 			 *             <row height="15px">
 			 *                  <columns>
 			 *                      <column>
+             *                          <cellType></cellType>
 			 *                          <formula>=cell formula</formula>
 			 *                          <value>cell value</value>
 			 *                          <style>cells style</style>
