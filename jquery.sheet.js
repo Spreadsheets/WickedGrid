@@ -6363,11 +6363,11 @@ jQuery = jQuery || window.jQuery;
                                 }
                                 jS.callStack--;
 
-                                if (cell.cellType && s.cellTypeHandlers[cell.cellType]) {
+                                if (cell.result && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
                                     cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.result);
                                 }
                                 jS.filterValue.call(cell);
-                            } else if (cell.cellType && s.cellTypeHandlers[cell.cellType]) {
+                            } else if (cell.value && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
                                 cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
                                 jS.filterValue.call(cell);
                             } else {
