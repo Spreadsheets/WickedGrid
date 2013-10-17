@@ -6070,7 +6070,7 @@ jQuery = jQuery || window.jQuery;
                                             return false;
                                         }
                                         previous = jS.spreadsheets[jS.i][up][left];
-                                        jS.followMe($(previous.td));
+                                        jS.followMe($(previous.td), true);
                                     }
 
                                     locTrack.last = locEnd;
@@ -7264,9 +7264,10 @@ jQuery = jQuery || window.jQuery;
                     /**
                      * scrolls the sheet to the selected cell
                      * @param {jQuery|HTMLElement} [$td] default is tdActive
+                     * @param {boolean} [dontMoveAutoFiller] keeps autoFillerHandler in default position
                      * @memberOf jS
                      */
-                    followMe:function ($td) {
+                    followMe:function ($td, dontMoveAutoFiller) {
                         $td = $td || jS.obj.tdActive();
                         if (!$td.length) return;
 
@@ -7304,11 +7305,13 @@ jQuery = jQuery || window.jQuery;
                         }
 
 
-                        setTimeout(function () {
+                        //setTimeout(function () {
                             jS.setBusy(false);
-                        }, 100);
+                       // }, 100);
                         jS.evt.scroll.stop();
-                        jS.autoFillerGoToTd($td);
+                        if(!dontMoveAutoFiller){
+                            jS.autoFillerGoToTd($td);
+                        }
                     },
 
                     /**
@@ -7337,7 +7340,7 @@ jQuery = jQuery || window.jQuery;
                             jS.obj.autoFiller()
                                 .show()
                                 .css('top', ((tdPos.top + (h || $td.height()) - 3) + 'px'))
-                                .css('left', ((tdPos.left + (w || $td.width()) - 3) + 'px'));
+                                .css('left', ((tdPos.left + (w || $td.width()) - 3) + 'px'))
                         }
                     },
 
@@ -9144,7 +9147,7 @@ jQuery = jQuery || window.jQuery;
                         o.gR = r.piechart(width / 2, height / 2, (width < height ? width : height) / 2, o.data, {legend:o.legend})
                             .hover(function () {
                                 this.sector.stop();
-                                this.sector.scale(1.1, 1.1, this.cx, this.cy);
+                                this.sector.scale(1.1, 1.1, this.cx, this.c);
 
                                 if (this.label) {
                                     this.label[0].stop();
