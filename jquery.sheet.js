@@ -8531,7 +8531,7 @@ jQuery = jQuery || window.jQuery;
                 col = doc.createElement('col');
                 col.setAttribute('style', colStyle);
                 colGroup.appendChild(col);
-            } while (i--);
+            } while (i-- > 1);
 
             i = size.rows;
             do {
