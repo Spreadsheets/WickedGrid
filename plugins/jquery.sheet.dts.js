@@ -347,12 +347,13 @@
 					spreadsheet = jS.spreadsheets[sheet];
 					row = spreadsheet.length - 1;
 					do {
-						parentAttr = spreadsheet[row][1].td[0].parentNode.attributes;
+						parentEle = spreadsheet[row][1].td[0].parentNode;
+						parentHeight = parentEle.style['height'];
 						jsonRow = {
-							"height": null,
-							"columns": [],
-							"height": (parentAttr['height'] ? parentAttr['height'].value.replace('px', '') : jS.s.colMargin)
-						};
+								"height": null,
+								"columns": [],
+								"height": (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin)
+							};
 
 						column = spreadsheet[row].length - 1;
 						do {
@@ -374,7 +375,7 @@
 								jsonRow.columns.unshift(jsonColumn);
 
 								if (!jsonRow["height"]) {
-									jsonRow["height"] = (parent.attributes['height'] ? parent.attributes['height'].value.replace('px' , '') : jS.s.colMargin);
+									jsonRow["height"] = (parent.style['height'] ? parent.style['height'].replace('px' , '') : jS.s.colMargin);
 								}
 
 								if (cell['formula']) jsonColumn['formula'] = cell['formula'];
