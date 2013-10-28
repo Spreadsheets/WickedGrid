@@ -512,8 +512,9 @@
 						} while (column -- > 1);
 
 						if (xmlColumns) {
-							parentAttr = spreadsheet[row][1].td[0].parentNode.attributes;
-							xmlRow = '<row height="' + (parentAttr['height'] ? parentAttr['height'].value.replace('px', '') : jS.s.colMargin) + '">' +
+							parentEle = spreadsheet[row][1].td[0].parentNode;
+							parentHeight = parentEle.style['height'];
+							xmlRow = '<row height="' + (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin) + '">' +
 								'<columns>' +
 									xmlColumns +
 								'</columns>' +
