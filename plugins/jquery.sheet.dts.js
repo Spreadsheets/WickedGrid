@@ -225,13 +225,17 @@
 								cellType = column.getElementsByTagName('cellType')[0],
 								value = column.getElementsByTagName('value')[0],
 								style = column.getElementsByTagName('style')[0],
-								cl = column.getElementsByTagName('class')[0];
+								cl = column.getElementsByTagName('class')[0]
+								rowspan = column.getElementsByTagName('rowspan')[0],
+								colspan = column.getElementsByTagName('colspan')[0];
 
 							if (formula) td.attr('data-formula', '=' + (formula.textContent || formula.text));
                             if (cellType) td.attr('data-celltype', cellType.textContent || cellType.text);
 							if (value) td.html(value.textContent || value.text);
 							if (style) td.attr('style', style.textContent || style.text);
 							if (cl) td.attr('class', cl.textContent || cl.text);
+							if (rowspan) td.attr('rowspan', rowspan.textContent || rowspan.text);
+							if (colspan) td.attr('colspan', colspan.textContent || colspan.text);
 						}
 					}
 
@@ -500,6 +504,8 @@
 								if (cell.value) xmlColumn += '<value>' + cell.value + '</value>';
 								if (attr['style']) xmlColumn += '<style>' + attr['style'].value + '</style>';
 								if (cl) xmlColumn += '<class>' + cl + '</class>';
+								if (attr['rowspan']) xmlColumn += '<rowspan>' + attr['rowspan'].value + '</rowspan>';
+								if (attr['colspan']) xmlColumn += '<colspan>' + attr['colspan'].value + '</colspan>';
 
 								xmlColumn += '</column>';
 
