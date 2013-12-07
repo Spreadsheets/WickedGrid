@@ -103,6 +103,8 @@
 							if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
 							if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
 							if (column['value']) td.html(column['value'] || '');
+							if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
+							if (column['colspan']) td.attr('colspan', column['colspan'] || '');
 						}
 					}
 
@@ -225,13 +227,17 @@
 								cellType = column.getElementsByTagName('cellType')[0],
 								value = column.getElementsByTagName('value')[0],
 								style = column.getElementsByTagName('style')[0],
-								cl = column.getElementsByTagName('class')[0];
+								cl = column.getElementsByTagName('class')[0]
+								rowspan = column.getElementsByTagName('rowspan')[0],
+								colspan = column.getElementsByTagName('colspan')[0];
 
 							if (formula) td.attr('data-formula', '=' + (formula.textContent || formula.text));
                             if (cellType) td.attr('data-celltype', cellType.textContent || cellType.text);
 							if (value) td.html(value.textContent || value.text);
 							if (style) td.attr('style', style.textContent || style.text);
 							if (cl) td.attr('class', cl.textContent || cl.text);
+							if (rowspan) td.attr('rowspan', rowspan.textContent || rowspan.text);
+							if (colspan) td.attr('colspan', colspan.textContent || colspan.text);
 						}
 					}
 
@@ -347,12 +353,13 @@
 					spreadsheet = jS.spreadsheets[sheet];
 					row = spreadsheet.length - 1;
 					do {
-						parentAttr = spreadsheet[row][1].td[0].parentNode.attributes;
+						parentEle = spreadsheet[row][1].td[0].parentNode;
+						parentHeight = parentEle.style['height'];
 						jsonRow = {
-							"height": null,
-							"columns": [],
-							"height": (parentAttr['height'] ? parentAttr['height'].value.replace('px', '') : jS.s.colMargin)
-						};
+								"height": null,
+								"columns": [],
+								"height": (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin)
+							};
 
 						column = spreadsheet[row].length - 1;
 						do {
@@ -374,7 +381,7 @@
 								jsonRow.columns.unshift(jsonColumn);
 
 								if (!jsonRow["height"]) {
-									jsonRow["height"] = (parent.attributes['height'] ? parent.attributes['height'].value.replace('px' , '') : jS.s.colMargin);
+									jsonRow["height"] = (parent.style['height'] ? parent.style['height'].replace('px' , '') : jS.s.colMargin);
 								}
 
 								if (cell['formula']) jsonColumn['formula'] = cell['formula'];
@@ -385,6 +392,8 @@
 								if (cl.length) {
 									jsonColumn['class'] = cl;
 								}
+								if (attr['rowspan']) jsonColumn['rowspan'] = attr['rowspan'].value;
+								if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
 							}
 
 							if (row * 1 == 1) {
@@ -499,6 +508,8 @@
 								if (cell.value) xmlColumn += '<value>' + cell.value + '</value>';
 								if (attr['style']) xmlColumn += '<style>' + attr['style'].value + '</style>';
 								if (cl) xmlColumn += '<class>' + cl + '</class>';
+								if (attr['rowspan']) xmlColumn += '<rowspan>' + attr['rowspan'].value + '</rowspan>';
+								if (attr['colspan']) xmlColumn += '<colspan>' + attr['colspan'].value + '</colspan>';
 
 								xmlColumn += '</column>';
 
@@ -512,8 +523,9 @@
 						} while (column -- > 1);
 
 						if (xmlColumns) {
-							parentAttr = spreadsheet[row][1].td[0].parentNode.attributes;
-							xmlRow = '<row height="' + (parentAttr['height'] ? parentAttr['height'].value.replace('px', '') : jS.s.colMargin) + '">' +
+							parentEle = spreadsheet[row][1].td[0].parentNode;
+							parentHeight = parentEle.style['height'];
+							xmlRow = '<row height="' + (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin) + '">' +
 								'<columns>' +
 									xmlColumns +
 								'</columns>' +
