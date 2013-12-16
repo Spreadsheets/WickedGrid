@@ -3365,10 +3365,9 @@ jQuery = jQuery || window.jQuery;
                         /**
                          * Creates a textarea for a user to put a value in that floats on top of the current selected cell
                          * @param {jQuery|HTMLElement} td the td to be edited
-                         * @param {Boolean} noSelect
                          * @memberOf jS.controlFactory
                          */
-                        inPlaceEdit:function (td, noSelect) {
+                        inPlaceEdit:function (td) {
                             td = td || jS.obj.tdActive();
 
                             if (!td.length) {
@@ -3392,7 +3391,6 @@ jQuery = jQuery || window.jQuery;
                             $textarea = $(textarea);
                             pane.inPlaceEdit = textarea;
                             textarea.i = jS.i;
-                            textarea.value = formula[0].value;
                             textarea.className = jS.cl.inPlaceEdit + ' ' + jS.cl.uiInPlaceEdit;
                             textarea.td = td[0];
                             textarea.goToTd = function() {
@@ -3437,9 +3435,11 @@ jQuery = jQuery || window.jQuery;
                             jS.controls.inPlaceEdit[jS.i] = textarea;
 
 
-                            if (!noSelect) {
-                                $textarea.select();
-                            }
+	                        //This is a little trick to get the cursor to the end of the textarea
+                            $textarea
+	                            .focus()
+	                            .val('')
+	                            .val(formula[0].value);
 
                             //Make the textarea resizable automatically
                             if ($.fn.elastic) {
@@ -4278,7 +4278,7 @@ jQuery = jQuery || window.jQuery;
                                 return false;
                             }
 
-                            jS.controlFactory.inPlaceEdit(null, true);
+                            jS.controlFactory.inPlaceEdit();
 
                             return true;
                         },
