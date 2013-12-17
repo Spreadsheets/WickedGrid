@@ -3365,9 +3365,10 @@ jQuery = jQuery || window.jQuery;
                         /**
                          * Creates a textarea for a user to put a value in that floats on top of the current selected cell
                          * @param {jQuery|HTMLElement} td the td to be edited
+                         * @param {Boolean} selected selects the text in the inline editor
                          * @memberOf jS.controlFactory
                          */
-                        inPlaceEdit:function (td) {
+                        inPlaceEdit:function (td, selected) {
                             td = td || jS.obj.tdActive();
 
                             if (!td.length) {
@@ -3440,6 +3441,10 @@ jQuery = jQuery || window.jQuery;
 	                            .focus()
 	                            .val('')
 	                            .val(formula[0].value);
+
+                            if (selected) {
+                                $textarea.select();
+                            }
 
                             //Make the textarea resizable automatically
                             if ($.fn.elastic) {
@@ -3647,33 +3652,21 @@ jQuery = jQuery || window.jQuery;
                                     case key.C:
                                         if (e.ctrlKey) {
                                             return jS.evt.doc.copy(e);
-                                        } else {
-                                            jS.obj.tdActive().dblclick();
-                                            return true;
                                         }
                                     case key.X:
                                         if (e.ctrlKey) {
                                             return jS.evt.doc.cut(e);
-                                        } else {
-                                            jS.obj.tdActive().dblclick();
-                                            return true;
                                         }
                                     case key.Y:
                                         if (e.ctrlKey) {
                                             jS.evt.doc.redo(e);
                                             return false;
-                                        } else {
-                                            jS.obj.tdActive().trigger('cellEdit');
-                                            return true;
                                         }
                                         break;
                                     case key.Z:
                                         if (e.ctrlKey) {
                                             jS.evt.doc.undo(e);
                                             return false;
-                                        } else {
-                                            jS.obj.tdActive().trigger('cellEdit');
-                                            return true;
                                         }
                                         break;
                                     case key.ESCAPE:
@@ -4288,7 +4281,7 @@ jQuery = jQuery || window.jQuery;
                                 return false;
                             }
 
-                            jS.controlFactory.inPlaceEdit();
+                            jS.controlFactory.inPlaceEdit(null, true);
 
                             return true;
                         },
