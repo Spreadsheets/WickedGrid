@@ -555,7 +555,7 @@ jQuery = jQuery || window.jQuery;
                         hiddenRows:[],
                         hiddenColumns:[],
                         cellStartingHandlers: {
-                            '$':function(value, ch) {
+                            '$':function(val, ch) {
                                 return jFN.DOLLAR.call(this, val.substring(1).replace(globalize.culture().numberFormat[','], ''), 2, ch || '$');
                             },
                             '£':function(val) {
