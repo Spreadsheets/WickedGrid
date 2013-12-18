@@ -1646,7 +1646,7 @@ jQuery = jQuery || window.jQuery;
                         if (!jS) {
                             return false;
                         }
-                        doc.onkeydown = null;
+                        $(doc).unbind('keydown');
                         this.obj.fullScreen().remove();
                         (this.obj.inPlaceEdit().destroy || emptyFN)();
                         s.parent
