@@ -3671,14 +3671,15 @@ jQuery = jQuery || window.jQuery;
                                         break;
                                     case key.ESCAPE:
                                         jS.evt.cellEditAbandon();
+                                        return true;
                                         break;
                                     case key.ENTER:
                                         jS.evt.cellSetActiveFromKeyCode(e, true);
                                         return false;
                                         break;
-                                    default:
-                                        jS.cellLast.isEdit = true;
                                 }
+
+                                jS.cellLast.isEdit = true;
                             },
 
                             /**
