@@ -3483,6 +3483,8 @@ jQuery = jQuery || window.jQuery;
                                         jS.autoFillerNotGroup = false;
                                     });
                                 }
+
+                                return false;
                             };
 
                             pane.autoFiller = jS.controls.autoFiller[jS.i] = $(autoFiller);
