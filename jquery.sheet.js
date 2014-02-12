@@ -8026,7 +8026,7 @@ jQuery = jQuery || window.jQuery;
                         cells:[],
                         id:0,
                         createCells: function(cells, fn, id) {
-                            if (this.manager.notLoaded) {
+                            if (jS.undo.manager.notLoaded) {
                                 this.createCells = function(cells, fn, id) {
                                     return fn(cells);
                                 };
@@ -8046,6 +8046,7 @@ jQuery = jQuery || window.jQuery;
                             jS.undo.manager.register(u, jS.undo.removeCells, [before, id], 'Remove Cells', u, jS.undo.createCells, [after, null, id], 'Create Cells');
 
                             if (id != jS.undo.id || !fn) {
+                                jS.calcLast = new Date();
                                 jS.undo.draw(after);
                             }
 
