@@ -1773,7 +1773,8 @@ jQuery = jQuery || window.jQuery;
                             type: 'cell',
                             jS: jS,
                             state: [],
-                            needsUpdated: true
+                            needsUpdated: true,
+                            uneditable: td.getAttribute('data-uneditable') || false
                         };
 
                         if (jSCell.formula && jSCell.formula.charAt(0) == '=') {
@@ -5960,6 +5961,7 @@ jQuery = jQuery || window.jQuery;
                             v;
 
                         if (!cell) return;
+                        if (cell.uneditable) return;
 
                         jS.trigger('sheetCellEdit', [cell]);
 
