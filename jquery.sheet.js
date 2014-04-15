@@ -6982,10 +6982,17 @@ jQuery = jQuery || window.jQuery;
                      */
                     deleteSheet:function (i) {
                         var oldI = i || jS.i;
+                        var enclosureArray =jS.controls.enclosures.toArray();
+                        enclosureArray.splice(oldI,1)
 
                         jS.obj.barHelper().remove();
 
                         jS.obj.enclosure().remove();
+                        //BUG Found:
+                        //The enclosure will not be removed correctly while you delete the sheet.You may find all the enclosure will be hidden after you add a sheet and delete it.
+                        //The reason is that "jS.controls.enclosures" is a jQuery selector object( "$([])" ) which can't not remove element like an array.All enclosure are reserved after sheet has been deleted.
+                        //Here I remove the element by creating the selector object again.
+                        jS.controls.enclosures = $(enclosureArray);
                         jS.obj.menus().remove();
                         jS.obj.tabContainer().children().eq(jS.i).remove();
                         jS.spreadsheets.splice(oldI, 1);
