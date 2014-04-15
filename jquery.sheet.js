@@ -3330,9 +3330,11 @@ jQuery = jQuery || window.jQuery;
 
                             pane.table = table;
                             pane.enclosure = enclosure;
+                            pane.$enclosure = $enclosure;
 
                             table.pane = pane;
                             table.enclosure = enclosure;
+                            table.$enclosure = $enclosure;
 
                             jS.controls.pane[jS.i] = pane;
                             jS.controls.panes = jS.obj.panes().add(pane);
@@ -4507,16 +4509,19 @@ jQuery = jQuery || window.jQuery;
                     /**
                      *
                      * @param {Number} start index to start from
+                     * @param {Number} [end] index to end at
                      * @memberOf jS
                      */
-                    refreshRowLabels:function (start) {
+                    refreshRowLabels:function (start, end) {
                         start = start || 0;
 
                         var tds = jS.controls.bar.y.td[jS.i];
 
                         if (!tds) return;
 
-                        for (var i = start; i < tds.length; i++) {
+                        end = end || tds.length;
+
+                        for (var i = start; i < end; i++) {
                             if (i) {
                                 $(tds[i]).text(tds[i][0].parentNode.rowIndex);
                             }
@@ -5998,6 +6003,7 @@ jQuery = jQuery || window.jQuery;
                      * @memberOf jS
                      */
                     cellSetActive:function (td, loc, isDrag, directional, fnDone, doNotClearHighlighted) {
+                        loc = loc || jS.getTdLocation(td);
                         if (loc.col != u) {
                             jS.cellLast.td = td; //save the current cell/td
 
@@ -6075,6 +6081,35 @@ jQuery = jQuery || window.jQuery;
                                         jS.cycleCellArea(function (o) {
                                             jS.themeRoller.cell.setHighlighted(o.td);
                                         }, loc, locEnd, false, true);
+                                    }
+                                    jS.followMe($(e.target));
+                                    var mouseY = e.clientY,
+                                        mouseX = e.clientX,
+                                        offset = pane.$enclosure.offset(),
+                                        cellLoc = jS.getTdLocation(e.target),
+                                        up = cellLoc.row,
+                                        left = cellLoc.col,
+                                        move = false,
+                                        previous;
+
+                                    if (n(up) || n(left)) {
+                                        return false;
+                                    }
+
+                                    if(mouseY > offset.top){
+                                        move = true;
+                                        up--
+                                    }
+                                    if(mouseX > offset.left){
+                                        move = true;
+                                        left--
+                                    }
+                                    if(move){
+                                        if (up < 1 || left < 1) {
+                                            return false;
+                                        }
+                                        previous = jS.spreadsheets[jS.i][up][left];
+                                        jS.followMe($(previous.td), true);
                                     }
 
                                     locTrack.last = locEnd;
@@ -6986,10 +7021,17 @@ jQuery = jQuery || window.jQuery;
                      */
                     deleteSheet:function (i) {
                         var oldI = i || jS.i;
+                        var enclosureArray =jS.controls.enclosures.toArray();
+                        enclosureArray.splice(oldI,1)
 
                         jS.obj.barHelper().remove();
 
                         jS.obj.enclosure().remove();
+                        //BUG Found:
+                        //The enclosure will not be removed correctly while you delete the sheet.You may find all the enclosure will be hidden after you add a sheet and delete it.
+                        //The reason is that "jS.controls.enclosures" is a jQuery selector object( "$([])" ) which can't not remove element like an array.All enclosure are reserved after sheet has been deleted.
+                        //Here I remove the element by creating the selector object again.
+                        jS.controls.enclosures = $(enclosureArray);
                         jS.obj.menus().remove();
                         jS.obj.tabContainer().children().eq(jS.i).remove();
                         jS.spreadsheets.splice(oldI, 1);
@@ -7281,9 +7323,10 @@ jQuery = jQuery || window.jQuery;
                     /**
                      * scrolls the sheet to the selected cell
                      * @param {jQuery|HTMLElement} [$td] default is tdActive
+                     * @param {boolean} [dontMoveAutoFiller] keeps autoFillerHandler in default position
                      * @memberOf jS
                      */
-                    followMe:function ($td) {
+                    followMe:function ($td, dontMoveAutoFiller) {
                         $td = $td || jS.obj.tdActive();
                         if (!$td.length) return;
 
@@ -7321,11 +7364,13 @@ jQuery = jQuery || window.jQuery;
                         }
 
 
-                        setTimeout(function () {
+                        //setTimeout(function () {
                             jS.setBusy(false);
-                        }, 100);
+                       // }, 100);
                         jS.evt.scroll.stop();
-                        jS.autoFillerGoToTd($td);
+                        if(!dontMoveAutoFiller){
+                            jS.autoFillerGoToTd($td);
+                        }
                     },
 
                     /**
@@ -7350,10 +7395,11 @@ jQuery = jQuery || window.jQuery;
                             }
 
                             var tdPos = $td.position();
+
                             jS.obj.autoFiller()
                                 .show()
                                 .css('top', ((tdPos.top + (h || $td.height()) - 3) + 'px'))
-                                .css('left', ((tdPos.left + (w || $td.width()) - 3) + 'px'));
+                                .css('left', ((tdPos.left + (w || $td.width()) - 3) + 'px'))
                         }
                     },
 
@@ -8282,12 +8328,110 @@ jQuery = jQuery || window.jQuery;
                         };
                     },
 
+                    test: function() {
+                        var s = jS.highlighted(true);
+//                        console.log(s);
+                        console.log(jS.obj.enclosure())
+                    },
+
+                    sortVerticalSelectAscending:function() {
+                        if (confirm('Do you want to extend your selection?')) {
+                            jS.sortVertical(); return true;
+                        } else {
+                            jS.sortVerticalSingle(false); return true
+                        }
+                    },
+
+                    sortVerticalSelectDescending:function() {
+                        if (confirm('Do you want to extend your selection?')) {
+                            jS.sortVertical(); return false;
+                        } else {
+                            jS.sortVerticalSingle(true); return false
+                        }
+                    },
+
+
                     /**
-                     * Sorts what is highlighted, and updates accordingly
+                     * Sorts what is highlighted vertically, and updates accordingly
                      * @param {Boolean} [reversed]
                      * @memberOf jS
                      */
-                    sort:function (reversed) {
+                    sortVertical:function (reversed) {
+
+                        var selected = jS.highlighted(true),
+                            trSibling = selected[0].td.parent().prev(),
+                            length = selected.length,
+                            date = new Date(),
+                            isNum = true,
+                            vals = [],
+                            row = [],
+                            offset,
+                            i = 0,
+                            cell,
+                            val,
+                            td;
+
+                        while(i<length){
+                            cell = selected[i];
+                            td = cell.td[0];
+                            if(!isNaN(cell.value)){
+                                val = (new Number(cell.value.valueOf()));
+                            }
+                            else{
+                                isNum = false;
+                                val = (new String(cell.value.valueOf()));
+                            }
+                            val.loc = jS.getTdLocation(td);
+                            val.row = td.parentNode;
+                            val.col = td;
+                            val.cell = cell;
+                            vals.push(val);
+                            i++;
+                        }
+
+
+                        if(reversed){
+                            if(isNum == false){
+                                vals.sort(function(a,b){return b-a});
+                            }
+                            else{
+                                vals.sort();
+                                vals.reverse();
+                            }
+                        }
+
+                        else
+                        {
+                            if(isNum == true){
+                                vals.sort(function(a,b){return a-b});
+                            }
+                            else{
+                                vals.sort();
+                            }
+                        }
+
+                        jS.undo.createCells(selected);
+                        while(offset = vals.length)                            {
+                            val = vals.pop();
+                            row = jS.spreadsheets[jS.i].splice(val.row.rowIndex, 1);
+                            cell = val.cell;
+                            cell.value = val.valueOf();
+                            cell.calcLast = 0;
+                            val.row.parentNode.removeChild(val.row);
+                            trSibling.after(val.row);
+                            val.row.children[0].innerHTML = trSibling[0].rowIndex + offset;
+                            jS.spreadsheets[jS.i].splice(trSibling[0].rowIndex + 1, 0, row[0]);
+                            jS.calcDependencies.call(cell, date, true);
+                        }
+
+                        jS.undo.createCells(selected);
+                    },
+
+                    /**
+                     * Sorts a single column
+                     * @param reversed
+                     */
+                    sortVerticalSingle: function (reversed) {
                         var selected = jS.highlighted(true),
                             length = selected.length,
                             i =  0,
@@ -8299,10 +8443,145 @@ jQuery = jQuery || window.jQuery;
                             i++
                         }
                         if(reversed){
-                            num.sort(function(a,b){return a-b});
+                            num.sort(function(a,b){return b-a});
                         }
                         else{
+                            num.sort(function(a,b){return a-b});
+                        }
+                        while(selected.length){
+                            cell = selected.pop();
+                            cell.value = num[selected.length];
+                            cell.calcLast = 0;
+                            jS.updateCellValue.call(cell);
+                            jS.updateCellDependencies.call(cell);
+                        }
+                    },
+
+                    sortHorizontalSelectAscending:function() {
+                        if (confirm('Do you want to extend your selection?')) {
+                            jS.sortHorizontal(); return true;
+                        } else {
+                            jS.sortHorizontalSingle(false); return true;
+                    }
+                    },
+
+                    sortHorizontalSelectDescending:function() {
+                        if (confirm('Do you want to extend your selection?')) {
+                            jS.sortHorizontal(); return false;
+                        } else {
+                            jS.sortHorizontalSingle(true); return false;
+                        }
+                    },
+
+                    /**
+                     * Sorts what is highlighted horizontally, and updates accordingly
+                     * @param {Boolean} [reversed]
+                     * @memberOf jS
+                     */
+                    sortHorizontal:function (reversed) {
+
+                        var selected = jS.highlighted(true),
+                            tdSibling = selected[0].td[0],
+                            tdSiblingIndex = tdSibling.cellIndex,
+                            colGroup = tdSibling.table.colGroup,
+                            size = jS.sheetSize().rows,
+                            length = selected.length,
+                            date = new Date(),
+                            isNum = true,
+                            vals = [],
+                            offset,
+                            i = 0,
+                            x,
+                            cell,
+                            val,
+                            tr,
+                            td;
+
+                        while(i<length){
+                            x = 0;
+                            cell = selected[i];
+                            td = cell.td[0];
+                            if(!isNaN(cell.value)){
+                                val = new Number(cell.value.valueOf());
+                            }
+                            else{
+                                isNum = false;
+                                val = new String(cell.value.valueOf());
+                            }
+                            val.tds = [];
+                            val.loc = jS.getTdLocation(td);
+                            val.tr = td.parentNode;
+                            val.td = td;
+                            val.cell = cell;
+                            while(x <= size){
+                                val.tds.push(jS.obj.pane().table.children[1].children[x].children[td.cellIndex]);
+                                x++;
+                            }
+                            vals.push(val);
+                            i++;
+
+                        }
+
+
+                        if(reversed){
+                            if(isNum == false){
+                                vals.sort(function(a,b){return b-a});
+                            }
+                            else{
+                                vals.sort();
+                                vals.reverse();
+                            }
+                        }
+
+                        else
+                        {
+                            if(isNum == true){
+                                vals.sort(function(a,b){return a-b});
+                            }
+                            else{
+                                vals.sort();
+                            }
+                        }
+
+                        jS.undo.createCells(selected);
+                        while(vals.length){
+                            val = vals.pop();
+                            while(val.tds.length > 1){
+                                td = val.tds.pop();
+                                tr = td.parentNode;
+                                cell = jS.spreadsheets[jS.i][tr.rowIndex].splice(td.cellIndex, 1);
+                                tr.insertBefore(td, tr.children[tdSiblingIndex]);
+                                td.col = colGroup.children[vals.length + td.cellIndex - 1];
+                                td.barTop = td.col.bar;
+                                cell.value = td.jSCell.value;
+                                cell.calcLast = date;
+                                jS.spreadsheets[jS.i][tr.rowIndex].splice(td.cellIndex, 0, cell[0]);
+                                jS.calcDependencies.call(cell, date, true);
+                            }
+                        }
+                        jS.undo.createCells(selected);
+                    },
+
+                    /**
+                     * Sorts a single row
+                     * @param reversed
+                     */
+                    sortHorizontalSingle: function (reversed) {
+                        var selected = jS.highlighted(true),
+                            length = selected.length,
+                            i =  0,
+                            num = [],
+                            cell;
+
+                        while(i<length){
+                            num.push(selected[i].value);
+                            i++
+                        }
+                        if(reversed){
                             num.sort(function(a,b){return b-a});
+                        }
+                        else{
+                            num.sort(function(a,b){return a-b});
                         }
                         while(selected.length){
                             cell = selected.pop();
@@ -8964,7 +9243,7 @@ jQuery = jQuery || window.jQuery;
                         o.gR = r.piechart(width / 2, height / 2, (width < height ? width : height) / 2, o.data, {legend:o.legend})
                             .hover(function () {
                                 this.sector.stop();
-                                this.sector.scale(1.1, 1.1, this.cx, this.cy);
+                                this.sector.scale(1.1, 1.1, this.cx, this.c);
 
                                 if (this.label) {
                                     this.label[0].stop();
@@ -11257,8 +11536,8 @@ jQuery = jQuery || window.jQuery;
 
     $.print = function (s) {
         var w = win.open();
-        w.doc.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
-        w.doc.close();
+        w.document.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
+        w.document.close();
     };
 
     //This is a fix for Jison

@@ -13,8 +13,8 @@
         <img alt="Align Center" src="images/text_align_center.png"/></a>
     <a href="#" onclick="this.jS.cellStyleToggle('styleRight', 'styleLeft styleCenter'); return false;" title="Align Right">
         <img alt="Align Right" src="images/text_align_right.png"/></a>
-	<a href="#" onclick="this.jS.cellStyleToggle('styleWrap'); return false;" title="Wrap Text">
-		<img alt="Web Link" src="images/text_horizontalrule.png"/></a>
+    <a href="#" onclick="this.jS.cellStyleToggle('styleWrap'); return false;" title="Wrap Text">
+        <img alt="Web Link" src="images/text_horizontalrule.png"/></a>
     <a href="#" onclick="this.jS.merge(); return false;" title="Merge Cells">
         <img alt="Fill Down" src="images/mergecell.png"/></a>
     <a href="#" onclick="this.jS.unmerge(); return false;" title="Un-Merge Cells">
@@ -27,10 +27,23 @@
         <img alt="Fill Up" src="images/arrow_down.png"/></a>
     <a href="#" onclick="this.jS.fillUpOrDown(true); return false;" title="Fill Up">
         <img alt="Fill Up" src="images/arrow_up.png"/></a>
-    <a href="#" onclick="this.jS.sort(); return false" title="Sort Ascending" style="display: none;">
+
+    <!--<a href="#" onclick="this.jS.sortVerticalSingle(); return false" title="Sort Ascending">-->
+    <a href="#" onclick="this.jS.sortVerticalSelectAscending();" title="Sort Ascending">
         <img alt="Sort Ascending" src="images/sort_up.png"/></a>
-    <a href="#" onclick="this.jS.sort(true); return true;" title="Sort Descending" style="display: none;">
+
+    <!--<a href="#" onclick="this.jS.sortVerticalSingle(true); return true;" title="Sort Descending">-->
+    <a href="#" onclick="this.jS.sortVerticalSelectDescending(true); return true;" title="Sort Descending">
         <img alt="Sort Descending" src="images/sort_down.png"/></a>
+
+    <!--<a href="#" onclick="this.jS.sortHorizontal(); return true;" title="Sort Right">-->
+    <a href="#" onclick="this.jS.sortHorizontalSelectAscending(); return true;" title="Sort Right">
+        <img alt="Sort Right" src="images/sort_right.png"/></a>
+
+    <!--<a href="#" onclick="this.jS.sortHorizontal(); return false;" title="Sort Left">-->
+    <a href="#" onclick="this.jS.sortHorizontalSelectDescending(); return false;" title="Sort Left">
+        <img alt="Sort Left" src="images/sort_left.png"/></a>
+
     <span class="colorPickers">
         <input title="Foreground color" class="colorPickerFont" style="background-image: url('images/palette.png') ! important; width: 16px; height: 16px;"/>
         <input title="Background Color" class="colorPickerCell" style="background-image: url('images/palette_bg.png') ! important; width: 16px; height: 16px;"/>

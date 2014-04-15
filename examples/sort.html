@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>jQuery.sheet - The Ajax Spreadsheet</title>
+    <script type="text/javascript" src="../jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="https://rawgithub.com/Spreadsheets/formula/master/formula.js"></script>
+    <script type="text/javascript" src="../jquery.sheet.js"></script>
+    <script type="text/javascript">
+        $.sheet.preLoad('../');
+        $(function() {
+            var menu,
+                jS = $('#sheetParent')
+                .height($(window).height() * 0.80)
+                .sheet({
+                    menuLeft:function() {
+                        menu = $('#menu');
+                        return menu;
+                    }
+                })
+                .getSheet();
+
+            menu.find('a').each(function() {
+                this.jS = jS;
+            });
+
+
+            //sort horizontal
+            var tdsHorizontal = $('#jS_0_0 tr:eq(1) td:first').nextAll();
+            tdsHorizontal.length = 5;
+
+            jS.themeRoller.cell.setHighlighted(tdsHorizontal);
+            jS.sortHorizontal();
+
+            //sort horizontal reverse
+            jS.setActiveSheet(1);
+            tdsHorizontal = $('#jS_0_1 tr:eq(1) td:first').nextAll();
+            tdsHorizontal.length = 5;
+
+            jS.themeRoller.cell.setHighlighted(tdsHorizontal);
+            jS.sortHorizontal(true);
+
+            //sort vertical
+            jS.setActiveSheet(2);
+            var trsVertical = $('#jS_0_2 tr:eq(4)').nextAll(),
+                tdsVertical = [];
+            trsVertical.length = 5;
+            trsVertical.each(function() {
+                tdsVertical.push($(this).find('td:eq(3)')[0]);
+            });
+            jS.themeRoller.cell.setHighlighted(tdsVertical);
+            jS.sortVertical();
+
+            //sort vertical
+            jS.setActiveSheet(3);
+            trsVertical = $('#jS_0_3 tr:eq(4)').nextAll();
+            tdsVertical = [];
+            trsVertical.length = 5;
+            trsVertical.each(function() {
+                tdsVertical.push($(this).find('td:eq(3)')[0]);
+            });
+            jS.themeRoller.cell.setHighlighted(tdsVertical);
+            jS.sortVertical(true);
+        });
+    </script>
+</head>
+<body>
+<div id="sheetParent" title="Sorting Test">
+    <table title="Horizontal"><colgroup><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"></colgroup><tbody><tr style="height:15px;"><td>5</td><td>4</td><td>1</td><td>2</td><td>3</td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td class=""></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+    <table title="Horizontal Reversed"><colgroup><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"></colgroup><tbody><tr style="height:15px;"><td>5</td><td>4</td><td>1</td><td>2</td><td>3</td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" "></td><td class=""></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+    <table title="Vertical"><colgroup><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"></colgroup><tbody><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">5</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">4</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">1</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">2</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">3</td><td class=""></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+    <table title="Vertical Reversed"><colgroup><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"><col style="width:120px;"></colgroup><tbody><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">5</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">4</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">1</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">2</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td class=" ">3</td><td class=""></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr style="height:15px;"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+</div>
+<div id="menu">
+    <a onclick="this.jS.sortHorizontal();return false;">Sort Horizontal Descending</a>
+    <a onclick="this.jS.sortHorizontal(true);return false;">Sort Horizontal Ascending</a>
+    <a onclick="this.jS.sortVertical();return false;">Sort Vertical Descending</a>
+    <a onclick="this.jS.sortVertical(true);return false;">Sort Vertical Ascending</a>
+</div>
+</body>
+</html>
