@@ -1299,6 +1299,12 @@ jQuery = jQuery || window.jQuery;
                      * @type {Number}
                      */
                     sheetCount:0,
+                    /**
+                     * The serial number for generating new sheet instance index (jS.i)
+                     * @memberOf jS
+                     * @type {Number}
+                     */
+                    sheetSerialNumber:0,
 
                     /**
                      * The current scrolled area, col.start, col.end, row.start, row.end
@@ -1318,18 +1324,19 @@ jQuery = jQuery || window.jQuery;
                      * @memberOf jS
                      */
                     controls:{
-                        autoFiller:[],
+                     //I replace all the array members related to sheet delete function by object({}) so that all things could be indexed by jS.i correctly.
+                        autoFiller:{},
                         bar:{
-                            helper:[],
-                            corner:[],
+                            helper:{},
+                            corner:{},
                             x:{
-                                controls:[],
-                                handleFreeze:[],
-                                menu:[],
-                                menuParent:[],
-                                parent:[],
-                                scroll:[],
-                                td:[],
+                                controls:{},
+                                handleFreeze:{},
+                                menu:{},
+                                menuParent:{},
+                                parent:{},
+                                scroll:{},
+                                td:{},
                                 tds:function () {
                                     var tds = $([]);
                                     for (var i in this.td[jS.i]) {
@@ -1339,12 +1346,13 @@ jQuery = jQuery || window.jQuery;
                                 }
                             },
                             y:{
-                                controls:[],
-                                handleFreeze:[],
-                                menu:[],
-                                parent:[],
-                                scroll:[],
-                                td:[],
+                                controls:{},
+                                handleFreeze:{},
+                                menu:{},
+                                menuParent:{},
+                                parent:{},
+                                scroll:{},
+                                td:{},
                                 tds:function () {
                                     var tds = $([]);
                                     for (var i in this.td[jS.i]) {
@@ -1354,39 +1362,39 @@ jQuery = jQuery || window.jQuery;
                                 }
                             }
                         },
-                        barMenuLeft:[],
-                        barMenuTop:[],
-                        barLeft:[],
-                        barTop:[],
-                        barTopParent:[],
-                        chart:[],
-                        tdMenu:[],
+                        barMenuLeft:{},
+                        barMenuTop:{},
+                        barLeft:{},
+                        barTop:{},
+                        barTopParent:{},
+                        chart:{},
+                        tdMenu:{},
                         cellsEdited:[],
-                        enclosure:[],
+                        enclosure:{},
                         enclosures:null,
                         formula:null,
                         fullScreen:null,
                         header:null,
-                        inPlaceEdit:[],
+                        inPlaceEdit:{},
                         inputs:[],
                         label:null,
-                        menuLeft:[],
-                        menuRight:[],
-                        menus:[],
-                        pane:[],
+                        menuLeft:{},
+                        menuRight:{},
+                        menus:{},
+                        pane:{},
                         panes:null,
-                        scroll:[],
+                        scroll:{},
                         scrolls:null,
                         sheetAdder:null,
-                        table:[],
+                        table:{},
                         tables:null,
-                        tab:[],
+                        tab:{},
                         tabContainer:null,
                         tabs:null,
                         title:null,
                         toggleHide:{
-                            x:[],
-                            y:[]
+                            x:{},
+                            y:{}
                         },
                         ui:null
                     },
@@ -4553,7 +4561,7 @@ jQuery = jQuery || window.jQuery;
                      * Tracks read state of spreadsheet
                      * @memberOf jS
                      */
-                    readOnly:[],
+                    readOnly:{},
 
                     /**
                      * Detects read state of a spreadsheet
@@ -6965,11 +6973,12 @@ jQuery = jQuery || window.jQuery;
                         if (size) {
                             jS.evt.cellEditAbandon();
                             jS.setDirty(true);
-                            jS.controlFactory.sheetUI(jS.obj.ui()[0], $.sheet.makeTable(size), jS.sheetCount);
+                            jS.controlFactory.sheetUI(jS.obj.ui()[0], $.sheet.makeTable(size), jS.sheetSerialNumber);
 
-                            jS.setActiveSheet(jS.sheetCount);
+                            jS.setActiveSheet(jS.sheetSerialNumber);
 
                             jS.sheetCount++;
+                            jS.sheetSerialNumber++;
 
                             jS.sheetSyncSize();
 
@@ -6990,59 +6999,71 @@ jQuery = jQuery || window.jQuery;
                         jS.obj.barHelper().remove();
 
                         jS.obj.enclosure().remove();
+
                         jS.obj.menus().remove();
-                        jS.obj.tabContainer().children().eq(jS.i).remove();
-                        jS.spreadsheets.splice(oldI, 1);
-                        jS.controls.autoFiller.splice(oldI, 1);
-                        jS.controls.bar.helper.splice(oldI, 1);
-                        jS.controls.bar.corner.splice(oldI, 1);
-                        jS.controls.bar.x.controls.splice(oldI, 1);
-                        jS.controls.bar.x.handleFreeze.splice(oldI, 1);
-                        jS.controls.bar.x.controls.splice(oldI, 1);
-                        jS.controls.bar.x.menu.splice(oldI, 1);
+                        jS.obj.tabContainer().children().each(function(x,ele){
+                           if(ele.i==oldI)
+                           {
+                              $(this).remove();
+                           }
+                        });
+                        delete jS.spreadsheets[oldI];
+                        delete jS.controls.autoFiller[oldI];
+                        delete jS.controls.bar.helper[oldI];
+                        delete jS.controls.bar.corner[oldI];
+                        delete jS.controls.bar.x.controls[oldI];
+                        delete jS.controls.bar.x.handleFreeze[oldI];
+                        delete jS.controls.bar.x.controls[oldI];
+                        delete jS.controls.bar.x.menu[oldI];
                         if (jS.controls.bar.x.menuParent && jS.controls.bar.x.menuParent[oldI]) {
-                            jS.controls.bar.x.menuParent.splice(oldI, 1);
+                            delete jS.controls.bar.x.menuParent[oldI];
                         }
-                        jS.controls.bar.x.parent.splice(oldI, 1);
-                        jS.controls.bar.x.scroll.splice(oldI, 1);
-                        jS.controls.bar.x.td.splice(oldI, 1);
-                        jS.controls.bar.y.controls.splice(oldI, 1);
-                        jS.controls.bar.y.handleFreeze.splice(oldI, 1);
-                        jS.controls.bar.y.controls.splice(oldI, 1);
-                        jS.controls.bar.y.menu.splice(oldI, 1);
+                        delete jS.controls.bar.x.parent[oldI];
+                        delete jS.controls.bar.x.scroll[oldI];
+                        delete jS.controls.bar.x.td[oldI];
+                        delete jS.controls.bar.y.controls[oldI];
+                        delete jS.controls.bar.y.handleFreeze[oldI];
+                        delete jS.controls.bar.y.controls[oldI];
+                        delete jS.controls.bar.y.menu[oldI];
                         if (jS.controls.bar.y.menuParent && jS.controls.bar.y.menuParent[oldI]) {
-                            jS.controls.bar.y.menuParent.splice(oldI, 1);
+                            delete jS.controls.bar.y.menuParent[oldI];
                         }
-                        jS.controls.bar.y.parent.splice(oldI, 1);
-                        jS.controls.bar.y.scroll.splice(oldI, 1);
-                        jS.controls.bar.y.td.splice(oldI, 1);
-                        jS.controls.barMenuLeft.splice(oldI, 1);
-                        jS.controls.barMenuTop.splice(oldI, 1);
-                        jS.controls.barLeft.splice(oldI, 1);
-                        jS.controls.barTop.splice(oldI, 1);
-                        jS.controls.barTopParent.splice(oldI, 1);
-                        jS.controls.chart.splice(oldI, 1);
-                        jS.controls.tdMenu.splice(oldI, 1);
-                        jS.controls.enclosure.splice(oldI, 1);
+                        delete jS.controls.bar.y.parent[oldI];
+                        delete jS.controls.bar.y.scroll[oldI];
+                        delete jS.controls.bar.y.td[oldI];
+                        delete jS.controls.barMenuLeft[oldI];
+                        delete jS.controls.barMenuTop[oldI];
+                        delete jS.controls.barLeft[oldI];
+                        delete jS.controls.barTop[oldI];
+                        delete jS.controls.barTopParent[oldI];
+                        delete jS.controls.chart[oldI];
+                        delete jS.controls.tdMenu[oldI];
+                        delete jS.controls.enclosure[oldI];
                         jS.controls.fullScreen = null;
-                        jS.controls.inPlaceEdit.splice(oldI, 1);
-                        jS.controls.menus.splice(oldI, 1);
-                        jS.controls.menuLeft.splice(oldI, 1);
-                        jS.controls.menuRight.splice(oldI, 1);
-                        jS.controls.pane.splice(oldI, 1);
-                        jS.controls.scroll.splice(oldI, 1);
-                        jS.controls.tables.splice(oldI, 1);
-                        jS.controls.table.splice(oldI, 1);
-                        jS.controls.tab.splice(oldI, 1);
-                        jS.controls.toggleHide.x.splice(oldI, 1);
-                        jS.controls.toggleHide.y.splice(oldI, 1);
-                        jS.readOnly.splice(oldI, 1);
-                        jS.i = 0;
+                        delete jS.controls.inPlaceEdit[oldI];
+                        delete jS.controls.menus[oldI];
+                        delete jS.controls.menuLeft[oldI];
+                        delete jS.controls.menuRight[oldI];
+                        delete jS.controls.pane[oldI];
+                        delete jS.controls.scroll[oldI];
+                        //delete jS.controls.tables.splice(oldI, 1);
+                        delete jS.controls.table[oldI];
+                        delete jS.controls.tab[oldI];
+                        delete jS.controls.toggleHide.x[oldI];
+                        delete jS.controls.toggleHide.y[oldI];
+                        delete jS.readOnly[oldI];
+
                         jS.sheetCount--;
                         jS.sheetCount = math.max(jS.sheetCount, 0);
 
                         if (jS.sheetCount == 0) {
                             jS.addSheet();
+                        }
+
+                        for (var i in jS.controls.enclosure)
+                        {
+                           jS.i = i;
+                           break;
                         }
 
                         jS.setActiveSheet(jS.i);
@@ -7388,20 +7409,19 @@ jQuery = jQuery || window.jQuery;
 
                         jS.autoFillerHide();
 
-                        if (j > 0) {
-                            do {
-                                if (i != j) {
-                                    enclosure = enclosures[j];
-                                    enclosure._scrollLeft = enclosure._scrollLeft || enclosure.scrollUI.scrollLeft;
-                                    enclosure._scrollTop = enclosure._scrollTop || enclosure.scrollUI.scrollTop;
-                                    enclosure.style.display = "none";
-                                }
-                            } while (j-- > 0);
-                        }
+                        $.each(jS.controls.enclosure,function(x,ele){
+                           if(x!=i)
+                           {
+                              var encl = ele[0];
+                              encl._scrollLeft = encl._scrollLeft || encl.scrollUI.scrollLeft;
+                              encl._scrollTop = encl._scrollTop || encl.scrollUI.scrollTop;
+                              encl.style.display = "none";
+                           }
+                        })
 
                         jS.i = i;
 
-                        enclosure = enclosures[i];
+                        enclosure = jS.controls.enclosure[i][0];
 
                         enclosure.style.display = "";
 
@@ -7434,6 +7454,7 @@ jQuery = jQuery || window.jQuery;
                                     i;
 
                                 jS.sheetCount = tables.length - 1;
+                                jS.sheetSerialNumber = tables.length;
 
                                 header.ui = ui;
                                 header.tabContainer = tabContainer;
