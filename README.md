@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/spreadsheets/jquery.sheet.png?label=ready&title=Ready)](https://waffle.io/spreadsheets/jquery.sheet)
 jQuery.sheet
 ============
 
