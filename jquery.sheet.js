@@ -3387,7 +3387,7 @@ jQuery = jQuery || window.jQuery;
                                 val = formula.val(),
                                 textarea,
                                 $textarea,
-                                pane = jS.obj.pane();
+                                pane = jS.obj.pane()
 
                             if (!td[0].isHighlighted) return; //If the td is a dud, we do not want a textarea
 
@@ -3398,7 +3398,7 @@ jQuery = jQuery || window.jQuery;
                             textarea.className = jS.cl.inPlaceEdit + ' ' + jS.cl.uiInPlaceEdit;
                             textarea.td = td[0];
                             textarea.goToTd = function() {
-                                this.offset = td.offset();
+                                this.offset = td.position();
                                 if (!this.offset.left && !this.offset.right) {
                                     $(textarea).hide();
                                 } else {
@@ -3432,7 +3432,7 @@ jQuery = jQuery || window.jQuery;
                                 jS.controls.inPlaceEdit[textarea.i] = false;
                             };
 
-                            body.appendChild(textarea);
+                            pane.appendChild(textarea);
 
                             textarea.onfocus();
 
@@ -4900,6 +4900,8 @@ jQuery = jQuery || window.jQuery;
                                         _td.removeAttribute('data-celltype')
                                         _td.innerHTML = '';
                                         _td.style.display = 'none';
+                                        _td.colSpan = colSpan - (_td.cellIndex - td.cellIndex);
+                                        _td.rowSpan = rowSpan - (_td.parentNode.rowIndex - td.parentNode.rowIndex);
                                     }
                                 });
 
