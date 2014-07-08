@@ -2184,7 +2184,7 @@ jQuery = jQuery || window.jQuery;
                                 jS.offsetFormulas(loc, o.offset, isBefore);
                             }
 
-                            jS.obj.pane().resizeScroll();
+                            jS.obj.pane().resizeScroll(true);
 
                             if (activeCell && activeCell[0] && activeCell[0].cellIndex && activeCell[0].parentNode) {
                                 jS.colLast = activeCell[0].cellIndex;
