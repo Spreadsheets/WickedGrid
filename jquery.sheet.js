@@ -8772,6 +8772,8 @@ jQuery = jQuery || window.jQuery;
 
             if (s.origHtml.length) {
                 jS.openSheet(s.origHtml);
+            } else {
+                jS.openSheet($(doc.createElement('table')));
             }
 
             jS.setBusy(false);
