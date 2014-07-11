@@ -127,7 +127,7 @@ jQuery = jQuery || window.jQuery;
          *
          *          })
          *          .sheet();
-         * sheetCellEdit - occurs just before a cell has been a cell is started to edit
+         * sheetCellEdit - occurs just before a cell has been started to edit
          *      arguments: e (jQuery event), jS (jQuery.sheet instance), cell (jQuery.sheet.instance.spreadsheet cell)
          *      example:
          *          $(obj).sheet({
@@ -380,7 +380,7 @@ jQuery = jQuery || window.jQuery;
          * hiddenColumns {Array} default [], Hides certain columns from being displayed initially. [sheet Index][column index]. example: [[1]] hides first column in first spreadsheet; [[],[1]] hides first column in second spreadsheet
          *
          * alert {Function} default function(msg) {alert(msg);}
-         * prompt {Function} defalut function(msg, callback, initialValue) {callback(prompt(msg, initialValue));}
+         * prompt {Function} default function(msg, callback, initialValue) {callback(prompt(msg, initialValue));}
          * confirm {Function} default
          *      function(msg, callbackIfTrue, callbackIfFalse) {
          *          if (confirm(msg)) {
