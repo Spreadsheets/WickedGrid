@@ -740,10 +740,16 @@ jQuery = jQuery || window.jQuery;
                     && (cell = jS.getCell(rowIndex, colIndex, sheetIndex))
                 ) {
                 try {
-                    cell.value = value;
-                    cell.valueOverride = cell.formula = '';
+                    if ((value + '').charAt(0) == '=') {
+                        cell.valueOverride = cell.value = '';
+                        cell.formula = value.substring(1);
+                    } else {
+                        cell.value = value;
+                        cell.valueOverride = cell.formula = '';
+                    }
                     cell.calcLast = cell.calcDependenciesLast = 0;
-                    jS.updateCellValue(sheetIndex, rowIndex, colIndex);
+                    jS.updateCellValue.call(cell);
+                    jS.updateCellDependencies.call(cell);
                     return true;
                 } catch (e) {}
             }
