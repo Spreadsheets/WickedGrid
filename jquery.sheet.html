@@ -10,34 +10,39 @@
         <title>jQuery.sheet - The Ajax Spreadsheet</title>
 
         <link rel="stylesheet" type="text/css" href="jquery.sheet.css">
-        <link rel="stylesheet" type="text/css" href="./jquery-ui/theme/jquery-ui.min.css">
+        <link rel="stylesheet" type="text/css" href="bower_components/jquery-ui/themes/start/jquery-ui.min.css">
 
-        <script type="text/javascript" src="jquery-1.10.2.min.js"></script>
-        <script type="text/javascript" src="plugins/globalize.js"></script>
+        <script type="text/javascript" src="bower_components/jquery-legacy/dist/jquery.min.js"></script>
+        <script type="text/javascript" src="bower_components/globalize/lib/globalize.js"></script>
         <script type="text/javascript" src="parser/formula/formula.js"></script>
         <script type="text/javascript" src="parser/tsv/tsv.js"></script>
         <script type="text/javascript" src="jquery.sheet.js"></script>
+        <script type="text/javascript" src="plugins/Sheet.ActionUI.js"></script>
 
 		<!--Optional-->
             <!--Nearest-->
-            <script type="text/javascript" src="plugins/jquery.nearest.min.js"></script>
+            <script type="text/javascript" src="bower_components/jquery-nearest/src/jquery.nearest.min.js"></script>
             <!--/Nearest-->
 			<!--jQuery UI-->
-				<script type="text/javascript" src="jquery-ui/ui/jquery-ui.min.js"></script>
+				<script type="text/javascript" src="bower_components/jquery-ui/jquery-ui.min.js"></script>
 			<!--/jQuery UI-->
 			<!--Raphaeljs - for charts-->
-				<script type="text/javascript" src="plugins/raphael-min.js"></script>
-				<script type="text/javascript" src="plugins/g.raphael-min.js"></script>
+				<script type="text/javascript" src="bower_components/raphael/raphael-min.js"></script>
+				<script type="text/javascript" src="bower_components/graphael/g.raphael.js"></script>
+				<script type="text/javascript" src="bower_components/graphael/g.bar.js"></script>
+				<script type="text/javascript" src="bower_components/graphael/g.dot.js"></script>
+				<script type="text/javascript" src="bower_components/graphael/g.line.js"></script>
+				<script type="text/javascript" src="bower_components/graphael/g.pie.js"></script>
 			<!--/Raphaeljs-->
 			<!--ColorPicker-->
-				<link rel="stylesheet" type="text/css" href="plugins/jquery.colorPicker.css" />
-				<script type="text/javascript" src="plugins/jquery.colorPicker.min.js"></script>
+				<link rel="stylesheet" type="text/css" href="bower_components/really-simple-color-picker/colorPicker.css" />
+				<script type="text/javascript" src="bower_components/really-simple-color-picker/jquery.colorPicker.min.js"></script>
 			<!--/ColorPicker-->
 			<!--Theme Switcher Tool-->
-				<script type="text/javascript" src="plugins/jquery.themeswitcher.js"></script>
+
 			<!--/Theme Switcher Tool-->
 			<!--Elastic-->
-				<script type="text/javascript" src="plugins/jquery.elastic.min.js"></script>
+				<script type="text/javascript" src="bower_components/jquery-elastic/jquery.elastic.source.js"></script>
 			<!--/Elastic-->
 			<!--Advanced_Math-->
 				<script type="text/javascript" src="plugins/jquery.sheet.advancedfn.js"></script>
@@ -46,10 +51,10 @@
 				<script type="text/javascript" src="plugins/jquery.sheet.financefn.js"></script>
 			<!--/Finance-->
 	        <!--Undo-->
-	            <script type="text/javascript" src="plugins/undomanager.js"></script>
+	            <script type="text/javascript" src="bower_components/Javascript-Undo-Manager/js/undomanager.js"></script>
 	        <!--/Undo-->
             <!--Zero Clipboard-->
-            <script type="text/javascript" src="plugins/ZeroClipboard.js"></script>
+            <script type="text/javascript" src="bower_components/zeroclipboard/dist/ZeroClipboard.min.js"></script>
             <!--/Zero Clipboard-->
 		    <!--DataTransformationService-->
 		    <script type="text/javascript" src="plugins/jquery.sheet.dts.js"></script>
@@ -58,10 +63,10 @@
         <script type="text/javascript">
             $(function(){
 
-                $('#themeSwitcher').themeswitcher({
+                /*$('#themeSwitcher').themeswitcher({
                     imgpath: "plugins/jquery.themeswitcher.images/",
                     loadTheme: "start"
-                });
+                });*/
                 //Here is where we initiate the sheets
                 //every time sheet is created it creates a new jQuery.sheet.instance (array), to manipulate each sheet, the jQuery object is returned
 
