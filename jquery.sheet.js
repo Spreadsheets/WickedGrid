@@ -976,18 +976,6 @@ jQuery = jQuery || window.jQuery;
                 result += node.data.replace(/^\s*(.*)\s*$/g, "$1");
             }
             return result;
-        },
-
-        /**
-         * mousewheel event handler, not a jQuery event handler
-         * @returns {HTMLElement}
-         * @memberOf jQuery()
-         */
-        mousewheel: function(fn) {
-            $(this).each(function() {
-                this.onwheel = this.onmousewheel = this.onDOMMouseScroll = this.onMozMousePixelScroll = fn;
-            });
-            return this;
         }
     });
 
@@ -1249,7 +1237,6 @@ jQuery = jQuery || window.jQuery;
                                 menu:[],
                                 menuParent:[],
                                 parent:[],
-                                scroll:[],
                                 td:[],
                                 tds:function () {
                                     var tds = $([]);
@@ -1264,7 +1251,6 @@ jQuery = jQuery || window.jQuery;
                                 handleFreeze:[],
                                 menu:[],
                                 parent:[],
-                                scroll:[],
                                 td:[],
                                 tds:function () {
                                     var tds = $([]);
@@ -1296,7 +1282,6 @@ jQuery = jQuery || window.jQuery;
                         menus:[],
                         pane:[],
                         panes:null,
-                        scroll:[],
                         scrolls:null,
                         sheetAdder:null,
                         table:[],
@@ -1420,15 +1405,6 @@ jQuery = jQuery || window.jQuery;
                         parent:function () {
                             return s.parent;
                         },
-                        scrollStyleX:function () {
-                            return jS.controls.bar.x.scroll[jS.i] || {};
-                        },
-                        scrollStyleY:function () {
-                            return jS.controls.bar.y.scroll[jS.i] || $([]);
-                        },
-                        scroll:function () {
-                            return jS.controls.scroll[jS.i] || $([]);
-                        },
                         scrolls:function () {
                             return jS.controls.scrolls || $([]);
                         },
@@ -1450,17 +1426,8 @@ jQuery = jQuery || window.jQuery;
                         tabContainer:function () {
                             return jS.controls.tabContainer || $([]);
                         },
-                        toggleHideStyleX:function () {
-                            return jS.controls.toggleHide.x[jS.i] || $([]);
-                        },
-                        toggleHideStyleY:function () {
-                            return jS.controls.toggleHide.y[jS.i] || $([]);
-                        },
                         title:function () {
                             return jS.controls.title || $([]);
-                        },
-                        ui:function () {
-                            return jS.controls.ui || $([]);
                         }
                     },
 
@@ -2274,7 +2241,7 @@ jQuery = jQuery || window.jQuery;
                                         var target = jS.nearest($handle, tds);
                                         jS.obj.barHelper().remove();
                                         jS.scrolledTo().end.col = jS.frozenAt().col = jS.getTdLocation(target).col - 1;
-                                        jS.evt.scroll.start('x', pane);
+                                        pane.actionUI.scrollStart('x');
                                     },
                                     containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - win.scrollBarSize.width), offset.top]
                                 });
@@ -2341,7 +2308,7 @@ jQuery = jQuery || window.jQuery;
                                         var target = jS.nearest($handle, trs);
                                         jS.obj.barHelper().remove();
                                         jS.scrolledTo().end.row = jS.frozenAt().row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
-                                        jS.evt.scroll.start('y', pane);
+                                        pane.actionUI.scrollStart('y');
                                     },
                                     containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - win.scrollBarSize.height)]
                                 });
@@ -2738,7 +2705,7 @@ jQuery = jQuery || window.jQuery;
                         ui:function () {
                             var ui = doc.createElement('div');
                             ui.setAttribute('class', jS.cl.ui);
-                            jS.controls.ui = $(ui);
+                            jS.obj.ui = ui;
                             return ui;
                         },
 
@@ -2944,7 +2911,7 @@ jQuery = jQuery || window.jQuery;
 
                             jS.controlFactory.tab();
 
-                            jS.actionUI.hide(enclosure, pane, table);
+                            enclosure.actionUI.hide();
 
                             jS.setChanged(true);
                         },
@@ -2958,7 +2925,9 @@ jQuery = jQuery || window.jQuery;
                             var pane = doc.createElement('div'),
                                 enclosure = doc.createElement('div'),
                                 $enclosure = $(enclosure),
-                                actionUI = jS.actionUI = new Sheet.ActionUI(jS, enclosure, pane, table, $.sheet.max);
+                                actionUI = new Sheet.ActionUI(jS, enclosure, pane, table, jS.cl.scroll, $.sheet.max);
+
+                            enclosure.actionUI = pane.actionUI = actionUI;
 
                             enclosure.scrollUI = actionUI.scrollUI;
                             enclosure.appendChild(enclosure.scrollUI);
@@ -3986,142 +3955,6 @@ jQuery = jQuery || window.jQuery;
                                     });
 
                                 return false;
-                            }
-                        },
-
-                        /**
-                         * Manages scrolling
-                         * @memberOf jS.evt
-                         * @namespace
-                         */
-                        scroll:{
-
-                            /**
-                             * axis cache, x & y
-                             * @memberOf jS.evt.scroll
-                             */
-                            axis:{x:{}, y:{}},
-
-                            /**
-                             * tracks the current spreadsheet size
-                             * @memberOf jS.evt.scroll
-                             */
-                            size:{},
-
-                            /**
-                             * tracks last select cell
-                             * @memberOf jS.evt.scroll
-                             */
-                            td:{},
-
-                            /**
-                             * prepare everything needed for a scroll, needs activated every time spreadsheet changes in size
-                             * @param {String} axisName x or y
-                             * @param {jQuery|HTMLElement} pane pane object
-                             * @memberOf jS.evt.scroll
-                             */
-                            start:function (axisName, pane) {
-                                jS.autoFillerHide();
-
-                                pane = pane || jS.obj.pane();
-                                var me = jS.evt.scroll,
-                                    outer = pane.scrollOuter,
-                                    axis = me.axis[axisName];
-
-                                me.size = jS.sheetSize(pane.table);
-                                me.td = jS.obj.tdActive();
-
-                                axis.v = [];
-                                axis.name = axisName;
-
-                                switch (axisName || 'x') {
-                                    case 'x':
-                                        axis.max = me.size.cols;
-                                        axis.min = 0;
-                                        axis.size = me.size.cols;
-                                        pane.scrollStyleX.updateStyle();
-                                        axis.scrollStyle = pane.scrollStyleX;
-                                        axis.area = outer.scrollWidth - outer.clientWidth;
-                                        axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
-                                        axis.scrollUpdate = function () {
-                                            outer.scrollLeft = (axis.value) * (axis.area / axis.size);
-                                        };
-                                        axis.gridSize = 100 / axis.size;
-                                        break;
-                                    case 'y':
-                                        axis.max = me.size.rows;
-                                        axis.min = 0;
-                                        axis.size = me.size.rows;
-                                        pane.scrollStyleY.updateStyle();
-                                        axis.scrollStyle = pane.scrollStyleY;
-                                        axis.area = outer.scrollHeight - outer.clientHeight;
-                                        axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
-                                        axis.scrollUpdate = function () {
-                                            outer.scrollTop = (axis.value) * (axis.area / axis.size);
-                                        };
-                                        axis.gridSize = 100 / axis.size;
-                                        break;
-                                }
-
-                                var i = axis.max;
-                                do {
-                                    var position = new Number(axis.gridSize * i);
-                                    position.index = i + 1;
-                                    axis.v.unshift(position);
-                                } while(i--);
-                            },
-
-                            /**
-                             * Scrolls to a position within the spreadsheet
-                             * @param {Object} pos {axis, value, pixel} if value not set, pixel is used
-                             * @memberOf jS.evt.scroll
-                             */
-                            scrollTo:function (pos) {
-                                pos = pos || {};
-                                pos.axis = pos.axis || 'x';
-                                pos.value = pos.value || 0;
-                                pos.pixel = pos.pixel || 0;
-
-                                if (!jS.evt.scroll.axis) {
-                                    jS.evt.scroll.start(pos.axis);
-                                }
-                                var me = jS.evt.scroll.axis[pos.axis];
-
-                                if (!pos.value) {
-                                    pos.value = arrHelpers.closest(me.v, math.abs(pos.pixel / me.area) * 100, me.min).index;
-                                }
-
-                                pos.max = pos.max || me.max;
-
-                                var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
-                                    indexes = [];
-
-                                if (i >= 0) {
-                                    do {
-                                        indexes.push(i + me.min);
-                                    } while(i-- > 0);
-                                }
-                                if (indexes.length) {
-                                    if (me.scrollStyle) me.scrollStyle.updateStyle(indexes);
-                                } else {
-                                    if (me.scrollStyle) me.scrollStyle.updateStyle();
-                                }
-
-                                me.value = pos.value;
-                            },
-
-                            /**
-                             * Called after scroll is done
-                             * @memberOf jS.evt.scroll
-                             */
-                            stop:function () {
-                                if (this.axis.x.scrollUpdate) this.axis.x.scrollUpdate();
-                                if (this.axis.y.scrollUpdate) this.axis.y.scrollUpdate();
-
-                                if (jS.evt.scroll.td) {
-                                    jS.evt.scroll.td = null;
-                                    jS.autoFillerGoToTd();
-                                }
                             }
                         }
                     },
@@ -5173,7 +5006,7 @@ jQuery = jQuery || window.jQuery;
 
                                 var i,
                                     oldObjects = jS.highlightedLast.obj,
-                                    x = jS.obj.scrollStyleX();
+                                    actionUI = jS.obj.pane().actionUI;
 
                                 //_obj is the old selected items
                                 if (oldObjects && oldObjects.length > 0) {
@@ -5197,7 +5030,7 @@ jQuery = jQuery || window.jQuery;
 
                                 jS.themeRoller.cell.clearHighlighted.call(obj, oldObjects);
 
-                                x.touch(); //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
+                                actionUI.touch(); //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
                             },
 
                             /**
@@ -6644,7 +6477,7 @@ jQuery = jQuery || window.jQuery;
                         if (size) {
                             jS.evt.cellEditAbandon();
                             jS.setDirty(true);
-                            jS.controlFactory.sheetUI(jS.obj.ui()[0], $.sheet.makeTable(size), jS.sheetCount);
+                            jS.controlFactory.sheetUI(jS.obj.ui, $.sheet.makeTable(size), jS.sheetCount);
 
                             jS.setActiveSheet(jS.sheetCount);
 
@@ -6690,7 +6523,6 @@ jQuery = jQuery || window.jQuery;
                             jS.controls.bar.x.menuParent.splice(oldI, 1);
                         }
                         jS.controls.bar.x.parent.splice(oldI, 1);
-                        jS.controls.bar.x.scroll.splice(oldI, 1);
                         jS.controls.bar.x.td.splice(oldI, 1);
                         jS.controls.bar.y.controls.splice(oldI, 1);
                         jS.controls.bar.y.handleFreeze.splice(oldI, 1);
@@ -6700,7 +6532,6 @@ jQuery = jQuery || window.jQuery;
                             jS.controls.bar.y.menuParent.splice(oldI, 1);
                         }
                         jS.controls.bar.y.parent.splice(oldI, 1);
-                        jS.controls.bar.y.scroll.splice(oldI, 1);
                         jS.controls.bar.y.td.splice(oldI, 1);
                         jS.controls.barMenuLeft.splice(oldI, 1);
                         jS.controls.barMenuTop.splice(oldI, 1);
@@ -6716,7 +6547,6 @@ jQuery = jQuery || window.jQuery;
                         jS.controls.menuLeft.splice(oldI, 1);
                         jS.controls.menuRight.splice(oldI, 1);
                         jS.controls.pane.splice(oldI, 1);
-                        jS.controls.scroll.splice(oldI, 1);
                         jS.controls.tables.splice(oldI, 1);
                         jS.controls.table.splice(oldI, 1);
                         jS.controls.tab.splice(oldI, 1);
@@ -6978,7 +6808,8 @@ jQuery = jQuery || window.jQuery;
                             x = 0,
                             y = 0,
                             direction,
-                            pane = jS.obj.pane();
+                            pane = jS.obj.pane(),
+                            actionUI = pane.actionUI;
 
                         pane.scrollStyleX.i = 0;
                         pane.scrollStyleY.i = 0;
@@ -6990,28 +6821,27 @@ jQuery = jQuery || window.jQuery;
 
                             if (direction.left) {
                                 x--;
-                                jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.end.col - 1});
+                                actionUI.scrollTo({axis:'x', value:scrolledArea.end.col - 1});
                             } else if (direction.right) {
                                 x++;
-                                jS.evt.scroll.scrollTo({axis:'x', value:scrolledArea.end.col + 1});
+                                actionUI.scrollTo({axis:'x', value:scrolledArea.end.col + 1});
                             }
 
                             if (direction.up) {
                                 y--;
-                                jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.end.row - 1});
+                                actionUI.scrollTo({axis:'y', value:scrolledArea.end.row - 1});
                             } else if (direction.down) {
                                 y++;
-                                jS.evt.scroll.scrollTo({axis:'y', value:scrolledArea.end.row + 1});
+                                actionUI.scrollTo({axis:'y', value:scrolledArea.end.row + 1});
                             }
 
                             i++;
                         }
 
+                        jS.setBusy(false);
 
-                        //setTimeout(function () {
-                            jS.setBusy(false);
-                       // }, 100);
-                        jS.evt.scroll.stop();
+                        pane.actionUI.scrollStop();
+
                         if(!dontMoveAutoFiller){
                             jS.autoFillerGoToTd($td);
                         }
@@ -7250,27 +7080,31 @@ jQuery = jQuery || window.jQuery;
                             s.parent.height(h);
                         }
 
-                        var w = s.parent[0].clientWidth;
                         h -= jS.obj.header().outerHeight();
                         h -= jS.obj.tabContainer().outerHeight() + jS.s.boxModelCorrection;
 
-                        jS.obj.panes()
-                            .height(h - win.scrollBarSize.height - s.boxModelCorrection)
-                            .width(w - win.scrollBarSize.width);
+                        var w = s.parent[0].clientWidth,
+                            uiStyle = jS.obj.ui.style,
+                            paneHeight = (h - win.scrollBarSize.height - s.boxModelCorrection) + 'px',
+                            paneWidth = (w - win.scrollBarSize.width) + 'px',
+                            standardHeight = h + 'px',
+                            standardWidth = w + 'px';
+
+                        jS.obj.panes().each(function() {
+                            var style = this.style,
+                                scrollStyle = this.actionUI.scrollUI.style,
+                                enclosureStyle = this.enclosure.style;
+
+                            style.height = paneHeight;
+                            style.width = paneWidth;
+
+                            enclosureStyle.height = scrollStyle.height = standardHeight;
+                            enclosureStyle.width = scrollStyle.width = standardWidth;
+                        });
 
 
-                        jS.obj.enclosures()
-                            .height(h)
-                            .width(w);
-
-                        jS.obj.scrolls()
-                            .height(h)
-                            .width(w);
-
-
-                        jS.obj.ui()
-                            .height(h)
-                            .width(w);
+                        uiStyle.height = standardHeight;
+                        uiStyle.width = standardWidth;
                     },
 
                     /**

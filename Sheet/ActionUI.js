@@ -3,28 +3,28 @@ var Sheet = Sheet || {};
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-Sheet.ActionUI = (function(doc, win, math, $) {
-    var Constructor = function(jS, enclosure, pane, sheet, max) {
+Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
+    var Constructor = function(jS, enclosure, pane, sheet, cl, max) {
         this.jS = jS;
         this.enclosure = enclosure;
         this.pane = pane;
         this.sheet = sheet;
         this.max = max;
 
-        var scrollOuter = this.scrollUI = pane.scrollOuter = doc.createElement('div'),
+        var that = this,
+            scrollOuter = this.scrollUI = pane.scrollOuter = doc.createElement('div'),
             scrollInner = pane.scrollInner = doc.createElement('div'),
             scrollStyleX = pane.scrollStyleX = doc.createElement('style'),
             scrollStyleY = pane.scrollStyleY = doc.createElement('style'),
-            $pane = $(pane),
             nthCss = this.nthCss;
 
-        scrollOuter.setAttribute('class', jS.cl.scroll);
+        scrollOuter.setAttribute('class', cl);
         scrollOuter.appendChild(scrollInner);
 
         scrollOuter.onscroll = function() {
             if (!jS.isBusy()) {
-                jS.evt.scroll.scrollTo({axis:'x', pixel:scrollOuter.scrollLeft});
-                jS.evt.scroll.scrollTo({axis:'y', pixel:scrollOuter.scrollTop});
+                that.scrollTo({axis:'x', pixel:scrollOuter.scrollLeft});
+                that.scrollTo({axis:'y', pixel:scrollOuter.scrollTop});
 
                 jS.autoFillerGoToTd();
                 if (pane.inPlaceEdit) {
@@ -37,7 +37,7 @@ Sheet.ActionUI = (function(doc, win, math, $) {
             jS.obj.barHelper().remove();
         };
 
-        jS.controls.scroll[jS.i] = $(scrollOuter)
+        $(scrollOuter)
             .disableSelectionSpecial();
 
         jS.controls.scrolls = jS.obj.scrolls().add(scrollOuter);
@@ -56,8 +56,8 @@ Sheet.ActionUI = (function(doc, win, math, $) {
                 jS.scrolledTo();
 
                 if (indexes.length) {
-                    jS.scrolledArea[jS.i].start.col = math.max(indexes.pop() || 1, 1);
-                    jS.scrolledArea[jS.i].end.col = math.max(indexes.shift() || 1, 1);
+                    jS.scrolledArea[jS.i].start.col = Math.max(indexes.pop() || 1, 1);
+                    jS.scrolledArea[jS.i].end.col = Math.max(indexes.shift() || 1, 1);
                 }
 
                 jS.obj.barHelper().remove();
@@ -77,8 +77,8 @@ Sheet.ActionUI = (function(doc, win, math, $) {
                 jS.scrolledTo();
 
                 if (indexes.length) {
-                    jS.scrolledArea[jS.i].start.row = math.max(indexes.pop() || 1, 1);
-                    jS.scrolledArea[jS.i].end.row = math.max(indexes.shift() || 1, 1);
+                    jS.scrolledArea[jS.i].start.row = Math.max(indexes.pop() || 1, 1);
+                    jS.scrolledArea[jS.i].end.row = Math.max(indexes.shift() || 1, 1);
                 }
 
                 jS.obj.barHelper().remove();
@@ -90,9 +90,6 @@ Sheet.ActionUI = (function(doc, win, math, $) {
 
         this.styleUpdater(scrollStyleX);
         this.styleUpdater(scrollStyleY);
-
-        jS.controls.bar.x.scroll[jS.i] = scrollStyleX;
-        jS.controls.bar.y.scroll[jS.i] = scrollStyleY;
 
         var xStyle,
             yStyle,
@@ -125,8 +122,8 @@ Sheet.ActionUI = (function(doc, win, math, $) {
             scrollOuter.style.width = enclosureWidth;
             scrollOuter.style.height = enclosureHeight;
 
-            jS.evt.scroll.start('x', pane);
-            jS.evt.scroll.start('y', pane);
+            that.scrollStart('x', pane);
+            that.scrollStart('y', pane);
 
             scrollStyleX.updateStyle(null, xStyle);
             scrollStyleY.updateStyle(null, yStyle);
@@ -136,57 +133,7 @@ Sheet.ActionUI = (function(doc, win, math, $) {
             }
         };
 
-        /*
-         * Mousewheel rewrites itself the first time it is triggered in order to perform faster*/
-        var chooseMouseWheel = function (e) {
-            e = e || win.event;
-            var mousewheel;
-            if ("mousewheel" == e.type) {
-                var div = function (a, b) {
-                        return 0 != a % b ? a : a / b;
-                    },
-                    scrollNoXY = 1;
-                if (e.wheelDeltaX !== u) {
-                    mousewheel = function(e) {
-                        e = e || win.event;
-                        scrollOuter.scrollTop += div(-e.wheelDeltaY, scrollNoXY);
-                        scrollOuter.scrollLeft += div(-e.wheelDeltaX, scrollNoXY);
-                        return false;
-                    };
-                } else {
-                    mousewheel = function(e) {
-                        e = e || win.event;
-                        scrollOuter.scrollTop += div(-e.wheelDelta, scrollNoXY);
-                        return false;
-                    };
-                }
-            } else {
-                mousewheel = function(e) {
-                    if (this.detail = (e.detail || e.deltaX || e.deltaY)) {
-                        (9 < this.detail ? this.detail = 3 : -9 > this.detail && (this.detail = -3));
-                        var top = 0, left = 0;
-                        switch (this.detail) {
-                            case 1:
-                            case -1:
-                                left = this.detail * 50;
-                                break;
-                            case 3:
-                            case -3:
-                                top = this.detail * 15;
-                                break;
-                        }
-
-                        scrollOuter.scrollTop += top;
-                        scrollOuter.scrollLeft += left;
-                    }
-                    return false;
-                };
-            }
-            $pane.mousewheel(mousewheel);
-            return false;
-        };
-
-        $pane.mousewheel(chooseMouseWheel);
+        new MouseWheel(pane, scrollOuter);
     };
 
     Constructor.prototype = {
@@ -263,8 +210,7 @@ Sheet.ActionUI = (function(doc, win, math, $) {
             } else {
                 this.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
                     var style = [],
-                        index = indexes.length,
-                        repeat = this.repeat;
+                        index = indexes.length;
 
                     css = css || '{display: none;}';
 
@@ -325,17 +271,20 @@ Sheet.ActionUI = (function(doc, win, math, $) {
             this.styleUpdater(style);
         },
 
-        hide:function (enclosure, pane, sheet) {
-            pane || jS.obj.pane();
-
+        touch: function() {
+            this.toggleHideStyleX.touch();
+        },
+        hide:function () {
             var jS = this.jS,
                 s = jS.s,
-                toggleHideStyleX = doc.createElement('style'),
-                toggleHideStyleY = doc.createElement('style'),
+                toggleHideStyleX = this.toggleHideStyleX = doc.createElement('style'),
+                toggleHideStyleY = this.toggleHideStyleY = doc.createElement('style'),
                 hiddenRows,
                 hiddenColumns,
                 i,
-                nthCss = this.nthCss;
+                nthCss = this.nthCss,
+                pane = this.pane,
+                sheet = this.sheet;
 
             toggleHideStyleX.updateStyle = function (e) {
                 var style = nthCss('col', '#' + jS.id + jS.i, jS.toggleHide.hiddenColumns[jS.i], 0) +
@@ -353,9 +302,6 @@ Sheet.ActionUI = (function(doc, win, math, $) {
 
                 jS.autoFillerGoToTd();
             };
-
-            jS.controls.toggleHide.x[jS.i] = $(toggleHideStyleX);
-            jS.controls.toggleHide.y[jS.i] = $(toggleHideStyleY);
 
             pane.appendChild(toggleHideStyleX);
             pane.appendChild(toggleHideStyleY);
@@ -390,8 +336,130 @@ Sheet.ActionUI = (function(doc, win, math, $) {
                     } while (i--);
                 }
             }
+        },
+        remove: function() {
+
+        },
+
+        scrollAxis: {
+            x:{},y:{}
+        },
+
+        scrollSize: {},
+
+        scrollTd: null,
+
+        /**
+         * prepare everything needed for a scroll, needs activated every time spreadsheet changes in size
+         * @param {String} axisName x or y
+         * @memberOf jS.evt.scroll
+         */
+        scrollStart:function (axisName) {
+            var jS = this.jS,
+                pane = this.pane,
+                outer = this.pane.scrollOuter,
+                axis = this.scrollAxis[axisName],
+                size = this.scrollSize = jS.sheetSize(pane.table);
+
+            jS.autoFillerHide();
+
+            this.scrollTd = jS.obj.tdActive();
+
+            axis.v = [];
+            axis.name = axisName;
+
+            switch (axisName || 'x') {
+                case 'x':
+                    axis.max = size.cols;
+                    axis.min = 0;
+                    axis.size = size.cols;
+                    pane.scrollStyleX.updateStyle();
+                    axis.scrollStyle = pane.scrollStyleX;
+                    axis.area = outer.scrollWidth - outer.clientWidth;
+                    axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
+                    axis.scrollUpdate = function () {
+                        outer.scrollLeft = (axis.value) * (axis.area / axis.size);
+                    };
+                    axis.gridSize = 100 / axis.size;
+                    break;
+                case 'y':
+                    axis.max = size.rows;
+                    axis.min = 0;
+                    axis.size = size.rows;
+                    pane.scrollStyleY.updateStyle();
+                    axis.scrollStyle = pane.scrollStyleY;
+                    axis.area = outer.scrollHeight - outer.clientHeight;
+                    axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
+                    axis.scrollUpdate = function () {
+                        outer.scrollTop = (axis.value) * (axis.area / axis.size);
+                    };
+                    axis.gridSize = 100 / axis.size;
+                    break;
+            }
+
+            var i = axis.max;
+
+            do {
+                var position = new Number(axis.gridSize * i);
+                position.index = i + 1;
+                axis.v.unshift(position);
+            } while(i--);
+        },
+
+        /**
+         * Scrolls to a position within the spreadsheet
+         * @param {Object} pos {axis, value, pixel} if value not set, pixel is used
+         * @memberOf jS.evt.scroll
+         */
+        scrollTo:function (pos) {
+            pos = pos || {};
+            pos.axis = pos.axis || 'x';
+            pos.value = pos.value || 0;
+            pos.pixel = pos.pixel || 0;
+
+            if (!this.scrollAxis) {
+                this.scrollStart(pos.axis);
+            }
+            var me = this.scrollAxis[pos.axis];
+
+            if (!pos.value) {
+                pos.value = arrHelpers.closest(me.v, Math.abs(pos.pixel / me.area) * 100, me.min).index;
+            }
+
+            pos.max = pos.max || me.max;
+
+            var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
+                indexes = [];
+
+            if (i >= 0) {
+                do {
+                    indexes.push(i + me.min);
+                } while(i-- > 0);
+            }
+            if (indexes.length) {
+                if (me.scrollStyle) me.scrollStyle.updateStyle(indexes);
+            } else {
+                if (me.scrollStyle) me.scrollStyle.updateStyle();
+            }
+
+            me.value = pos.value;
+        },
+
+        /**
+         * Called after scroll is done
+         * @memberOf jS.evt.scroll
+         */
+        scrollStop:function () {
+            if (this.scrollAxis.x.scrollUpdate) this.scrollAxis.x.scrollUpdate();
+            if (this.scrollAxis.y.scrollUpdate) this.scrollAxis.y.scrollUpdate();
+
+            if (this.scrollTd) {
+                this.scrollTd = null;
+                this.jS.autoFillerGoToTd();
+            }
         }
+
     };
 
     return Constructor;
-})(document, window, Math, jQuery);
+})(document, window, Math, Number, MouseWheel, jQuery);
