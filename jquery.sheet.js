@@ -2998,7 +2998,7 @@ jQuery = jQuery || window.jQuery;
                                 val = formula.val(),
                                 textarea,
                                 $textarea,
-                                pane = jS.obj.pane()
+                                pane = jS.obj.pane();
 
                             if (!td[0].isHighlighted) return; //If the td is a dud, we do not want a textarea
 
@@ -6549,6 +6549,11 @@ jQuery = jQuery || window.jQuery;
                         jS.controls.pane.splice(oldI, 1);
                         jS.controls.tables.splice(oldI, 1);
                         jS.controls.table.splice(oldI, 1);
+                        //BUGFIX - After removing of sheet, we need update the tab.i property - start from removed sheet's position.
+                        for (tabIndex = oldI+1; tabIndex < jS.controls.tab.length; ++tabIndex) {
+                            var tab = jS.controls.tab[tabIndex].get(0);
+                            tab.i--;
+                        }                        
                         jS.controls.tab.splice(oldI, 1);
                         jS.controls.toggleHide.x.splice(oldI, 1);
                         jS.controls.toggleHide.y.splice(oldI, 1);
@@ -6873,7 +6878,7 @@ jQuery = jQuery || window.jQuery;
                             jS.obj.autoFiller()
                                 .show()
                                 .css('top', ((tdPos.top + (h || $td.height()) - 3) + 'px'))
-                                .css('left', ((tdPos.left + (w || $td.width()) - 3) + 'px'))
+                                .css('left', ((tdPos.left + (w || $td.width()) - 3) + 'px'));
                         }
                     },
 
@@ -8725,7 +8730,7 @@ jQuery = jQuery || window.jQuery;
                         o.gR = r.piechart(width / 2, height / 2, (width < height ? width : height) / 2, o.data, {legend:o.legend})
                             .hover(function () {
                                 this.sector.stop();
-                                this.sector.scale(1.1, 1.1, this.cx, this.c);
+                                this.sector.scale(1.1, 1.1, this.cx, this.cy);
 
                                 if (this.label) {
                                     this.label[0].stop();
