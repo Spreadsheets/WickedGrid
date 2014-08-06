@@ -1,4 +1,3 @@
-var Sheet = Sheet || {};
 
 /**
  * Creates the scrolling system used by each spreadsheet
@@ -14,8 +13,8 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
         var that = this,
             scrollOuter = this.scrollUI = pane.scrollOuter = doc.createElement('div'),
             scrollInner = pane.scrollInner = doc.createElement('div'),
-            scrollStyleX = pane.scrollStyleX = doc.createElement('style'),
-            scrollStyleY = pane.scrollStyleY = doc.createElement('style'),
+            scrollStyleX = pane.scrollStyleX = new Sheet.StyleUpdater(),
+            scrollStyleY = pane.scrollStyleY = new Sheet.StyleUpdater(),
             nthCss = this.nthCss;
 
         scrollOuter.setAttribute('class', cl);
@@ -85,11 +84,8 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
             }
         };
 
-        pane.appendChild(scrollStyleX);
-        pane.appendChild(scrollStyleY);
-
-        this.styleUpdater(scrollStyleX);
-        this.styleUpdater(scrollStyleY);
+        pane.appendChild(scrollStyleX.styleElement);
+        pane.appendChild(scrollStyleY.styleElement);
 
         var xStyle,
             yStyle,
@@ -234,51 +230,14 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
             return this.nthCss(elementName, parentSelectorString, indexes, min, css);
         },
 
-
-        styleUpdater: function (style){
-            if (style.styleSheet) {
-                this.styleUpdater = function(style) {
-                    style.css = function (css) {
-                        this.styleSheet.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
-                        if (!this.styleSheet.disabled) {
-                            this.styleSheet.cssText = css;
-                        }
-                    };
-                    style.touch = function () {};
-                    style.styleString = function() {
-                        this.styleSheet.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
-                        if (!this.styleSheet.disabled) {
-                            return this.styleSheet.cssText;
-                        }
-                        return '';
-                    };
-                }
-            } else {
-                this.styleUpdater = function(style) {
-                    style.css = function (css) {
-                        this.innerHTML = css;
-                    };
-                    style.touch = function () {
-                        this.innerHTML = this.innerHTML + ' ';
-                    };
-                    style.styleString = function() {
-                        return this.innerHTML;
-                    };
-                }
-            }
-
-            //this looks like a nested call, but will only trigger once, since the function is overwritten from the above
-            this.styleUpdater(style);
-        },
-
         touch: function() {
             this.toggleHideStyleX.touch();
         },
         hide:function () {
             var jS = this.jS,
                 s = jS.s,
-                toggleHideStyleX = this.toggleHideStyleX = doc.createElement('style'),
-                toggleHideStyleY = this.toggleHideStyleY = doc.createElement('style'),
+                toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(),
+                toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(),
                 hiddenRows,
                 hiddenColumns,
                 i,
@@ -303,11 +262,8 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
                 jS.autoFillerGoToTd();
             };
 
-            pane.appendChild(toggleHideStyleX);
-            pane.appendChild(toggleHideStyleY);
-
-            this.styleUpdater(toggleHideStyleX);
-            this.styleUpdater(toggleHideStyleY);
+            pane.appendChild(toggleHideStyleX.styleElement);
+            pane.appendChild(toggleHideStyleY.styleElement);
 
             s.hiddenColumns[jS.i] = s.hiddenColumns[jS.i] || [];
             s.hiddenRows[jS.i] = s.hiddenRows[jS.i] || [];

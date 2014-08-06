@@ -15,6 +15,8 @@
  */
 jQuery = jQuery || window.jQuery;
 (function($, doc, win, Date, String, Number, Boolean, Math, RegExp, Error) {
+    "use strict";
+
     /**
      * @namespace
      * @type {Object}
@@ -2961,8 +2963,8 @@ jQuery = jQuery || window.jQuery;
                          * @memberOf jS.controlFactory
                          */
                         tab:function () {
-                            var tab = doc.createElement('span');
-                            $tab = jS.controls.tab[jS.i] = $(tab).appendTo(jS.obj.tabContainer());
+                            var tab = doc.createElement('span'),
+                                $tab = jS.controls.tab[jS.i] = $(tab).appendTo(jS.obj.tabContainer());
 
                             tab.setAttribute('class', jS.cl.tab);
                             jS.sheetTab(true, function(sheetTitle) {
@@ -4250,7 +4252,7 @@ jQuery = jQuery || window.jQuery;
 
                             var row = jS.rows()[i],
                                 $row = $(row),
-                                style = [];
+                                pane = jS.obj.pane();
 
                             if (!this.hiddenRows[jS.i]) this.hiddenRows[jS.i] = [];
 
@@ -4260,13 +4262,13 @@ jQuery = jQuery || window.jQuery;
                                 this.hiddenRows[jS.i].splice(this.hiddenRows[jS.i].indexOf(i + 1), 1);
                             }
 
-                            jS.obj.toggleHideStyleY()[0].updateStyle();
+                            pane.actionUI.toggleHideStyleY.updateStyle();
                         },
                         rowShowAll:function () {
                             $.each(this.hiddenRows[jS.i] || [], function (j) {
                                 $(this).removeData('hidden');
                             });
-                            jS.obj.toggleHideStyleY().html('');
+                            jS.obj.pane().actionUI.toggleHideStyleY.css('');
                             this.hiddenRows[jS.i] = [];
                         },
 
@@ -4278,7 +4280,7 @@ jQuery = jQuery || window.jQuery;
 
                             var col = jS.cols()[i],
                                 $col = $(col),
-                                style = [];
+                                pane = jS.obj.pane();
 
                             if (!this.hiddenColumns[jS.i]) this.hiddenColumns[jS.i] = [];
 
@@ -4288,10 +4290,10 @@ jQuery = jQuery || window.jQuery;
                                 this.hiddenColumns[jS.i].splice(this.hiddenColumns[jS.i].indexOf(i + 1), 1);
                             }
 
-                            jS.obj.toggleHideStyleX()[0].updateStyle();
+                            pane.actionUI.toggleHideStyleX.updateStyle();
                         },
                         columnShowAll:function () {
-                            jS.obj.toggleHideStyleX().html('');
+                            jS.obj.pane().actionUI.toggleHideStyleX.css('');
                             this.hiddenColumns[jS.i] = [];
                         }
                     },
@@ -5812,7 +5814,12 @@ jQuery = jQuery || window.jQuery;
                      */
                     updateCellValue:function (sheetIndex, rowIndex, colIndex) {
                         var sheet, row, cell, fn;
-                        if (!this.type || !this.type == 'cell') {
+
+                        sheetIndex = sheetIndex || 0;
+                        rowIndex = rowIndex || -1;
+                        colIndex = colIndex || -1;
+
+                        if (rowIndex > -1) {
                             //first detect if the cell exists if not return nothing
                             if (!(sheet = jS.spreadsheets[sheetIndex])) return s.error({error:jS.msg.notFoundSheet});
                             if (!(row = sheet[rowIndex])) return s.error({error:jS.msg.notFoundRow});
@@ -6497,8 +6504,10 @@ jQuery = jQuery || window.jQuery;
                      * @memberOf jS
                      */
                     deleteSheet:function (i) {
-                        var oldI = i || jS.i;
-                        var enclosureArray =jS.controls.enclosures.toArray();
+                        var oldI = i || jS.i,
+                            enclosureArray =jS.controls.enclosures.toArray(),
+                            tabIndex;
+
                         enclosureArray.splice(oldI,1)
 
                         jS.obj.barHelper().remove();
@@ -7199,7 +7208,7 @@ jQuery = jQuery || window.jQuery;
                              * Sets active bar
                              * @param {Boolean} [before]
                              */
-                            setActive = function (before) {
+                            SetActive = function (before) {
                                 switch (s.cellSelectModel) {
                                     case 'oo': //follow cursor behavior
                                         this.row = (before ? start.row : stop.row);
@@ -7270,7 +7279,7 @@ jQuery = jQuery || window.jQuery;
                                 break;
                         }
 
-                        setActive(begin > end);
+                        new SetActive(begin > end);
 
                         jS.themeRoller.cell.setHighlighted($(obj));
                     },
