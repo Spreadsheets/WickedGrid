@@ -1068,10 +1068,10 @@ $.sheet = {
 
         var write = function () {
             if (this.script) {
-                doc.write('<script src="' + (this.thirdParty ? settings.thirdPartyDirectory : '') + path + this.script + '"></script>');
+                document.write('<script src="' + (this.thirdParty ? settings.thirdPartyDirectory : '') + path + this.script + '"></script>');
             }
             if (this.css) {
-                doc.write('<link rel="stylesheet" type="text/css" href="' + (this.thirdParty ? settings.thirdPartyDirectory : '') + path + this.css + '"></link>');
+                document.write('<link rel="stylesheet" type="text/css" href="' + (this.thirdParty ? settings.thirdPartyDirectory : '') + path + this.css + '"></link>');
             }
         };
 
@@ -1117,9 +1117,9 @@ $.sheet = {
                     parent.insertBefore(newElement, targetElement.nextSibling);
                 }
             },
-            $win = $(win),
-            $doc = $(doc),
-            body = doc.body,
+            $win = $(window),
+            $doc = $(document),
+            body = document.body,
             $body = $(body),
             emptyFN = function () {},
             u = undefined,
@@ -1517,7 +1517,7 @@ $.sheet = {
                     if (!jS) {
                         return false;
                     }
-                    $(doc).unbind('keydown');
+                    $(document).unbind('keydown');
                     this.obj.fullScreen().remove();
                     (this.obj.inPlaceEdit().destroy || emptyFN)();
                     s.parent
@@ -1657,7 +1657,7 @@ $.sheet = {
                     colGroup = table.colGroup;
                     while (!(col = colGroup.children[colIndex])) {
                         //if a col doesn't exist, it adds it here
-                        col = doc.createElement('col');
+                        col = document.createElement('col');
                         col.setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
                         colGroup.appendChild(col);
                     }
@@ -1887,11 +1887,11 @@ $.sheet = {
                                     trs: [],
                                     newObj:function () {
                                         var j = o.size(),
-                                            tr = doc.createElement('tr');
+                                            tr = document.createElement('tr');
 
                                         tr.setAttribute('style', 'height: ' + s.colMargin + 'px;');
                                         for (var i = 0; i <= j; i++) {
-                                            var td = doc.createElement('td');
+                                            var td = document.createElement('td');
                                             if (i == 0) {
                                                 td.setAttribute('class', jS.cl.barLeft + ' ' + jS.cl.uiBar);
                                                 td.entity = 'left';
@@ -1959,7 +1959,7 @@ $.sheet = {
                                     },
                                     cols: [],
                                     newCol:function () {
-                                        var col = doc.createElement('col');
+                                        var col = document.createElement('col');
                                         col.setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
                                         o.cols.push(col);
                                         return col;
@@ -1970,7 +1970,7 @@ $.sheet = {
                                     },
                                     tds: [],
                                     newObj:function () {
-                                        var td = doc.createElement('td');
+                                        var td = document.createElement('td');
                                         o.tds.push(td);
                                         return td;
                                     },
@@ -2099,7 +2099,7 @@ $.sheet = {
                         //table / tBody / tr
                         if (i > -1) {
                             do {
-                                tr[i].insertBefore(doc.createElement('td'), tr[i].children[0]);
+                                tr[i].insertBefore(document.createElement('td'), tr[i].children[0]);
                             } while(i-- > 1); //We only go till row 1, row 0 is handled by barTop with corner etc
                         }
                     },
@@ -2115,10 +2115,10 @@ $.sheet = {
                             i,
                             trFirst = table.tBody.children[0],
 
-                            colCorner = doc.createElement('col'), //left column & corner
-                            tdCorner = doc.createElement('td'),
+                            colCorner = document.createElement('col'), //left column & corner
+                            tdCorner = document.createElement('td'),
 
-                            barTopParent = doc.createElement('tr');
+                            barTopParent = document.createElement('tr');
 
                         //If the col elements outnumber the td's, get rid of the extra as it messes with the ui
                         while (cols.length > trFirst.children.length) {
@@ -2140,9 +2140,9 @@ $.sheet = {
                         i = trFirst.children.length - 1;
 
                         do {
-                            var td = doc.createElement('td');
+                            var td = document.createElement('td');
                             if (!cols[i]) {
-                                cols[i] = doc.createElement('col');
+                                cols[i] = document.createElement('col');
                                 colGroup.insertBefore(cols[i], colCorner.nextSibling);
 
                             }
@@ -2186,7 +2186,7 @@ $.sheet = {
                                 pos = bar.position(),
                                 highlighter,
                                 offset = $(pane).offset(),
-                                handle = doc.createElement('div'),
+                                handle = document.createElement('div'),
                                 $handle = pane.freezeHandleTop = $(handle)
                                     .appendTo(pane)
                                     .addClass(jS.cl.uiBarHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
@@ -2204,7 +2204,7 @@ $.sheet = {
                                 start:function () {
                                     jS.setBusy(true);
 
-                                    highlighter = $(doc.createElement('div'))
+                                    highlighter = $(document.createElement('div'))
                                         .appendTo(pane)
                                         .css('position', 'absolute')
                                         .addClass('ui-state-highlight ' + jS.cl.barHelper)
@@ -2226,7 +2226,7 @@ $.sheet = {
                                     jS.scrolledTo().end.col = jS.frozenAt().col = jS.getTdLocation(target).col - 1;
                                     pane.actionUI.scrollStart('x');
                                 },
-                                containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - win.scrollBarSize.width), offset.top]
+                                containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - window.scrollBarSize.width), offset.top]
                             });
 
                             return true;
@@ -2254,7 +2254,7 @@ $.sheet = {
                                 pos = bar.position(),
                                 highlighter,
                                 offset = $(pane).offset(),
-                                handle = doc.createElement('div'),
+                                handle = document.createElement('div'),
                                 $handle = pane.freezeHandleLeft = $(handle)
                                     .appendTo(pane)
                                     .addClass(jS.cl.uiBarHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
@@ -2271,7 +2271,7 @@ $.sheet = {
                                 start:function () {
                                     jS.setBusy(true);
 
-                                    highlighter = $(doc.createElement('div'))
+                                    highlighter = $(document.createElement('div'))
                                         .appendTo(pane)
                                         .css('position', 'absolute')
                                         .addClass('ui-state-highlight ' + jS.cl.barHelper)
@@ -2293,7 +2293,7 @@ $.sheet = {
                                     jS.scrolledTo().end.row = jS.frozenAt().row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
                                     pane.actionUI.scrollStart('y');
                                 },
-                                containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - win.scrollBarSize.height)]
+                                containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - window.scrollBarSize.height)]
                             });
 
                             return true;
@@ -2319,17 +2319,17 @@ $.sheet = {
 
                         switch (bar) {
                             case "top":
-                                menu = $(doc.createElement('div'))
+                                menu = $(document.createElement('div'))
                                     .addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
                                 jS.controls.bar.x.menu[jS.i] = menu;
                                 break;
                             case "left":
-                                menu = $(doc.createElement('div'))
+                                menu = $(document.createElement('div'))
                                     .addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
                                 jS.controls.bar.y.menu[jS.i] = menu;
                                 break;
                             case "cell":
-                                menu = $(doc.createElement('div'))
+                                menu = $(document.createElement('div'))
                                     .addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
                                 jS.controls.tdMenu[jS.i] = menu;
                                 break;
@@ -2350,7 +2350,7 @@ $.sheet = {
                             if (menuItems[msg]) {
                                 if ($.isFunction(menuItems[msg])) {
                                     buttons.pushStack(
-                                        $(doc.createElement('div'))
+                                        $(document.createElement('div'))
                                             .text(msg)
                                             .data('msg', msg)
                                             .click(function () {
@@ -2368,7 +2368,7 @@ $.sheet = {
                                     );
 
                                 } else if (menuItems[msg] == 'line') {
-                                    $(doc.createElement('hr')).appendTo(menu);
+                                    $(document.createElement('hr')).appendTo(menu);
                                 }
                             }
                         }
@@ -2414,10 +2414,10 @@ $.sheet = {
 
                             if (!barMenuParentTop.length) {
 
-                                barMenuParentTop = $(doc.createElement('div'))
+                                barMenuParentTop = $(document.createElement('div'))
                                     .addClass(jS.cl.uiBarMenuTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barTopMenuButton)
                                     .append(
-                                        $(doc.createElement('span'))
+                                        $(document.createElement('span'))
                                             .addClass('ui-icon ui-icon-triangle-1-s')
                                     )
                                     .mousedown(function (e) {
@@ -2528,12 +2528,12 @@ $.sheet = {
                         jS.obj.sheetAdder().remove();
                         jS.obj.tabContainer().remove();
 
-                        var header = doc.createElement('div'),
-                            firstRow = doc.createElement('table'),
-                            firstRowTr = doc.createElement('tr'),
+                        var header = document.createElement('div'),
+                            firstRow = document.createElement('table'),
+                            firstRowTr = document.createElement('tr'),
                             secondRow,
                             secondRowTr,
-                            title = doc.createElement('td'),
+                            title = document.createElement('td'),
                             label,
                             menuLeft,
                             menuRight,
@@ -2588,7 +2588,7 @@ $.sheet = {
 
                         if (jS.isSheetEditable()) {
                             if (s.menuLeft) {
-                                menuLeft = doc.createElement('td');
+                                menuLeft = document.createElement('td');
                                 menuLeft.className = jS.cl.menu + ' ' + jS.cl.menuFixed;
                                 firstRowTr.insertBefore(menuLeft, title);
 
@@ -2601,7 +2601,7 @@ $.sheet = {
                             }
 
                             if (s.menuRight) {
-                                menuRight = doc.createElement('td');
+                                menuRight = document.createElement('td');
                                 menuRight.className = jS.cl.menu + ' ' + jS.cl.menuFixed;
                                 firstRowTr.appendChild(menuRight);
 
@@ -2613,12 +2613,12 @@ $.sheet = {
                                 });
                             }
 
-                            label = doc.createElement('td');
+                            label = document.createElement('td');
                             label.className = jS.cl.label;
                             jS.controls.label = $(label);
 
                             //Edit box menu
-                            formula = doc.createElement('textarea');
+                            formula = document.createElement('textarea');
                             formula.className = jS.cl.formula;
                             formula.onkeydown = jS.evt.formula.keydown;
                             formula.onkeyup = function () {
@@ -2640,17 +2640,17 @@ $.sheet = {
                             jS.controls.formula = $(formula);
 
                             // resizable formula area - a bit hard to grab the handle but is there!
-                            var formulaResize = doc.createElement('span');
+                            var formulaResize = document.createElement('span');
                             formulaResize.appendChild(formula);
 
-                            secondRow = doc.createElement('table');
-                            secondRowTr = doc.createElement('tr');
+                            secondRow = document.createElement('table');
+                            secondRowTr = document.createElement('tr');
                             secondRow.appendChild(secondRowTr);
 
                             header.appendChild(secondRow);
 
 
-                            formulaParent = doc.createElement('td');
+                            formulaParent = document.createElement('td');
                             formulaParent.className = jS.cl.formulaParent;
                             formulaParent.appendChild(formulaResize);
                             secondRowTr.appendChild(label);
@@ -2675,7 +2675,7 @@ $.sheet = {
 
                             jS.setNav(true);
 
-                            $(doc).keydown(jS.evt.doc.keydown);
+                            $(document).keydown(jS.evt.document.keydown);
                         }
 
                         return header;
@@ -2686,14 +2686,14 @@ $.sheet = {
                      * @memberOf jS.controlFactory
                      */
                     ui:function () {
-                        var ui = doc.createElement('div');
+                        var ui = document.createElement('div');
                         ui.setAttribute('class', jS.cl.ui);
                         jS.obj.ui = ui;
                         return ui;
                     },
 
                     sheetAdder: function () {
-                        var addSheet = doc.createElement('span');
+                        var addSheet = document.createElement('span');
                         if (jS.isSheetEditable()) {
                             addSheet.setAttribute('class', jS.cl.sheetAdder + ' ' + jS.cl.tab + ' ' + jS.cl.uiTab + ' ui-corner-bottom');
                             addSheet.setAttribute('title', jS.msg.addSheet);
@@ -2713,12 +2713,12 @@ $.sheet = {
                      * @memberOf jS.controlFactory
                      */
                     tabContainer:function () {
-                        var tabContainer = doc.createElement('span'),
+                        var tabContainer = document.createElement('span'),
                             startPosition;
                         tabContainer.setAttribute('class', jS.cl.tabContainer);
 
                         tabContainer.onmousedown = function (e) {
-                            e = e || win.event;
+                            e = e || window.event;
 
                             var i = (e.target || e.srcElement).i;
                             if (i >= 0) {
@@ -2727,7 +2727,7 @@ $.sheet = {
                             return false;
                         };
                         tabContainer.ondblclick = function (e) {
-                            e = e || win.event;
+                            e = e || window.event;
                             var i = (e.target || e.srcElement).i;
                             if (i >= 0) {
                                 jS.trigger('sheetRename', [i]);
@@ -2774,7 +2774,7 @@ $.sheet = {
                             pane = enclosure.pane,
                             $pane = $(pane),
                             paneContextmenuEvent = function (e) {
-                                e = e || win.event;
+                                e = e || window.event;
                                 if (jS.isBusy()) {
                                     return false;
                                 }
@@ -2841,19 +2841,21 @@ $.sheet = {
                             };
 
                             pane.onmouseover = function (e) {
-                                e = e || win.event;
-                                e.target = e.target || e.srcElement;
+                                e = e || window.event;
+
+                                var target = e.target || e.srcElement;
+
                                 //This manages bar resize, bar menu, and bar selection
                                 if (jS.isBusy()) {
                                     return false;
                                 }
 
-                                if (!jS.isBar(e.target)) {
+                                if (!jS.isBar(target)) {
                                     return false;
                                 }
-                                var bar = $(e.target),
-                                    entity = e.target.entity,
-                                    i = jS.getBarIndex[entity](e.target);
+                                var bar = $(target),
+                                    entity = target.entity,
+                                    i = jS.getBarIndex[entity](target);
 
                                 if (i < 0) {
                                     return false;
@@ -2905,8 +2907,8 @@ $.sheet = {
                      * @memberOf jS.controlFactory
                      */
                     enclosure:function (table) {
-                        var pane = doc.createElement('div'),
-                            enclosure = doc.createElement('div'),
+                        var pane = document.createElement('div'),
+                            enclosure = document.createElement('div'),
                             $enclosure = $(enclosure),
                             actionUI = new Sheet.ActionUI(jS, enclosure, pane, table, jS.cl.scroll, $.sheet.max);
 
@@ -2944,7 +2946,7 @@ $.sheet = {
                      * @memberOf jS.controlFactory
                      */
                     tab:function () {
-                        var tab = doc.createElement('span'),
+                        var tab = document.createElement('span'),
                             $tab = jS.controls.tab[jS.i] = $(tab).appendTo(jS.obj.tabContainer());
 
                         tab.setAttribute('class', jS.cl.tab);
@@ -2985,7 +2987,7 @@ $.sheet = {
 
                         if (!td[0].isHighlighted) return; //If the td is a dud, we do not want a textarea
 
-                        textarea = doc.createElement('textarea');
+                        textarea = document.createElement('textarea');
                         $textarea = $(textarea);
                         pane.inPlaceEdit = textarea;
                         textarea.i = jS.i;
@@ -3058,9 +3060,9 @@ $.sheet = {
                     autoFiller:function (pane) {
                         if (!s.autoFiller) return false;
 
-                        var autoFiller = doc.createElement('div'),
-                            handle = doc.createElement('div'),
-                            cover = doc.createElement('div');
+                        var autoFiller = document.createElement('div'),
+                            handle = document.createElement('div'),
+                            cover = document.createElement('div');
 
                         autoFiller.i = jS.i;
 
@@ -3215,7 +3217,7 @@ $.sheet = {
                          * @memberOf jS.evt.inPlaceEdit
                          */
                         keydown:function (e) {
-                            e = e || win.event;
+                            e = e || window.event;
                             jS.trigger('sheetFormulaKeydown', [true]);
 
                             switch (e.keyCode) {
@@ -3241,7 +3243,7 @@ $.sheet = {
                          * @memberOf jS.evt.formula
                          */
                         keydown:function (e) {
-                            e = e || win.event;
+                            e = e || window.event;
                             if (jS.readOnly[jS.i]) return false;
                             if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
 
@@ -3250,21 +3252,21 @@ $.sheet = {
                             switch (e.keyCode) {
                                 case key.C:
                                     if (e.ctrlKey) {
-                                        return jS.evt.doc.copy(e);
+                                        return jS.evt.document.copy(e);
                                     }
                                 case key.X:
                                     if (e.ctrlKey) {
-                                        return jS.evt.doc.cut(e);
+                                        return jS.evt.document.cut(e);
                                     }
                                 case key.Y:
                                     if (e.ctrlKey) {
-                                        jS.evt.doc.redo(e);
+                                        jS.evt.document.redo(e);
                                         return false;
                                     }
                                     break;
                                 case key.Z:
                                     if (e.ctrlKey) {
-                                        jS.evt.doc.undo(e);
+                                        jS.evt.document.undo(e);
                                         return false;
                                     }
                                     break;
@@ -3301,12 +3303,12 @@ $.sheet = {
                      * Key down handlers
                      * @memberOf jS.evt
                      */
-                    doc:{
+                    document:{
                         /**
                          *
                          * @param {Object} e jQuery event
                          * @returns {*}
-                         * @memberOf jS.evt.doc
+                         * @memberOf jS.evt.document
                          */
                         enter:function (e) {
                             if (!jS.cellLast.isEdit && !e.ctrlKey) {
@@ -3319,7 +3321,7 @@ $.sheet = {
                          *
                          * @param {Object} e jQuery event
                          * @returns {*}
-                         * @memberOf jS.evt.doc
+                         * @memberOf jS.evt.document
                          */
                         tab:function (e) {
                             jS.evt.cellSetActiveFromKeyCode(e);
@@ -3329,7 +3331,7 @@ $.sheet = {
                          *
                          * @param {Object} e jQuery event
                          * @returns {*}
-                         * @memberOf jS.evt.doc
+                         * @memberOf jS.evt.document
                          */
                         findCell:function (e) {
                             if (e.ctrlKey) {
@@ -3343,7 +3345,7 @@ $.sheet = {
                          *
                          * @param {Object} e jQuery event
                          * @returns {*}
-                         * @memberOf jS.evt.doc
+                         * @memberOf jS.evt.document
                          */
                         redo:function (e) {
                             if (e.ctrlKey && !jS.cellLast.isEdit) {
@@ -3357,7 +3359,7 @@ $.sheet = {
                          *
                          * @param {Object} e jQuery event
                          * @returns {*}
-                         * @memberOf jS.evt.doc
+                         * @memberOf jS.evt.document
                          */
                         undo:function (e) {
                             if (e.ctrlKey && !jS.cellLast.isEdit) {
@@ -3404,7 +3406,7 @@ $.sheet = {
                          * Manages the page up and down buttons
                          * @param {Boolean} [reverse] Go up or down
                          * @returns {Boolean}
-                         * @memberOf jS.evt.doc
+                         * @memberOf jS.evt.document
                          */
                         pageUpDown:function (reverse) {
                             var size = jS.sheetSize(),
@@ -3436,10 +3438,10 @@ $.sheet = {
                          *
                          * @param {Object} e jQuery event
                          * @returns {*}
-                         * @memberOf jS.evt.doc
+                         * @memberOf jS.evt.document
                          */
                         keydown:function (e) {
-                            e = e || win.event;
+                            e = e || window.event;
                             if (jS.readOnly[jS.i]) return false;
                             if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
                             var td = jS.cellLast.td;
@@ -3452,7 +3454,7 @@ $.sheet = {
                                         jS.obj.formula().val('');
                                         break;
                                     case key.TAB:
-                                        jS.evt.doc.tab(e);
+                                        jS.evt.document.tab(e);
                                         break;
                                     case key.ENTER:
                                         jS.evt.cellSetActiveFromKeyCode(e);
@@ -3464,10 +3466,10 @@ $.sheet = {
                                         (e.shiftKey ? jS.evt.cellSetHighlightFromKeyCode(e) : jS.evt.cellSetActiveFromKeyCode(e));
                                         break;
                                     case key.PAGE_UP:
-                                        jS.evt.doc.pageUpDown(true);
+                                        jS.evt.document.pageUpDown(true);
                                         break;
                                     case key.PAGE_DOWN:
-                                        jS.evt.doc.pageUpDown();
+                                        jS.evt.document.pageUpDown();
                                         break;
                                     case key.HOME:
                                     case key.END:
@@ -3483,7 +3485,7 @@ $.sheet = {
                                         break;
                                     case key.Y:
                                         if (e.ctrlKey) {
-                                            jS.evt.doc.redo(e);
+                                            jS.evt.document.redo(e);
                                             return false;
                                         } else {
                                             td.trigger('cellEdit');
@@ -3492,7 +3494,7 @@ $.sheet = {
                                         break;
                                     case key.Z:
                                         if (e.ctrlKey) {
-                                            jS.evt.doc.undo(e);
+                                            jS.evt.document.undo(e);
                                             return false;
                                         } else {
                                             td.trigger('cellEdit');
@@ -3504,7 +3506,7 @@ $.sheet = {
                                         break;
                                     case key.F:
                                         if (e.ctrlKey) {
-                                            return jS.evt.formula.If(jS.evt.doc.findCell(e), e);
+                                            return jS.evt.formula.If(jS.evt.document.findCell(e), e);
                                         } else {
                                             td.trigger('cellEdit');
                                             return true;
@@ -3535,7 +3537,7 @@ $.sheet = {
                      * @memberOf jS.evt
                      */
                     pasteOverCells:function (e) {
-                        e = e || win.event;
+                        e = e || window.event;
                         if (e.ctrlKey || e.type == "paste") {
                             var fnAfter = function () {
                                 jS.updateCellsAfterPasteToFormula();
@@ -3546,13 +3548,13 @@ $.sheet = {
                                     fnAfter();
                                     fnAfter = function () {
                                     };
-                                    doc.mouseup();
+                                    document.mouseup();
                                 })
                                 .one('mouseup', function () {
                                     fnAfter();
                                     fnAfter = function () {
                                     };
-                                    doc.keyup();
+                                    document.keyup();
                                 });
 
                             jS.setDirty(true);
@@ -4056,7 +4058,7 @@ $.sheet = {
                     var fullScreen = jS.obj.fullScreen(),
                         pane = jS.obj.pane();
                     if (fullScreen.is(':visible')) {
-                        $win.unbind('jSResize');
+                        $window.unbind('jSResize');
                         $body.removeClass('bodyNoScroll');
                         s.parent = fullScreen[0].origParent;
 
@@ -4071,7 +4073,7 @@ $.sheet = {
                         $body.addClass('bodyNoScroll');
 
                         var parent = $(s.parent),
-                            fullScreen = doc.createElement('div'),
+                            fullScreen = document.createElement('div'),
                             events = $._data(s.parent[0], 'events');
 
                         fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen + ' ' + jS.cl.parent;
@@ -4083,11 +4085,11 @@ $.sheet = {
 
                         $win
                             .bind('resize', function() {
-                                $win.trigger('jSResize');
+                                $window.trigger('jSResize');
                             })
                             .bind('jSResize', function () {
-                                this.w = $win.width();
-                                this.h = $win.height();
+                                this.w = $window.width();
+                                this.h = $window.height();
                                 s.parent
                                     .width(this.w)
                                     .height(this.h);
@@ -4893,22 +4895,22 @@ $.sheet = {
                             }
                         } while (i--);
                     } else {
-                        var child = doc.createElement('tr');
+                        var child = document.createElement('tr');
                         //if there aren't any children, give it at least 1
-                        child.appendChild(doc.createElement('td'));
+                        child.appendChild(document.createElement('td'));
                         table.appendChild(child);
                         children = table.children;
                     }
 
                     if (!tBody) {
-                        tBody = doc.createElement('tbody');
+                        tBody = document.createElement('tbody');
                         do {
                             tBody.appendChild(children[0]);
                         } while (children.length);
                     }
 
                     if (!colGroup || colGroup.children.length < 1) {
-                        colGroup = doc.createElement('colgroup');
+                        colGroup = document.createElement('colgroup');
 
                         table.appendChild(colGroup);
                         table.appendChild(tBody);
@@ -4916,7 +4918,7 @@ $.sheet = {
                         firstTr = tBody.children[0];
 
                         for (i = 0, j = firstTr.children.length; i < j; i++) {
-                            col = doc.createElement('col');
+                            col = document.createElement('col');
                             colGroup.appendChild(col);
                             col.style.width = w + 'px';
                         }
@@ -5250,7 +5252,7 @@ $.sheet = {
                      */
                     top:function ($bar, i, pane, sheet) {
                         jS.obj.barTopControls().remove();
-                        var barController = doc.createElement('div'),
+                        var barController = document.createElement('div'),
                             $barController = $(barController)
                                 .addClass(jS.cl.barController + ' ui-state-highlight')
                                 .width($bar.width())
@@ -5304,7 +5306,7 @@ $.sheet = {
                     left:function ($bar, i, pane, sheet) {
                         jS.obj.barLeftControls().remove();
                         var offset = $bar.offset(),
-                            barController = doc.createElement('div'),
+                            barController = document.createElement('div'),
                             $barController = $(barController)
                                 .addClass(jS.cl.barController + ' ui-state-highlight')
                                 .prependTo($bar)
@@ -5315,7 +5317,7 @@ $.sheet = {
                             bar = $bar[0],
                             td = $bar.next()[0],
                             parent = td.parentNode,
-                            child = doc.createElement('div'),
+                            child = document.createElement('div'),
                             $child = $(child)
                                 .addClass('jSBarControllerChild')
                                 .height($bar.height())
@@ -5507,13 +5509,15 @@ $.sheet = {
                             locTrack.last = loc;//we keep track of the most recent location because we don't want tons of recursion here
 
                             pane.onmousemove = function (e) {
-                                e = e || win.event;
-                                e.target = e.target || e.srcElement;
+                                e = e || window.event;
+
+                                var target = e.target || e.srcElement;
+
                                 if (jS.isBusy()) {
                                     return false;
                                 }
 
-                                var locEnd = jS.highlightedLast.end = jS.getTdLocation(e.target),
+                                var locEnd = jS.highlightedLast.end = jS.getTdLocation(target),
                                     ok = true;
 
                                 //bar
@@ -5535,18 +5539,18 @@ $.sheet = {
 
                                 if ((locTrack.last.col != locEnd.col || locTrack.last.row != locEnd.row) && ok) { //this prevents this method from firing too much
                                     //select active cell if needed
-                                    selectModel(e.target);
+                                    selectModel(target);
 
                                     //highlight the cells
                                     jS.cycleCellArea(function (o) {
                                         jS.themeRoller.cell.setHighlighted(o.td);
                                     }, loc, locEnd, false, true);
                                 }
-                                jS.followMe($(e.target));
+                                jS.followMe($(target));
                                 var mouseY = e.clientY,
                                     mouseX = e.clientX,
                                     offset = pane.$enclosure.offset(),
-                                    cellLoc = jS.getTdLocation(e.target),
+                                    cellLoc = jS.getTdLocation(target),
                                     up = cellLoc.row,
                                     left = cellLoc.col,
                                     move = false,
@@ -5576,11 +5580,11 @@ $.sheet = {
                                 return true;
                             };
 
-                            doc.onmouseup = function() {
+                            document.onmouseup = function() {
                                 pane.onmousemove = null;
                                 pane.onmousemove = null;
                                 pane.onmouseup = null;
-                                doc.onmouseup = null;
+                                document.onmouseup = null;
 
                                 if (fnDone) {
                                     fnDone();
@@ -5846,7 +5850,7 @@ $.sheet = {
                                 var formulaParser;
                                 if (jS.callStack) { //we prevent parsers from overwriting each other
                                     if (!cell.formulaParser) { //cut down on un-needed parser creation
-                                        cell.formulaParser = win.Formula(jS.cellHandler);
+                                        cell.formulaParser = window.Formula(jS.cellHandler);
                                     }
                                     formulaParser = cell.formulaParser
                                 } else {//use the sheet's parser if there aren't many calls in the callStack
@@ -6734,7 +6738,7 @@ $.sheet = {
                                 }
 
                                 if (callback) {
-                                    callback($(doc.createElement('div')).text(sheetTab).html());
+                                    callback($(document.createElement('div')).text(sheetTab).html());
                                 }
                             },
                             jS.sheetTab(true)
@@ -7080,8 +7084,8 @@ $.sheet = {
 
                     var w = s.parent[0].clientWidth,
                         uiStyle = jS.obj.ui.style,
-                        paneHeight = (h - win.scrollBarSize.height - s.boxModelCorrection) + 'px',
-                        paneWidth = (w - win.scrollBarSize.width) + 'px',
+                        paneHeight = (h - window.scrollBarSize.height - s.boxModelCorrection) + 'px',
+                        paneWidth = (w - window.scrollBarSize.width) + 'px',
                         standardHeight = h + 'px',
                         standardWidth = w + 'px';
 
@@ -7336,7 +7340,7 @@ $.sheet = {
                             }
                         });
 
-                        $doc.one('mouseup', function () {
+                        $document.one('mouseup', function () {
                             sheet.unbind('mousemove');
                             return newVal;
                         });
@@ -7384,7 +7388,7 @@ $.sheet = {
                             || !(row = tBody.children[rowIndex])
                             || !(td = row.children[colIndex])
                         ) {
-                        td = doc.createElement('td');
+                        td = document.createElement('td');
                     }
 
                     return $(td);
@@ -7535,7 +7539,7 @@ $.sheet = {
                  */
                 undo:{
                     manager:(
-                        win.UndoManager
+                        window.UndoManager
                             ? new UndoManager()
                             : {
                             undo: emptyFN,
@@ -7650,7 +7654,7 @@ $.sheet = {
                         tr;
 
                     do {
-                        table = (useActualTables ? doc.body.removeChild(tables[i]) : tables[i].cloneNode(true));
+                        table = (useActualTables ? document.body.removeChild(tables[i]) : tables[i].cloneNode(true));
 
                         if (
                             (colGroup = table.children[0])
@@ -8147,15 +8151,15 @@ $.sheet = {
         s.parent[0].jS = jS;
 
         //got tired of ie crashing when console not available
-        if (!win.console) win.console = {log:function () {}};
+        if (!window.console) window.console = {log:function () {}};
 
-        if (!win.scrollBarSize) {
-            win.scrollBarSize = $.sheet.getScrollBarSize();
+        if (!window.scrollBarSize) {
+            window.scrollBarSize = $.sheet.getScrollBarSize();
         }
 
         //ready the sheet's parser;
-        if (win.Formula) {
-            jS.formulaParser = win.Formula(jS.cellHandler);
+        if (window.Formula) {
+            jS.formulaParser = window.Formula(jS.cellHandler);
         }
 
         //We need to take the sheet out of the parent in order to get an accurate reading of it's height and width
@@ -8206,7 +8210,7 @@ $.sheet = {
             jS.calc = emptyFN;
         }
 
-        if (!win.Raphael) {
+        if (!window.Raphael) {
             jSE.chart = emptyFN;
         }
 
@@ -8244,7 +8248,7 @@ $.sheet = {
         if (s.origHtml.length) {
             jS.openSheet(s.origHtml);
         } else {
-            jS.openSheet($(doc.createElement('table')));
+            jS.openSheet($(document.createElement('table')));
         }
 
         jS.setBusy(false);
@@ -8268,9 +8272,9 @@ $.sheet = {
         rowHeight = rowHeight || 15;
 
         //Create elements before loop to make it faster.
-        var table = doc.createElement('table'),
-            colGroup = doc.createElement('colgroup'),
-            tBody = doc.createElement('tbody'),
+        var table = document.createElement('table'),
+            colGroup = document.createElement('colgroup'),
+            tBody = document.createElement('tbody'),
             colStyle = 'width:' + columnWidth + 'px;',
             rowStyle = 'height:' + rowHeight + 'px;',
             tr,
@@ -8281,19 +8285,19 @@ $.sheet = {
         i = size.cols;
 
         do {
-            col = doc.createElement('col');
+            col = document.createElement('col');
             col.setAttribute('style', colStyle);
             colGroup.appendChild(col);
         } while (i-- > 1);
 
         i = size.rows;
         do {
-            tr = doc.createElement('tr');
+            tr = document.createElement('tr');
             tr.setAttribute('style', rowStyle);
 
             j = size.cols;
             do {
-                tr.appendChild(doc.createElement('td'));
+                tr.appendChild(document.createElement('td'));
             } while (j-- > 1);
 
             tBody.appendChild(tr);
@@ -8383,11 +8387,11 @@ $.sheet = {
      */
     getScrollBarSize:function () {
         var doc = document,
-            inner = $(doc.createElement('p')).css({
+            inner = $(document.createElement('p')).css({
                 width:'100%',
                 height:'100%'
             }),
-            outer = $(doc.createElement('div')).css({
+            outer = $(document.createElement('div')).css({
                 position:'absolute',
                 width:'100px',
                 height:'100px',
@@ -8397,7 +8401,7 @@ $.sheet = {
                 overflow:'hidden'
             }).append(inner);
 
-        $(doc.body).append(outer);
+        $(document.body).append(outer);
 
         var w1 = inner.width(),
             h1 = inner.height();

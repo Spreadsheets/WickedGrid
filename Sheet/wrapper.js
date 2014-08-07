@@ -19,10 +19,11 @@
  * @namespace
  * @type {Object|Function}
  */
-jQuery = jQuery || window.jQuery;
-(function($, doc, win, Date, String, Number, Boolean, Math, RegExp, Error) {
+var jQuery = window.jQuery || {};
+var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, RegExp, Error) {
     "use strict";
 
-    /*CODE_HERE*/
+    CODE_HERE
 
+    return Sheet;
 })(jQuery, document, window, Date, String, Number, Boolean, Math, RegExp, Error);
