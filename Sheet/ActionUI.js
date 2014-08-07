@@ -2,7 +2,7 @@
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
+Sheet.ActionUI = (function(document, window, Math, Number, MouseWheel, $) {
     var Constructor = function(jS, enclosure, pane, sheet, cl, max) {
         this.jS = jS;
         this.enclosure = enclosure;
@@ -11,8 +11,8 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
         this.max = max;
 
         var that = this,
-            scrollOuter = this.scrollUI = pane.scrollOuter = doc.createElement('div'),
-            scrollInner = pane.scrollInner = doc.createElement('div'),
+            scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
+            scrollInner = pane.scrollInner = document.createElement('div'),
             scrollStyleX = pane.scrollStyleX = new Sheet.StyleUpdater(),
             scrollStyleY = pane.scrollStyleY = new Sheet.StyleUpdater(),
             nthCss = this.nthCss;
@@ -166,12 +166,12 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
         nthCss:function (elementName, parentSelectorString, indexes, min, css) {
             //the initial call overwrites this function so that it doesn't have to check if it is IE or not
 
-            var scrollTester = doc.createElement('div'),
-                scrollItem1 = doc.createElement('div'),
-                scrollItem2 = doc.createElement('div'),
-                scrollStyle = doc.createElement('style');
+            var scrollTester = document.createElement('div'),
+                scrollItem1 = document.createElement('div'),
+                scrollItem2 = document.createElement('div'),
+                scrollStyle = document.createElement('style');
 
-            doc.body.appendChild(scrollTester);
+            document.body.appendChild(scrollTester);
             scrollTester.setAttribute('id', 'scrollTester');
             scrollTester.appendChild(scrollItem1);
             scrollTester.appendChild(scrollItem2);
@@ -183,8 +183,8 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
                 scrollStyle.innerHTML = '#scrollTester div:nth-child(2) { display: none; }';
             }
 
-            if (this.max) {//this is where we check IE8 compatibility
-                this.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+            if ($.sheet.max) {//this is where we check IE8 compatibility
+                Constructor.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
                     var style = [],
                         index = indexes.length,
                         repeat = this.repeat;
@@ -204,7 +204,7 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
                     return '';
                 };
             } else {
-                this.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+                Constructor.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
                     var style = [],
                         index = indexes.length;
 
@@ -224,10 +224,10 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
                 };
             }
 
-            doc.body.removeChild(scrollTester);
+            document.body.removeChild(scrollTester);
 
             //this looks like a nested call, but will only trigger once, since the function is overwritten from the above
-            return this.nthCss(elementName, parentSelectorString, indexes, min, css);
+            return Constructor.prototype.nthCss(elementName, parentSelectorString, indexes, min, css);
         },
 
         touch: function() {
@@ -418,4 +418,4 @@ Sheet.ActionUI = (function(doc, win, Math, Number, MouseWheel, $) {
     };
 
     return Constructor;
-})(document, window, Math, Number, MouseWheel, jQuery);
+})(document, window, Math, Number, MouseWheel, $);

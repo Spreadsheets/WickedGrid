@@ -34,7 +34,7 @@ var key = { /* key objects, makes it easier to develop */
     Z:					90
 };
 
-var arrHelpers = win.arrHelpers = {
+var arrHelpers = window.arrHelpers = {
     math: Math,
     toNumbers:function (arr) {
         arr = this.flatten(arr);
@@ -313,7 +313,7 @@ var dates = {
     }
 };
 
-var times = win.times = {
+var times = window.times = {
     math: Math,
     fromMath:function (time) {
         var result = {}, me = this;
@@ -378,7 +378,7 @@ var times = win.times = {
 };
 
 
-var math = win.math = $.extend(win.math, {
+$.extend(Math, {
     log10:function (arg) {
         // http://kevin.vanzonneveld.net
         // +   original by: Philip Peterson

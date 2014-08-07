@@ -1,14 +1,13 @@
-Sheet.StyleUpdater = (function(doc) {
-    "use strict";
 
+Sheet.StyleUpdater = (function(document) {
     function Constructor() {
-        var el = doc.createElement('style');
+        var el = document.createElement('style');
         this.styleElement = el;
         el.styleUpdater = this;
     }
 
     //ie
-    if (doc.createElement('style').styleSheet) {
+    if (document.createElement('style').styleSheet) {
         Constructor.prototype = {
             css: function (css) {
                 var el = this.styleElement,
