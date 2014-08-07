@@ -9,17 +9,18 @@
 
         <title>jQuery.sheet - The Ajax Spreadsheet</title>
 
-        <link rel="stylesheet" type="text/css" href="jquery.sheet.css">
-        <link rel="stylesheet" type="text/css" href="bower_components/jquery-ui/themes/start/jquery-ui.min.css">
+        <!--dependencies-->
+            <link rel="stylesheet" type="text/css" href="jquery.sheet.css">
+            <link rel="stylesheet" type="text/css" href="bower_components/jquery-ui/themes/start/jquery-ui.min.css">
+            <script type="text/javascript" src="bower_components/jquery-legacy/dist/jquery.min.js"></script>
+            <script type="text/javascript" src="bower_components/globalize/lib/globalize.js"></script>
+            <script type="text/javascript" src="bower_components/MouseWheel/MouseWheel.js"></script>
 
-        <script type="text/javascript" src="bower_components/jquery-legacy/dist/jquery.min.js"></script>
-        <script type="text/javascript" src="bower_components/globalize/lib/globalize.js"></script>
-        <script type="text/javascript" src="parser/formula/formula.js"></script>
-        <script type="text/javascript" src="parser/tsv/tsv.js"></script>
-        <script type="text/javascript" src="plugins/MouseWheel.js"></script>
-        <script type="text/javascript" src="jquery.sheet.js"></script>
+            <script type="text/javascript" src="parser/formula/formula.js"></script>
+            <script type="text/javascript" src="parser/tsv/tsv.js"></script>
+            <script type="text/javascript" src="jquery.sheet.js"></script>
 
-		<!--Optional-->
+		<!--optional-->
             <!--Nearest-->
             <script type="text/javascript" src="bower_components/jquery-nearest/src/jquery.nearest.min.js"></script>
             <!--/Nearest-->
@@ -59,7 +60,8 @@
 		    <!--DataTransformationService-->
 		    <script type="text/javascript" src="plugins/jquery.sheet.dts.js"></script>
 		    <!--/DataTransformationService-->
-		<!--/Optional-->
+
+
         <script type="text/javascript">
             $(function(){
 
