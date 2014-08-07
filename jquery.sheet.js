@@ -255,9 +255,20 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             return Constructor.prototype.nthCss(elementName, parentSelectorString, indexes, min, css);
         },
 
-        touch: function() {
-            this.toggleHideStyleX.touch();
+        /**
+         * Causes the pane to redraw, really just for fixing issues in Chrome
+         */
+        redraw: function() {
+            var style = this.pane.style;
+
+            style.opacity = 0.9999;
+
+            setTimeout(function() {
+                style.opacity = 1;
+            },0);
         },
+
+
         hide:function () {
             var jS = this.jS,
                 s = jS.s,
@@ -463,7 +474,6 @@ Sheet.StyleUpdater = (function(document) {
                     ss.cssText = css;
                 }
             },
-            touch: function () {},
             styleString: function() {
                 var el = this.styleElement,
                     ss = el.styleSheet;
@@ -480,11 +490,6 @@ Sheet.StyleUpdater = (function(document) {
         Constructor.prototype = {
             css: function (css) {
                 this.styleElement.innerHTML = css;
-            },
-            touch: function () {
-                var el = this.styleElement;
-
-                el.innerHTML = el.innerHTML + ' ';
             },
             styleString: function() {
                 return this.styleElement.innerHTML;
@@ -5512,7 +5517,8 @@ $.sheet = {
 
                             jS.themeRoller.cell.clearHighlighted.call(obj, oldObjects);
 
-                            actionUI.touch(); //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
+                            //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
+                            actionUI.redraw();
                         },
 
                         /**

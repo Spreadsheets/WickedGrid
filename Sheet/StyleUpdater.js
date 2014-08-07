@@ -18,7 +18,6 @@ Sheet.StyleUpdater = (function(document) {
                     ss.cssText = css;
                 }
             },
-            touch: function () {},
             styleString: function() {
                 var el = this.styleElement,
                     ss = el.styleSheet;
@@ -35,11 +34,6 @@ Sheet.StyleUpdater = (function(document) {
         Constructor.prototype = {
             css: function (css) {
                 this.styleElement.innerHTML = css;
-            },
-            touch: function () {
-                var el = this.styleElement;
-
-                el.innerHTML = el.innerHTML + ' ';
             },
             styleString: function() {
                 return this.styleElement.innerHTML;

@@ -230,9 +230,20 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             return Constructor.prototype.nthCss(elementName, parentSelectorString, indexes, min, css);
         },
 
-        touch: function() {
-            this.toggleHideStyleX.touch();
+        /**
+         * Causes the pane to redraw, really just for fixing issues in Chrome
+         */
+        redraw: function() {
+            var style = this.pane.style;
+
+            style.opacity = 0.9999;
+
+            setTimeout(function() {
+                style.opacity = 1;
+            },0);
         },
+
+
         hide:function () {
             var jS = this.jS,
                 s = jS.s,
