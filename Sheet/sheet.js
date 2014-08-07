@@ -5017,7 +5017,8 @@ $.sheet = {
 
                             jS.themeRoller.cell.clearHighlighted.call(obj, oldObjects);
 
-                            actionUI.touch(); //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
+                            //Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
+                            actionUI.redraw();
                         },
 
                         /**
