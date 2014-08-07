@@ -105,7 +105,6 @@ var MouseWheel = (function(win) {
             }
 
             bindMouseWheel(this, mousewheel);
-            console.log(this.mWType);
             return false;
         };
 
