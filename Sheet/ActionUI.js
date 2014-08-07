@@ -2,7 +2,7 @@
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-Sheet.ActionUI = (function(document, window, Math, Number, MouseWheel, $) {
+Sheet.ActionUI = (function(document, window, Math, Number, $) {
     var Constructor = function(jS, enclosure, pane, sheet, cl, max) {
         this.jS = jS;
         this.enclosure = enclosure;
@@ -418,4 +418,4 @@ Sheet.ActionUI = (function(document, window, Math, Number, MouseWheel, $) {
     };
 
     return Constructor;
-})(document, window, Math, Number, MouseWheel, $);
+})(document, window, Math, Number, $);

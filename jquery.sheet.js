@@ -27,7 +27,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-Sheet.ActionUI = (function(document, window, Math, Number, MouseWheel, $) {
+Sheet.ActionUI = (function(document, window, Math, Number, $) {
     var Constructor = function(jS, enclosure, pane, sheet, cl, max) {
         this.jS = jS;
         this.enclosure = enclosure;
@@ -443,7 +443,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, MouseWheel, $) {
     };
 
     return Constructor;
-})(document, window, Math, Number, MouseWheel, $);
+})(document, window, Math, Number, $);
 Sheet.StyleUpdater = (function(document) {
     function Constructor() {
         var el = document.createElement('style');
@@ -1481,11 +1481,13 @@ $.sheet = {
         tsvParser:{script:'parser/tsv/tsv.js'},
 
         jQueryUI:{script:'jquery-ui/jquery-ui.min.js', thirdParty:true},
-        jQueryUIThemeRoller:{css:'jquery-ui/themes/smootheness/jquery-ui.min.css', thirdParty:true},
+        jQueryUIThemeRoller:{css:'jquery-ui/themes/smoothness/jquery-ui.min.css', thirdParty:true},
 
         globalize:{script:'globalize/lib/globalize.js', thirdParty:true},
 
-        nearest:{script:'jquery-nearest/jquery.nearest.min.js', thirdParty:true}
+        nearest:{script:'jquery-nearest/src/jquery.nearest.min.js', thirdParty:true},
+
+        mousewheel:{script:'MouseWheel/MouseWheel.js', thirdParty:true}
     },
 
     /**
@@ -1500,9 +1502,9 @@ $.sheet = {
 
         //3rd party
         colorPicker:{
-            css:'really-simple-color-picker/jquery.colorPicker.css',
+            css:'really-simple-color-picker/colorPicker.css',
             script:'really-simple-color-picker/jquery.colorPicker.min.js',
-            bower:true
+            thirdParty:true
         },
 
         elastic:{script:'jquery-elastic/jquery.elastic.source.js', thirdParty:true},
@@ -1510,11 +1512,11 @@ $.sheet = {
         globalizeCultures:{script:'globalize/lib/cultures/globalize.cultures.js', thirdParty:true},
 
         raphael:{script:'raphael/raphael-min.js', thirdParty:true},
-        gRaphael:{script:'graphael/g.raphael-min.js', thirdParty:true},
-        gRaphaelBar:{script:'graphael/g.bar-min.js', thirdParty:true},
-        gRaphaelDot:{script:'graphael/g.dot-min.js', thirdParty:true},
-        gRaphaelLine:{script:'graphael/g.line-min.js', thirdParty:true},
-        gRaphaelPie:{script:'graphael/g.pie-min.js', thirdParty:true},
+        gRaphael:{script:'graphael/g.raphael.js', thirdParty:true},
+        gRaphaelBar:{script:'graphael/g.bar.js', thirdParty:true},
+        gRaphaelDot:{script:'graphael/g.dot.js', thirdParty:true},
+        gRaphaelLine:{script:'graphael/g.line.js', thirdParty:true},
+        gRaphaelPie:{script:'graphael/g.pie.js', thirdParty:true},
 
         undoManager:{script: 'Javascript-Undo-Manager/js/undomanager.js', thirdParty:true},
 
@@ -1562,20 +1564,20 @@ $.sheet = {
 
 
         var write = function () {
-            if (this.script) {
-                document.write('<script src="' + (this.thirdParty ? settings.thirdPartyDirectory : '') + path + this.script + '"></script>');
+            if (this.script !== undefined) {
+                document.write('<script src="' + path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.script + '"></script>');
             }
-            if (this.css) {
-                document.write('<link rel="stylesheet" type="text/css" href="' + (this.thirdParty ? settings.thirdPartyDirectory : '') + path + this.css + '"></link>');
+            if (this.css !== undefined) {
+                document.write('<link rel="stylesheet" type="text/css" href="' + path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.css + '"></link>');
             }
         };
 
         for(var i in settings.skip) {
             if (this.dependencies[settings.skip[i]]) {
-                this.dependencies[settings.skip[i]] = null;
+                delete this.dependencies[settings.skip[i]];
             }
             if (this.optional[settings.skip[i]]) {
-                this.optional[settings.skip[i]] = null;
+                delete this.optional[settings.skip[i]];
             }
         }
 
@@ -1664,7 +1666,7 @@ $.sheet = {
                  * @memberOf jS
                  * @type {String}
                  */
-                version:'3.x',
+                version:'4.x',
 
                 /**
                  * The active sheet index within the a set of sheets
