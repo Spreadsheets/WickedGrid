@@ -23,7 +23,7 @@ var jQuery = window.jQuery || {};
 var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, RegExp, Error) {
     "use strict";
 
-    var Sheet = {};
+    var Sheet = Sheet || {};
 /**
  * Creates the scrolling system used by each spreadsheet
  */
@@ -34,6 +34,49 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         this.pane = pane;
         this.sheet = sheet;
         this.max = max;
+
+        if (Constructor.prototype.nthCss === null) {
+            if ($.sheet.max) {//this is where we check IE8 compatibility
+                Constructor.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+                    var style = [],
+                        index = indexes.length,
+                        repeat = this.repeat;
+
+                    css = css || '{display: none;}';
+
+                    do {
+                        if (indexes[index] > min) {
+                            style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
+                        }
+                    } while (index--);
+
+                    if (style.length) {
+                        return style.join(',') + css;
+                    }
+
+                    return '';
+                };
+            } else {
+                Constructor.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+                    var style = [],
+                        index = indexes.length;
+
+                    css = css || '{display: none;}';
+
+                    do {
+                        if (indexes[index] > min) {
+                            style.push(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
+                        }
+                    } while (index--);
+
+                    if (style.length) {
+                        return style.join(',') + css;
+                    }
+
+                    return '';
+                };
+            }
+        }
 
         var that = this,
             scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
@@ -188,72 +231,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
          * @returns {String}
          * @memberOf jQuery.sheet
          */
-        nthCss:function (elementName, parentSelectorString, indexes, min, css) {
-            //the initial call overwrites this function so that it doesn't have to check if it is IE or not
 
-            var scrollTester = document.createElement('div'),
-                scrollItem1 = document.createElement('div'),
-                scrollItem2 = document.createElement('div'),
-                scrollStyle = document.createElement('style');
-
-            document.body.appendChild(scrollTester);
-            scrollTester.setAttribute('id', 'scrollTester');
-            scrollTester.appendChild(scrollItem1);
-            scrollTester.appendChild(scrollItem2);
-            scrollTester.appendChild(scrollStyle);
-
-            if (scrollStyle.styleSheet && !scrollStyle.styleSheet.disabled) {
-                scrollStyle.styleSheet.cssText = '#scrollTester div:nth-child(2) { display: none; }';
-            } else {
-                scrollStyle.innerHTML = '#scrollTester div:nth-child(2) { display: none; }';
-            }
-
-            if ($.sheet.max) {//this is where we check IE8 compatibility
-                Constructor.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-                    var style = [],
-                        index = indexes.length,
-                        repeat = this.repeat;
-
-                    css = css || '{display: none;}';
-
-                    do {
-                        if (indexes[index] > min) {
-                            style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
-                        }
-                    } while (index--);
-
-                    if (style.length) {
-                        return style.join(',') + css;
-                    }
-
-                    return '';
-                };
-            } else {
-                Constructor.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-                    var style = [],
-                        index = indexes.length;
-
-                    css = css || '{display: none;}';
-
-                    do {
-                        if (indexes[index] > min) {
-                            style.push(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
-                        }
-                    } while (index--);
-
-                    if (style.length) {
-                        return style.join(',') + css;
-                    }
-
-                    return '';
-                };
-            }
-
-            document.body.removeChild(scrollTester);
-
-            //this looks like a nested call, but will only trigger once, since the function is overwritten from the above
-            return Constructor.prototype.nthCss(elementName, parentSelectorString, indexes, min, css);
-        },
+        nthCss: null,
 
         /**
          * Causes the pane to redraw, really just for fixing issues in Chrome
@@ -457,8 +436,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 })(document, window, Math, Number, $);
 Sheet.StyleUpdater = (function(document) {
     function Constructor() {
-        var el = document.createElement('style');
-        this.styleElement = el;
+        var el = this.styleElement = document.createElement('style');
         el.styleUpdater = this;
     }
 
@@ -8841,10 +8819,12 @@ $.sheet = {
         instance[I].obj.scrolls().each(function (i) {
             var me = this;
             $(this).scroll(function (e) {
-                var j = instance.length - 1, scrollUI;
+                var j = instance.length - 1,
+                    scrollUI,
+                    pane;
                 if (j > -1) {
                     do {
-                        scrollUI = instance[j].controls.scroll[i][0];
+                        scrollUI = instance[j].controls.enclosure[i][0].scrollUI;
                         scrollUI.scrollLeft = me.scrollLeft;
                         scrollUI.scrollTop = me.scrollTop;
                     } while (j--);

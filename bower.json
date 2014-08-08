@@ -39,6 +39,7 @@
     "really-simple-color-picker": "https://github.com/laktek/really-simple-color-picker.git",
     "Javascript-Undo-Manager": "*",
     "ThemeSwitcher": "https://github.com/josephbulger/ThemeSwitcher.git",
-    "jquery-ui": "~1.11.0"
+    "jquery-ui": "~1.11.0",
+    "MouseWheel": "https://github.com/robertleeplummerjr/MouseWheel.git"
   }
 }
