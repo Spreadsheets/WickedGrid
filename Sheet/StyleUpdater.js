@@ -1,15 +1,15 @@
 
 Sheet.StyleUpdater = (function(document) {
-    function Constructor() {
-        var el = document.createElement('style');
-        this.styleElement = el;
+    function Constructor(updateFn) {
+        var el = this.styleElement = document.createElement('style');
         el.styleUpdater = this;
+        this.update = updateFn;
     }
 
     //ie
     if (document.createElement('style').styleSheet) {
         Constructor.prototype = {
-            css: function (css) {
+            setStyle: function (css) {
                 var el = this.styleElement,
                     ss = el.styleSheet;
 
@@ -18,7 +18,7 @@ Sheet.StyleUpdater = (function(document) {
                     ss.cssText = css;
                 }
             },
-            styleString: function() {
+            getStyle: function() {
                 var el = this.styleElement,
                     ss = el.styleSheet;
 
@@ -32,10 +32,10 @@ Sheet.StyleUpdater = (function(document) {
     } else {
         //standard
         Constructor.prototype = {
-            css: function (css) {
+            setStyle: function (css) {
                 this.styleElement.innerHTML = css;
             },
-            styleString: function() {
+            getStyle: function() {
                 return this.styleElement.innerHTML;
             }
         };

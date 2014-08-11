@@ -10,11 +10,12 @@
  */
 
 (function($, doc) {
+    "use strict";
 	/**
 	 * @namespace
 	 * @memberOf jQuery.sheet
 	 */
-	jQuery.sheet.dts = {
+	$.sheet.dts = {
 		/**
 		 * @memberOf jQuery.sheet.dts
 		 * @namespace
@@ -231,7 +232,7 @@
 								cellType = column.getElementsByTagName('cellType')[0],
 								value = column.getElementsByTagName('value')[0],
 								style = column.getElementsByTagName('style')[0],
-								cl = column.getElementsByTagName('class')[0]
+								cl = column.getElementsByTagName('class')[0],
 								rowspan = column.getElementsByTagName('rowspan')[0],
 								colspan = column.getElementsByTagName('colspan')[0];
 
@@ -336,7 +337,9 @@
 					attr,
 					cl,
 					parent,
-					rowHasValues;
+					rowHasValues,
+                    parentEle,
+                    parentHeight;
 
 
 				if (sheet < 0) return output;
@@ -350,7 +353,7 @@
 						"rows": [],
 						"metadata": {
 							"widths": [],
-							"frozenAt": $.extend({}, jS.frozenAt())
+							"frozenAt": $.extend({}, jS.obj.pane().actionUI.frozenAt)
 						}
 					};
 
@@ -362,7 +365,6 @@
 						parentEle = spreadsheet[row][1].td[0].parentNode;
 						parentHeight = parentEle.style['height'];
 						jsonRow = {
-								"height": null,
 								"columns": [],
 								"height": (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin)
 							};
@@ -479,7 +481,10 @@
 					cl,
 					parent,
 					frozenAt,
-					rowHasValues;
+					rowHasValues,
+                    widths,
+                    parentEle,
+                    parentHeight;
 
 				if (sheet < 0) return output;
 
@@ -487,7 +492,7 @@
 					rowHasValues = false;
 					jS.i = sheet;
 					jS.evt.cellEditDone();
-					frozenAt = $.extend({}, jS.frozenAt());
+					frozenAt = $.extend({}, jS.obj.pane().actionUI.frozenAt);
 					widths = [];
 
 					spreadsheet = jS.spreadsheets[sheet];
@@ -498,13 +503,13 @@
 						column = spreadsheet[row].length - 1;
 						do {
 							xmlColumn = '';
-							var cell = spreadsheet[row][column],
-								attr = cell.td[0].attributes,
-								cl = (attr['class'] ? $.trim(
-									(attr['class'].value || '')
-										.replace(jS.cl.uiCellActive, '')
-										.replace(jS.cl.uiCellHighlighted, '')
-								) : '');
+							cell = spreadsheet[row][column];
+                            attr = cell.td[0].attributes;
+                            cl = (attr['class'] ? $.trim(
+                                (attr['class'].value || '')
+                                    .replace(jS.cl.uiCellActive, '')
+                                    .replace(jS.cl.uiCellHighlighted, '')
+                            ) : '');
 
 							if (doNotTrim || rowHasValues || cl || cell.formula || cell.value || attr['style']) {
 								rowHasValues = true;

@@ -1,1 +1,1 @@
-var Sheet = {};
+var Sheet = Sheet || {};

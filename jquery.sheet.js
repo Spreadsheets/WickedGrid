@@ -28,16 +28,47 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-    var Constructor = function(jS, enclosure, pane, sheet, cl, max) {
-        this.jS = jS;
+    var Constructor = function(enclosure, pane, sheet, cl, frozenAt, max, scrollFn) {
         this.enclosure = enclosure;
         this.pane = pane;
         this.sheet = sheet;
         this.max = max;
+        this.scrollFn = scrollFn || function() {};
+        this.xIndex = 0;
+        this.yIndex = 0;
 
-        if (Constructor.prototype.nthCss === null) {
-            if ($.sheet.max) {//this is where we check IE8 compatibility
-                Constructor.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+        this.scrollAxis = {
+            x:{},y:{}
+        };
+
+        this.scrollSize = {};
+
+        this.hiddenColumns = [];
+        this.hiddenRows = [];
+
+        if (!(this.frozenAt = frozenAt)) this.frozenAt = {row:0, col:0};
+        this.frozenAt.row = Math.max(this.frozenAt.row, 0);
+        this.frozenAt.col = Math.max(this.frozenAt.col, 0);
+
+        /**
+         * Where the current sheet is scrolled to
+         * @returns {Object}
+         */
+        this.scrolledArea = {
+            start: {
+                row: Math.max(this.frozenAt.row, 1),
+                col: Math.max(this.frozenAt.col, 1)
+            },
+            end: {
+                row: Math.max(this.frozenAt.row, 1),
+                col: Math.max(this.frozenAt.col, 1)
+            }
+        };
+
+
+        if (Sheet.ActionUI.prototype.nthCss === null) {
+            if (max) {//this is where we check IE8 compatibility
+                Sheet.ActionUI.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
                     var style = [],
                         index = indexes.length,
                         repeat = this.repeat;
@@ -57,7 +88,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     return '';
                 };
             } else {
-                Constructor.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+                Sheet.ActionUI.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
                     var style = [],
                         index = indexes.length;
 
@@ -79,78 +110,53 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         }
 
         var that = this,
+            cssId = '#' + sheet.getAttribute('id'),
             scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
             scrollInner = pane.scrollInner = document.createElement('div'),
-            scrollStyleX = pane.scrollStyleX = new Sheet.StyleUpdater(),
-            scrollStyleY = pane.scrollStyleY = new Sheet.StyleUpdater(),
+            scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(indexes, style) {
+                indexes = indexes || [];
+
+                if (indexes.length !== that.xIndex || style) {
+                    that.xIndex = indexes.length || that.xIndex;
+
+                    style = style || nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
+                        nthCss('td', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1);
+
+                    this.setStyle(style);
+
+                    if (indexes.length) {
+                        that.scrolledArea.start.col = Math.max(indexes.pop() || 1, 1);
+                        that.scrolledArea.end.col = Math.max(indexes.shift() || 1, 1);
+                    }
+
+                    that.scrollFn();
+                }
+            }),
+            scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(indexes, style){
+                indexes = indexes || [];
+
+                if (indexes.length !== that.yIndex || style) {
+                    that.yIndex = indexes.length || that.yIndex;
+
+                    style = style || nthCss('tr', cssId, indexes, that.frozenAt.row + 1);
+
+                    this.setStyle(style);
+
+                    if (indexes.length) {
+                        that.scrolledArea.start.row = Math.max(indexes.pop() || 1, 1);
+                        that.scrolledArea.end.row = Math.max(indexes.shift() || 1, 1);
+                    }
+
+                    that.scrollFn();
+                }
+            }),
             nthCss = this.nthCss;
 
         scrollOuter.setAttribute('class', cl);
         scrollOuter.appendChild(scrollInner);
 
-        scrollOuter.onscroll = function() {
-            if (!jS.isBusy()) {
-                that.scrollTo({axis:'x', pixel:scrollOuter.scrollLeft});
-                that.scrollTo({axis:'y', pixel:scrollOuter.scrollTop});
-
-                jS.autoFillerGoToTd();
-                if (pane.inPlaceEdit) {
-                    pane.inPlaceEdit.goToTd();
-                }
-            }
-        };
-
-        scrollOuter.onmousedown = function() {
-            jS.obj.barHelper().remove();
-        };
-
         $(scrollOuter)
             .disableSelectionSpecial();
-
-        jS.controls.scrolls = jS.obj.scrolls().add(scrollOuter);
-
-        scrollStyleX.updateStyle = function (indexes, style) {
-            indexes = indexes || [];
-
-            if (indexes.length != this.i || style) {
-                this.i = indexes.length || this.i;
-
-                style = style || nthCss('col', '#' + jS.id + jS.i, indexes, jS.frozenAt().col + 1) +
-                    nthCss('td', '#' + jS.id + jS.i + ' ' + 'tr', indexes, jS.frozenAt().col + 1);
-
-                this.css(style);
-
-                jS.scrolledTo();
-
-                if (indexes.length) {
-                    jS.scrolledArea[jS.i].start.col = Math.max(indexes.pop() || 1, 1);
-                    jS.scrolledArea[jS.i].end.col = Math.max(indexes.shift() || 1, 1);
-                }
-
-                jS.obj.barHelper().remove();
-            }
-        };
-
-        scrollStyleY.updateStyle = function (indexes, style) {
-            indexes = indexes || [];
-
-            if (indexes.length != this.i || style) {
-                this.i = indexes.length || this.i;
-
-                style = style || nthCss('tr', '#' + jS.id + jS.i, indexes, jS.frozenAt().row + 1);
-
-                this.css(style);
-
-                jS.scrolledTo();
-
-                if (indexes.length) {
-                    jS.scrolledArea[jS.i].start.row = Math.max(indexes.pop() || 1, 1);
-                    jS.scrolledArea[jS.i].end.row = Math.max(indexes.shift() || 1, 1);
-                }
-
-                jS.obj.barHelper().remove();
-            }
-        };
 
         pane.appendChild(scrollStyleX.styleElement);
         pane.appendChild(scrollStyleY.styleElement);
@@ -165,15 +171,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
         pane.resizeScroll = function (justTouch) {
             if (justTouch) {
-                xStyle = scrollStyleX.styleString();
-                yStyle = scrollStyleY.styleString();
+                xStyle = scrollStyleX.getStyle();
+                yStyle = scrollStyleY.getStyle();
             } else {
-                xStyle = (sheet.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.styleString());
-                yStyle = (sheet.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.styleString());
+                xStyle = (sheet.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.getStyle());
+                yStyle = (sheet.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.getStyle());
             }
 
-            scrollStyleX.updateStyle(null, ' ');
-            scrollStyleY.updateStyle(null, ' ');
+            scrollStyleX.update(null, ' ');
+            scrollStyleY.update(null, ' ');
 
             sheetWidth = (firstRow.clientWidth || sheet.clientWidth) + 'px';
             sheetHeight = sheet.clientHeight + 'px';
@@ -186,11 +192,11 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             scrollOuter.style.width = enclosureWidth;
             scrollOuter.style.height = enclosureHeight;
 
-            that.scrollStart('x', pane);
-            that.scrollStart('y', pane);
+            that.scrollStart('x');
+            that.scrollStart('y');
 
-            scrollStyleX.updateStyle(null, xStyle);
-            scrollStyleY.updateStyle(null, yStyle);
+            scrollStyleX.update(null, xStyle);
+            scrollStyleY.update(null, yStyle);
 
             if (pane.inPlaceEdit) {
                 pane.inPlaceEdit.goToTd();
@@ -248,62 +254,53 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         },
 
 
-        hide:function () {
-            var jS = this.jS,
-                s = jS.s,
-                toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(),
-                toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(),
-                hiddenRows,
-                hiddenColumns,
+        hide:function (hiddenRows, hiddenColumns, rows, columns) {
+            var that = this,
+                cssId = '#' + this.sheet.getAttribute('id'),
+                toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function(fn) {
+                    var style = nthCss('col', cssId, that.hiddenColumns, 0) +
+                        nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
+
+                    this.setStyle(style);
+
+                    if (fn) fn();
+                }),
+                toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(function(fn) {
+                    var style = nthCss('tr', cssId, that.hiddenRows, 0);
+
+                    this.setStyle(style);
+
+                    if (fn) fn();
+                }),
+
                 i,
+                j,
                 nthCss = this.nthCss,
                 pane = this.pane,
                 sheet = this.sheet;
 
-            toggleHideStyleX.updateStyle = function (e) {
-                var style = nthCss('col', '#' + jS.id + jS.i, jS.toggleHide.hiddenColumns[jS.i], 0) +
-                    nthCss('td', '#' + jS.id + jS.i + ' tr', jS.toggleHide.hiddenColumns[jS.i], 0);
-
-                this.css(style);
-
-                jS.autoFillerGoToTd();
-            };
-
-            toggleHideStyleY.updateStyle = function (e) {
-                var style = nthCss('tr', '#' + jS.id + jS.i, jS.toggleHide.hiddenRows[jS.i], 0);
-
-                this.css(style);
-
-                jS.autoFillerGoToTd();
-            };
-
             pane.appendChild(toggleHideStyleX.styleElement);
             pane.appendChild(toggleHideStyleY.styleElement);
 
-            s.hiddenColumns[jS.i] = s.hiddenColumns[jS.i] || [];
-            s.hiddenRows[jS.i] = s.hiddenRows[jS.i] || [];
+            this.hiddenRows = [];
+            this.hiddenColumns = [];
 
-            if (!s.hiddenColumns[jS.i].length || !s.hiddenRows[jS.i].length) {
-                hiddenRows = sheet.attributes['data-hiddenrows'] || {value:''};
-                hiddenColumns = sheet.attributes['data-hiddencolumns'] || {value:''};
-                s.hiddenRows[jS.i] = arrHelpers.toNumbers(hiddenRows.value.split(','));
-                s.hiddenColumns[jS.i] = arrHelpers.toNumbers(hiddenColumns.value.split(','));
-            }
-
-            if (jS.s.hiddenRows[jS.i]) {
-                i = jS.s.hiddenRows[jS.i].length - 1;
+            if (hiddenRows) {
+                i = hiddenRows.length - 1;
                 if (i > -1) {
                     do {
-                        jS.toggleHide.row(jS.s.hiddenRows[jS.i][i]);
+                        j = hiddenRows[i];
+                        this.toggleHideRow(rows[j], j);
                     } while (i--);
                 }
             }
 
-            if (s.hiddenColumns[jS.i]) {
-                i = s.hiddenColumns[jS.i].length - 1;
+            if (hiddenColumns) {
+                i = hiddenColumns.length - 1;
                 if (i > -1) {
                     do {
-                        jS.toggleHide.column(s.hiddenColumns[jS.i][i]);
+                        j = hiddenColumns[i];
+                        this.toggleHideColumn(columns[j], j);
                     } while (i--);
                 }
             }
@@ -312,29 +309,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
         },
 
-        scrollAxis: {
-            x:{},y:{}
-        },
-
-        scrollSize: {},
-
-        scrollTd: null,
-
         /**
          * prepare everything needed for a scroll, needs activated every time spreadsheet changes in size
          * @param {String} axisName x or y
-         * @memberOf jS.evt.scroll
          */
         scrollStart:function (axisName) {
-            var jS = this.jS,
-                pane = this.pane,
-                outer = this.pane.scrollOuter,
+            var pane = this.pane,
+                outer = pane.scrollOuter,
                 axis = this.scrollAxis[axisName],
-                size = this.scrollSize = jS.sheetSize(pane.table);
-
-            jS.autoFillerHide();
-
-            this.scrollTd = jS.obj.tdActive();
+                size = this.scrollSize = this.sheet.size();
 
             axis.v = [];
             axis.name = axisName;
@@ -344,7 +327,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     axis.max = size.cols;
                     axis.min = 0;
                     axis.size = size.cols;
-                    pane.scrollStyleX.updateStyle();
+                    pane.scrollStyleX.update();
                     axis.scrollStyle = pane.scrollStyleX;
                     axis.area = outer.scrollWidth - outer.clientWidth;
                     axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
@@ -357,7 +340,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     axis.max = size.rows;
                     axis.min = 0;
                     axis.size = size.rows;
-                    pane.scrollStyleY.updateStyle();
+                    pane.scrollStyleY.update();
                     axis.scrollStyle = pane.scrollStyleY;
                     axis.area = outer.scrollHeight - outer.clientHeight;
                     axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
@@ -380,7 +363,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         /**
          * Scrolls to a position within the spreadsheet
          * @param {Object} pos {axis, value, pixel} if value not set, pixel is used
-         * @memberOf jS.evt.scroll
          */
         scrollTo:function (pos) {
             pos = pos || {};
@@ -408,9 +390,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 } while(i-- > 0);
             }
             if (indexes.length) {
-                if (me.scrollStyle) me.scrollStyle.updateStyle(indexes);
+                if (me.scrollStyle) me.scrollStyle.update(indexes);
             } else {
-                if (me.scrollStyle) me.scrollStyle.updateStyle();
+                if (me.scrollStyle) me.scrollStyle.update();
             }
 
             me.value = pos.value;
@@ -418,32 +400,64 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
         /**
          * Called after scroll is done
-         * @memberOf jS.evt.scroll
          */
         scrollStop:function () {
             if (this.scrollAxis.x.scrollUpdate) this.scrollAxis.x.scrollUpdate();
             if (this.scrollAxis.y.scrollUpdate) this.scrollAxis.y.scrollUpdate();
+        },
 
-            if (this.scrollTd) {
-                this.scrollTd = null;
-                this.jS.autoFillerGoToTd();
+
+        toggleHideRow:function (row, i) {
+            var $row = $(row);
+            i = Math.max(i + 1, 1);
+
+
+            if ($row.length && $.inArray(i, this.hiddenRows) < 0) {
+                this.hiddenRows.push(i);
+            } else {
+                this.hiddenRows.splice(this.hiddenRows.indexOf(i), 1);
             }
-        }
 
+            this.toggleHideStyleY.update();
+        },
+        rowShowAll:function () {
+            $.each(this.hiddenRows || [], function (j) {
+                $(this).removeData('hidden');
+            });
+            this.toggleHideStyleY.setStyle('');
+            this.hiddenRows = [];
+        },
+        toggleHideColumn:function (col, i) {
+            var $col = $(col);
+            i = Math.max(i + 1, 1);
+
+            if ($col.length && $.inArray(i, this.hiddenColumns) < 0) {
+                this.hiddenColumns.push(i);
+            } else {
+                this.hiddenColumns.splice(this.hiddenColumns.indexOf(i), 1);
+            }
+
+            this.toggleHideStyleX.update();
+        },
+        columnShowAll:function () {
+            this.toggleHideStyleX.setStyle('');
+            this.hiddenColumns = [];
+        }
     };
 
     return Constructor;
 })(document, window, Math, Number, $);
 Sheet.StyleUpdater = (function(document) {
-    function Constructor() {
+    function Constructor(updateFn) {
         var el = this.styleElement = document.createElement('style');
         el.styleUpdater = this;
+        this.update = updateFn;
     }
 
     //ie
     if (document.createElement('style').styleSheet) {
         Constructor.prototype = {
-            css: function (css) {
+            setStyle: function (css) {
                 var el = this.styleElement,
                     ss = el.styleSheet;
 
@@ -452,7 +466,7 @@ Sheet.StyleUpdater = (function(document) {
                     ss.cssText = css;
                 }
             },
-            styleString: function() {
+            getStyle: function() {
                 var el = this.styleElement,
                     ss = el.styleSheet;
 
@@ -466,10 +480,10 @@ Sheet.StyleUpdater = (function(document) {
     } else {
         //standard
         Constructor.prototype = {
-            css: function (css) {
+            setStyle: function (css) {
                 this.styleElement.innerHTML = css;
             },
-            styleString: function() {
+            getStyle: function() {
                 return this.styleElement.innerHTML;
             }
         };
@@ -924,8 +938,9 @@ $.fn.extend({
                     frozenAt:[],
                     contextmenuTop:{
                         "Toggle freeze columns to here":function (jS) {
-                            var col = jS.getTdLocation(jS.obj.tdActive()).col;
-                            jS.frozenAt().col = (jS.frozenAt().col == col ? 0 : col);
+                            var col = jS.getTdLocation(jS.obj.tdActive()).col,
+                                actionUI = jS.obj.pane().actionUI;
+                            actionUI.frozenAt.col = (actionUI.frozenAt.col == col ? 0 : col);
                         },
                         "Insert column after":function (jS) {
                             jS.controlFactory.addColumn(jS.colLast);
@@ -944,14 +959,15 @@ $.fn.extend({
                             return false;
                         },
                         "Hide column":function (jS) {
-                            jS.toggleHide.column();
+                            jS.toggleHideColumn();
                             return false;
                         }
                     },
                     contextmenuLeft:{
                         "Toggle freeze rows to here":function (jS) {
-                            var row = jS.getTdLocation(jS.obj.tdActive()).row;
-                            jS.frozenAt().row = (jS.frozenAt().row == row ? 0 : row);
+                            var row = jS.getTdLocation(jS.obj.tdActive()).row,
+                                actionUI = jS.obj.pane().actionUI;
+                            actionUI.frozenAt.row = (actionUI.frozenAt.row == row ? 0 : row);
                         },
                         "Insert row after":function (jS) {
                             jS.controlFactory.addRow(jS.rowLast);
@@ -1643,7 +1659,7 @@ $.sheet = {
              * @alias jQuery.sheet.instance[]
              * @name jS
              */
-                jS = {
+            jS = {
                 /**
                  * Current version of jQuery.sheet
                  * @memberOf jS
@@ -1671,12 +1687,6 @@ $.sheet = {
                  * @type {Number}
                  */
                 sheetCount:0,
-
-                /**
-                 * The current scrolled area, col.start, col.end, row.start, row.end
-                 * @memberOf jS
-                 */
-                scrolledArea:[],
 
                 /**
                  * The internal storage array of the spreadsheets for an instance, constructed as array 3 levels deep, spreadsheet, rows, cells, can easily be used for custom exporting/saving
@@ -2654,9 +2664,12 @@ $.sheet = {
                             if (jS.isBusy()) {
                                 return false;
                             }
-                            var frozenAt = jS.frozenAt(),
-                                scrolledTo = jS.scrolledTo();
-                            if (!(scrolledTo.end.col <= frozenAt.col + 1)) {
+                            var
+                                actionUI = jS.obj.pane().actionUI,
+                                frozenAt = actionUI.frozenAt,
+                                scrolledArea = actionUI.scrolledArea;
+
+                            if (!(scrolledArea.end.col <= frozenAt.col + 1)) {
                                 return false;
                             }
 
@@ -2702,9 +2715,11 @@ $.sheet = {
                                     jS.setBusy(false);
                                     jS.setDirty(true);
                                     var target = jS.nearest($handle, tds);
+
                                     jS.obj.barHelper().remove();
-                                    jS.scrolledTo().end.col = jS.frozenAt().col = jS.getTdLocation(target).col - 1;
-                                    pane.actionUI.scrollStart('x');
+                                    scrolledArea.end.col = actionUI.frozenAt.col = jS.getTdLocation(target).col - 1;
+                                    jS.autoFillerHide();
+                                    actionUI.scrollStart('x', jS.sheetSize(pane.table));
                                 },
                                 containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - window.scrollBarSize.width), offset.top]
                             });
@@ -2722,9 +2737,12 @@ $.sheet = {
                             if (jS.isBusy()) {
                                 return false;
                             }
-                            var frozenAt = jS.frozenAt(),
-                                scrolledTo = jS.scrolledTo();
-                            if (!(scrolledTo.end.row <= (frozenAt.row + 1))) {
+                            var pane = jS.obj.pane(),
+                                actionUI = pane.actionUI,
+                                frozenAt = actionUI.frozenAt,
+                                scrolledArea = actionUI.scrolledArea;
+
+                            if (!(scrolledArea.end.row <= (frozenAt.row + 1))) {
                                 return false;
                             }
 
@@ -2770,8 +2788,9 @@ $.sheet = {
                                     jS.setDirty(true);
                                     var target = jS.nearest($handle, trs);
                                     jS.obj.barHelper().remove();
-                                    jS.scrolledTo().end.row = jS.frozenAt().row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
-                                    pane.actionUI.scrollStart('y');
+                                    scrolledArea.end.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
+                                    jS.autoFillerHide();
+                                    pane.actionUI.scrollStart('y', jS.sheetSize(pane.table));
                                 },
                                 containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - window.scrollBarSize.height)]
                             });
@@ -3376,7 +3395,22 @@ $.sheet = {
 
                         jS.controlFactory.tab();
 
-                        enclosure.actionUI.hide();
+                        var settings = jS.s,
+                            hiddenRows = settings.hiddenRows,
+                            hiddenColumns = settings.hiddenColumns;
+
+                        if (!hiddenRows.length || !hiddenColumns.length) {
+                            hiddenRows = table.attributes['data-hiddenrows'] || {value:''};
+                            hiddenColumns = table.attributes['data-hiddencolumns'] || {value:''};
+
+                            if (hiddenRows.value.length > 0)
+                                hiddenRows = arrHelpers.toNumbers(hiddenRows.value.split(','));
+
+                            if (hiddenColumns.value.length > 0)
+                                hiddenColumns = arrHelpers.toNumbers(hiddenColumns.value.split(','));
+                        }
+
+                        enclosure.actionUI.hide(hiddenRows, hiddenColumns, jS.rows(table), jS.cols(table));
 
                         jS.setChanged(true);
                     },
@@ -3390,11 +3424,31 @@ $.sheet = {
                         var pane = document.createElement('div'),
                             enclosure = document.createElement('div'),
                             $enclosure = $(enclosure),
-                            actionUI = new Sheet.ActionUI(jS, enclosure, pane, table, jS.cl.scroll, $.sheet.max);
+                            actionUI = new Sheet.ActionUI(enclosure, pane, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max, function() {
+                                jS.obj.barHelper().remove();
+                            }),
+                            scrollUI = actionUI.scrollUI;
+
+                        table.size = function() { return jS.sheetSize(table); };
+
+                        scrollUI.onscroll = function() {
+                            if (!jS.isBusy()) {
+                                actionUI.scrollTo({axis:'x', pixel:scrollUI.scrollLeft});
+                                actionUI.scrollTo({axis:'y', pixel:scrollUI.scrollTop});
+
+                                jS.autoFillerGoToTd();
+                                if (pane.inPlaceEdit) {
+                                    pane.inPlaceEdit.goToTd();
+                                }
+                            }
+                        };
+                        scrollUI.onmousedown = function() {
+                            jS.obj.barHelper().remove();
+                        };
 
                         enclosure.actionUI = pane.actionUI = actionUI;
 
-                        enclosure.scrollUI = actionUI.scrollUI;
+                        enclosure.scrollUI = pane.scrollUI = scrollUI;
                         enclosure.appendChild(enclosure.scrollUI);
 
                         pane.setAttribute('class', jS.cl.pane + ' ' + jS.cl.uiPane);
@@ -4703,64 +4757,32 @@ $.sheet = {
                     } while (row--);
                 },
 
-                /**
-                 * Toggles cells from being hidden, not yet used needs a bit of work
-                 * @memberOf jS
-                 */
-                toggleHide:{
-                    hiddenRows:[],
-                    row:function (i) {
-                        i = i || jS.rowLast;
-                        if (!i) return;
+                toggleHideRow: function(i) {
+                    i = i || jS.rowLast;
+                    if (!i) return;
 
-                        var row = jS.rows()[i],
-                            $row = $(row),
-                            pane = jS.obj.pane();
+                    var row = jS.rows()[i],
+                        actionUI = jS.obj.pane().actionUI;
 
-                        if (!this.hiddenRows[jS.i]) this.hiddenRows[jS.i] = [];
-
-                        if ($row.length && $.inArray(i + 1, this.hiddenRows[jS.i]) < 0) {
-                            this.hiddenRows[jS.i].push(i + 1);
-                        } else {
-                            this.hiddenRows[jS.i].splice(this.hiddenRows[jS.i].indexOf(i + 1), 1);
-                        }
-
-                        pane.actionUI.toggleHideStyleY.updateStyle();
-                    },
-                    rowShowAll:function () {
-                        $.each(this.hiddenRows[jS.i] || [], function (j) {
-                            $(this).removeData('hidden');
-                        });
-                        jS.obj.pane().actionUI.toggleHideStyleY.css('');
-                        this.hiddenRows[jS.i] = [];
-                    },
-
-                    hiddenColumns:[],
-                    columnIndexOffset:[],
-                    column:function (i) {
-                        i = i || jS.colLast;
-                        if (!i) return;
-
-                        var col = jS.cols()[i],
-                            $col = $(col),
-                            pane = jS.obj.pane();
-
-                        if (!this.hiddenColumns[jS.i]) this.hiddenColumns[jS.i] = [];
-
-                        if ($col.length && $.inArray(i + 1, this.hiddenColumns[jS.i]) < 0) {
-                            this.hiddenColumns[jS.i].push(i + 1);
-                        } else {
-                            this.hiddenColumns[jS.i].splice(this.hiddenColumns[jS.i].indexOf(i + 1), 1);
-                        }
-
-                        pane.actionUI.toggleHideStyleX.updateStyle();
-                    },
-                    columnShowAll:function () {
-                        jS.obj.pane().actionUI.toggleHideStyleX.css('');
-                        this.hiddenColumns[jS.i] = [];
-                    }
+                    actionUI.toggleHideRow(row, i);
+                    jS.autoFillerGoToTd();
                 },
+                toggleHideColumn: function(i) {
+                    i = i || jS.colLast;
+                    if (!i) return;
 
+                    var col = jS.cols()[i],
+                        actionUI = jS.obj.pane().actionUI;
+
+                    actionUI.toggleHideColumn(col, i);
+                    jS.autoFillerGoToTd();
+                },
+                rowShowAll: function() {
+                    jS.obj.pane().actionUI.rowShowAll();
+                },
+                columnShowAll: function() {
+                    jS.obj.pane().actionUI.columnShowAll();
+                },
                 /**
                  * Merges cells together
                  * @param {Object} [tds]
@@ -5422,7 +5444,8 @@ $.sheet = {
                     var size = jS.sheetSize(o),
                         addRows = s.minSize.rows || 0,
                         addCols = s.minSize.cols || 0,
-                        frozenAt = jS.frozenAt();
+                        actionUI = jS.obj.pane().actionUI,
+                        frozenAt = actionUI.frozenAt;
 
                     addRows = (frozenAt.row > addRows ? frozenAt.row + 1 : addRows);
                     addCols = (frozenAt.col > addCols ? frozenAt.col + 1 : addCols);
@@ -5626,41 +5649,6 @@ $.sheet = {
                     if (!o.data('resizable')) {
                         o.resizable(settings);
                     }
-                },
-
-                /**
-                 * Where the currect sheet is frozen at
-                 * @returns {Object}
-                 */
-                frozenAt:function () {
-                    var frozenAt;
-                    if (!(frozenAt = jS.s.frozenAt[jS.i])) frozenAt = {row:0, col:0};
-
-                    frozenAt.row = math.max(frozenAt.row, 0);
-                    frozenAt.col = math.max(frozenAt.col, 0);
-
-                    return frozenAt;
-                },
-
-                /**
-                 * Where the current sheet is scrolled to
-                 * @returns {Object}
-                 */
-                scrolledTo:function () {
-                    if (!jS.scrolledArea[jS.i]) {
-                        var frozenAt = jS.frozenAt();
-                        jS.scrolledArea[jS.i] = {
-                            start: {
-                                row:math.max(frozenAt.row, 1),
-                                col: math.max(frozenAt.col, 1)
-                            },
-                            end: {
-                                row:math.max(frozenAt.row, 1),
-                                col:math.max(frozenAt.col, 1)
-                            }
-                        };
-                    }
-                    return jS.scrolledArea[jS.i];
                 },
 
                 /**
@@ -7291,13 +7279,13 @@ $.sheet = {
                         pane = jS.obj.pane(),
                         actionUI = pane.actionUI;
 
-                    pane.scrollStyleX.i = 0;
-                    pane.scrollStyleY.i = 0;
+                    pane.actionUI.xIndex = 0;
+                    pane.actionUI.yIndex = 0;
 
                     jS.setBusy(true);
 
                     while ((direction = this.tdNotVisible($td)) && i < 25) {
-                        var scrolledArea = jS.scrolledTo();
+                        var scrolledArea = actionUI.scrolledArea;
 
                         if (direction.left) {
                             x--;
@@ -7428,7 +7416,7 @@ $.sheet = {
                         open = function() {
                             jS.setBusy(true);
                             var header = jS.controlFactory.header(),
-                                ui = open.ui = jS.controlFactory.ui(),
+                                ui = jS.controlFactory.ui(),
                                 sheetAdder = jS.controlFactory.sheetAdder(),
                                 tabContainer = jS.controlFactory.tabContainer(),
                                 i;
@@ -7452,14 +7440,16 @@ $.sheet = {
                                 .append(tabContainer);
 
                             for (i = 0; i < tables.length; i++) {
-                                var me = new Loader(i, tables[i]);
+                                new Loader(jS, i, ui, tables[i]);
                             }
                         },
-                        Loader = function(i, table) {
+                        Loader = function(jS, i, ui, table) {
                             var me = this;
                             this.i = i;
+                            this.ui = ui;
                             this.table = table;
                             this.isLast = (i == lastIndex);
+                            this.jS = jS;
 
                             if ($.sheet.max) {
                                 var size = jS.tableSize(table);
@@ -7475,8 +7465,25 @@ $.sheet = {
                             } else {
                                 this.load();
                             }
+                        };
+
+                    Loader.prototype = {
+                        load: function() {
+                            jS.controlFactory.sheetUI(this.ui, this.table, this.i);
+                            jS.sheetCount++;
+
+                            stack.push(this.i);
+
+                            jS.trigger('sheetOpened', [this.i]);
+
+                            if (this.isLast) {
+                                this.loaded();
+                            }
                         },
-                        loaded = function() {
+                        loaded: function() {
+                            var jS = this.jS,
+                                ui = this.ui;
+
                             // resizable container div
                             jS.resizableSheet(s.parent, {
                                 minWidth:s.parent.width() * 0.1,
@@ -7484,13 +7491,13 @@ $.sheet = {
                                 start:function () {
                                     jS.setBusy(true);
                                     jS.obj.enclosure().hide();
-                                    open.ui.sheetAdder.hide();
-                                    open.ui.tabContainer.hide();
+                                    ui.sheetAdder.hide();
+                                    ui.tabContainer.hide();
                                 },
                                 stop:function () {
                                     jS.obj.enclosure().show();
-                                    open.ui.sheetAdder.show();
-                                    open.ui.tabContainer.show();
+                                    ui.sheetAdder.show();
+                                    ui.tabContainer.show();
                                     jS.setBusy(false);
                                     jS.sheetSyncSize();
                                     jS.obj.pane().resizeScroll();
@@ -7509,18 +7516,6 @@ $.sheet = {
                             }
 
                             jS.trigger('sheetAllOpened');
-                        };
-
-                    Loader.prototype.load = function() {
-                        jS.controlFactory.sheetUI(open.ui, this.table, this.i);
-                        jS.sheetCount++;
-
-                        stack.push(this.i);
-
-                        jS.trigger('sheetOpened', [this.i]);
-
-                        if (this.isLast) {
-                            loaded();
                         }
                     };
 
@@ -7695,7 +7690,7 @@ $.sheet = {
                             }
                         },
                         obj = [],
-                        scrolledArea  = jS.scrolledTo(),
+                        scrolledArea  = jS.obj.pane().actionUI.scrolledArea,
                         sheet = jS.obj.table(),
                         col,
                         row;
@@ -8816,17 +8811,19 @@ $.sheet = {
      */
     scrollLocker:function (I) {
         var instance = $.sheet.instance;
-        instance[I].obj.scrolls().each(function (i) {
-            var me = this;
-            $(this).scroll(function (e) {
+        instance[I].obj.panes().each(function (i) {
+            var me;
+            $(me = this.scrollUI).scroll(function (e) {
                 var j = instance.length - 1,
-                    scrollUI,
-                    pane;
+                    scrollUI;
                 if (j > -1) {
                     do {
                         scrollUI = instance[j].controls.enclosure[i][0].scrollUI;
-                        scrollUI.scrollLeft = me.scrollLeft;
-                        scrollUI.scrollTop = me.scrollTop;
+
+                        if (this !== scrollUI) {
+                            scrollUI.scrollLeft = me.scrollLeft;
+                            scrollUI.scrollTop = me.scrollTop;
+                        }
                     } while (j--);
                 }
             });
