@@ -1613,8 +1613,8 @@ $.sheet = {
                     parent.insertBefore(newElement, targetElement.nextSibling);
                 }
             },
-            $win = $(window),
-            $doc = $(document),
+            $window = $(window),
+            $document = $(document),
             body = document.body,
             $body = $(body),
             emptyFN = function () {},
@@ -3920,7 +3920,7 @@ $.sheet = {
                                 .focus()
                                 .select();
 
-                            $doc
+                            $document
                                 .one('keyup', function () {
                                     if (clearValue) {
                                         formula.val('');
@@ -4077,18 +4077,18 @@ $.sheet = {
                                 jS.updateCellsAfterPasteToFormula();
                             };
 
-                            var doc = $doc
+                            var $doc = $document
                                 .one('keyup', function () {
                                     fnAfter();
                                     fnAfter = function () {
                                     };
-                                    document.mouseup();
+                                    $doc.mouseup();
                                 })
                                 .one('mouseup', function () {
                                     fnAfter();
                                     fnAfter = function () {
                                     };
-                                    document.keyup();
+                                    $doc.keyup();
                                 });
 
                             jS.setDirty(true);
@@ -4468,7 +4468,7 @@ $.sheet = {
                             jS.evt.barInteraction.first = jS.evt.barInteraction.last = jS[entity + 'Last'] = i;
 
                             jS.evt.barInteraction.selecting = true;
-                            $doc
+                            $document
                                 .one('mouseup', function () {
                                     jS.evt.barInteraction.selecting = false;
                                 });
@@ -4617,7 +4617,7 @@ $.sheet = {
                             .append(parent.children())
                             .appendTo($body);
 
-                        $win
+                        $window
                             .bind('resize', function() {
                                 $window.trigger('jSResize');
                             })
@@ -8690,7 +8690,7 @@ $.sheet = {
             jSE.chart = emptyFN;
         }
 
-        $win
+        $window
             .resize(function () {
                 if (jS && !jS.isBusy()) { //We check because jS might have been killed
                     s.width = s.parent.width();
