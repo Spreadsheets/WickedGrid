@@ -1119,7 +1119,9 @@ $.fn.extend({
             if ((this.className || '').match(/\bnotEditable\b/i) != null) {
                 settings['editable'] = false;
             }
-
+			
+            settings['isStretchedVertically'] = /%/.test(this.style.height);			
+			
             for (var i in events) {
                 if (settings[events[i]]) me.bind(events[i], settings[events[i]]);
             }
@@ -1548,10 +1550,10 @@ $.sheet = {
 
         var write = function () {
             if (this.script !== undefined) {
-                document.write('<script src="' + path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.script + '"></script>');
+                $('head').append('<script src="' + path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.script + '"></script>');
             }
             if (this.css !== undefined) {
-                document.write('<link rel="stylesheet" type="text/css" href="' + path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.css + '"></link>');
+                $('head').append('<link rel="stylesheet" type="text/css" href="' + path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.css + '"></link>');
             }
         };
 
@@ -1597,7 +1599,7 @@ $.sheet = {
                     parent.insertBefore(newElement, targetElement.nextSibling);
                 }
             },
-            $win = $(window),
+            $window = $(window),
             $doc = $(document),
             body = document.body,
             $body = $(body),
@@ -1924,6 +1926,7 @@ $.sheet = {
                     formulaParent:'jSFormulaParent',
                     header:'jSHeader',
                     fullScreen:'jSFullScreen',
+                    fullScreenToggleBtn: 'jSFullScreenToggleBtn',
                     inPlaceEdit:'jSInPlaceEdit',
                     menu:'jSMenu',
                     menuFixed:'jSMenuFixed',
@@ -4536,8 +4539,14 @@ $.sheet = {
                     if (!jS) return;
                     jS.evt.cellEditDone();
                     var fullScreen = jS.obj.fullScreen(),
-                        pane = jS.obj.pane();
+                        pane = jS.obj.pane(),
+                        $fullScreenToggleBtn;
                     if (fullScreen.is(':visible')) {
+                        $fullScreenToggleBtn = $('.' + jS.cl.fullScreenToggleBtn);
+                        if ($fullScreenToggleBtn.length > 0) {
+                            $fullScreenToggleBtn.off('click');
+                            $fullScreenToggleBtn.remove();
+                        }
                         $window.unbind('jSResize');
                         $body.removeClass('bodyNoScroll');
                         s.parent = fullScreen[0].origParent;
@@ -4556,14 +4565,26 @@ $.sheet = {
                             fullScreen = document.createElement('div'),
                             events = $._data(s.parent[0], 'events');
 
-                        fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen + ' ' + jS.cl.parent;
+                        $("<span>")
+                            .addClass(jS.cl.fullScreenToggleBtn)
+                            .on("mouseover",function(e){
+                                $(this).addClass(jS.cl.fullScreenToggleBtn + '-hover');
+                            })
+                            .on("mouseout",function(e){
+                                $(this).removeClass(jS.cl.fullScreenToggleBtn + '-hover');
+                            })
+                            .on("click", function(e){
+                                jS.toggleFullScreen();
+                            })
+                            .appendTo(fullScreen);
 
+                        fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen + ' ' + jS.cl.parent;                         
                         fullScreen.origParent = parent;
                         s.parent = jS.controls.fullScreen = $(fullScreen)
                             .append(parent.children())
                             .appendTo($body);
 
-                        $win
+                        $window
                             .bind('resize', function() {
                                 $window.trigger('jSResize');
                             })
@@ -7555,7 +7576,7 @@ $.sheet = {
                     if (!h) {
                         h = 400; //Height really needs to be set by the parent
                         s.parent.height(h);
-                    } else if (h < 200) {
+                    } else if ((h < 200) && (!s.isStretchedVertically)) {
                         h = 200;
                         s.parent.height(h);
                     }
@@ -8695,7 +8716,7 @@ $.sheet = {
             jSE.chart = emptyFN;
         }
 
-        $win
+        $window
             .resize(function () {
                 if (jS && !jS.isBusy()) { //We check because jS might have been killed
                     s.width = s.parent.width();
@@ -11490,10 +11511,14 @@ $.extend(Math, {
         }
         return ret;
     }
-});$.print = function (s) {
-    var w = win.open();
-    w.document.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
-    w.document.close();
+});
+
+$.print = function (s) {
+    var newWin = $(window).get(0).open();
+	if (newWin && !newWin.closed && typeof newWin.closed!='undefined'){
+		newWin.document.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
+		newWin.document.close();
+	}
 };
 
 //This is a fix for Jison
