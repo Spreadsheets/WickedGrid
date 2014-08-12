@@ -6411,7 +6411,7 @@ $.sheet = {
 
                     var sheet = jS.spreadsheetToArray(null, sheetIndex),
                         endScrolledArea = actionUI.scrolledArea.end;
-                    console.log(endScrolledArea);
+                    //console.log(endScrolledArea);
                     //jSE.calc(sheetIndex, sheet, jS.updateCellValue);
                     /*jS.trigger('sheetCalculation', [
                         {which:'speadsheet', sheet:sheet, index:sheetIndex}

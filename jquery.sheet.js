@@ -221,28 +221,40 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 x = 0,
                 y = 0,
                 direction,
-                scrolledArea;
+                scrolledTo;
 
             this.xIndex = 0;
             this.yIndex = 0;
 
             while ((direction = this.directionToSeeTd(td)) !== null) {
-                scrolledArea = this.scrolledArea;
+                scrolledTo = this.scrolledArea.end;
 
                 if (direction.left) {
                     x--;
-                    this.scrollTo({axis:'x', value:scrolledArea.end.col - 1});
+                    this.scrollTo({
+                        axis:'x',
+                        value:scrolledTo.col - 1
+                    });
                 } else if (direction.right) {
                     x++;
-                    this.scrollTo({axis:'x', value:scrolledArea.end.col + 1});
+                    this.scrollTo({
+                        axis:'x',
+                        value:scrolledTo.col + 1
+                    });
                 }
 
                 if (direction.up) {
                     y--;
-                    this.scrollTo({axis:'y', value:scrolledArea.end.row - 1});
+                    this.scrollTo({
+                        axis:'y',
+                        value:scrolledTo.row - 1
+                    });
                 } else if (direction.down) {
                     y++;
-                    this.scrollTo({axis:'y', value:scrolledArea.end.row + 1});
+                    this.scrollTo({
+                        axis:'y',
+                        value:scrolledTo.row + 1
+                    });
                 }
 
                 i++;
@@ -276,14 +288,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     left:td.offsetLeft,
                     right:td.offsetLeft + tdWidth
                 },
-                tdParent = td.parentNode;
+                tdParent = td.parentNode,
+                scrollTo = this.scrolledArea.end;
 
             if (!td.col) {
                 return null;
             }
 
-            var xHidden = $(td.barTop).is(':hidden'),
-                yHidden = $(tdParent).is(':hidden'),
+            var xHidden = td.barTop.cellIndex < scrollTo.col,
+                yHidden = tdParent.rowIndex < scrollTo.row,
                 hidden = {
                     up:yHidden,
                     down:tdLocation.bottom > visibleFold.bottom && tdHeight <= pane.clientHeight,
@@ -291,7 +304,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     right:tdLocation.right > visibleFold.right && tdWidth <= pane.clientWidth
                 };
 
-            if (hidden.up || hidden.down || hidden.left || hidden.right) {
+            if (
+                hidden.up
+                || hidden.down
+                || hidden.left
+                || hidden.right
+            ) {
                 return hidden;
             }
 
@@ -410,6 +428,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
             switch (axisName || 'x') {
                 case 'x':
+                    axis.value = 0;
                     axis.max = size.cols;
                     axis.min = 0;
                     axis.size = size.cols;
@@ -418,13 +437,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     axis.area = outer.scrollWidth - outer.clientWidth;
                     axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
                     axis.scrollUpdate = function () {
-                        if (axis.value) {
-                            outer.scrollLeft = (axis.value) * (axis.area / axis.size);
-                        }
+                        outer.scrollLeft = (axis.value) * (axis.area / axis.size);
                     };
                     axis.gridSize = 100 / axis.size;
                     break;
                 case 'y':
+                    axis.value = 0;
                     axis.max = size.rows;
                     axis.min = 0;
                     axis.size = size.rows;
@@ -433,9 +451,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     axis.area = outer.scrollHeight - outer.clientHeight;
                     axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
                     axis.scrollUpdate = function () {
-                        if (axis.value) {
-                            outer.scrollTop = (axis.value) * (axis.area / axis.size);
-                        }
+                        outer.scrollTop = (axis.value) * (axis.area / axis.size);
                     };
                     axis.gridSize = 100 / axis.size;
                     break;
@@ -479,6 +495,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     indexes.push(i + me.min);
                 } while(i-- > 0);
             }
+
+            me.value = pos.value;
+
             if (indexes.length) {
                 if (me.scrollStyle) {
                     return me.scrollStyle.update(indexes);
@@ -489,7 +508,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 }
             }
 
-            me.value = pos.value;
             return false;
         },
 
@@ -7002,7 +7020,7 @@ $.sheet = {
 
                     var sheet = jS.spreadsheetToArray(null, sheetIndex),
                         endScrolledArea = actionUI.scrolledArea.end;
-                    console.log(endScrolledArea);
+                    //console.log(endScrolledArea);
                     //jSE.calc(sheetIndex, sheet, jS.updateCellValue);
                     /*jS.trigger('sheetCalculation', [
                         {which:'speadsheet', sheet:sheet, index:sheetIndex}
