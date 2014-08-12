@@ -1,0 +1,44 @@
+{
+    "name": "sheet",
+    "title": "jQuery.sheet",
+    "description": "The ajax spreadsheet",
+    "keywords": [
+        "spreadsheet",
+        "sheet",
+        "excel",
+        "docs",
+        "office",
+        "sheet",
+        "formula",
+        "calculate",
+        "calculation",
+        "doc",
+        "fast"
+    ],
+    "version": "4.0.0",
+    "author": {
+        "name": "Robert Plummer",
+        "email": "RobertLeePlummerJr@gmail.com",
+        "url": "http://visop-dev.com"
+    },
+    "maintainers": [
+        {
+            "name": "Robert Plummer",
+            "email": "RobertLeePlummerJr@gmail.com",
+            "url": "http://visop-dev.com"
+        }
+    ],
+    "licenses": [
+        {
+            "type": "MIT",
+            "url": "https://github.com/Spreadsheets/jQuery.sheet/wiki/License"
+        }
+    ],
+    "bugs": "https://github.com/Spreadsheets/jQuery.sheet/issues",
+    "homepage": "https://github.com/Spreadsheets/jQuery.sheet",
+    "docs": "http://visop-dev.com/doc/js3/jQuery.sheet.html",
+    "download": "https://github.com/Spreadsheets/jQuery.sheet/releases",
+    "dependencies": {
+        "jquery": ">=1.5"
+    }
+}
