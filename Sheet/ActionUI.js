@@ -3,17 +3,17 @@
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-    var Constructor = function(enclosure, pane, sheet, cl, frozenAt, max, scrollFn) {
+    var Constructor = function(enclosure, pane, sheet, cl, frozenAt, max) {
         this.enclosure = enclosure;
         this.pane = pane;
         this.sheet = sheet;
         this.max = max;
-        this.scrollFn = scrollFn || function() {};
         this.xIndex = 0;
         this.yIndex = 0;
 
         this.scrollAxis = {
-            x:{},y:{}
+            x:{},
+            y:{}
         };
 
         this.scrollSize = {};
@@ -21,7 +21,10 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         this.hiddenColumns = [];
         this.hiddenRows = [];
 
-        if (!(this.frozenAt = frozenAt)) this.frozenAt = {row:0, col:0};
+        if (!(this.frozenAt = frozenAt)) {
+            this.frozenAt = {row:0, col:0};
+        }
+
         this.frozenAt.row = Math.max(this.frozenAt.row, 0);
         this.frozenAt.col = Math.max(this.frozenAt.col, 0);
 
@@ -104,8 +107,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                         that.scrolledArea.end.col = Math.max(indexes.shift() || 1, 1);
                     }
 
-                    that.scrollFn();
+                    return true;
                 }
+                return false;
             }),
             scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(indexes, style){
                 indexes = indexes || [];
@@ -122,8 +126,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                         that.scrolledArea.end.row = Math.max(indexes.shift() || 1, 1);
                     }
 
-                    that.scrollFn();
+                    return true;
                 }
+                return false;
             }),
             nthCss = this.nthCss;
 
@@ -183,6 +188,92 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
     Constructor.prototype = {
         /**
+         * scrolls the sheet to the selected cell
+         * @param {HTMLElement} td
+         */
+        putTdInView:function (td) {
+            var i = 0,
+                x = 0,
+                y = 0,
+                direction,
+                scrolledArea;
+
+            this.xIndex = 0;
+            this.yIndex = 0;
+
+            while ((direction = this.directionToSeeTd(td)) !== null) {
+                scrolledArea = this.scrolledArea;
+
+                if (direction.left) {
+                    x--;
+                    this.scrollTo({axis:'x', value:scrolledArea.end.col - 1});
+                } else if (direction.right) {
+                    x++;
+                    this.scrollTo({axis:'x', value:scrolledArea.end.col + 1});
+                }
+
+                if (direction.up) {
+                    y--;
+                    this.scrollTo({axis:'y', value:scrolledArea.end.row - 1});
+                } else if (direction.down) {
+                    y++;
+                    this.scrollTo({axis:'y', value:scrolledArea.end.row + 1});
+                }
+
+                i++;
+                if (i < 25) {
+                    break;
+                }
+            }
+
+            this.scrollStop();
+        },
+
+        /**
+         * detects if a td is not visible
+         * @param {HTMLElement} td
+         * @returns {Boolean|Object}
+         */
+        directionToSeeTd:function(td) {
+            var pane = this.pane,
+                visibleFold = {
+                    top:0,
+                    bottom:pane.clientHeight,
+                    left:0,
+                    right:pane.clientWidth
+                },
+
+                tdWidth = td.clientWidth,
+                tdHeight = td.clientHeight,
+                tdLocation = {
+                    top:td.offsetTop,
+                    bottom:td.offsetTop + tdHeight,
+                    left:td.offsetLeft,
+                    right:td.offsetLeft + tdWidth
+                },
+                tdParent = td.parentNode;
+
+            if (!td.col) {
+                return null;
+            }
+
+            var xHidden = $(td.barTop).is(':hidden'),
+                yHidden = $(tdParent).is(':hidden'),
+                hidden = {
+                    up:yHidden,
+                    down:tdLocation.bottom > visibleFold.bottom && tdHeight <= pane.clientHeight,
+                    left:xHidden,
+                    right:tdLocation.right > visibleFold.right && tdWidth <= pane.clientWidth
+                };
+
+            if (hidden.up || hidden.down || hidden.left || hidden.right) {
+                return hidden;
+            }
+
+            return null;
+        },
+
+        /**
          * Repeats a string a number of times
          * @param {String} str
          * @param {Number} num
@@ -232,27 +323,22 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         hide:function (hiddenRows, hiddenColumns, rows, columns) {
             var that = this,
                 cssId = '#' + this.sheet.getAttribute('id'),
-                toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function(fn) {
+                toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
                     var style = nthCss('col', cssId, that.hiddenColumns, 0) +
                         nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
 
                     this.setStyle(style);
-
-                    if (fn) fn();
                 }),
-                toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(function(fn) {
+                toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
                     var style = nthCss('tr', cssId, that.hiddenRows, 0);
 
                     this.setStyle(style);
-
-                    if (fn) fn();
                 }),
 
                 i,
                 j,
                 nthCss = this.nthCss,
-                pane = this.pane,
-                sheet = this.sheet;
+                pane = this.pane;
 
             pane.appendChild(toggleHideStyleX.styleElement);
             pane.appendChild(toggleHideStyleY.styleElement);
@@ -307,7 +393,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     axis.area = outer.scrollWidth - outer.clientWidth;
                     axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
                     axis.scrollUpdate = function () {
-                        outer.scrollLeft = (axis.value) * (axis.area / axis.size);
+                        if (axis.value) {
+                            outer.scrollLeft = (axis.value) * (axis.area / axis.size);
+                        }
                     };
                     axis.gridSize = 100 / axis.size;
                     break;
@@ -320,7 +408,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     axis.area = outer.scrollHeight - outer.clientHeight;
                     axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
                     axis.scrollUpdate = function () {
-                        outer.scrollTop = (axis.value) * (axis.area / axis.size);
+                        if (axis.value) {
+                            outer.scrollTop = (axis.value) * (axis.area / axis.size);
+                        }
                     };
                     axis.gridSize = 100 / axis.size;
                     break;
@@ -365,20 +455,29 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 } while(i-- > 0);
             }
             if (indexes.length) {
-                if (me.scrollStyle) me.scrollStyle.update(indexes);
+                if (me.scrollStyle) {
+                    return me.scrollStyle.update(indexes);
+                }
             } else {
-                if (me.scrollStyle) me.scrollStyle.update();
+                if (me.scrollStyle) {
+                    return me.scrollStyle.update();
+                }
             }
 
             me.value = pos.value;
+            return false;
         },
 
         /**
          * Called after scroll is done
          */
         scrollStop:function () {
-            if (this.scrollAxis.x.scrollUpdate) this.scrollAxis.x.scrollUpdate();
-            if (this.scrollAxis.y.scrollUpdate) this.scrollAxis.y.scrollUpdate();
+            if (this.scrollAxis.x.scrollUpdate) {
+                this.scrollAxis.x.scrollUpdate();
+            }
+            if (this.scrollAxis.y.scrollUpdate) {
+                this.scrollAxis.y.scrollUpdate();
+            }
         },
 
 

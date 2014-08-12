@@ -2932,21 +2932,23 @@ $.sheet = {
                         var pane = document.createElement('div'),
                             enclosure = document.createElement('div'),
                             $enclosure = $(enclosure),
-                            actionUI = new Sheet.ActionUI(enclosure, pane, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max, function() {
-                                jS.obj.barHelper().remove();
-                            }),
+                            actionUI = new Sheet.ActionUI(enclosure, pane, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
                             scrollUI = actionUI.scrollUI;
 
                         table.size = function() { return jS.sheetSize(table); };
 
                         scrollUI.onscroll = function() {
                             if (!jS.isBusy()) {
-                                actionUI.scrollTo({axis:'x', pixel:scrollUI.scrollLeft});
-                                actionUI.scrollTo({axis:'y', pixel:scrollUI.scrollTop});
+                                var xUpdated = actionUI.scrollTo({axis:'x', pixel:scrollUI.scrollLeft}),
+                                    yUpdated = actionUI.scrollTo({axis:'y', pixel:scrollUI.scrollTop});
 
-                                jS.autoFillerGoToTd();
-                                if (pane.inPlaceEdit) {
-                                    pane.inPlaceEdit.goToTd();
+                                if (xUpdated || yUpdated) {
+                                    jS.obj.barHelper().remove();
+                                    jS.calcVisible(actionUI);
+                                    jS.autoFillerGoToTd();
+                                    if (pane.inPlaceEdit) {
+                                        pane.inPlaceEdit.goToTd();
+                                    }
                                 }
                             }
                         };
@@ -6394,6 +6396,30 @@ $.sheet = {
                     return true;
                 },
 
+
+                calcVisible: function(actionUI, sheetIndex) {
+                    sheetIndex = sheetIndex || jS.i;
+                    /*if (
+                        jS.readOnly[sheetIndex]
+                            || jS.isChanged(sheetIndex) === false
+                            || !jS.formulaParser
+                        ) {
+                        return false;
+                    }*/ //readonly is no calc at all
+
+                    jS.calcLast = jS.calcLast || new Date();
+
+                    var sheet = jS.spreadsheetToArray(null, sheetIndex),
+                        endScrolledArea = actionUI.scrolledArea.end;
+                    console.log(endScrolledArea);
+                    //jSE.calc(sheetIndex, sheet, jS.updateCellValue);
+                    /*jS.trigger('sheetCalculation', [
+                        {which:'speadsheet', sheet:sheet, index:sheetIndex}
+                    ]);*/
+                    //jS.setChanged(false);
+                    return true;
+                },
+
                 /**
                  * Calculates just the dependencies of a single cell, and their dependencies recursivley
                  * @param {Date} last
@@ -6780,43 +6806,14 @@ $.sheet = {
                     $td = $td || jS.obj.tdActive();
                     if (!$td.length) return;
 
-                    var i = 0,
-                        x = 0,
-                        y = 0,
-                        direction,
-                        pane = jS.obj.pane(),
+                    var pane = jS.obj.pane(),
                         actionUI = pane.actionUI;
-
-                    pane.actionUI.xIndex = 0;
-                    pane.actionUI.yIndex = 0;
 
                     jS.setBusy(true);
 
-                    while ((direction = this.tdNotVisible($td)) && i < 25) {
-                        var scrolledArea = actionUI.scrolledArea;
-
-                        if (direction.left) {
-                            x--;
-                            actionUI.scrollTo({axis:'x', value:scrolledArea.end.col - 1});
-                        } else if (direction.right) {
-                            x++;
-                            actionUI.scrollTo({axis:'x', value:scrolledArea.end.col + 1});
-                        }
-
-                        if (direction.up) {
-                            y--;
-                            actionUI.scrollTo({axis:'y', value:scrolledArea.end.row - 1});
-                        } else if (direction.down) {
-                            y++;
-                            actionUI.scrollTo({axis:'y', value:scrolledArea.end.row + 1});
-                        }
-
-                        i++;
-                    }
+                    actionUI.putTdInView($td[0]);
 
                     jS.setBusy(false);
-
-                    pane.actionUI.scrollStop();
 
                     if(!dontMoveAutoFiller){
                         jS.autoFillerGoToTd($td);
