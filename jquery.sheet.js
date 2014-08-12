@@ -3552,8 +3552,16 @@ $.sheet = {
                                     yUpdated = actionUI.scrollTo({axis:'y', pixel:scrollUI.scrollTop});
 
                                 if (xUpdated || yUpdated) {
+
+                                    if (xUpdated) {
+                                        jS.calcVisibleCol(actionUI);
+                                    }
+
+                                    if (yUpdated) {
+                                        jS.calcVisibleRow(actionUI);
+                                    }
+
                                     jS.obj.barHelper().remove();
-                                    jS.calcVisible(actionUI);
                                     jS.autoFillerGoToTd();
                                     if (pane.inPlaceEdit) {
                                         pane.inPlaceEdit.goToTd();
@@ -6401,6 +6409,10 @@ $.sheet = {
                         cell = this;
                     }
 
+                    if (cell === undefined) {
+                        throw new Error("cell doesn't exist");
+                    }
+
                     cell.oldValue = cell.value; //we detect the last value, so that we don't have to update all cell, thus saving resources
 
                     if (cell.result) { //unset the last result if it is set
@@ -7005,28 +7017,88 @@ $.sheet = {
                     return true;
                 },
 
-
-                calcVisible: function(actionUI, sheetIndex) {
+                calcVisibleInit: function(sheetIndex) {
                     sheetIndex = sheetIndex || jS.i;
-                    /*if (
-                        jS.readOnly[sheetIndex]
-                            || jS.isChanged(sheetIndex) === false
-                            || !jS.formulaParser
-                        ) {
-                        return false;
-                    }*/ //readonly is no calc at all
 
                     jS.calcLast = jS.calcLast || new Date();
 
-                    var sheet = jS.spreadsheetToArray(null, sheetIndex),
-                        endScrolledArea = actionUI.scrolledArea.end;
-                    //console.log(endScrolledArea);
-                    //jSE.calc(sheetIndex, sheet, jS.updateCellValue);
-                    /*jS.trigger('sheetCalculation', [
-                        {which:'speadsheet', sheet:sheet, index:sheetIndex}
-                    ]);*/
-                    //jS.setChanged(false);
-                    return true;
+                    var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
+                        ignite = jS.updateCellValue,
+                        min = Math.min,
+                        initRows = 40,
+                        initCols = 20,
+                        rowIndex = min(spreadsheet.length - 1, initRows),
+                        row,
+                        colIndex;
+
+
+                    if (rowIndex > 0) {
+                        do {
+                            if (rowIndex > 0 && (row = spreadsheet[rowIndex]) !== undefined) {
+                                colIndex = min(row.length - 1, initCols);
+                                if (colIndex > 0) {
+                                    do {
+                                        ignite.apply(row[colIndex]);
+                                    } while (colIndex-- > 1);
+                                }
+                            }
+                        } while(rowIndex-- > 1);
+                    }
+                },
+                calcVisibleRow: function(actionUI, sheetIndex) {
+                    sheetIndex = sheetIndex || jS.i;
+
+                    var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
+                        endScrolledArea = actionUI.scrolledArea.end,
+                        ignite = jS.updateCellValue,
+                        min = Math.min,
+                        initRows = 40,
+                        initCols = 20,
+                        targetRow = endScrolledArea.row + initRows,
+                        targetCol = endScrolledArea.col + initCols,
+                        rowIndex = min(spreadsheet.length - 1, targetRow),
+                        row,
+                        colIndex;
+
+
+                    if (rowIndex > 0) {
+                        if ((row = spreadsheet[rowIndex]) !== undefined) {
+                            colIndex = min(row.length - 1, targetCol);
+                            if (colIndex > 0) {
+                                do {
+                                    ignite.apply(row[colIndex]);
+                                } while (colIndex-- > 1);
+                            }
+                        }
+                    }
+                },
+                calcVisibleCol: function(actionUI, sheetIndex) {
+                    sheetIndex = sheetIndex || jS.i;
+
+                    var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
+                        endScrolledArea = actionUI.scrolledArea.end,
+                        ignite = jS.updateCellValue,
+                        min = Math.min,
+                        initRows = 40,
+                        initCols = 20,
+                        targetRow = endScrolledArea.row + initRows,
+                        targetCol = endScrolledArea.col + initCols,
+                        rowIndex = min(spreadsheet.length - 1, targetRow),
+                        row,
+                        colIndex,
+                        cell;
+
+
+                    if (rowIndex > 0) {
+                        do {
+                            if (rowIndex > 0 && (row = spreadsheet[rowIndex]) !== undefined) {
+                                colIndex = min(row.length - 1, targetCol);
+                                if ((cell = row[colIndex]) !== undefined) {
+                                    ignite.apply(cell);
+                                }
+                            }
+                        } while(rowIndex-- > 1);
+                    }
                 },
 
                 /**
@@ -7626,7 +7698,7 @@ $.sheet = {
                             jS.setBusy(false);
 
                             while (stack.length) {
-                                jS.calc(jS.i = stack.pop());
+                                jS.calcVisibleInit(jS.i = stack.pop());
                             }
 
                             jS.trigger('sheetAllOpened');
