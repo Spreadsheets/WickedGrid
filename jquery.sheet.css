@@ -372,6 +372,24 @@
 	position: fixed;
 	top: expression(eval(document.body.scrollTop) + "px");
 	left: expression(eval(document.body.scrollLeft) + "px");
+	z-index: 99999 !important;
+}
+
+.jSFullScreenToggleBtn{
+	width: 32px;
+	height: 32px;
+	position: absolute;
+	bottom: 40px;
+	right: 20px;
+	background: #FFF url("images/toggle_full_screen.png") no-repeat center center;
+	z-index: 99999;
+	cursor: pointer;	
+}
+
+.jSFullScreenToggleBtn-hover{
+	-moz-box-shadow: 0 0 10px 0 #439FE6;
+	-webkit-box-shadow: 0 0 10px 0 #439FE6;
+	box-shadow: 0 0 10px 0 #439FE6;
 }
 
 .jSFullScreen > .ui-resizable-handle {
