@@ -2446,11 +2446,12 @@ $.sheet = {
                                     })
                                     .blur(function () {
                                         if (menu) menu.hide();
-                                    })
-                                    .bind('destroy', function () {
-                                        barMenuParentTop.remove();
-                                        jS.controls.bar.x.menuParent[jS.i] = null;
                                     });
+
+                                barMenuParentTop.get(0).destroy = function(){
+                                    barMenuParentTop.remove();
+                                    jS.controls.bar.x.menuParent[jS.i] = null;
+                                };
 
                                 jS.controls.bar.x.menuParent[jS.i] = barMenuParentTop;
                             }
@@ -4013,7 +4014,13 @@ $.sheet = {
                 refreshColumnLabels:function (start) {
                     start = start || 0;
 
-                    jS.obj.barMenuParentTop().trigger('destroy');
+                    var $barMenuParentTop = jS.obj.barMenuParentTop();
+                    if (($barMenuParentTop) && ($barMenuParentTop.length)){
+                        var barMenuParentTop = $barMenuParentTop.get(0);
+                        if ($.isFunction(barMenuParentTop.destroy)) { 
+                            barMenuParentTop.destroy(); 
+                        }
+                    }
 
                     var tds = jS.controls.bar.x.td[jS.i];
 
