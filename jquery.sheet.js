@@ -982,6 +982,9 @@ $.fn.extend({
      *          }
      *      }
      * </pre>
+     *
+     * initCalcRows {Number} default 40
+     * initCalcCols {Number} default 20
      */
     sheet:function (settings) {
         var n = isNaN,
@@ -1232,7 +1235,9 @@ $.fn.extend({
                         } else if (callbackIfFalse) {
                             callbackIfFalse();
                         }
-                    }
+                    },
+                    initCalcRows: 40,
+                    initCalcCols: 20
                 };
 
             //destroy already existing spreadsheet
@@ -3548,17 +3553,21 @@ $.sheet = {
 
                         scrollUI.onscroll = function() {
                             if (!jS.isBusy()) {
-                                var xUpdated = actionUI.scrollTo({axis:'x', pixel:scrollUI.scrollLeft}),
-                                    yUpdated = actionUI.scrollTo({axis:'y', pixel:scrollUI.scrollTop});
+                                var xUpdated = actionUI.scrollTo({axis:'x', pixel:this.scrollLeft}),
+                                    yUpdated = actionUI.scrollTo({axis:'y', pixel:this.scrollTop});
 
                                 if (xUpdated || yUpdated) {
 
                                     if (xUpdated) {
-                                        jS.calcVisibleCol(actionUI);
+                                        setTimeout(function(){
+                                            jS.calcVisibleCol(actionUI);
+                                        }, 0);
                                     }
 
                                     if (yUpdated) {
-                                        jS.calcVisibleRow(actionUI);
+                                        setTimeout(function() {
+                                            jS.calcVisibleRow(actionUI);
+                                        }, 0);
                                     }
 
                                     jS.obj.barHelper().remove();
@@ -7011,12 +7020,16 @@ $.sheet = {
                     var sheet = jS.spreadsheetToArray(null, sheetIndex);
                     jSE.calc(sheetIndex, sheet, jS.updateCellValue);
                     jS.trigger('sheetCalculation', [
-                        {which:'speadsheet', sheet:sheet, index:sheetIndex}
+                        {which:'spreadsheet', sheet:sheet, index:sheetIndex}
                     ]);
                     jS.setChanged(false);
                     return true;
                 },
 
+                calcVisiblePos: {
+                    row: -1,
+                    col: -1
+                },
                 calcVisibleInit: function(sheetIndex) {
                     sheetIndex = sheetIndex || jS.i;
 
@@ -7025,17 +7038,19 @@ $.sheet = {
                     var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
                         ignite = jS.updateCellValue,
                         min = Math.min,
-                        initRows = 40,
-                        initCols = 20,
+                        initRows = s.initCalcRows,
+                        initCols = s.initCalcCols,
                         rowIndex = min(spreadsheet.length - 1, initRows),
                         row,
-                        colIndex;
+                        colIndex,
+                        pos = {row: -1, col: -1};
 
 
                     if (rowIndex > 0) {
+                        pos.row = rowIndex;
                         do {
                             if (rowIndex > 0 && (row = spreadsheet[rowIndex]) !== undefined) {
-                                colIndex = min(row.length - 1, initCols);
+                                pos.col = colIndex = min(row.length - 1, initCols);
                                 if (colIndex > 0) {
                                     do {
                                         ignite.apply(row[colIndex]);
@@ -7044,6 +7059,12 @@ $.sheet = {
                             }
                         } while(rowIndex-- > 1);
                     }
+
+                    this.calcVisiblePos = pos;
+                    jS.trigger('sheetCalculation', [
+                        {which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
+                    ]);
+                    jS.setChanged(false);
                 },
                 calcVisibleRow: function(actionUI, sheetIndex) {
                     sheetIndex = sheetIndex || jS.i;
@@ -7052,25 +7073,37 @@ $.sheet = {
                         endScrolledArea = actionUI.scrolledArea.end,
                         ignite = jS.updateCellValue,
                         min = Math.min,
-                        initRows = 40,
-                        initCols = 20,
+                        initRows = s.initCalcRows,
+                        initCols = s.initCalcCols,
                         targetRow = endScrolledArea.row + initRows,
                         targetCol = endScrolledArea.col + initCols,
                         rowIndex = min(spreadsheet.length - 1, targetRow),
                         row,
-                        colIndex;
+                        colIndex,
+                        oldPos = this.calcVisiblePos,
+                        newPos = {row: rowIndex, col: oldPos.col};
 
 
                     if (rowIndex > 0) {
-                        if ((row = spreadsheet[rowIndex]) !== undefined) {
-                            colIndex = min(row.length - 1, targetCol);
-                            if (colIndex > 0) {
-                                do {
-                                    ignite.apply(row[colIndex]);
-                                } while (colIndex-- > 1);
+                        do {
+                            if ((row = spreadsheet[rowIndex]) !== undefined) {
+                                colIndex = min(row.length - 1, targetCol);
+                                if (colIndex > 0) {
+                                    do {
+                                        ignite.apply(row[colIndex]);
+                                    } while (colIndex-- > 1);
+                                }
                             }
-                        }
+                        } while (rowIndex-- > oldPos.row);
+
                     }
+
+                    this.calcVisiblePos = newPos;
+
+                    jS.trigger('sheetCalculation', [
+                        {which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
+                    ]);
+                    jS.setChanged(false);
                 },
                 calcVisibleCol: function(actionUI, sheetIndex) {
                     sheetIndex = sheetIndex || jS.i;
@@ -7079,14 +7112,16 @@ $.sheet = {
                         endScrolledArea = actionUI.scrolledArea.end,
                         ignite = jS.updateCellValue,
                         min = Math.min,
-                        initRows = 40,
-                        initCols = 20,
+                        initRows = s.initCalcRows,
+                        initCols = s.initCalcCols,
                         targetRow = endScrolledArea.row + initRows,
                         targetCol = endScrolledArea.col + initCols,
                         rowIndex = min(spreadsheet.length - 1, targetRow),
                         row,
                         colIndex,
-                        cell;
+                        cell,
+                        oldPos = this.calcVisiblePos,
+                        newPos = {row: oldPos.row, col: oldPos.col};
 
 
                     if (rowIndex > 0) {
@@ -7099,10 +7134,17 @@ $.sheet = {
                             }
                         } while(rowIndex-- > 1);
                     }
+
+                    this.calcVisiblePos = newPos;
+
+                    jS.trigger('sheetCalculation', [
+                        {which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
+                    ]);
+                    jS.setChanged(false);
                 },
 
                 /**
-                 * Calculates just the dependencies of a single cell, and their dependencies recursivley
+                 * Calculates just the dependencies of a single cell, and their dependencies recursively
                  * @param {Date} last
                  * @param {Boolean} skipUndoable
                  * @memberOf jS
