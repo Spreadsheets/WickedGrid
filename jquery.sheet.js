@@ -3132,9 +3132,16 @@ $.sheet = {
 
                         jS.obj.menus().hide();
 
+                        var menuWidth = menu.width(),
+                            menuHeight = menu.height(),
+                            menuPosLeft, menuPosTop;
+
+                        menuPosLeft = ((e.pageX + menuWidth) > $window.width() ) ? (e.pageX - menuWidth + 5) : (e.pageX - 5);
+                        menuPosTop = ((e.pageY + menuHeight) > $window.height() ) ? (e.pageY - menuHeight + 5) : (e.pageY - 5);
+
                         menu
-                            .css('left', (e.pageX - 5) + 'px')
-                            .css('top', (e.pageY - 5) + 'px')
+                            .css('left', menuPosLeft + 'px')
+                            .css('top', menuPosTop + 'px')
                             .show();
 
                         return true;
