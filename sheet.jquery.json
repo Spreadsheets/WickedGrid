@@ -36,7 +36,7 @@
     ],
     "bugs": "https://github.com/Spreadsheets/jQuery.sheet/issues",
     "homepage": "https://github.com/Spreadsheets/jQuery.sheet",
-    "docs": "http://visop-dev.com/doc/js3/jQuery.sheet.html",
+    "docs": "http://visop-dev.com/doc/js3/jQuery_.html#sheet",
     "download": "https://github.com/Spreadsheets/jQuery.sheet/releases",
     "dependencies": {
         "jquery": ">=1.5"
