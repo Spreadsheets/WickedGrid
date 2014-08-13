@@ -3055,12 +3055,13 @@ $.sheet = {
                                     })
                                     .blur(function () {
                                         if (menu) menu.hide();
-                                    })
+                                    });
 
                                 barMenuParentTop.get(0).destroy = function(){
                                     barMenuParentTop.remove();
                                     jS.controls.bar.x.menuParent[jS.i] = null;
-                                }
+                                };
+
                                 jS.controls.bar.x.menuParent[jS.i] = barMenuParentTop;
                             }
 
