@@ -1811,6 +1811,13 @@ $.sheet = {
                 sheetCount:0,
 
                 /**
+                 * The continuous count of sheet's within the instance. 
+                 * @memberOf jS
+                 * @type {Number}
+                 */	
+                sheetContinuousCount: 0,
+
+                /**
                  * The internal storage array of the spreadsheets for an instance, constructed as array 3 levels deep, spreadsheet, rows, cells, can easily be used for custom exporting/saving
                  * @memberOf jS
                  * @type {Array}
@@ -7207,6 +7214,7 @@ $.sheet = {
                         jS.setActiveSheet(jS.sheetCount);
 
                         jS.sheetCount++;
+                        jS.sheetContinuousCount++;
 
                         jS.sheetSyncSize();
 
@@ -7450,7 +7458,7 @@ $.sheet = {
                 sheetTab:function (get, callback) {
                     var sheetTab = '';
                     if (get) {
-                        sheetTab = jS.obj.table().attr('title') || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1);
+                        sheetTab = jS.obj.table().attr('title') || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.sheetContinuousCount + 1);
                         if (callback) {
                             callback(sheetTab);
                         }
@@ -7461,7 +7469,7 @@ $.sheet = {
                             function(newTitle) {
                                 if (!newTitle) { //The user didn't set the new tab name
                                     sheetTab = jS.obj.table().attr('title');
-                                    newTitle = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
+                                    newTitle = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.sheetContinuousCount + 1));
                                 } else {
                                     jS.setDirty(true);
                                     jS.obj.table().attr('title', newTitle);
@@ -7706,6 +7714,7 @@ $.sheet = {
                         load: function() {
                             jS.controlFactory.sheetUI(this.ui, this.table, this.i);
                             jS.sheetCount++;
+                            jS.sheetContinuousCount++;
 
                             stack.push(this.i);
 
