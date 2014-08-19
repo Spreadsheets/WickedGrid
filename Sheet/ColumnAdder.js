@@ -49,7 +49,7 @@
 
                 this.createBar(col + offset);
 
-                for (row = 1; row < rowMax; row++) {
+                for (row = 1; row <= rowMax; row++) {
                     this.createCell(row, col + offset);
                 }
             }
