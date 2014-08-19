@@ -1601,7 +1601,6 @@ $.sheet = {
                     var sheet,
                         row,
                         jSCell,
-                        jSCells,
                         table,
                         colGroup,
                         col,
@@ -1917,7 +1916,6 @@ $.sheet = {
                                     var td = document.createElement('td'),
                                         cell = jS.createUnboundCell(jS.i, td),
                                         spreadsheetRow = spreadsheet[row];
-                                    td.jSCell = cell;
 
                                     spreadsheetRow.splice(at, 0, cell);
                                     rowParent.insertBefore(td, rowParent.children[at]);
@@ -1959,11 +1957,14 @@ $.sheet = {
                                 o.setCreateCellFn(function(row, at) {
                                     var td = document.createElement('td'),
                                         cell = jS.createUnboundCell(jS.i, td),
-                                        rowParent = tBody.children[row];
+                                        rowParent = tBody.children[row],
+                                        spreadsheetRow = spreadsheet[row];
 
-                                    td.jSCell = cell;
+                                    if (spreadsheetRow === undefined) {
+                                        spreadsheet[row] = spreadsheetRow = [];
+                                    }
 
-                                    spreadsheet[row].splice(at, 0, cell);
+                                    spreadsheetRow.splice(at, 0, cell);
                                     rowParent.insertBefore(td, rowParent.children[at]);
 
                                     jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
@@ -6420,16 +6421,22 @@ $.sheet = {
 
                     var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
                         endScrolledArea = actionUI.scrolledArea.end,
+                        sheetSize = actionUI.sheet.size(),
                         ignite = jS.updateCellValue,
                         initRows = s.initCalcRows,
                         initCols = s.initCalcCols,
                         targetRow = (endScrolledArea.row + initRows) - 1,
                         targetCol = (endScrolledArea.col + initCols) - 1,
-                        rowIndex = targetRow,
+                        rowIndex,
                         row,
                         colIndex,
                         oldPos = this.calcVisiblePos,
-                        newPos = {row: rowIndex, col: oldPos.col};
+                        newPos = {row: rowIndex, col: oldPos.col},
+                        cell;
+
+                    targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
+                    targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
+                    rowIndex = targetRow;
 
 
                     if (rowIndex > 0) {
@@ -6438,7 +6445,11 @@ $.sheet = {
                             if ((row = spreadsheet[rowIndex]) !== undefined) {
                                 if (colIndex > 0) {
                                     do {
-                                        ignite.apply(row[colIndex]);
+                                        if ((cell = row[colIndex]) === undefined) {
+                                            jS.createCell(jS.i, rowIndex, colIndex);
+                                            cell = spreadsheet[rowIndex][colIndex];
+                                        }
+                                        ignite.apply(cell);
                                     } while (colIndex-- > 1);
                                 }
                             } else {
@@ -6446,7 +6457,7 @@ $.sheet = {
                                     do {
                                         this.createSpreadsheetForArea(actionUI.sheet, sheetIndex, rowIndex, rowIndex, colIndex, colIndex);
                                         if ((row = spreadsheet[rowIndex]) !== undefined) {
-                                            ignite.apply(row[colIndex]);
+                                            ignite.apply(row[colIndex] || (row[colIndex] = []));
                                         }
                                     } while (colIndex-- > 1);
                                 }
@@ -6467,31 +6478,35 @@ $.sheet = {
 
                     var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
                         endScrolledArea = actionUI.scrolledArea.end,
+                        sheetSize = actionUI.sheet.size(),
                         ignite = jS.updateCellValue,
                         initRows = s.initCalcRows,
                         initCols = s.initCalcCols,
                         targetRow = (endScrolledArea.row + initRows) - 1,
                         targetCol = (endScrolledArea.col + initCols) - 1,
-                        rowIndex = targetRow,
+                        rowIndex,
                         row,
                         colIndex,
                         cell,
                         oldPos = this.calcVisiblePos,
                         newPos = {row: oldPos.row, col: oldPos.col};
 
-                    if (rowIndex > 0) {
+                    targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
+                    targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
+                    rowIndex = targetRow;
+
+                    if (rowIndex > 0 && targetCol > 0) {
                         do {
-                            if (rowIndex > 0 && (row = spreadsheet[rowIndex]) !== undefined) {
-                                colIndex = targetCol;
-                                if ((cell = row[colIndex]) !== undefined) {
-                                    ignite.apply(cell);
-                                } else {
-                                    this.createSpreadsheetForArea(actionUI.sheet, sheetIndex, rowIndex, rowIndex, colIndex, colIndex);
-                                    if ((cell = row[colIndex]) !== undefined) {
-                                        ignite.apply(cell);
-                                    }
-                                }
+                            colIndex = targetCol;
+                            row = spreadsheet[rowIndex];
+                            if (row === undefined || row[colIndex] === undefined) {
+                                this.createSpreadsheetForArea(actionUI.sheet, sheetIndex, rowIndex, rowIndex, colIndex, colIndex);
+                                row = spreadsheet[rowIndex];
                             }
+
+                            cell = row[colIndex];
+                            ignite.apply(cell);
+
                         } while(rowIndex-- > 1);
                     }
 
