@@ -1,3 +1,67 @@
 #!/bin/bash
 
-bash ./.git/hooks/pre-commit
+# directories of the JS and CSS files
+# CSS_DIR='.'
+JS_IN_DIR='./Sheet'
+JS_OUT_DIR='.'
+
+#these are the paths to the final combined files that you want to have in the end
+# CSS_COMBINED_FILE="$CSS_DIR/combined.css"
+
+JS_TEMP=""
+JS_WRAPPER=$(<"$JS_IN_DIR/wrapper.js")
+JS_COMBINED_FILE="$JS_OUT_DIR/jquery.sheet.js"
+JS_COMBINED_FILE_MIN="$JS_OUT_DIR/jquery.sheet.min.js"
+
+# These files are your CSS and JS files you want to combine together
+# CSS_FILES=( file1.css file2.css )
+
+JS_FILES=(
+	#constructors first
+	Base.js
+	ActionUI.js
+	ColumnAdder.js
+	RowAdder.js
+	StyleUpdater.js
+
+	#everything else next
+	sheet.js
+	engine.js
+	fn.js
+	utilities.js
+	environmentCorrection.js
+)
+
+# ----- Do not edit past this line -----
+# CSS_TEMP="$CSS_DIR/_Sheet.css"
+
+#clear the files
+# > $CSS_COMBINED_FILE
+> $JS_COMBINED_FILE
+> $JS_COMBINED_FILE_MIN
+
+#run thru the CSS files
+#for F in ${CSS_FILES[@]}; do
+#  cat "$CSS_DIR/$F" >> $CSS_TEMP
+#done
+
+#run thru the JS files
+for F in ${JS_FILES[@]}; do
+  CONTENTS=$(<"$JS_IN_DIR/$F")
+  JS_TEMP+="$CONTENTS"
+done
+
+echo "${JS_WRAPPER//CODE_HERE/"$JS_TEMP"}" > $JS_COMBINED_FILE
+
+#compress it
+#csstidy $CSS_TEMP $CSS_COMBINED_FILE
+yui-compressor -o $JS_COMBINED_FILE_MIN $JS_COMBINED_FILE
+
+#remove the temp files
+#rm $CSS_TEMP
+#rm $JS_TEMP
+
+#add the file to the git base
+#git add $CSS_COMBINED_FILE
+git add $JS_COMBINED_FILE
+git add $JS_COMBINED_FILE_MIN
