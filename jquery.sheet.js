@@ -565,8 +565,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
     return Constructor;
 })(document, window, Math, Number, $);
 ;Sheet.ColumnAdder = (function() {
-    function Constructor(max) {
-        this.max = max;
+    function Constructor() {
         this.qty = -1;
 
         this.addedFinished = null;
@@ -576,7 +575,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
     Constructor.prototype = {
         setQty: function(qty, sheetSize) {
-            var max = this.max;
+            var max = $.sheet.max;
 
             if (max) {
                 //if current size is less than max, but the qty needed is more than the max
@@ -631,8 +630,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
     return Constructor;
 })();
 ;Sheet.RowAdder = (function() {
-    function Constructor(max) {
-        this.max = max;
+    function Constructor() {
         this.qty = -1;
 
         this.addedFinished = null;
@@ -642,7 +640,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
     Constructor.prototype = {
         setQty: function(qty, sheetSize) {
-            var max = this.max;
+            var max = $.sheet.max;
 
             if (max) {
                 //if current size is less than max, but the qty needed is more than the max
@@ -681,7 +679,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 //create a new row
                 rowParent = this.createBar(row + offset);
 
-                for (col = 1; col < colMax; col++) {
+                for (col = 1; col <= colMax; col++) {
                     this.createCell(row + offset, col, rowParent);
                 }
             }
@@ -741,6 +739,636 @@ Sheet.StyleUpdater = (function(document) {
 
     return Constructor;
 })(document);/**
+ * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
+ * @author RobertLeePlummerJr@gmail.com
+ * $Id: jquery.sheet.dts.js 933 2013-08-28 12:59:30Z robertleeplummerjr $
+ * Licensed under MIT
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+;Sheet.JSONLoader = (function($, document) {
+    "use strict";
+    function Constructor(json) {
+        this.json = json;
+        this.lazy = true;
+        this.count = json.length;
+    }
+
+    Constructor.prototype = {
+        size: function(spreadsheetIndex) {
+            var jsonSpreadsheet = this.json[spreadsheetIndex],
+                rows = jsonSpreadsheet.rows,
+                firstRow = rows[0],
+                firstRowColumns = firstRow.columns;
+
+            return {
+                rows: rows.length,
+                cols: firstRowColumns.length
+            };
+        },
+        setWidth: function(sheetIndex, columnIndex, colElement) {
+            var json = this.json,
+                jsonSpreadsheet = json[sheetIndex],
+                metadata = jsonSpreadsheet.metadata || {},
+                widths = metadata.widths || [],
+                width = widths[columnIndex];
+
+            colElement.style.width = width + 'px';
+        },
+        setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
+            var json = this.json,
+                jsonSpreadsheet,
+                row,
+                cell;
+
+            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
+            if ((row = jsonSpreadsheet.rows[rowIndex]) === undefined) return;
+            if ((cell = row.columns[columnIndex]) === undefined) return;
+
+            blankCell.cellType = cell['cellType'] || '';
+
+            if (cell['formula']) {
+                blankCell.formula = cell['formula'] || '';
+                blankTd.setAttribute('data-formula', cell['formula'] || '');
+            } else {
+                blankTd.innerHTML = blankCell.value = cell['value'] || '';
+            }
+
+            blankTd.className = cell['class'] || '';
+            blankTd.setAttribute('style', cell['style'] || '');
+
+            if (cell['rowspan']) blankTd.setAttribute('rowspan', cell['rowspan'] || '');
+            if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
+        },
+        /**
+         * Create a table from json
+         * @param {Array} json array of spreadsheets - schema:<pre>
+         * [{ // sheet 1, can repeat
+			 *  "title": "Title of spreadsheet",
+			 *  "metadata": {
+			 *      "widths": [
+			 *          120, //widths for each column, required
+			 *          80
+			 *      ]
+			 *  },
+			 *  "rows": [
+			 *      { // row 1, repeats for each column of the spreadsheet
+			 *          "height": 18, //optional
+			 *          "columns": [
+			 *              { //column A
+			 *                  "cellType":"", //optional
+			 *                  "class": "css classes", //optional
+			 *                  "formula": "=cell formula", //optional
+			 *                  "value": "value", //optional
+			 *                  "style": "css cell style" //optional
+			 *              },
+			 *              {} //column B
+			 *          ]
+			 *      },
+			 *      { // row 2
+			 *          "height": 18, //optional
+			 *          "columns": [
+			 *              { // column A
+			 *                  "cellType":"", //optional
+			 *                  "class": "css classes", //optional
+			 *                  "formula": "=cell formula", //optional
+			 *                  "value": "value", //optional
+			 *                  "style": "css cell style" //optional
+			 *              },
+			 *              {} // column B
+			 *          ]
+			 *      }
+			 *  ]
+			 * }]</pre>
+         * @returns {*|jQuery|HTMLElement} a simple html table
+         * @memberOf Sheet.JSONLoader
+         */
+        toTables: function() {
+
+            var json = this.json,
+                tables = $([]),
+                spreadsheet,
+                rows,
+                row,
+                columns,
+                column,
+                metadata,
+                widths,
+                width,
+                frozenAt,
+                height;
+
+            for (var i = 0; i < json.length; i++) {
+                spreadsheet = json[i];
+                var table = $(document.createElement('table'));
+                if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');
+
+                tables = tables.add(table);
+
+                rows = spreadsheet['rows'];
+                for (var j = 0; j < rows.length; j++) {
+                    row = rows[j];
+                    if (height = (row['height'] + '').replace('px','')) {
+                        var tr = $(document.createElement('tr'))
+                            .attr('height', height)
+                            .css('height', height + 'px')
+                            .appendTo(table);
+                    }
+                    columns = row['columns'];
+                    for (var k = 0; k < columns.length; k++) {
+                        column = columns[k];
+                        var td = $(document.createElement('td'))
+                            .appendTo(tr);
+
+                        if (column['class']) td.attr('class', column['class'] || '');
+                        if (column['style']) td.attr('style', column['style'] || '');
+                        if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
+                        if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
+                        if (column['value']) td.html(column['value'] || '');
+                        if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
+                        if (column['colspan']) td.attr('colspan', column['colspan'] || '');
+                    }
+                }
+
+                if (metadata = spreadsheet['metadata']) {
+                    if (widths = metadata['widths']) {
+                        var colgroup = $(document.createElement('colgroup'))
+                            .prependTo(table);
+                        for(var k = 0; k < widths.length; k++) {
+                            width = (widths[k] + '').replace('px', '');
+                            var col = $(document.createElement('col'))
+                                .attr('width', width)
+                                .css('width', width + 'px')
+                                .appendTo(colgroup);
+                        }
+                    }
+                    if (frozenAt = metadata['frozenAt']) {
+                        if (frozenAt['row']) {
+                            table.attr('data-frozenatrow', frozenAt['row']);
+                        }
+                        if (frozenAt['col']) {
+                            table.attr('data-frozenatcol', frozenAt['col']);
+                        }
+                    }
+                }
+            }
+
+            return tables;
+        },
+
+        /**
+         * Create a table from json
+         * @param {Object} jS required, the jQuery.sheet instance
+         * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
+         * @returns {Array}  - schema:<pre>
+         * [{ // sheet 1, can repeat
+                 *  "title": "Title of spreadsheet",
+                 *  "metadata": {
+                 *      "widths": [
+                 *          "120px", //widths for each column, required
+                 *          "80px"
+                 *      ],
+                 *      "frozenAt": {row: 0, col: 0}
+                 *  },
+                 *  "rows": [
+                 *      { // row 1, repeats for each column of the spreadsheet
+                 *          "height": "18px", //optional
+                 *          "columns": [
+                 *              { //column A
+                 *                  "cellType":"", //optional
+                 *                  "class": "css classes", //optional
+                 *                  "formula": "=cell formula", //optional
+                 *                  "value": "value", //optional
+                 *                  "style": "css cell style" //optional
+                 *              },
+                 *              {} //column B
+                 *          ]
+                 *      },
+                 *      { // row 2
+                 *          "height": "18px", //optional
+                 *          "columns": [
+                 *              { // column A
+                 *                  "cellType":"", //optional
+                 *                  "class": "css classes", //optional
+                 *                  "formula": "=cell formula", //optional
+                 *                  "value": "value", //optional
+                 *                  "style": "css cell style" //optional
+                 *              },
+                 *              {} // column B
+                 *          ]
+                 *      }
+                 *  ]
+                 * }]</pre>
+         * @memberOf Sheet.JSONLoader
+         */
+        fromTables: function(jS, doNotTrim) {
+            doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
+
+            var output = [],
+                i = 1 * jS.i,
+                sheet = jS.spreadsheets.length - 1,
+                jsonSpreadsheet,
+                spreadsheet,
+                row,
+                column,
+                parentAttr,
+                jsonRow,
+                jsonColumn,
+                cell,
+                attr,
+                cl,
+                parent,
+                rowHasValues,
+                parentEle,
+                parentHeight;
+
+            if (sheet < 0) return output;
+
+            do {
+                rowHasValues = false;
+                jS.i = sheet;
+                jS.evt.cellEditDone();
+                jsonSpreadsheet = {
+                    "title": (jS.obj.table().attr('title') || ''),
+                    "rows": [],
+                    "metadata": {
+                        "widths": [],
+                        "frozenAt": $.extend({}, jS.obj.pane().actionUI.frozenAt)
+                    }
+                };
+
+                output.unshift(jsonSpreadsheet);
+
+                spreadsheet = jS.spreadsheets[sheet];
+                row = spreadsheet.length - 1;
+                do {
+                    parentEle = spreadsheet[row][1].td[0].parentNode;
+                    parentHeight = parentEle.style['height'];
+                    jsonRow = {
+                        "columns": [],
+                        "height": (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin)
+                    };
+
+                    column = spreadsheet[row].length - 1;
+                    do {
+                        cell = spreadsheet[row][column];
+                        jsonColumn = {};
+                        attr = cell.td[0].attributes;
+
+                        if (doNotTrim || rowHasValues || attr['class'] || cell['formula'] || cell['value'] || attr['style']) {
+                            rowHasValues = true;
+
+                            cl = (attr['class'] ? $.trim(
+                                (attr['class'].value || '')
+                                    .replace(jS.cl.uiCellActive , '')
+                                    .replace(jS.cl.uiCellHighlighted, '')
+                            ) : '');
+
+                            parent = cell.td[0].parentNode;
+
+                            jsonRow.columns.unshift(jsonColumn);
+
+                            if (!jsonRow["height"]) {
+                                jsonRow["height"] = (parent.style['height'] ? parent.style['height'].replace('px' , '') : jS.s.colMargin);
+                            }
+
+                            if (cell['formula']) jsonColumn['formula'] = cell['formula'];
+                            if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
+                            if (cell['value']) jsonColumn['value'] = cell['value'];
+                            if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
+
+                            if (cl.length) {
+                                jsonColumn['class'] = cl;
+                            }
+                            if (attr['rowspan']) jsonColumn['rowspan'] = attr['rowspan'].value;
+                            if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
+                        }
+
+                        if (row * 1 == 1) {
+                            jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
+                        }
+                    } while (column-- > 1);
+
+                    if (rowHasValues) {
+                        jsonSpreadsheet.rows.unshift(jsonRow);
+                    }
+
+                } while (row-- > 1);
+            } while (sheet--);
+            jS.i = i;
+
+            return output;
+        }
+    };
+
+    return Constructor;
+})(jQuery, document);/**
+ * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
+ * @author RobertLeePlummerJr@gmail.com
+ * $Id: jquery.sheet.dts.js 933 2013-08-28 12:59:30Z robertleeplummerjr $
+ * Licensed under MIT
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+;Sheet.XMLLoader = (function($, document) {
+    "use strict";
+
+    /**
+     *
+     * @param {String|jQuery|HTMLElement} xml - schema:<textarea disabled=disabled>
+     * <spreadsheets>
+     *     <spreadsheet title="spreadsheet title">
+     *         <metadata>
+     *             <widths>
+     *                 <width>120</width>
+     *                 <width>80</width>
+     *             </widths>
+     *             <frozenAt>
+     *                 <row>0</row>
+     *                 <col>0</col>
+     *             </frozenAt>
+     *         </metadata>
+     *         <rows>
+     *             <row height=15>
+     *                  <columns>
+     *                      <column>
+     *                          <cellType></cellType>
+     *                          <formula>=cell formula</formula>
+     *                          <value>cell value</value>
+     *                          <style>cells style</style>
+     *                          <class>cells class</class>
+     *                      </column>
+     *                      <column></column>
+     *                  </columns>
+     *              </row>
+     *             <row height=15>
+     *                  <columns>
+     *                      <column>
+     *                          <cellType></cellType>
+     *                          <formula>=cell formula</formula>
+     *                          <value>cell value</value>
+     *                          <style>cells style</style>
+     *                          <class>cells class</class>
+     *                      </column>
+     *                      <column></column>
+     *                  </columns>
+     *              </row>
+     *         </rows>
+     *     </spreadsheet>
+     * </spreadsheets></textarea>
+     */
+    function Constructor(xml) {
+        this.xml = xml;
+        this.lazy = true;
+    }
+
+    Constructor.prototype = {
+        /**
+         * @returns {*|jQuery|HTMLElement} a simple html table
+         * @memberOf Sheet.XMLLoader
+         */
+        toTables: function() {
+            var xml = $.parseXML(this.xml),
+                tables = $([]),
+                spreadsheets = xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet'),
+                spreadsheet,
+                rows,
+                row,
+                columns,
+                column,
+                attr,
+                metadata,
+                frozenat,
+                frozenatrow,
+                frozenatcol,
+                widths,
+                width,
+                height;
+
+            for (var i = 0; i < spreadsheets.length; i++) {
+                spreadsheet = spreadsheets[i];
+                var table = $(document.createElement('table')).attr('title', (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '')),
+                    colgroup = $(document.createElement('colgroup')).appendTo(table),
+                    tbody = $(document.createElement('tbody')).appendTo(table);
+
+                tables = tables.add(table);
+
+                rows = spreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row');
+                metadata = spreadsheet.getElementsByTagName('metadata')[0];
+
+                for (var l = 0; l < rows.length; l++) {//row
+                    row = rows[l];
+                    var tr = $(document.createElement('tr')).appendTo(tbody);
+
+                    if (height = row.attributes['height']) {
+                        height = (height.nodeValue || '').replace('px','');
+                        tr
+                            .css('height', height)
+                            .attr('height', height + 'px');
+                    }
+
+                    columns = row.getElementsByTagName('columns')[0].getElementsByTagName('column');
+                    for (var m = 0; m < columns.length; m++) {
+                        column = columns[m];
+                        var td = $(document.createElement('td')).appendTo(tr),
+                            formula = column.getElementsByTagName('formula')[0],
+                            cellType = column.getElementsByTagName('cellType')[0],
+                            value = column.getElementsByTagName('value')[0],
+                            style = column.getElementsByTagName('style')[0],
+                            cl = column.getElementsByTagName('class')[0],
+                            rowspan = column.getElementsByTagName('rowspan')[0],
+                            colspan = column.getElementsByTagName('colspan')[0];
+
+                        if (formula) td.attr('data-formula', '=' + (formula.textContent || formula.text));
+                        if (cellType) td.attr('data-celltype', cellType.textContent || cellType.text);
+                        if (value) td.html(value.textContent || value.text);
+                        if (style) td.attr('style', style.textContent || style.text);
+                        if (cl) td.attr('class', cl.textContent || cl.text);
+                        if (rowspan) td.attr('rowspan', rowspan.textContent || rowspan.text);
+                        if (colspan) td.attr('colspan', colspan.textContent || colspan.text);
+                    }
+                }
+
+                widths = metadata.getElementsByTagName('width');
+                for (var l = 0; l < widths.length; l++) {
+                    width = (widths[l].textContent || widths[l].text).replace('px', '');
+                    $(document.createElement('col'))
+                        .attr('width', width)
+                        .css('width', width + 'px')
+                        .appendTo(colgroup);
+                }
+
+                frozenat = metadata.getElementsByTagName('frozenAt')[0];
+                if (frozenat) {
+                    frozenatcol = frozenat.getElementsByTagName('col')[0];
+                    frozenatrow = frozenat.getElementsByTagName('row')[0];
+
+                    if (frozenatcol) table.attr('data-frozenatcol', (frozenatcol.textContent || frozenatcol.text) * 1);
+                    if (frozenatrow) table.attr('data-frozenatrow', (frozenatrow.textContent || frozenatrow.text) * 1);
+                }
+            }
+            return tables;
+        },
+
+        /**
+         * Create a table from xml
+         * @param {Object} jS the jQuery.sheet instance
+         * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
+         * @returns {String} - schema:<textarea disabled=disabled>
+         * <spreadsheets>
+         *     <spreadsheet title="spreadsheet title">
+         *         <metadata>
+         *             <widths>
+         *                 <width>120px</width>
+         *                 <width>80px</width>
+         *             </widths>
+         *         </metadata>
+         *         <rows>
+         *             <row height="15px">
+         *                  <columns>
+         *                      <column>
+         *                          <cellType></cellType>
+         *                          <formula>=cell formula</formula>
+         *                          <value>cell value</value>
+         *                          <style>cells style</style>
+         *                          <class>cells class</class>
+         *                      </column>
+         *                      <column></column>
+         *                  </columns>
+         *              </row>
+         *             <row height="15px">
+         *                  <columns>
+         *                      <column>
+         *                          <cellType></cellType>
+         *                          <formula>=cell formula</formula>
+         *                          <value>cell value</value>
+         *                          <style>cells style</style>
+         *                          <class>cells class</class>
+         *                      </column>
+         *                      <column></column>
+         *                  </columns>
+         *              </row>
+         *         </rows>
+         *     </spreadsheet>
+         * </spreadsheets></textarea>
+         * @memberOf jQuery.sheet.dts.fromTables
+         */
+        fromTables: function(jS, doNotTrim) {
+            doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
+            var output = '',
+                i = 1 * jS.i,
+                sheet = jS.spreadsheets.length - 1,
+                xmlSpreadsheet,
+                spreadsheet,
+                row,
+                column,
+                parentAttr,
+                xmlRow,
+                xmlColumn,
+                xmlColumns,
+                cell,
+                attr,
+                cl,
+                parent,
+                frozenAt,
+                rowHasValues,
+                widths,
+                parentEle,
+                parentHeight;
+
+            if (sheet < 0) return output;
+
+            do {
+                rowHasValues = false;
+                jS.i = sheet;
+                jS.evt.cellEditDone();
+                frozenAt = $.extend({}, jS.obj.pane().actionUI.frozenAt);
+                widths = [];
+
+                spreadsheet = jS.spreadsheets[sheet];
+                row = spreadsheet.length - 1;
+                xmlRow = '';
+                do {
+                    xmlColumns = '';
+                    column = spreadsheet[row].length - 1;
+                    do {
+                        xmlColumn = '';
+                        cell = spreadsheet[row][column];
+                        attr = cell.td[0].attributes;
+                        cl = (attr['class'] ? $.trim(
+                            (attr['class'].value || '')
+                                .replace(jS.cl.uiCellActive, '')
+                                .replace(jS.cl.uiCellHighlighted, '')
+                        ) : '');
+
+                        if (doNotTrim || rowHasValues || cl || cell.formula || cell.value || attr['style']) {
+                            rowHasValues = true;
+
+                            xmlColumn += '<column>';
+
+                            if (cell.formula) xmlColumn += '<formula>' + cell.formula + '</formula>';
+                            if (cell.cellType) xmlColumn += '<cellType>' + cell.cellType + '</cellType>';
+                            if (cell.value) xmlColumn += '<value>' + cell.value + '</value>';
+                            if (attr['style']) xmlColumn += '<style>' + attr['style'].value + '</style>';
+                            if (cl) xmlColumn += '<class>' + cl + '</class>';
+                            if (attr['rowspan']) xmlColumn += '<rowspan>' + attr['rowspan'].value + '</rowspan>';
+                            if (attr['colspan']) xmlColumn += '<colspan>' + attr['colspan'].value + '</colspan>';
+
+                            xmlColumn += '</column>';
+
+                            xmlColumns = xmlColumn + xmlColumns;
+                        }
+
+                        if (row * 1 == 1) {
+                            widths[column] = '<width>' + $(jS.col(null, column)).css('width').replace('px', '') + '</width>';
+                        }
+
+                    } while (column -- > 1);
+
+                    if (xmlColumns) {
+                        parentEle = spreadsheet[row][1].td[0].parentNode;
+                        parentHeight = parentEle.style['height'];
+                        xmlRow = '<row height="' + (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin) + '">' +
+                            '<columns>' +
+                            xmlColumns +
+                            '</columns>' +
+                            '</row>' + xmlRow;
+                    }
+
+                } while (row-- > 1);
+                xmlSpreadsheet = '<spreadsheet title="' + (jS.obj.table().attr('title') || '') + '">' +
+                    '<rows>' +
+                    xmlRow +
+                    '</rows>' +
+                    '<metadata>' +
+                    (
+                        frozenAt.row || frozenAt.col ?
+                            '<frozenAt>' +
+                                (frozenAt.row ? '<row>' + frozenAt.row + '</row>' : '') +
+                                (frozenAt.col ? '<col>' + frozenAt.col + '</col>' : '') +
+                                '</frozenAt>' :
+                            ''
+                        ) +
+                    '<widths>' + widths.join('') + '</widths>' +
+                    '</metadata>' +
+                    '</spreadsheet>';
+
+                output = xmlSpreadsheet + output;
+            } while (sheet--);
+
+            jS.i = i;
+            return '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">' + output + '</spreadsheets>';
+        }
+    };
+
+    return Constructor;
+})(jQuery, document);/**
  * @namespace
  * @type {Object}
  * @name jQuery()
@@ -1372,7 +2000,8 @@ $.fn.extend({
                     initCalcRows: 40,
                     initCalcCols: 20,
                     initScrollRows: 0,
-                    initScrollCols: 0
+                    initScrollCols: 0,
+                    loader: {}
                 };
 
             //destroy already existing spreadsheet
@@ -1753,7 +2382,7 @@ $.sheet = {
     optional:{
         //native
         advancedFn:{script:'plugins/jquery.sheet.advancedfn.js'},
-        dts:{script:'plugins/jquery.sheet.dts.js'},
+        dts:{script:'plugins/JSONLoader.js'},
         financeFn:{script:'plugins/jquery.sheet.financefn.js'},
 
         //3rd party
@@ -2581,8 +3210,8 @@ $.sheet = {
                             add(qty);
                         }
                     },
-                    rowAdder: null,
-                    columnAdder: null,
+                    rowAdder: new Sheet.RowAdder(),
+                    columnAdder: new Sheet.ColumnAdder(),
                     /**
                      * Creates cells for sheet and the bars that go along with them
                      * @param {Number} [i] index where cells should be added, if null, cells go to end
@@ -2614,7 +3243,9 @@ $.sheet = {
                             height = s.colMargin + 'px',
                             rowBarClasses = jS.cl.barLeft + ' ' + jS.cl.uiBar,
                             colBarClasses = jS.cl.barTop + ' ' + jS.cl.uiBar,
-                            loc;
+                            loc,
+                            loader = s.loader || {},
+                            setupCell = loader.setupCell || null;
 
                         qty = qty || 1;
                         type = type || 'col';
@@ -2627,7 +3258,7 @@ $.sheet = {
                         switch (type) {
                             case "row":
                                 loc = {row: i, col: 0};
-                                o = jS.rowAdder;
+                                o = this.rowAdder;
                                 if (o.setQty(qty, sheetSize) === false) {
                                     if (!jS.isBusy()) {
                                         s.alert(jS.msg.maxRowsBrowserLimitation);
@@ -2660,6 +3291,11 @@ $.sheet = {
                                         spreadsheetRow = spreadsheet[row];
 
                                     spreadsheetRow.splice(at, 0, cell);
+
+                                    if (setupCell) {
+                                        setupCell.call(loader, jS.i, row, at, cell, td);
+                                    }
+
                                     rowParent.insertBefore(td, rowParent.children[at]);
 
                                     jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
@@ -2672,7 +3308,7 @@ $.sheet = {
                                 break;
                             case "col":
                                 loc = {row: 0, col: i};
-                                o = jS.columnAdder;
+                                o = this.columnAdder;
                                 if (o.setQty(qty, sheetSize) === false) {
                                     if (!jS.isBusy()) {
                                         s.alert(jS.msg.maxColsBrowserLimitation);
@@ -2686,7 +3322,8 @@ $.sheet = {
 
                                     col.style.width = width;
 
-
+                                    bar.entity = 'top';
+                                    bar.type = 'bar';
                                     bar.innerText = jSE.columnLabelString(at);
                                     bar.className = colBarClasses;
 
@@ -2707,6 +3344,11 @@ $.sheet = {
                                     }
 
                                     spreadsheetRow.splice(at, 0, cell);
+
+                                    if (setupCell) {
+                                        setupCell.call(loader, jS.i, row, at, cell, td);
+                                    }
+
                                     rowParent.insertBefore(td, rowParent.children[at]);
 
                                     jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
@@ -3627,6 +4269,7 @@ $.sheet = {
                                     if (yUpdated) {
                                         setTimeout(function() {
                                             jS.calcVisibleRow(actionUI);
+                                            jS.updateYBarWidthToCorner(actionUI);
                                         }, 0);
                                     }
 
@@ -4938,9 +5581,9 @@ $.sheet = {
                         col;
 
                     rowStart = rowStart || 0;
-                    rowEnd = rowEnd || Math.min(rows.length - 1, s.initCalcRows);
+                    rowEnd = rowEnd || rows.length - 1;
                     colStart = colStart || 0;
-                    colEnd = colEnd || Math.min(rows[0].children.length - 1, s.initCalcCols);
+                    colEnd = colEnd || rows[0].children.length - 1;
 
                     //if we are starting at the beginning of the spreadsheet, then we start from empty
                     if (rowStart === 0 && colStart === 0) {
@@ -4983,6 +5626,16 @@ $.sheet = {
                             }
                         } while (col-- > colStart);
                     } while (row-- > rowStart);
+                },
+                updateYBarWidthToCorner: function(actionUI) {
+                    return;
+                    //TODO, get working on scroll
+                    var corner = jS.obj.corner(),
+                        table = actionUI.table,
+                        tableRows = table.size().rows,
+                        idealTarget = s.initCalcRows + actionUI.scrolledArea.end.row,
+                        realTarget = (idealTarget < tableRows ? idealTarget : tableRows),
+                        td = table.children[realTarget].children[0];
                 },
 
                 toggleHideRow: function(i) {
@@ -5599,8 +6252,8 @@ $.sheet = {
                  * @memberOf jS
                  */
                 formatTable:function (table) {
-                    var w = s.newColumnWidth,
-                        h = s.colMargin,
+                    var w = s.newColumnWidth + 'px',
+                        h = s.colMargin + 'px',
                         children = table.children,
                         i = children.length - 1,
                         j,
@@ -5609,7 +6262,11 @@ $.sheet = {
                         colGroup,
                         firstTr,
                         hasTBody,
-                        hasColGroup;
+                        hasColGroup,
+                        loader = s.loader || {},
+                        setWidth =  loader.setWidth || function(sheetIndex, columnIndex, colElement) {
+                            colElement.style.width = w;
+                        };
 
                     if (i > -1) {
                         do {
@@ -5649,11 +6306,14 @@ $.sheet = {
 
                         for (i = 0, j = Math.min(firstTr.children.length, s.initCalcCols); i < j; i++) {
                             col = document.createElement('col');
+
+                            setWidth.call(loader, jS.i, i, col);
+
                             colGroup.appendChild(col);
-                            col.style.width = w + 'px';
+
                         }
                         for (i = 0, j = Math.min(tBody.children.length, s.initCalcRows); i < j; i++) {
-                            tBody.children[i].style.height = h + 'px';
+                            tBody.children[i].style.height = h;
                         }
                     }
 
@@ -7197,7 +7857,11 @@ $.sheet = {
                             } else {
                                 if (colIndex > 0) {
                                     do {
-                                        this.createSpreadsheetForArea(actionUI.sheet, sheetIndex, rowIndex, rowIndex, colIndex, colIndex);
+                                        var offset = rowIndex;
+                                        while (offset > 0 && spreadsheet[offset] === undefined) {
+                                            this.createSpreadsheetForArea(actionUI.sheet, sheetIndex, offset, offset, colIndex, colIndex);
+                                            offset--;
+                                        }
                                         if ((row = spreadsheet[rowIndex]) !== undefined) {
                                             ignite.apply(row[colIndex] || (row[colIndex] = []));
                                         }
@@ -7828,9 +8492,6 @@ $.sheet = {
                         loaded: function() {
                             var jS = this.jS,
                                 ui = this.ui;
-
-                            jS.rowAdder = new Sheet.RowAdder($.sheet.max);
-                            jS.columnAdder = new Sheet.ColumnAdder($.sheet.max);
 
                             // resizable container div
                             jS.resizableSheet(s.parent, {

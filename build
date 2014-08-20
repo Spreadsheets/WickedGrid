@@ -23,6 +23,8 @@ JS_FILES=(
 	ColumnAdder.js
 	RowAdder.js
 	StyleUpdater.js
+	JSONLoader.js
+	XMLLoader.js
 
 	#everything else next
 	sheet.js

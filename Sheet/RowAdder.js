@@ -1,7 +1,6 @@
 
 ;Sheet.RowAdder = (function() {
-    function Constructor(max) {
-        this.max = max;
+    function Constructor() {
         this.qty = -1;
 
         this.addedFinished = null;
@@ -11,7 +10,7 @@
 
     Constructor.prototype = {
         setQty: function(qty, sheetSize) {
-            var max = this.max;
+            var max = $.sheet.max;
 
             if (max) {
                 //if current size is less than max, but the qty needed is more than the max
@@ -50,7 +49,7 @@
                 //create a new row
                 rowParent = this.createBar(row + offset);
 
-                for (col = 1; col < colMax; col++) {
+                for (col = 1; col <= colMax; col++) {
                     this.createCell(row + offset, col, rowParent);
                 }
             }
