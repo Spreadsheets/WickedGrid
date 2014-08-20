@@ -630,7 +630,8 @@ $.fn.extend({
                     initCalcRows: 40,
                     initCalcCols: 20,
                     initScrollRows: 0,
-                    initScrollCols: 0
+                    initScrollCols: 0,
+                    loader: {}
                 };
 
             //destroy already existing spreadsheet
@@ -1011,7 +1012,7 @@ $.sheet = {
     optional:{
         //native
         advancedFn:{script:'plugins/jquery.sheet.advancedfn.js'},
-        dts:{script:'plugins/jquery.sheet.dts.js'},
+        dts:{script:'plugins/JSONLoader.js'},
         financeFn:{script:'plugins/jquery.sheet.financefn.js'},
 
         //3rd party
@@ -1839,8 +1840,8 @@ $.sheet = {
                             add(qty);
                         }
                     },
-                    rowAdder: null,
-                    columnAdder: null,
+                    rowAdder: new Sheet.RowAdder(),
+                    columnAdder: new Sheet.ColumnAdder(),
                     /**
                      * Creates cells for sheet and the bars that go along with them
                      * @param {Number} [i] index where cells should be added, if null, cells go to end
@@ -1872,7 +1873,9 @@ $.sheet = {
                             height = s.colMargin + 'px',
                             rowBarClasses = jS.cl.barLeft + ' ' + jS.cl.uiBar,
                             colBarClasses = jS.cl.barTop + ' ' + jS.cl.uiBar,
-                            loc;
+                            loc,
+                            loader = s.loader || {},
+                            setupCell = loader.setupCell || null;
 
                         qty = qty || 1;
                         type = type || 'col';
@@ -1885,7 +1888,7 @@ $.sheet = {
                         switch (type) {
                             case "row":
                                 loc = {row: i, col: 0};
-                                o = jS.rowAdder;
+                                o = this.rowAdder;
                                 if (o.setQty(qty, sheetSize) === false) {
                                     if (!jS.isBusy()) {
                                         s.alert(jS.msg.maxRowsBrowserLimitation);
@@ -1918,6 +1921,11 @@ $.sheet = {
                                         spreadsheetRow = spreadsheet[row];
 
                                     spreadsheetRow.splice(at, 0, cell);
+
+                                    if (setupCell) {
+                                        setupCell.call(loader, jS.i, row, at, cell, td);
+                                    }
+
                                     rowParent.insertBefore(td, rowParent.children[at]);
 
                                     jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
@@ -1930,7 +1938,7 @@ $.sheet = {
                                 break;
                             case "col":
                                 loc = {row: 0, col: i};
-                                o = jS.columnAdder;
+                                o = this.columnAdder;
                                 if (o.setQty(qty, sheetSize) === false) {
                                     if (!jS.isBusy()) {
                                         s.alert(jS.msg.maxColsBrowserLimitation);
@@ -1944,7 +1952,8 @@ $.sheet = {
 
                                     col.style.width = width;
 
-
+                                    bar.entity = 'top';
+                                    bar.type = 'bar';
                                     bar.innerText = jSE.columnLabelString(at);
                                     bar.className = colBarClasses;
 
@@ -1965,6 +1974,11 @@ $.sheet = {
                                     }
 
                                     spreadsheetRow.splice(at, 0, cell);
+
+                                    if (setupCell) {
+                                        setupCell.call(loader, jS.i, row, at, cell, td);
+                                    }
+
                                     rowParent.insertBefore(td, rowParent.children[at]);
 
                                     jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
@@ -2885,6 +2899,7 @@ $.sheet = {
                                     if (yUpdated) {
                                         setTimeout(function() {
                                             jS.calcVisibleRow(actionUI);
+                                            jS.updateYBarWidthToCorner(actionUI);
                                         }, 0);
                                     }
 
@@ -4196,9 +4211,9 @@ $.sheet = {
                         col;
 
                     rowStart = rowStart || 0;
-                    rowEnd = rowEnd || Math.min(rows.length - 1, s.initCalcRows);
+                    rowEnd = rowEnd || rows.length - 1;
                     colStart = colStart || 0;
-                    colEnd = colEnd || Math.min(rows[0].children.length - 1, s.initCalcCols);
+                    colEnd = colEnd || rows[0].children.length - 1;
 
                     //if we are starting at the beginning of the spreadsheet, then we start from empty
                     if (rowStart === 0 && colStart === 0) {
@@ -4241,6 +4256,16 @@ $.sheet = {
                             }
                         } while (col-- > colStart);
                     } while (row-- > rowStart);
+                },
+                updateYBarWidthToCorner: function(actionUI) {
+                    return;
+                    //TODO, get working on scroll
+                    var corner = jS.obj.corner(),
+                        table = actionUI.table,
+                        tableRows = table.size().rows,
+                        idealTarget = s.initCalcRows + actionUI.scrolledArea.end.row,
+                        realTarget = (idealTarget < tableRows ? idealTarget : tableRows),
+                        td = table.children[realTarget].children[0];
                 },
 
                 toggleHideRow: function(i) {
@@ -4857,8 +4882,8 @@ $.sheet = {
                  * @memberOf jS
                  */
                 formatTable:function (table) {
-                    var w = s.newColumnWidth,
-                        h = s.colMargin,
+                    var w = s.newColumnWidth + 'px',
+                        h = s.colMargin + 'px',
                         children = table.children,
                         i = children.length - 1,
                         j,
@@ -4867,7 +4892,11 @@ $.sheet = {
                         colGroup,
                         firstTr,
                         hasTBody,
-                        hasColGroup;
+                        hasColGroup,
+                        loader = s.loader || {},
+                        setWidth =  loader.setWidth || function(sheetIndex, columnIndex, colElement) {
+                            colElement.style.width = w;
+                        };
 
                     if (i > -1) {
                         do {
@@ -4907,11 +4936,14 @@ $.sheet = {
 
                         for (i = 0, j = Math.min(firstTr.children.length, s.initCalcCols); i < j; i++) {
                             col = document.createElement('col');
+
+                            setWidth.call(loader, jS.i, i, col);
+
                             colGroup.appendChild(col);
-                            col.style.width = w + 'px';
+
                         }
                         for (i = 0, j = Math.min(tBody.children.length, s.initCalcRows); i < j; i++) {
-                            tBody.children[i].style.height = h + 'px';
+                            tBody.children[i].style.height = h;
                         }
                     }
 
@@ -6455,7 +6487,11 @@ $.sheet = {
                             } else {
                                 if (colIndex > 0) {
                                     do {
-                                        this.createSpreadsheetForArea(actionUI.sheet, sheetIndex, rowIndex, rowIndex, colIndex, colIndex);
+                                        var offset = rowIndex;
+                                        while (offset > 0 && spreadsheet[offset] === undefined) {
+                                            this.createSpreadsheetForArea(actionUI.sheet, sheetIndex, offset, offset, colIndex, colIndex);
+                                            offset--;
+                                        }
                                         if ((row = spreadsheet[rowIndex]) !== undefined) {
                                             ignite.apply(row[colIndex] || (row[colIndex] = []));
                                         }
@@ -7086,9 +7122,6 @@ $.sheet = {
                         loaded: function() {
                             var jS = this.jS,
                                 ui = this.ui;
-
-                            jS.rowAdder = new Sheet.RowAdder($.sheet.max);
-                            jS.columnAdder = new Sheet.ColumnAdder($.sheet.max);
 
                             // resizable container div
                             jS.resizableSheet(s.parent, {
