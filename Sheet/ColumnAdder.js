@@ -39,17 +39,18 @@
         },
         createCells:function (i, size, isBefore) {
             var offset = (isBefore ? 0 : 1),
-                rowMax = size.rows,
+                rowMax = size.rows || 1,
                 colMax = i + this.qty,
                 row,
-                col = i;
+                col = i,
+                bar;
 
             for (; col < colMax; col++) {
 
-                this.createBar(col + offset);
+                bar = this.createBar(col + offset);
 
                 for (row = 1; row <= rowMax; row++) {
-                    this.createCell(row, col + offset);
+                    this.createCell(row, col + offset, bar);
                 }
             }
 

@@ -39,8 +39,8 @@
         },
         createCells:function (i, size, isBefore) {
             var offset = (isBefore ? 0 : 1),
-                rowMax = i + this.qty,
-                colMax = size.cols,
+                rowMax = (i + this.qty) - 1,
+                colMax = size.cols || 1,
                 rowParent,
                 row = i,
                 col;
