@@ -38,6 +38,14 @@
 
             colElement.style.width = width + 'px';
         },
+        setRowHeight: function(sheetIndex, rowIndex, barTd) {
+            var json = this.json,
+                jsonSpreadsheet = json[sheetIndex],
+                row = jsonSpreadsheet.rows[rowIndex],
+                height = row.height;
+
+            barTd.style.height = height + 'px';
+        },
         setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
             var json = this.json,
                 jsonSpreadsheet,
@@ -45,8 +53,8 @@
                 cell;
 
             if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
-            if ((row = jsonSpreadsheet.rows[rowIndex]) === undefined) return;
-            if ((cell = row.columns[columnIndex]) === undefined) return;
+            if ((row = jsonSpreadsheet.rows[rowIndex - 1]) === undefined) return;
+            if ((cell = row.columns[columnIndex - 1]) === undefined) return;
 
             blankCell.cellType = cell['cellType'] || '';
 

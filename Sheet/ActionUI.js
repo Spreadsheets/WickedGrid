@@ -161,6 +161,10 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             scrollStyleX.update(null, ' ');
             scrollStyleY.update(null, ' ');
 
+            if (firstRow === undefined) {
+                firstRow = sheet.tBody.children[0];
+            }
+
             sheetWidth = (firstRow.clientWidth || sheet.clientWidth) + 'px';
             sheetHeight = sheet.clientHeight + 'px';
             enclosureWidth = enclosure.clientWidth + 'px';

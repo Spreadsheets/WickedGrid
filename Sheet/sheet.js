@@ -1694,8 +1694,8 @@ $.sheet = {
                     //attach col to td
                     td.col = col;
                     td.type = 'cell';
-                    td.barLeft = tr.children[0];
-                    td.barTop = tBody.children[0].children[colIndex];
+                    td.barLeft = td.barLeft || tr.children[0];
+                    td.barTop = td.barTop || tBody.children[0].children[colIndex];
 
                     //attach cells to tr
                     if (!tr.jSCells) tr.jSCells = [];
@@ -1863,6 +1863,7 @@ $.sheet = {
                             table = $table[0],
                             tBody = table.tBody,
                             colGroup = table.colGroup,
+                            minSize = s.minSize,
                             sheetSize = jS.sheetSize(table),
                             isLast = false,
                             activeCell = jS.obj.tdActive(),
@@ -1875,12 +1876,17 @@ $.sheet = {
                             colBarClasses = jS.cl.barTop + ' ' + jS.cl.uiBar,
                             loc,
                             loader = s.loader || {},
-                            setupCell = loader.setupCell || null;
+                            setupCell = loader.setupCell || null,
+                            controlX = jS.controls.bar.x.td[jS.i] || (jS.controls.bar.x.td[jS.i] = []),
+                            controlY = jS.controls.bar.y.td[jS.i] || (jS.controls.bar.y.td[jS.i] = []);
+
+                        minSize.rows = Math.max(minSize.rows, sheetSize.rows);
+                        minSize.cols = Math.max(minSize.cols, sheetSize.cols);
 
                         qty = qty || 1;
                         type = type || 'col';
 
-                        if (i == u) {
+                        if (i === null || i === u) {
                             i = (type == 'row' ? sheetSize.rows : sheetSize.cols);
                             isLast = true;
                         }
@@ -1900,15 +1906,15 @@ $.sheet = {
                                     var barParent = document.createElement('tr'),
                                         bar = document.createElement('td');
 
-                                    bar.innerHTML = at;
                                     bar.setAttribute('class', rowBarClasses);
                                     bar.entity = 'left';
                                     bar.type = 'bar';
-
+                                    bar.style.height = height;
                                     barParent.appendChild(bar);
                                     tBody.insertBefore(barParent, tBody.children[at]);
-                                    bar.style.height = height;
-                                    jS.controls.bar.y.td[jS.i].splice(at, 0, $(bar));
+
+                                    bar.innerHTML = barParent.rowIndex;
+                                    controlY.splice(at, 0, $(bar));
                                     //make the spreadsheet ready to accept cells;
                                     spreadsheet.splice(at, 0, []);
 
@@ -1948,29 +1954,51 @@ $.sheet = {
                                 o.setCreateBarFn(function(at) {
                                     var barParent = tBody.children[0],
                                         col = document.createElement('col'),
-                                        bar = document.createElement('td');
+                                        bar = document.createElement('td'),
+                                        rowParent = tBody.children[1]; //the very first row may not exist yet
 
                                     col.style.width = width;
 
                                     bar.entity = 'top';
                                     bar.type = 'bar';
-                                    bar.innerText = jSE.columnLabelString(at);
+                                    bar.innerHTML = jSE.columnLabelString(at);
                                     bar.className = colBarClasses;
 
                                     colGroup.insertBefore(col, colGroup.children[at]);
                                     barParent.insertBefore(bar, barParent.children[at]);
 
-                                    jS.controls.bar.x.td[jS.i].splice(at, 0, $(bar));
+                                    controlX.splice(at, 0, $(bar));
 
+                                    return {
+                                        bar: bar,
+                                        col: col,
+                                        barParent: barParent
+                                    };
                                 });
-                                o.setCreateCellFn(function(row, at) {
+                                o.setCreateCellFn(function(row, at, createdBar) {
                                     var td = document.createElement('td'),
                                         cell = jS.createUnboundCell(jS.i, td),
                                         rowParent = tBody.children[row],
-                                        spreadsheetRow = spreadsheet[row];
+                                        spreadsheetRow = spreadsheet[row],
+                                        bar;
 
                                     if (spreadsheetRow === undefined) {
                                         spreadsheet[row] = spreadsheetRow = [];
+                                    }
+
+                                    //If the row has not been created lets set it up
+                                    if (rowParent === undefined) {
+                                        bar = document.createElement('td');
+                                        bar.setAttribute('class', rowBarClasses);
+                                        bar.entity = 'left';
+                                        bar.type = 'bar'
+
+                                        rowParent = document.createElement('tr');
+                                        rowParent.style.height = height;
+                                        rowParent.appendChild(bar);
+                                        tBody.appendChild(rowParent);
+
+                                        bar.innerHTML = rowParent.rowIndex;
                                     }
 
                                     spreadsheetRow.splice(at, 0, cell);
@@ -1981,7 +2009,7 @@ $.sheet = {
 
                                     rowParent.insertBefore(td, rowParent.children[at]);
 
-                                    jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
+                                    jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
                                 });
 
                                 o.setAddedFinished(function(_offset) {
@@ -2042,7 +2070,7 @@ $.sheet = {
                         //table / tBody / tr
                         if (i > -1) {
                             do {
-                                tr[i].insertBefore(document.createElement('td'), tr[i].children[0]);
+                                //tr[i].insertBefore(document.createElement('td'), tr[i].children[0]);
                             } while(i-- > 1); //We only go till row 1, row 0 is handled by barTop with corner etc
                         }
                     },
@@ -2061,11 +2089,17 @@ $.sheet = {
                             colCorner = document.createElement('col'), //left column & corner
                             tdCorner = document.createElement('td'),
 
-                            barTopParent = document.createElement('tr');
+                            barTopParent = document.createElement('tr'),
+                            existingTdsInFirstRow = 0;
 
-                        //If the col elements outnumber the td's, get rid of the extra as it messes with the ui
-                        while (cols.length > trFirst.children.length) {
-                            colGroup.removeChild(cols[cols.length -1]);
+                        if (trFirst === undefined) {
+                            colGroup.innerHTML = '';
+                        } else {
+                            existingTdsInFirstRow = trFirst.children.length;
+                            //If the col elements outnumber the td's, get rid of the extra as it messes with the ui
+                            while (cols.length > existingTdsInFirstRow) {
+                                colGroup.removeChild(cols[cols.length -1]);
+                            }
                         }
 
                         colCorner.width = s.colMargin + 'px';
@@ -2080,20 +2114,22 @@ $.sheet = {
                         table.corner = tdCorner;
                         jS.controls.barTopParent[jS.i] = $(barTopParent);
 
-                        i = Math.min(trFirst.children.length, s.initCalcCols) - 1;
+                        i = Math.min(existingTdsInFirstRow, s.initCalcCols) - 1;
 
-                        do {
-                            var td = document.createElement('td');
-                            if (!cols[i]) {
-                                cols[i] = document.createElement('col');
-                                colGroup.insertBefore(cols[i], colCorner.nextSibling);
+                        if (i > 0) {
+                            do {
+                                var td = document.createElement('td');
+                                if (!cols[i]) {
+                                    cols[i] = document.createElement('col');
+                                    colGroup.insertBefore(cols[i], colCorner.nextSibling);
 
-                            }
+                                }
 
-                            cols[i].bar = td;
-                            td.col = cols[i];
-                            barTopParent.insertBefore(td, tdCorner.nextSibling);
-                        } while (i-- > 0);
+                                cols[i].bar = td;
+                                td.col = cols[i];
+                                barTopParent.insertBefore(td, tdCorner.nextSibling);
+                            } while (i-- > 0);
+                        }
 
                         table.barTop = jS.controls.barTopParent[jS.i].children();
 
@@ -4208,7 +4244,21 @@ $.sheet = {
                 createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd) {
                     var rows = jS.rows(table),
                         row,
-                        col;
+                        col,
+                        loader = s.loader || {},
+                        standardHeight = s.colMargin + 'px',
+                        setRowHeight = loader.setRowHeight || function(sheetIndex, rowIndex, barTd) {
+                            var sibling,
+                                style,
+                                height = standardHeight;
+
+                            //This element is generated and needs to track the height of the item just before it
+                            if ((sibling = barTd.nextSibling) === undefined) return height;
+                            if ((style = sibling.style) === undefined) return height;
+                            if (style.height !== undefined) height = style.height;
+
+                            barTd.style.height = height;
+                        };
 
                     rowStart = rowStart || 0;
                     rowEnd = rowEnd || rows.length - 1;
@@ -4229,6 +4279,9 @@ $.sheet = {
                         if (col < 0 || tr === undefined) return;
                         do {
                             var td = tr.children[col];
+
+                            if (td === undefined) continue;
+
                             if (row > 0 && col > 0) {
                                 jS.createCell(i, row, col);
                             } else {
@@ -4237,7 +4290,7 @@ $.sheet = {
                                     td.entity = 'left';
                                     td.innerHTML = row;
                                     td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.cl.uiBar;
-                                    td.setAttribute('style', 'height:' + td.nextSibling.style.height); //This element is generated and needs to track the height of the item just before it
+                                    setRowHeight.call(loader, i, row, td);
                                 }
 
                                 if (row == 0 && col > 0) { //bartop
@@ -4912,18 +4965,19 @@ $.sheet = {
                             }
                         } while (i--);
                     } else {
-                        var child = document.createElement('tr');
-                        //if there aren't any children, give it at least 1
-                        child.appendChild(document.createElement('td'));
+                        /*var child = document.createElement('tr');
                         table.appendChild(child);
-                        children = table.children;
+                        children = table.children;*/
                     }
 
                     if (!tBody) {
                         tBody = document.createElement('tbody');
-                        do {
-                            tBody.appendChild(children[0]);
-                        } while (children.length);
+
+                        if (children.length > 0) {
+                            do {
+                                tBody.appendChild(children[0]);
+                            } while (children.length);
+                        }
                     }
 
                     if (!colGroup || colGroup.children.length < 1) {
@@ -4932,18 +4986,20 @@ $.sheet = {
                         table.appendChild(colGroup);
                         table.appendChild(tBody);
 
-                        firstTr = tBody.children[0];
+                        if (tBody.children.length > 0) {
+                            firstTr = tBody.children[0];
 
-                        for (i = 0, j = Math.min(firstTr.children.length, s.initCalcCols); i < j; i++) {
-                            col = document.createElement('col');
+                            for (i = 0, j = Math.min(firstTr.children.length, s.initCalcCols); i < j; i++) {
+                                col = document.createElement('col');
 
-                            setWidth.call(loader, jS.i, i, col);
+                                setWidth.call(loader, jS.i, i, col);
 
-                            colGroup.appendChild(col);
+                                colGroup.appendChild(col);
 
-                        }
-                        for (i = 0, j = Math.min(tBody.children.length, s.initCalcRows); i < j; i++) {
-                            tBody.children[i].style.height = h;
+                            }
+                            for (i = 0, j = Math.min(tBody.children.length, s.initCalcRows); i < j; i++) {
+                                tBody.children[i].style.height = h;
+                            }
                         }
                     }
 
@@ -4969,11 +5025,11 @@ $.sheet = {
                     addCols = (frozenAt.col > addCols ? frozenAt.col + 1 : addCols);
 
                     if (size.cols < addCols) {
-                        jS.controlFactory.addColumnMulti(null, addCols - size.cols);
+                        jS.controlFactory.addColumnMulti(null, Math.max(addCols - size.cols, 1), false, true);
                     }
 
                     if (size.rows < addRows) {
-                        jS.controlFactory.addRowMulti(null, addRows - size.rows);
+                        jS.controlFactory.addRowMulti(null, Math.max(addRows - size.rows, 1), false, true);
                     }
                 },
 
