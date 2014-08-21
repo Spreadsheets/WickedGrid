@@ -40,12 +40,12 @@
         createCells:function (i, size, isBefore) {
             var offset = (isBefore ? 0 : 1),
                 rowMax = size.rows || 1,
-                colMax = i + this.qty,
+                colMax = this.qty,
                 row,
                 col = i,
                 bar;
 
-            for (; col < colMax; col++) {
+            for (; col <= colMax; col++) {
 
                 bar = this.createBar(col + offset);
 

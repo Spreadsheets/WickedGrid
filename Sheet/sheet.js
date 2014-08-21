@@ -1954,23 +1954,39 @@ $.sheet = {
                                 o.setCreateBarFn(function(at) {
                                     var barParent = tBody.children[0],
                                         col = document.createElement('col'),
-                                        bar = document.createElement('td'),
+                                        topBar = document.createElement('td'),
+                                        leftBar,
                                         rowParent = tBody.children[1]; //the very first row may not exist yet
 
                                     col.style.width = width;
 
-                                    bar.entity = 'top';
-                                    bar.type = 'bar';
-                                    bar.innerHTML = jSE.columnLabelString(at);
-                                    bar.className = colBarClasses;
+                                    topBar.entity = 'top';
+                                    topBar.type = 'bar';
+                                    topBar.innerHTML = jSE.columnLabelString(at);
+                                    topBar.className = colBarClasses;
+
+                                    //If the row has not been created lets set it up
+                                    if (rowParent === undefined) {
+                                        leftBar = document.createElement('td');
+                                        leftBar.setAttribute('class', rowBarClasses);
+                                        leftBar.entity = 'left';
+                                        leftBar.type = 'bar'
+
+                                        rowParent = document.createElement('tr');
+                                        rowParent.style.height = height;
+                                        rowParent.appendChild(leftBar);
+                                        tBody.appendChild(rowParent);
+
+                                        leftBar.innerHTML = rowParent.rowIndex;
+                                    }
 
                                     colGroup.insertBefore(col, colGroup.children[at]);
-                                    barParent.insertBefore(bar, barParent.children[at]);
+                                    barParent.insertBefore(topBar, barParent.children[at]);
 
-                                    controlX.splice(at, 0, $(bar));
+                                    controlX.splice(at, 0, $(topBar));
 
                                     return {
-                                        bar: bar,
+                                        bar: topBar,
                                         col: col,
                                         barParent: barParent
                                     };
@@ -1984,21 +2000,6 @@ $.sheet = {
 
                                     if (spreadsheetRow === undefined) {
                                         spreadsheet[row] = spreadsheetRow = [];
-                                    }
-
-                                    //If the row has not been created lets set it up
-                                    if (rowParent === undefined) {
-                                        bar = document.createElement('td');
-                                        bar.setAttribute('class', rowBarClasses);
-                                        bar.entity = 'left';
-                                        bar.type = 'bar'
-
-                                        rowParent = document.createElement('tr');
-                                        rowParent.style.height = height;
-                                        rowParent.appendChild(bar);
-                                        tBody.appendChild(rowParent);
-
-                                        bar.innerHTML = rowParent.rowIndex;
                                     }
 
                                     spreadsheetRow.splice(at, 0, cell);
@@ -2068,9 +2069,9 @@ $.sheet = {
                             i = tr.length - 1;
 
                         //table / tBody / tr
-                        if (i > -1) {
+                        if (i > 0) {
                             do {
-                                //tr[i].insertBefore(document.createElement('td'), tr[i].children[0]);
+                                tr[i].insertBefore(document.createElement('td'), tr[i].children[0]);
                             } while(i-- > 1); //We only go till row 1, row 0 is handled by barTop with corner etc
                         }
                     },
