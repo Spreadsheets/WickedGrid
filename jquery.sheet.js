@@ -28,10 +28,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-    var Constructor = function(enclosure, pane, sheet, cl, frozenAt, max) {
+    var Constructor = function(enclosure, pane, table, cl, frozenAt, max) {
         this.enclosure = enclosure;
         this.pane = pane;
-        this.sheet = sheet;
+        this.table = table;
         this.max = max;
         this.xIndex = 0;
         this.yIndex = 0;
@@ -113,7 +113,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         }
 
         var that = this,
-            cssId = '#' + sheet.getAttribute('id'),
+            cssId = '#' + table.getAttribute('id'),
             scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
             scrollInner = pane.scrollInner = document.createElement('div'),
             scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(indexes, style) {
@@ -168,35 +168,35 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
         var xStyle,
             yStyle,
-            sheetWidth,
-            sheetHeight,
+            tableWidth,
+            tableHeight,
             enclosureWidth,
             enclosureHeight,
-            firstRow = sheet.tBody.children[0];
+            firstRow = table.tBody.children[0];
 
         pane.resizeScroll = function (justTouch) {
             if (justTouch) {
                 xStyle = scrollStyleX.getStyle();
                 yStyle = scrollStyleY.getStyle();
             } else {
-                xStyle = (sheet.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.getStyle());
-                yStyle = (sheet.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.getStyle());
+                xStyle = (table.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.getStyle());
+                yStyle = (table.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.getStyle());
             }
 
             scrollStyleX.update(null, ' ');
             scrollStyleY.update(null, ' ');
 
             if (firstRow === undefined) {
-                firstRow = sheet.tBody.children[0];
+                firstRow = table.tBody.children[0];
             }
 
-            sheetWidth = (firstRow.clientWidth || sheet.clientWidth) + 'px';
-            sheetHeight = sheet.clientHeight + 'px';
+            tableWidth = (firstRow.clientWidth || table.clientWidth) + 'px';
+            tableHeight = table.clientHeight + 'px';
             enclosureWidth = enclosure.clientWidth + 'px';
             enclosureHeight = enclosure.clientHeight + 'px';
 
-            scrollInner.style.width = sheetWidth;
-            scrollInner.style.height = sheetHeight;
+            scrollInner.style.width = tableWidth;
+            scrollInner.style.height = tableHeight;
 
             scrollOuter.style.width = enclosureWidth;
             scrollOuter.style.height = enclosureHeight;
@@ -324,7 +324,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
          * Repeats a string a number of times
          * @param {String} str
          * @param {Number} num
-         * @memberOf jQuery.sheet
          * @returns {String}
          */
         repeat:function (str, num) {
@@ -348,7 +347,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
          * @param {Number} min
          * @param {String} [css]
          * @returns {String}
-         * @memberOf jQuery.sheet
          */
 
         nthCss: null,
@@ -369,7 +367,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
         hide:function (hiddenRows, hiddenColumns, rows, columns) {
             var that = this,
-                cssId = '#' + this.sheet.getAttribute('id'),
+                cssId = '#' + this.table.getAttribute('id'),
                 toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
                     var style = nthCss('col', cssId, that.hiddenColumns, 0) +
                         nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
@@ -425,7 +423,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             var pane = this.pane,
                 outer = pane.scrollOuter,
                 axis = this.scrollAxis[axisName],
-                size = this.scrollSize = this.sheet.size();
+                size = this.scrollSize = pane.size();
 
             axis.v = [];
             axis.name = axisName;
@@ -614,7 +612,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 col = i,
                 bar;
 
-            for (; col <= colMax; col++) {
+            for (; col < colMax; col++) {
 
                 bar = this.createBar(col + offset);
 
@@ -2014,7 +2012,7 @@ $.fn.extend({
                     initCalcCols: 20,
                     initScrollRows: 0,
                     initScrollCols: 0,
-                    loader: {}
+                    loader: null
                 };
 
             //destroy already existing spreadsheet
@@ -3247,10 +3245,10 @@ $.sheet = {
                             tBody = table.tBody,
                             colGroup = table.colGroup,
                             minSize = s.minSize,
-                            sheetSize = jS.sheetSize(table),
+                            tableSize = jS.tableSize(table),
                             isLast = false,
                             activeCell = jS.obj.tdActive(),
-                            spreadsheet = jS.spreadsheets[jS.i],
+                            spreadsheet = jS.spreadsheets[jS.i] || (jS.spreadsheets[jS.i] = []),
                             o,
                             offset,
                             width = s.newColumnWidth + 'px',
@@ -3263,14 +3261,14 @@ $.sheet = {
                             controlX = jS.controls.bar.x.td[jS.i] || (jS.controls.bar.x.td[jS.i] = []),
                             controlY = jS.controls.bar.y.td[jS.i] || (jS.controls.bar.y.td[jS.i] = []);
 
-                        minSize.rows = Math.max(minSize.rows, sheetSize.rows);
-                        minSize.cols = Math.max(minSize.cols, sheetSize.cols);
+                        minSize.rows = Math.max(minSize.rows, tableSize.rows);
+                        minSize.cols = Math.max(minSize.cols, tableSize.cols);
 
                         qty = qty || 1;
                         type = type || 'col';
 
                         if (i === null || i === u) {
-                            i = (type == 'row' ? sheetSize.rows : sheetSize.cols);
+                            i = (type == 'row' ? tableSize.rows : tableSize.cols);
                             isLast = true;
                         }
 
@@ -3278,7 +3276,7 @@ $.sheet = {
                             case "row":
                                 loc = {row: i, col: 0};
                                 o = this.rowAdder;
-                                if (o.setQty(qty, sheetSize) === false) {
+                                if (o.setQty(qty, tableSize) === false) {
                                     if (!jS.isBusy()) {
                                         s.alert(jS.msg.maxRowsBrowserLimitation);
                                     }
@@ -3328,7 +3326,7 @@ $.sheet = {
                             case "col":
                                 loc = {row: 0, col: i};
                                 o = this.columnAdder;
-                                if (o.setQty(qty, sheetSize) === false) {
+                                if (o.setQty(qty, tableSize) === false) {
                                     if (!jS.isBusy()) {
                                         s.alert(jS.msg.maxColsBrowserLimitation);
                                     }
@@ -3378,8 +3376,7 @@ $.sheet = {
                                     var td = document.createElement('td'),
                                         cell = jS.createUnboundCell(jS.i, td),
                                         rowParent = tBody.children[row],
-                                        spreadsheetRow = spreadsheet[row],
-                                        bar;
+                                        spreadsheetRow = spreadsheet[row];
 
                                     if (spreadsheetRow === undefined) {
                                         spreadsheet[row] = spreadsheetRow = [];
@@ -3403,7 +3400,7 @@ $.sheet = {
                                 break;
                         }
 
-                        o.createCells(i, sheetSize, isBefore);
+                        o.createCells(i, tableSize, isBefore);
 
                         if (!skipFormulaReParse && isLast != true) {
                             //offset formulas
@@ -4143,7 +4140,8 @@ $.sheet = {
 
                         jS.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
 
-                        var enclosure = jS.controlFactory.enclosure(table),
+                        var hasChildren = table.tBody.children.length > 0,
+                            enclosure = jS.controlFactory.enclosure(table),
                             pane = enclosure.pane,
                             $pane = $(pane),
                             paneContextmenuEvent = function (e) {
@@ -4301,7 +4299,8 @@ $.sheet = {
                             actionUI = new Sheet.ActionUI(enclosure, pane, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
                             scrollUI = actionUI.scrollUI;
 
-                        table.size = function() { return jS.sheetSize(table); };
+                        table.size = function() { return jS.tableSize(table); };
+                        pane.size = function() { return jS.sheetSize(table); };
 
                         scrollUI.onscroll = function() {
                             if (!jS.isBusy()) {
@@ -5591,6 +5590,8 @@ $.sheet = {
                         .attr('cellpadding', '0')
                         .attr('cellspacing', '0');
 
+                    table.spreadsheetIndex = jS.i;
+
                     jS.formatTable(table);
                     jS.sheetDecorateRemove(false, $table);
 
@@ -5623,9 +5624,10 @@ $.sheet = {
                  * @param {Number} [rowEnd]
                  * @param {Number} [colStart]
                  * @param {Number} [colEnd]
+                 * @oaram {Boolean} [createCellsIfNeeded]
                  * @memberOf jS
                  */
-                createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd) {
+                createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd, createCellsIfNeeded) {
                     var rows = jS.rows(table),
                         row,
                         col,
@@ -5656,11 +5658,17 @@ $.sheet = {
 
                     //This is performed backwards starting at end
                     row = rowEnd;
-                    if (row < 0) return;
+                    if (row < 0 || col < 0) return;
                     do {
                         var tr = rows[row];
                         col = colEnd;
-                        if (col < 0 || tr === undefined) return;
+                        if (tr === undefined) {
+                            if (createCellsIfNeeded) {
+                                jS.controlFactory.addCells(null, false, row - (rows.length - 1), 'row');
+                            } else {
+                                return;
+                            }
+                        }
                         do {
                             var td = tr.children[col];
 
@@ -6395,11 +6403,11 @@ $.sheet = {
 
                 /**
                  * Ensure sheet minimums have been met, if not add columns and rows
-                 * @param {jQuery|HTMLElement} o table object
+                 * @param {jQuery|HTMLElement} table object
                  * @memberOf jS
                  */
-                checkMinSize:function (o) {
-                    var size = jS.sheetSize(o),
+                checkMinSize:function (table) {
+                    var size = jS.tableSize(table),
                         addRows = s.minSize.rows || 0,
                         addCols = s.minSize.cols || 0,
                         actionUI = jS.obj.pane().actionUI,
@@ -7893,7 +7901,7 @@ $.sheet = {
 
                     var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
                         endScrolledArea = actionUI.scrolledArea.end,
-                        sheetSize = actionUI.sheet.size(),
+                        sheetSize = actionUI.pane.size(),
                         ignite = jS.updateCellValue,
                         initRows = s.initCalcRows,
                         initCols = s.initCalcCols,
@@ -7929,7 +7937,7 @@ $.sheet = {
                                     do {
                                         var offset = rowIndex;
                                         while (offset > 0 && spreadsheet[offset] === undefined) {
-                                            this.createSpreadsheetForArea(actionUI.sheet, sheetIndex, offset, offset, colIndex, colIndex);
+                                            this.createSpreadsheetForArea(actionUI.table, sheetIndex, offset, offset, colIndex, colIndex, true);
                                             offset--;
                                         }
                                         if ((row = spreadsheet[rowIndex]) !== undefined) {
@@ -7954,7 +7962,7 @@ $.sheet = {
 
                     var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
                         endScrolledArea = actionUI.scrolledArea.end,
-                        sheetSize = actionUI.sheet.size(),
+                        sheetSize = actionUI.pane.size(),
                         ignite = jS.updateCellValue,
                         initRows = s.initCalcRows,
                         initCols = s.initCalcCols,
@@ -7976,7 +7984,7 @@ $.sheet = {
                             colIndex = targetCol;
                             row = spreadsheet[rowIndex];
                             if (row === undefined || row[colIndex] === undefined) {
-                                this.createSpreadsheetForArea(actionUI.sheet, sheetIndex, rowIndex, rowIndex, colIndex, colIndex);
+                                this.createSpreadsheetForArea(actionUI.table, sheetIndex, rowIndex, rowIndex, colIndex, colIndex, true);
                                 row = spreadsheet[rowIndex];
                             }
 
@@ -9352,10 +9360,23 @@ $.sheet = {
                 sheetSize:function (table) {
                     var lastRow,
                         loc,
-                        size = {};
+                        size = {},
+                        minSize = s.minSize;
 
                     table = table || jS.obj.table()[0];
                     //table / tBody / tr / td
+
+                    //if we are using a dataloader, get the size from that
+                    if (s.loader !== null) {
+                        size = s.loader.size(table.spreadsheetIndex);
+
+                        if (minSize !== null) {
+                            size.rows = Math.max(size.rows, minSize.rows);
+                            size.cols = Math.max(size.cols, minSize.cols);
+                        }
+
+                        return size;
+                    }
 
                     if (
                         (size.cols = s.initScrollCols) > 0
@@ -9646,14 +9667,15 @@ $.sheet = {
                     table = table || jS.obj.table()[0];
                     //table / tBody / tr / td
 
-                    var trs = (table.children[0].nodeName != "TBODY" ? table.children[1] : table.children[0]).children,
-                        tds = trs[trs.length - 1].children,
-                        td = tds[tds.length - 1],
-                        loc = jS.getTdLocation(td);
+                    var tBody = table.tBody || {},
+                        tBodyChildren = tBody.children || [],
+                        tr = tBodyChildren[tBodyChildren.length - 1] || {},
+                        trChildren = tr.children || [],
+                        td = trChildren[trChildren.length - 1] || {};
 
                     return {
-                        cols:loc.col,
-                        rows:loc.row
+                        cols: td.cellIndex || 0,
+                        rows: tr.rowIndex || 0
                     };
                 },
 

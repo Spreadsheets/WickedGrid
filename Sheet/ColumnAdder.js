@@ -45,7 +45,7 @@
                 col = i,
                 bar;
 
-            for (; col <= colMax; col++) {
+            for (; col < colMax; col++) {
 
                 bar = this.createBar(col + offset);
 
