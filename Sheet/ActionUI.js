@@ -3,10 +3,10 @@
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-    var Constructor = function(enclosure, pane, sheet, cl, frozenAt, max) {
+    var Constructor = function(enclosure, pane, table, cl, frozenAt, max) {
         this.enclosure = enclosure;
         this.pane = pane;
-        this.sheet = sheet;
+        this.table = table;
         this.max = max;
         this.xIndex = 0;
         this.yIndex = 0;
@@ -88,7 +88,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         }
 
         var that = this,
-            cssId = '#' + sheet.getAttribute('id'),
+            cssId = '#' + table.getAttribute('id'),
             scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
             scrollInner = pane.scrollInner = document.createElement('div'),
             scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(indexes, style) {
@@ -143,35 +143,35 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
         var xStyle,
             yStyle,
-            sheetWidth,
-            sheetHeight,
+            tableWidth,
+            tableHeight,
             enclosureWidth,
             enclosureHeight,
-            firstRow = sheet.tBody.children[0];
+            firstRow = table.tBody.children[0];
 
         pane.resizeScroll = function (justTouch) {
             if (justTouch) {
                 xStyle = scrollStyleX.getStyle();
                 yStyle = scrollStyleY.getStyle();
             } else {
-                xStyle = (sheet.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.getStyle());
-                yStyle = (sheet.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.getStyle());
+                xStyle = (table.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.getStyle());
+                yStyle = (table.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.getStyle());
             }
 
             scrollStyleX.update(null, ' ');
             scrollStyleY.update(null, ' ');
 
             if (firstRow === undefined) {
-                firstRow = sheet.tBody.children[0];
+                firstRow = table.tBody.children[0];
             }
 
-            sheetWidth = (firstRow.clientWidth || sheet.clientWidth) + 'px';
-            sheetHeight = sheet.clientHeight + 'px';
+            tableWidth = (firstRow.clientWidth || table.clientWidth) + 'px';
+            tableHeight = table.clientHeight + 'px';
             enclosureWidth = enclosure.clientWidth + 'px';
             enclosureHeight = enclosure.clientHeight + 'px';
 
-            scrollInner.style.width = sheetWidth;
-            scrollInner.style.height = sheetHeight;
+            scrollInner.style.width = tableWidth;
+            scrollInner.style.height = tableHeight;
 
             scrollOuter.style.width = enclosureWidth;
             scrollOuter.style.height = enclosureHeight;
@@ -299,7 +299,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
          * Repeats a string a number of times
          * @param {String} str
          * @param {Number} num
-         * @memberOf jQuery.sheet
          * @returns {String}
          */
         repeat:function (str, num) {
@@ -323,7 +322,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
          * @param {Number} min
          * @param {String} [css]
          * @returns {String}
-         * @memberOf jQuery.sheet
          */
 
         nthCss: null,
@@ -344,7 +342,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
         hide:function (hiddenRows, hiddenColumns, rows, columns) {
             var that = this,
-                cssId = '#' + this.sheet.getAttribute('id'),
+                cssId = '#' + this.table.getAttribute('id'),
                 toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
                     var style = nthCss('col', cssId, that.hiddenColumns, 0) +
                         nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
@@ -400,7 +398,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             var pane = this.pane,
                 outer = pane.scrollOuter,
                 axis = this.scrollAxis[axisName],
-                size = this.scrollSize = this.sheet.size();
+                size = this.scrollSize = pane.size();
 
             axis.v = [];
             axis.name = axisName;
