@@ -9,7 +9,7 @@
     }
 
     Constructor.prototype = {
-        setQty: function(qty, sheetSize) {
+        setQty: function(qty, sheetSize, minSize) {
             var max = $.sheet.max;
 
             if (max) {

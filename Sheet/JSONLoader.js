@@ -13,7 +13,6 @@
     "use strict";
     function Constructor(json) {
         this.json = json;
-        this.lazy = true;
         this.count = json.length;
     }
 
@@ -329,7 +328,10 @@
             jS.i = i;
 
             return output;
-        }
+        },
+	    getCellValue: function() {
+
+	    }
     };
 
     return Constructor;

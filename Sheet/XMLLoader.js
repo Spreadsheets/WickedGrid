@@ -57,17 +57,73 @@
      * </spreadsheets></textarea>
      */
     function Constructor(xml) {
-        this.xml = xml;
-        this.lazy = true;
+	    this.xml = $.parseXML(xml);
+	    this.spreadsheets = this.xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet');
+        this.count = this.xml.length;
     }
 
     Constructor.prototype = {
+	    size: function(spreadsheetIndex) {
+		    var xmlSpreadsheet = this.xml[spreadsheetIndex],
+			    rows = xmlSpreadsheet.rows,
+			    firstRow = rows[0],
+			    firstRowColumns = firstRow.columns;
+
+		    return {
+			    rows: rows.length,
+			    cols: firstRowColumns.length
+		    };
+	    },
+	    setWidth: function(sheetIndex, columnIndex, colElement) {
+		    var spreadsheets = this.spreadsheets,
+			    xmlSpreadsheet = spreadsheets[sheetIndex],
+			    metadata = xmlSpreadsheet.getElementsByTagName('metadata')[0] || {},
+			    widths = metadata.getElementsByTagName('width') || [],
+			    widthElement = widths[columnIndex],
+			    width = (widthElement.textContent || widthElement.text);
+
+		    colElement.style.width = width + 'px';
+	    },
+	    setRowHeight: function(sheetIndex, rowIndex, barTd) {
+		    var spreadsheets = this.spreadsheets,
+			    xmlSpreadsheet = spreadsheets[sheetIndex],
+			    rows = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row'),
+			    row = rows[rowIndex],
+			    height = row.attributes['height'].nodeValue;
+
+		    barTd.style.height = height + 'px';
+	    },
+	    setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
+		    var spreadsheets = this.spreadsheets,
+			    xmlSpreadsheet,
+			    row,
+			    cell;
+
+		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return;
+		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return;
+		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return;
+
+		    blankCell.cellType = cell.attributes['cellType'].nodeValue || '';
+
+		    if (cell.attributes['formula']) {
+			    blankCell.formula = cell.attributes['formula'].nodeValue || '';
+			    blankTd.setAttribute('data-formula', cell.attributes['formula'].nodeValue || '');
+		    } else {
+			    blankTd.innerHTML = blankCell.value = cell.attributes['value'].nodeValue || '';
+		    }
+
+		    blankTd.className = cell.attributes['class'].nodeValue || '';
+		    blankTd.setAttribute('style', cell.attributes['style'].nodeValue || '');
+
+		    if (cell.attributes['rowspan']) blankTd.setAttribute('rowspan', cell.attributes['rowspan'].nodeValue || '');
+		    if (cell.attributes['colspan']) blankTd.setAttribute('colspan', cell.attributes['colspan'].nodeValue || '');
+	    },
         /**
          * @returns {*|jQuery|HTMLElement} a simple html table
          * @memberOf Sheet.XMLLoader
          */
         toTables: function() {
-            var xml = $.parseXML(this.xml),
+            var xml = this.xml,
                 tables = $([]),
                 spreadsheets = xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet'),
                 spreadsheet,

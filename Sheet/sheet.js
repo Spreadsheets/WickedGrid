@@ -1012,7 +1012,6 @@ $.sheet = {
     optional:{
         //native
         advancedFn:{script:'plugins/jquery.sheet.advancedfn.js'},
-        dts:{script:'plugins/JSONLoader.js'},
         financeFn:{script:'plugins/jquery.sheet.financefn.js'},
 
         //3rd party
@@ -1882,13 +1881,12 @@ $.sheet = {
                         qty = qty || 1;
                         type = type || 'col';
 
-                        if (i === null || i === u) {
-                            i = -1;
-                            isLast = true;
-                        }
-
                         switch (type) {
                             case "row":
+	                            if (!i) {
+		                            i = tableSize.rows;
+		                            isLast = true;
+	                            }
                                 loc = {row: i, col: 0};
                                 o = this.rowAdder;
                                 if (o.setQty(qty, tableSize) === false) {
@@ -1907,7 +1905,7 @@ $.sheet = {
                                     bar.type = 'bar';
                                     bar.style.height = height;
                                     barParent.appendChild(bar);
-                                    tBody.insertBefore(barParent, tBody.children[at]);
+                                    tBody.insertBefore(barParent, tBody.children[at + 1]);
 
                                     bar.innerHTML = barParent.rowIndex;
                                     controlY.splice(at, 0, $(bar));
@@ -1922,7 +1920,7 @@ $.sheet = {
                                         cell = jS.createUnboundCell(jS.i, td),
                                         spreadsheetRow = spreadsheet[row];
 
-                                    spreadsheetRow.splice(at, 0, cell);
+                                    spreadsheetRow[at] = cell;
 
                                     if (setupCell) {
                                         setupCell.call(loader, jS.i, row, at, cell, td);
@@ -1939,6 +1937,10 @@ $.sheet = {
                                 });
                                 break;
                             case "col":
+	                            if (!i) {
+		                            i = tableSize.cols;
+		                            isLast = true;
+	                            }
                                 loc = {row: 0, col: i};
                                 o = this.columnAdder;
                                 if (o.setQty(qty, tableSize) === false) {
@@ -1966,7 +1968,7 @@ $.sheet = {
                                         leftBar = document.createElement('td');
                                         leftBar.setAttribute('class', rowBarClasses);
                                         leftBar.entity = 'left';
-                                        leftBar.type = 'bar'
+                                        leftBar.type = 'bar';
 
                                         rowParent = document.createElement('tr');
                                         rowParent.style.height = height;
@@ -1997,7 +1999,7 @@ $.sheet = {
                                         spreadsheet[row] = spreadsheetRow = [];
                                     }
 
-                                    spreadsheetRow.splice(at, 0, cell);
+                                    spreadsheetRow[at] = cell;
 
                                     if (setupCell) {
                                         setupCell.call(loader, jS.i, row, at, cell, td);
@@ -2015,7 +2017,7 @@ $.sheet = {
                                 break;
                         }
 
-                        o.createCells(i, isBefore);
+                        o.createCells(i, tableSize, isBefore);
 
                         if (!skipFormulaReParse && isLast != true) {
                             //offset formulas
@@ -4001,7 +4003,7 @@ $.sheet = {
 
                     if (!tds) return;
 
-                    for (var i = start; i < tds.length; i++) {
+                    for (var i = Math.max(start, 0); i < tds.length; i++) {
                         if (i) {//greater than 1 (corner)
                             tds[i].text(jSE.columnLabelString(tds[i][0].cellIndex));
                         }

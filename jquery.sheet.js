@@ -618,6 +618,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
                 for (row = 1; row <= rowMax; row++) {
                     this.createCell(row, col + offset, bar);
+	                console.log([row, col + offset]);
                 }
             }
 
@@ -642,7 +643,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
     }
 
     Constructor.prototype = {
-        setQty: function(qty, sheetSize) {
+        setQty: function(qty, sheetSize, minSize) {
             var max = $.sheet.max;
 
             if (max) {
@@ -756,7 +757,6 @@ Sheet.StyleUpdater = (function(document) {
     "use strict";
     function Constructor(json) {
         this.json = json;
-        this.lazy = true;
         this.count = json.length;
     }
 
@@ -1072,7 +1072,10 @@ Sheet.StyleUpdater = (function(document) {
             jS.i = i;
 
             return output;
-        }
+        },
+	    getCellValue: function() {
+
+	    }
     };
 
     return Constructor;
@@ -1135,17 +1138,73 @@ Sheet.StyleUpdater = (function(document) {
      * </spreadsheets></textarea>
      */
     function Constructor(xml) {
-        this.xml = xml;
-        this.lazy = true;
+	    this.xml = $.parseXML(xml);
+	    this.spreadsheets = this.xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet');
+        this.count = this.xml.length;
     }
 
     Constructor.prototype = {
+	    size: function(spreadsheetIndex) {
+		    var xmlSpreadsheet = this.xml[spreadsheetIndex],
+			    rows = xmlSpreadsheet.rows,
+			    firstRow = rows[0],
+			    firstRowColumns = firstRow.columns;
+
+		    return {
+			    rows: rows.length,
+			    cols: firstRowColumns.length
+		    };
+	    },
+	    setWidth: function(sheetIndex, columnIndex, colElement) {
+		    var spreadsheets = this.spreadsheets,
+			    xmlSpreadsheet = spreadsheets[sheetIndex],
+			    metadata = xmlSpreadsheet.getElementsByTagName('metadata')[0] || {},
+			    widths = metadata.getElementsByTagName('width') || [],
+			    widthElement = widths[columnIndex],
+			    width = (widthElement.textContent || widthElement.text);
+
+		    colElement.style.width = width + 'px';
+	    },
+	    setRowHeight: function(sheetIndex, rowIndex, barTd) {
+		    var spreadsheets = this.spreadsheets,
+			    xmlSpreadsheet = spreadsheets[sheetIndex],
+			    rows = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row'),
+			    row = rows[rowIndex],
+			    height = row.attributes['height'].nodeValue;
+
+		    barTd.style.height = height + 'px';
+	    },
+	    setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
+		    var spreadsheets = this.spreadsheets,
+			    xmlSpreadsheet,
+			    row,
+			    cell;
+
+		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return;
+		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return;
+		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return;
+
+		    blankCell.cellType = cell.attributes['cellType'].nodeValue || '';
+
+		    if (cell.attributes['formula']) {
+			    blankCell.formula = cell.attributes['formula'].nodeValue || '';
+			    blankTd.setAttribute('data-formula', cell.attributes['formula'].nodeValue || '');
+		    } else {
+			    blankTd.innerHTML = blankCell.value = cell.attributes['value'].nodeValue || '';
+		    }
+
+		    blankTd.className = cell.attributes['class'].nodeValue || '';
+		    blankTd.setAttribute('style', cell.attributes['style'].nodeValue || '');
+
+		    if (cell.attributes['rowspan']) blankTd.setAttribute('rowspan', cell.attributes['rowspan'].nodeValue || '');
+		    if (cell.attributes['colspan']) blankTd.setAttribute('colspan', cell.attributes['colspan'].nodeValue || '');
+	    },
         /**
          * @returns {*|jQuery|HTMLElement} a simple html table
          * @memberOf Sheet.XMLLoader
          */
         toTables: function() {
-            var xml = $.parseXML(this.xml),
+            var xml = this.xml,
                 tables = $([]),
                 spreadsheets = xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet'),
                 spreadsheet,
@@ -2393,7 +2452,6 @@ $.sheet = {
     optional:{
         //native
         advancedFn:{script:'plugins/jquery.sheet.advancedfn.js'},
-        dts:{script:'plugins/JSONLoader.js'},
         financeFn:{script:'plugins/jquery.sheet.financefn.js'},
 
         //3rd party
@@ -3244,8 +3302,6 @@ $.sheet = {
                             table = $table[0],
                             tBody = table.tBody,
                             colGroup = table.colGroup,
-                            minSize = s.minSize,
-                            tableSize = jS.tableSize(table),
                             isLast = false,
                             activeCell = jS.obj.tdActive(),
                             spreadsheet = jS.spreadsheets[jS.i] || (jS.spreadsheets[jS.i] = []),
@@ -3259,21 +3315,18 @@ $.sheet = {
                             loader = s.loader || {},
                             setupCell = loader.setupCell || null,
                             controlX = jS.controls.bar.x.td[jS.i] || (jS.controls.bar.x.td[jS.i] = []),
-                            controlY = jS.controls.bar.y.td[jS.i] || (jS.controls.bar.y.td[jS.i] = []);
-
-                        minSize.rows = Math.max(minSize.rows, tableSize.rows);
-                        minSize.cols = Math.max(minSize.cols, tableSize.cols);
+                            controlY = jS.controls.bar.y.td[jS.i] || (jS.controls.bar.y.td[jS.i] = []),
+                            tableSize = table.size();
 
                         qty = qty || 1;
                         type = type || 'col';
 
-                        if (i === null || i === u) {
-                            i = (type == 'row' ? tableSize.rows : tableSize.cols);
-                            isLast = true;
-                        }
-
                         switch (type) {
                             case "row":
+	                            if (!i) {
+		                            i = tableSize.rows;
+		                            isLast = true;
+	                            }
                                 loc = {row: i, col: 0};
                                 o = this.rowAdder;
                                 if (o.setQty(qty, tableSize) === false) {
@@ -3292,7 +3345,7 @@ $.sheet = {
                                     bar.type = 'bar';
                                     bar.style.height = height;
                                     barParent.appendChild(bar);
-                                    tBody.insertBefore(barParent, tBody.children[at]);
+                                    tBody.insertBefore(barParent, tBody.children[at + 1]);
 
                                     bar.innerHTML = barParent.rowIndex;
                                     controlY.splice(at, 0, $(bar));
@@ -3307,7 +3360,7 @@ $.sheet = {
                                         cell = jS.createUnboundCell(jS.i, td),
                                         spreadsheetRow = spreadsheet[row];
 
-                                    spreadsheetRow.splice(at, 0, cell);
+                                    spreadsheetRow[at] = cell;
 
                                     if (setupCell) {
                                         setupCell.call(loader, jS.i, row, at, cell, td);
@@ -3324,6 +3377,10 @@ $.sheet = {
                                 });
                                 break;
                             case "col":
+	                            if (!i) {
+		                            i = tableSize.cols;
+		                            isLast = true;
+	                            }
                                 loc = {row: 0, col: i};
                                 o = this.columnAdder;
                                 if (o.setQty(qty, tableSize) === false) {
@@ -3351,7 +3408,7 @@ $.sheet = {
                                         leftBar = document.createElement('td');
                                         leftBar.setAttribute('class', rowBarClasses);
                                         leftBar.entity = 'left';
-                                        leftBar.type = 'bar'
+                                        leftBar.type = 'bar';
 
                                         rowParent = document.createElement('tr');
                                         rowParent.style.height = height;
@@ -3382,7 +3439,7 @@ $.sheet = {
                                         spreadsheet[row] = spreadsheetRow = [];
                                     }
 
-                                    spreadsheetRow.splice(at, 0, cell);
+                                    spreadsheetRow[at] = cell;
 
                                     if (setupCell) {
                                         setupCell.call(loader, jS.i, row, at, cell, td);
@@ -5386,7 +5443,7 @@ $.sheet = {
 
                     if (!tds) return;
 
-                    for (var i = start; i < tds.length; i++) {
+                    for (var i = Math.max(start, 0); i < tds.length; i++) {
                         if (i) {//greater than 1 (corner)
                             tds[i].text(jSE.columnLabelString(tds[i][0].cellIndex));
                         }
