@@ -40,7 +40,7 @@
         createCells:function (i, size, isBefore) {
             var offset = (isBefore ? 0 : 1),
                 rowMax = size.rows || 1,
-                colMax = this.qty,
+                colMax = i + this.qty,
                 row,
                 col = i,
                 bar;
@@ -51,7 +51,6 @@
 
                 for (row = 1; row <= rowMax; row++) {
                     this.createCell(row, col + offset, bar);
-	                console.log([row, col + offset]);
                 }
             }
 
