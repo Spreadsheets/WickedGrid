@@ -607,7 +607,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         createCells:function (i, size, isBefore) {
             var offset = (isBefore ? 0 : 1),
                 rowMax = size.rows || 1,
-                colMax = this.qty,
+                colMax = i + this.qty,
                 row,
                 col = i,
                 bar;
@@ -618,7 +618,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
                 for (row = 1; row <= rowMax; row++) {
                     this.createCell(row, col + offset, bar);
-	                console.log([row, col + offset]);
                 }
             }
 
@@ -673,7 +672,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
         },
         createCells:function (i, size, isBefore) {
             var offset = (isBefore ? 0 : 1),
-                rowMax = this.qty,
+                rowMax = i + this.qty,
                 colMax = size.cols || 1,
                 rowParent,
                 row = i,
@@ -5722,14 +5721,22 @@ $.sheet = {
                         if (tr === undefined) {
                             if (createCellsIfNeeded) {
                                 jS.controlFactory.addCells(null, false, row - (rows.length - 1), 'row');
+	                            tr = rows[row];
                             } else {
-                                return;
+                                continue;
                             }
                         }
                         do {
                             var td = tr.children[col];
 
-                            if (td === undefined) continue;
+                            if (td === undefined) {
+	                            if (createCellsIfNeeded) {
+	                                jS.controlFactory.addCells(null, false, row - (rows.length - 1), 'col');
+		                            td = tr.children[col];
+	                            } else {
+		                            continue;
+	                            }
+                            }
 
                             if (row > 0 && col > 0) {
                                 jS.createCell(i, row, col);
@@ -6470,15 +6477,18 @@ $.sheet = {
                         actionUI = jS.obj.pane().actionUI,
                         frozenAt = actionUI.frozenAt;
 
-                    addRows = (frozenAt.row > addRows ? frozenAt.row + 1 : addRows);
-                    addCols = (frozenAt.col > addCols ? frozenAt.col + 1 : addCols);
+                    addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1);
+                    addCols = Math.max((frozenAt.col > addCols ? frozenAt.col + 1 : addCols), 1);
 
                     if (size.cols < addCols) {
-                        jS.controlFactory.addColumnMulti(null, Math.max(addCols - size.cols, 1), false, true);
+                        jS.controlFactory.addColumnMulti(null, addCols, false, true);
                     }
 
+	                //The sheet size (rows) may have changed
+	                size = jS.tableSize(table);
+
                     if (size.rows < addRows) {
-                        jS.controlFactory.addRowMulti(null, Math.max(addRows - size.rows, 1), false, true);
+                        jS.controlFactory.addRowMulti(null, addRows, false, true);
                     }
                 },
 
