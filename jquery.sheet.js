@@ -794,9 +794,9 @@ Sheet.StyleUpdater = (function(document) {
                 row,
                 cell;
 
-            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
-            if ((row = jsonSpreadsheet.rows[rowIndex - 1]) === undefined) return;
-            if ((cell = row.columns[columnIndex - 1]) === undefined) return;
+            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return false;
+            if ((row = jsonSpreadsheet.rows[rowIndex - 1]) === undefined) return false;
+            if ((cell = row.columns[columnIndex - 1]) === undefined) return false;
 
             blankCell.cellType = cell['cellType'] || '';
 
@@ -812,6 +812,8 @@ Sheet.StyleUpdater = (function(document) {
 
             if (cell['rowspan']) blankTd.setAttribute('rowspan', cell['rowspan'] || '');
             if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
+
+            return true;
         },
         /**
          * Create a table from json
@@ -1179,9 +1181,9 @@ Sheet.StyleUpdater = (function(document) {
 			    row,
 			    cell;
 
-		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return;
-		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return;
-		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return;
+		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return false;
+		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return false;
+		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return false;
 
 		    blankCell.cellType = cell.attributes['cellType'].nodeValue || '';
 
@@ -1197,6 +1199,8 @@ Sheet.StyleUpdater = (function(document) {
 
 		    if (cell.attributes['rowspan']) blankTd.setAttribute('rowspan', cell.attributes['rowspan'].nodeValue || '');
 		    if (cell.attributes['colspan']) blankTd.setAttribute('colspan', cell.attributes['colspan'].nodeValue || '');
+
+            return true;
 	    },
         /**
          * @returns {*|jQuery|HTMLElement} a simple html table
@@ -3362,7 +3366,9 @@ $.sheet = {
                                     spreadsheetRow[at] = cell;
 
                                     if (setupCell) {
-                                        setupCell.call(loader, jS.i, row, at, cell, td);
+                                        if (setupCell.call(loader, jS.i, row, at, cell, td)) {
+                                            jS.updateCellValue.call(cell);
+                                        }
                                     }
 
                                     rowParent.insertBefore(td, rowParent.children[at]);
@@ -3441,7 +3447,9 @@ $.sheet = {
                                     spreadsheetRow[at] = cell;
 
                                     if (setupCell) {
-                                        setupCell.call(loader, jS.i, row, at, cell, td);
+                                        if (setupCell.call(loader, jS.i, row, at, cell, td)) {
+                                            jS.updateCellValue.call(cell);
+                                        }
                                     }
 
                                     rowParent.insertBefore(td, rowParent.children[at]);
@@ -5731,7 +5739,7 @@ $.sheet = {
 
                             if (td === undefined) {
 	                            if (createCellsIfNeeded) {
-	                                jS.controlFactory.addCells(null, false, row - (rows.length - 1), 'col');
+	                                jS.controlFactory.addCells(null, false, col - (rows[0].children.length - 1), 'col');
 		                            td = tr.children[col];
 	                            } else {
 		                            continue;
@@ -5739,7 +5747,9 @@ $.sheet = {
                             }
 
                             if (row > 0 && col > 0) {
-                                jS.createCell(i, row, col);
+                                if (!td.jSCell) {
+                                    jS.createCell(i, row, col);
+                                }
                             } else {
                                 if (col == 0 && row > 0) { //barleft
                                     td.type = 'bar';

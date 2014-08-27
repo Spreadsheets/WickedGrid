@@ -51,9 +51,9 @@
                 row,
                 cell;
 
-            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
-            if ((row = jsonSpreadsheet.rows[rowIndex - 1]) === undefined) return;
-            if ((cell = row.columns[columnIndex - 1]) === undefined) return;
+            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return false;
+            if ((row = jsonSpreadsheet.rows[rowIndex - 1]) === undefined) return false;
+            if ((cell = row.columns[columnIndex - 1]) === undefined) return false;
 
             blankCell.cellType = cell['cellType'] || '';
 
@@ -69,6 +69,8 @@
 
             if (cell['rowspan']) blankTd.setAttribute('rowspan', cell['rowspan'] || '');
             if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
+
+            return true;
         },
         /**
          * Create a table from json
