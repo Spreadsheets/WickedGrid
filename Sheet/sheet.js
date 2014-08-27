@@ -1923,7 +1923,9 @@ $.sheet = {
                                     spreadsheetRow[at] = cell;
 
                                     if (setupCell) {
-                                        setupCell.call(loader, jS.i, row, at, cell, td);
+                                        if (setupCell.call(loader, jS.i, row, at, cell, td)) {
+                                            jS.updateCellValue.call(cell);
+                                        }
                                     }
 
                                     rowParent.insertBefore(td, rowParent.children[at]);
@@ -2002,7 +2004,9 @@ $.sheet = {
                                     spreadsheetRow[at] = cell;
 
                                     if (setupCell) {
-                                        setupCell.call(loader, jS.i, row, at, cell, td);
+                                        if (setupCell.call(loader, jS.i, row, at, cell, td)) {
+                                            jS.updateCellValue.call(cell);
+                                        }
                                     }
 
                                     rowParent.insertBefore(td, rowParent.children[at]);
@@ -4292,7 +4296,7 @@ $.sheet = {
 
                             if (td === undefined) {
 	                            if (createCellsIfNeeded) {
-	                                jS.controlFactory.addCells(null, false, row - (rows.length - 1), 'col');
+	                                jS.controlFactory.addCells(null, false, col - (rows[0].children.length - 1), 'col');
 		                            td = tr.children[col];
 	                            } else {
 		                            continue;
@@ -4300,7 +4304,9 @@ $.sheet = {
                             }
 
                             if (row > 0 && col > 0) {
-                                jS.createCell(i, row, col);
+                                if (!td.jSCell) {
+                                    jS.createCell(i, row, col);
+                                }
                             } else {
                                 if (col == 0 && row > 0) { //barleft
                                     td.type = 'bar';

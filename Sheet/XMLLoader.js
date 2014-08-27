@@ -99,9 +99,9 @@
 			    row,
 			    cell;
 
-		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return;
-		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return;
-		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return;
+		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return false;
+		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return false;
+		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return false;
 
 		    blankCell.cellType = cell.attributes['cellType'].nodeValue || '';
 
@@ -117,6 +117,8 @@
 
 		    if (cell.attributes['rowspan']) blankTd.setAttribute('rowspan', cell.attributes['rowspan'].nodeValue || '');
 		    if (cell.attributes['colspan']) blankTd.setAttribute('colspan', cell.attributes['colspan'].nodeValue || '');
+
+            return true;
 	    },
         /**
          * @returns {*|jQuery|HTMLElement} a simple html table
