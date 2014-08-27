@@ -761,10 +761,20 @@ Sheet.StyleUpdater = (function(document) {
 
     Constructor.prototype = {
         size: function(spreadsheetIndex) {
-            var jsonSpreadsheet = this.json[spreadsheetIndex],
-                rows = jsonSpreadsheet.rows,
-                firstRow = rows[0],
-                firstRowColumns = firstRow.columns;
+            var size = {
+                    cols: 0,
+                    rows: 0
+                },
+                json = this.json,
+                jsonSpreadsheet,
+                rows,
+                firstRow,
+                firstRowColumns;
+
+            if ((jsonSpreadsheet = json[spreadsheetIndex]) === undefined) return size;
+            if ((rows = jsonSpreadsheet.rows) === undefined) return size;
+            if ((firstRow = rows[0]) === undefined) return size;
+            if ((firstRowColumns = firstRow.columns) === undefined) return size;
 
             return {
                 rows: rows.length,
@@ -782,9 +792,15 @@ Sheet.StyleUpdater = (function(document) {
         },
         setRowHeight: function(sheetIndex, rowIndex, barTd) {
             var json = this.json,
-                jsonSpreadsheet = json[sheetIndex],
-                row = jsonSpreadsheet.rows[rowIndex],
-                height = row.height;
+                jsonSpreadsheet,
+                rows,
+                row,
+                height;
+
+            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
+            if ((rows = jsonSpreadsheet.rows) === undefined) return;
+            if ((row = rows[rowIndex]) === undefined) return;
+            if ((height = row.height) === undefined) return;
 
             barTd.style.height = height + 'px';
         },
@@ -1168,10 +1184,15 @@ Sheet.StyleUpdater = (function(document) {
 	    },
 	    setRowHeight: function(sheetIndex, rowIndex, barTd) {
 		    var spreadsheets = this.spreadsheets,
-			    xmlSpreadsheet = spreadsheets[sheetIndex],
-			    rows = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row'),
-			    row = rows[rowIndex],
-			    height = row.attributes['height'].nodeValue;
+			    xmlSpreadsheet,
+			    rows,
+			    row,
+			    height;
+
+            if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return;
+            if ((rows = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')) === undefined) return;
+            if ((row = rows[rowIndex]) === undefined) return;
+            if ((height = row.attributes['height'].nodeValue) === undefined) return;
 
 		    barTd.style.height = height + 'px';
 	    },
@@ -8585,8 +8606,6 @@ $.sheet = {
                                 tabContainer = jS.controlFactory.tabContainer(),
                                 i;
 
-                            jS.sheetCount = tables.length - 1;
-
                             header.ui = ui;
                             header.tabContainer = tabContainer;
 
@@ -9811,7 +9830,9 @@ $.sheet = {
                  * @memberOf jS
                  */
                 formulaParser: null
-            };
+            },
+            loaderTables = [];
+
         jS.setBusy(true);
         s.parent[0].jS = jS;
 
@@ -9913,7 +9934,16 @@ $.sheet = {
         if (s.origHtml.length) {
             jS.openSheet(s.origHtml);
         } else {
-            jS.openSheet($(document.createElement('table')));
+            if (s.loader) {
+                while(loaderTables.length < s.loader.count) {
+                    loaderTables.push(document.createElement('table'));
+                }
+                jS.openSheet($(loaderTables));
+            }
+
+            else {
+                jS.openSheet($(document.createElement('table')));
+            }
         }
 
         jS.setBusy(false);

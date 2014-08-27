@@ -7142,8 +7142,6 @@ $.sheet = {
                                 tabContainer = jS.controlFactory.tabContainer(),
                                 i;
 
-                            jS.sheetCount = tables.length - 1;
-
                             header.ui = ui;
                             header.tabContainer = tabContainer;
 
@@ -8368,7 +8366,9 @@ $.sheet = {
                  * @memberOf jS
                  */
                 formulaParser: null
-            };
+            },
+            loaderTables = [];
+
         jS.setBusy(true);
         s.parent[0].jS = jS;
 
@@ -8470,7 +8470,16 @@ $.sheet = {
         if (s.origHtml.length) {
             jS.openSheet(s.origHtml);
         } else {
-            jS.openSheet($(document.createElement('table')));
+            if (s.loader) {
+                while(loaderTables.length < s.loader.count) {
+                    loaderTables.push(document.createElement('table'));
+                }
+                jS.openSheet($(loaderTables));
+            }
+
+            else {
+                jS.openSheet($(document.createElement('table')));
+            }
         }
 
         jS.setBusy(false);

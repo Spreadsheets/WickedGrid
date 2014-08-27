@@ -86,10 +86,15 @@
 	    },
 	    setRowHeight: function(sheetIndex, rowIndex, barTd) {
 		    var spreadsheets = this.spreadsheets,
-			    xmlSpreadsheet = spreadsheets[sheetIndex],
-			    rows = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row'),
-			    row = rows[rowIndex],
-			    height = row.attributes['height'].nodeValue;
+			    xmlSpreadsheet,
+			    rows,
+			    row,
+			    height;
+
+            if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return;
+            if ((rows = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')) === undefined) return;
+            if ((row = rows[rowIndex]) === undefined) return;
+            if ((height = row.attributes['height'].nodeValue) === undefined) return;
 
 		    barTd.style.height = height + 'px';
 	    },

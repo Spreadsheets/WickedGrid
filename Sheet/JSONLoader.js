@@ -18,10 +18,20 @@
 
     Constructor.prototype = {
         size: function(spreadsheetIndex) {
-            var jsonSpreadsheet = this.json[spreadsheetIndex],
-                rows = jsonSpreadsheet.rows,
-                firstRow = rows[0],
-                firstRowColumns = firstRow.columns;
+            var size = {
+                    cols: 0,
+                    rows: 0
+                },
+                json = this.json,
+                jsonSpreadsheet,
+                rows,
+                firstRow,
+                firstRowColumns;
+
+            if ((jsonSpreadsheet = json[spreadsheetIndex]) === undefined) return size;
+            if ((rows = jsonSpreadsheet.rows) === undefined) return size;
+            if ((firstRow = rows[0]) === undefined) return size;
+            if ((firstRowColumns = firstRow.columns) === undefined) return size;
 
             return {
                 rows: rows.length,
@@ -39,9 +49,15 @@
         },
         setRowHeight: function(sheetIndex, rowIndex, barTd) {
             var json = this.json,
-                jsonSpreadsheet = json[sheetIndex],
-                row = jsonSpreadsheet.rows[rowIndex],
-                height = row.height;
+                jsonSpreadsheet,
+                rows,
+                row,
+                height;
+
+            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
+            if ((rows = jsonSpreadsheet.rows) === undefined) return;
+            if ((row = rows[rowIndex]) === undefined) return;
+            if ((height = row.height) === undefined) return;
 
             barTd.style.height = height + 'px';
         },
