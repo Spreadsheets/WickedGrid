@@ -3321,6 +3321,8 @@ $.sheet = {
                                     jS.evt.cellSetActiveFromKeyCode(e, true);
                                     return false;
                                     break;
+								case key.UNKNOWN:
+									return false;
                             }
 
                             jS.cellLast.isEdit = true;
@@ -7755,8 +7757,7 @@ $.sheet = {
                             redo: emptyFN,
                             register: emptyFN,
                             notLoaded: true
-                        }
-                        ),
+                        }),
                     cells:[],
                     id:0,
                     createCells: function(cells, fn, id) {
@@ -7800,7 +7801,7 @@ $.sheet = {
                         }
 
                         if (index !== -1) {
-                            //jS.undo.cells.splice(index, 1);
+                            jS.undo.cells.splice(index, 1);
                         }
                         jS.undo.draw(cells);
                     },
