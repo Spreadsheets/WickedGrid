@@ -7777,7 +7777,14 @@ $.sheet = {
                         before.id = id;
                         after.id = id;
 
-                        jS.undo.manager.register(u, jS.undo.removeCells, [before, id], 'Remove Cells', u, jS.undo.createCells, [after, null, id], 'Create Cells');
+                        jS.undo.manager.add({
+							undo: function() {
+								jS.undo.removeCells(before, id);
+							},
+							redo: function() {
+								jS.undo.createCells(after, null, id);
+							}
+						});
 
                         if (id != jS.undo.id || !fn) {
                             jS.calcLast = new Date();
