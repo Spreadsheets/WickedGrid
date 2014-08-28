@@ -31,7 +31,8 @@ var key = { /* key objects, makes it easier to develop */
     V:					86,
     X:                  88,
     Y:					89,
-    Z:					90
+    Z:					90,
+	UNKNOWN:			229
 };
 
 var arrHelpers = window.arrHelpers = {

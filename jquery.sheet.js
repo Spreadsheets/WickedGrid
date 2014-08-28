@@ -4816,6 +4816,8 @@ $.sheet = {
                                     jS.evt.cellSetActiveFromKeyCode(e, true);
                                     return false;
                                     break;
+								case key.UNKNOWN:
+									return false;
                             }
 
                             jS.cellLast.isEdit = true;
@@ -9250,8 +9252,7 @@ $.sheet = {
                             redo: emptyFN,
                             register: emptyFN,
                             notLoaded: true
-                        }
-                        ),
+                        }),
                     cells:[],
                     id:0,
                     createCells: function(cells, fn, id) {
@@ -9295,7 +9296,7 @@ $.sheet = {
                         }
 
                         if (index !== -1) {
-                            //jS.undo.cells.splice(index, 1);
+                            jS.undo.cells.splice(index, 1);
                         }
                         jS.undo.draw(cells);
                     },
@@ -12371,7 +12372,8 @@ var jFN = $.sheet.fn = {
     V:					86,
     X:                  88,
     Y:					89,
-    Z:					90
+    Z:					90,
+	UNKNOWN:			229
 };
 
 var arrHelpers = window.arrHelpers = {
