@@ -807,11 +807,13 @@ Sheet.StyleUpdater = (function(document) {
         setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
             var json = this.json,
                 jsonSpreadsheet,
+				rows,
                 row,
                 cell;
 
             if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return false;
-            if ((row = jsonSpreadsheet.rows[rowIndex - 1]) === undefined) return false;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return;
+            if ((row = rows[rowIndex - 1]) === undefined) return false;
             if ((cell = row.columns[columnIndex - 1]) === undefined) return false;
 
             blankCell.cellType = cell['cellType'] || '';
@@ -831,6 +833,35 @@ Sheet.StyleUpdater = (function(document) {
 
             return true;
         },
+		jitCell: function(sheetIndex, rowIndex, columnIndex) {
+			var json = this.json,
+				jsonSpreadsheet,
+				rows,
+				row,
+				cell;
+
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
+			if ((row = rows[rowIndex - 1]) === undefined) return null;
+			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+
+			return {
+				td: {
+					cellIndex: columnIndex,
+					parentNode:{
+						rowIndex: rowIndex
+					},
+					html: function() {}
+				},
+				html: [],
+				state: [],
+				calcLast: -1,
+				calcDependenciesLast: -1,
+				cellType: cell['cellType'] || '',
+				formula: cell['formula'] || '',
+				value: cell['value'] || ''
+			}
+		},
         /**
          * Create a table from json
          * @param {Array} json array of spreadsheets - schema:<pre>
@@ -7331,23 +7362,37 @@ $.sheet = {
                  * @memberOf jS
                  */
                 updateCellValue:function (sheetIndex, rowIndex, colIndex) {
-                    var sheet, row, cell, fn;
+                    var sheet, row, cell, fn, lookupErrors = null;
 
                     sheetIndex = sheetIndex || 0;
                     rowIndex = rowIndex || -1;
                     colIndex = colIndex || -1;
 
                     if (rowIndex > -1) {
-                        //first detect if the cell exists if not return nothing
-                        if (!(sheet = jS.spreadsheets[sheetIndex])) return s.error({error:jS.msg.notFoundSheet});
-                        if (!(row = sheet[rowIndex])) return s.error({error:jS.msg.notFoundRow});
-                        if (!(cell = row[colIndex])) return s.error({error:jS.msg.notFoundColumn});
+						//first detect if the cell exists if not return nothing
+						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
+							lookupErrors = s.error({error:jS.msg.notFoundSheet});
+						} else {
+							if (lookupErrors === null && (row = sheet[rowIndex]) === undefined) {
+								lookupErrors = s.error({error:jS.msg.notFoundRow});
+							} else {
+								if (lookupErrors === null && (cell = row[colIndex]) === undefined) {
+									lookupErrors = s.error({error:jS.msg.notFoundColumn});
+								}
+							}
+						}
+
+						if (lookupErrors !== null && s.loader) {
+							if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
+								return lookupErrors
+							}
+						}
                     } else {
                         cell = this;
                     }
 
                     if (cell === undefined) {
-                        throw new Error("cell doesn't exist");
+						throw new Error("cell doesn't exist");
                     }
 
                     cell.oldValue = cell.value; //we detect the last value, so that we don't have to update all cell, thus saving resources
