@@ -64,11 +64,13 @@
         setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
             var json = this.json,
                 jsonSpreadsheet,
+				rows,
                 row,
                 cell;
 
             if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return false;
-            if ((row = jsonSpreadsheet.rows[rowIndex - 1]) === undefined) return false;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return;
+            if ((row = rows[rowIndex - 1]) === undefined) return false;
             if ((cell = row.columns[columnIndex - 1]) === undefined) return false;
 
             blankCell.cellType = cell['cellType'] || '';
@@ -88,6 +90,35 @@
 
             return true;
         },
+		jitCell: function(sheetIndex, rowIndex, columnIndex) {
+			var json = this.json,
+				jsonSpreadsheet,
+				rows,
+				row,
+				cell;
+
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
+			if ((row = rows[rowIndex - 1]) === undefined) return null;
+			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+
+			return {
+				td: {
+					cellIndex: columnIndex,
+					parentNode:{
+						rowIndex: rowIndex
+					},
+					html: function() {}
+				},
+				html: [],
+				state: [],
+				calcLast: -1,
+				calcDependenciesLast: -1,
+				cellType: cell['cellType'] || '',
+				formula: cell['formula'] || '',
+				value: cell['value'] || ''
+			}
+		},
         /**
          * Create a table from json
          * @param {Array} json array of spreadsheets - schema:<pre>

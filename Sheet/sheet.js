@@ -5867,23 +5867,37 @@ $.sheet = {
                  * @memberOf jS
                  */
                 updateCellValue:function (sheetIndex, rowIndex, colIndex) {
-                    var sheet, row, cell, fn;
+                    var sheet, row, cell, fn, lookupErrors = null;
 
                     sheetIndex = sheetIndex || 0;
                     rowIndex = rowIndex || -1;
                     colIndex = colIndex || -1;
 
                     if (rowIndex > -1) {
-                        //first detect if the cell exists if not return nothing
-                        if (!(sheet = jS.spreadsheets[sheetIndex])) return s.error({error:jS.msg.notFoundSheet});
-                        if (!(row = sheet[rowIndex])) return s.error({error:jS.msg.notFoundRow});
-                        if (!(cell = row[colIndex])) return s.error({error:jS.msg.notFoundColumn});
+						//first detect if the cell exists if not return nothing
+						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
+							lookupErrors = s.error({error:jS.msg.notFoundSheet});
+						} else {
+							if (lookupErrors === null && (row = sheet[rowIndex]) === undefined) {
+								lookupErrors = s.error({error:jS.msg.notFoundRow});
+							} else {
+								if (lookupErrors === null && (cell = row[colIndex]) === undefined) {
+									lookupErrors = s.error({error:jS.msg.notFoundColumn});
+								}
+							}
+						}
+
+						if (lookupErrors !== null && s.loader) {
+							if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
+								return lookupErrors
+							}
+						}
                     } else {
                         cell = this;
                     }
 
                     if (cell === undefined) {
-                        throw new Error("cell doesn't exist");
+						throw new Error("cell doesn't exist");
                     }
 
                     cell.oldValue = cell.value; //we detect the last value, so that we don't have to update all cell, thus saving resources
