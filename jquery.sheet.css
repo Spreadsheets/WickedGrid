@@ -160,9 +160,15 @@
 }
 .jSParent .jSTabContainer span
 {
-	
+	border-bottom: none;
+	border-top: none;
 	padding: 2px 5px 0 5px ! important;
 	cursor: pointer;
+}
+.jSParent .jSSheetAdder {
+	border-left: none;
+	border-bottom: none;
+	border-top: none;
 }
 .jSParent .jSTab {
 	cursor: pointer;
@@ -213,7 +219,7 @@
 }
 .jSParent .jS td {
 	height: inherit;
-	border-width: 0px 0px 1px 1px ! important;
+	border-width: 0px 0px 1px 1px;
 	border-color: inherit;
 	padding: 0px ! important;
 	border-style: solid ! important;
@@ -232,7 +238,7 @@
 }
 
 .jSParent .jS td.jSBarLeft {
-	border-width: 0px 0px 1px 1px;
+	border-width: 0px 0px 1px 0px;
 }
 
 .jSParent .jS td.jSBarTop {
