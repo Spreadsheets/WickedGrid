@@ -7090,10 +7090,10 @@ $.sheet = {
 									jS.controlFactory.customTab(s.loader.title(i))
 										.mousedown(function() {
 											jS.setBusy(true);
-											var spreadsheetUI = new Sheet.SpreadsheetUI(jS, this.i, ui, tables[this.i]);
+											var spreadsheetUI = new Sheet.SpreadsheetUI(jS, this.i, ui, tables[this.i], options);
+											jS.setActiveSheet(-1, spreadsheetUI);
 											jS.calcVisibleInit(this.i);
 											jS.setBusy(false);
-											jS.setActiveSheet(-1, spreadsheetUI);
 											jS.obj.tab().insertAfter(this);
 											$(this).remove();
 											jS.sheetSyncSize();
