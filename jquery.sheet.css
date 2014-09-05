@@ -366,9 +366,8 @@
 .colorPickers *
 {
 	display: inline-block;
-	width: 16px ! important;
-	height: 16px ! important;
 	background-color: transparent ! important;
+	background-image: none ! important;
 }
 
 .jSFullScreen

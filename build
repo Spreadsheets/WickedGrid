@@ -20,6 +20,8 @@ JS_FILES=(
 	#constructors first
 	Base.js
 	ActionUI.js
+	SpreadsheetUI.js
+	Highlighter.js
 	ColumnAdder.js
 	RowAdder.js
 	StyleUpdater.js

@@ -128,16 +128,23 @@
                                             });
 
                                             //The following is just so you get an idea of how to style cells
-                                            menu.find('.colorPickerCell').colorPicker().change(function(){
-                                                jS.cellChangeStyle('background-color', $(this).val());
-                                            });
+                                            var colorPickerCell = menu.find('.colorPickerCell')
+			                                        .colorPicker()
+		                                            .change(function(){
+	                                                    jS.cellChangeStyle('background-color', $(this).val());
+	                                                }),
 
-                                            menu.find('.colorPickerFont').colorPicker().change(function(){
-                                                jS.cellChangeStyle('color', $(this).val());
-                                            });
+                                                colorPickerFont = menu.find('.colorPickerFont')
+	                                                .colorPicker()
+	                                                .change(function(){
+                                                        jS.cellChangeStyle('color', $(this).val());
+                                                    });
 
-                                            menu.find('.colorPickers').children().eq(1).css('background-image', "url('images/palette.png')");
-                                            menu.find('.colorPickers').children().eq(3).css('background-image', "url('images/palette_bg.png')");
+	                                        colorPickerCell.next()
+			                                        .html($('<img>').attr('src', colorPickerCell.attr('data-img')));
+
+	                                        colorPickerFont.next()
+			                                        .html($('<img>').attr('src', colorPickerFont.attr('data-img')));
 
                                             return menu;
                                         }
@@ -331,6 +338,10 @@
             | <a href="http://jqueryui.com/themeroller/">Create your own theme</a>
             <br/>
             <a href="http://www.opensource.org/licenses/mit-license.html">MIT license</a>
+	        <br>
+	        <br>
+	        <br>
+	        <div>Icons made by Freepik, Elegant Themes, Zurb, Icomoon, SimpleIcon, Catalin Fertu from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a></div>
         </div>
     </body>
 
