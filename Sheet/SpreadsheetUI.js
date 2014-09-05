@@ -1,14 +1,13 @@
 Sheet.SpreadsheetUI = (function() {
 	var stack = [];
 
-	function Constructor(jS, i, ui, table, options) {
+	function Constructor(i, ui, table, options) {
 		options = options || {};
 
 		this.i = i;
 		this.ui = ui;
 		this.table = table;
 		this.isLast = options.lastIndex === i;
-		this.jS = jS;
 		this.enclosure = null;
 		this.pane = null;
 		this.spreadsheet = null;
@@ -25,6 +24,7 @@ Sheet.SpreadsheetUI = (function() {
 			var table = this.table;
 			this.initChildren(this.ui, table, this.i);
 
+			table.pane.ui = this.ui;
 			this.enclosure = table.enclosure;
 			this.pane = table.pane;
 			this.spreadsheet = table.spreadsheet;

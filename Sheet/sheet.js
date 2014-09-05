@@ -1460,6 +1460,7 @@ $.sheet = {
 					pane:'jSEditPane',
 					tab:'jSTab',
 					tabContainer:'jSTabContainer',
+					tabContainerScrollable:'jSTabContainerScrollable',
 					tdMenu:'jSTdMenu',
 					title:'jSTitle',
 					enclosure:'jSEnclosure',
@@ -2187,7 +2188,6 @@ $.sheet = {
 							jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
 							jS.controls.bar.x.handleFreeze[jS.i] = $handle;
 
-							console.log('test');
 							jS.draggable($handle, {
 								axis:'x',
 								start:function () {
@@ -3009,14 +3009,11 @@ $.sheet = {
 
 					customTab: function(title) {
 						var tab = document.createElement('span'),
-							$tab = jS.controls.tab[jS.i] = $(tab).appendTo(jS.obj.tabContainer());
+							$tab = $(tab).appendTo(jS.obj.tabContainer());
 
 						tab.setAttribute('class', jS.cl.tab);
 						tab.setAttribute('class', jS.cl.uiTab + ' ui-corner-bottom');
 						tab.innerHTML = title;
-
-						tab.i = jS.i;
-						jS.controls.tabs = jS.obj.tabs().add($tab);
 
 						return $tab;
 					},
@@ -5256,10 +5253,10 @@ $.sheet = {
 							},
 							resize:function (e, ui) {
 								barController.style.height =
-									td.style.height =
-										bar.style.height =
-											parent.style.height =
-												ui.size.height + 'px';
+								td.style.height =
+								bar.style.height =
+								parent.style.height =
+								ui.size.height + 'px';
 
 								if (pane.inPlaceEdit) {
 									pane.inPlaceEdit.goToTd();
@@ -6536,22 +6533,23 @@ $.sheet = {
 				 */
 				addSheet:function (size) {
 					size = size || {rows: 25, cols: 10};
-					if (size) {
-						jS.evt.cellEditAbandon();
-						jS.setDirty(true);
-						jS.controlFactory.sheetUI(jS.obj.ui, $.sheet.makeTable(size), jS.sheetCount);
 
-						jS.setActiveSheet(jS.sheetCount);
+					jS.evt.cellEditAbandon();
+					jS.setDirty(true);
+					jS.controlFactory.sheetUI(jS.obj.ui, $.sheet.makeTable(size), jS.sheetCount);
 
-						jS.sheetCount++;
+					jS.setActiveSheet(jS.sheetCount);
 
-						jS.sheetSyncSize();
+					jS.sheetCount++;
 
-						jS.obj.pane().resizeScroll();
+					jS.sheetSyncSize();
 
-						jS.trigger('sheetAdd', [jS.i]);
-					}
+					jS.obj.pane().resizeScroll();
+
+					jS.trigger('sheetAdd', [jS.i]);
 				},
+
+				insertSheet: null,
 
 				/**
 				 * deletes a spreadsheet table
@@ -6969,7 +6967,7 @@ $.sheet = {
 					if (spreadsheetUI !== undefined) {
 						enclosure = spreadsheetUI.enclosure;
 					} else {
-						enclosure = enclosures[i];
+						enclosure = jS.controls.enclosure[i][0];
 					}
 
 					enclosure.style.display = "";
@@ -6985,6 +6983,8 @@ $.sheet = {
 					enclosure._scrollLeft = enclosure._scrollTop = null;
 					enclosure.scrollUI.onscroll();
 				},
+
+
 
 				/**
 				 * opens a spreadsheet into the active sheet instance
@@ -7003,12 +7003,12 @@ $.sheet = {
 								options = {
 									sizeCheck: function(spreadsheetUI) {
 										if ($.sheet.max) {
-											var size = jS.tableSize(table);
+											var size = jS.tableSize(spreadsheetUI.table);
 											if (size.rows > $.sheet.max || size.cols > $.sheet.max) {
-												jS.trigger('sheetMaxSize', [table, i]);
+												jS.trigger('sheetMaxSize', [spreadsheetUI.table, spreadsheetUI.i]);
 												s.confirm(
 													jS.msg.maxSizeBrowserLimitationOnOpen,
-													function() {me.load();}
+													function() {spreadsheetUI.load();}
 												);
 											} else {
 												spreadsheetUI.load();
@@ -7019,7 +7019,6 @@ $.sheet = {
 									},
 									initChildren: function(ui, table, i) {
 										jS.controlFactory.sheetUI(ui, table, i);
-										jS.sheetCount++;
 										jS.trigger('sheetOpened', [i]);
 									},
 									done: function(stack) {
@@ -7037,7 +7036,8 @@ $.sheet = {
 										jS.trigger('sheetAllOpened');
 									},
 									lastIndex: lastIndex
-								};
+								},
+								firstSpreadsheetUI;
 
 							header.ui = ui;
 							header.tabContainer = tabContainer;
@@ -7075,32 +7075,67 @@ $.sheet = {
 								}
 							});
 
+
+
 							if (!s.loader) {
 								for (i = 0; i < tables.length; i++) {
-									new Sheet.SpreadsheetUI(jS, i, ui, tables[i], options);
+									new Sheet.SpreadsheetUI(i, ui, tables[i], options);
+									jS.sheetCount++;
 								}
 							} else {
-								//always load at least the first spreadsheet
-								(new Sheet.SpreadsheetUI(jS, 0, ui, tables[0], options)).loaded();
-								jS.sheetSyncSize();
 
-								//set the others up to load on demand
-								for (i = 1; i < tables.length; i++) {
-									jS.i = i;
+								jS.insertSheet = function(data, i, makeVisible, table) {
+									jS.sheetCount++;
+									data = data || null;
+									table = table || document.createElement('table');
+									makeVisible = makeVisible !== undefined ? makeVisible : true;
+									i = i || jS.sheetCount;
+
+									if (data !== null) {
+										loader.addSpreadsheet(data);
+									}
+
+									if (!table.hasAttribute('title')) {
+										table.setAttribute('title', loader.title(i));
+									}
+
+									var showSpreadsheet = function() {
+										jS.obj.enclosure().hide();
+										jS.setBusy(true);
+										var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, table, options);
+										jS.setActiveSheet(-1, spreadsheetUI);
+										jS.calcVisibleInit(i);
+										jS.setBusy(false);
+										jS.sheetSyncSize();
+									};
+
+									if (makeVisible) {
+										showSpreadsheet();
+										return;
+									}
+
 									jS.controlFactory.customTab(s.loader.title(i))
 										.mousedown(function() {
-											jS.setBusy(true);
-											var spreadsheetUI = new Sheet.SpreadsheetUI(jS, this.i, ui, tables[this.i], options);
-											jS.setActiveSheet(-1, spreadsheetUI);
-											jS.calcVisibleInit(this.i);
-											jS.setBusy(false);
-											jS.obj.tab().insertAfter(this);
+											showSpreadsheet();
+											jS.obj.tab().insertBefore(this);
 											$(this).remove();
-											jS.sheetSyncSize();
 											return false;
 										});
+								};
+
+								//always load at least the first spreadsheet
+								firstSpreadsheetUI = new Sheet.SpreadsheetUI(0, ui, tables[0], options);
+								jS.sheetCount++;
+
+								if (tables.length > 1) {
+									//set the others up to load on demand
+									for (i = 1; i < tables.length; i++) {
+										jS.insertSheet(null, i, false, tables[i]);
+									}
+									jS.i = 0;
+
+									firstSpreadsheetUI.loaded()
 								}
-								jS.i = 0;
 							}
 						};
 
@@ -7131,24 +7166,56 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				sheetSyncSize:function () {
-					var h = s.parent[0].clientHeight;
+					var $parent = s.parent,
+						parent = $parent[0],
+						h = parent.clientHeight,
+						w = parent.clientWidth,
+						$tabContainer = jS.obj.tabContainer(),
+						tabContainer = $tabContainer[0],
+						tabContainerStyle = tabContainer.style,
+						scrollBarWidth = window.scrollBarSize.width,
+						tabContainerInnerWidth,
+						tabContainerOuterWidth,
+						widthTabContainer,
+						heightTabContainer,
+						uiStyle = jS.obj.ui.style,
+						paneHeight,
+						paneWidth,
+						standardHeight,
+						standardWidth,
+						tabContainerScrollLeft;
+
 					if (!h) {
 						h = 400; //Height really needs to be set by the parent
-						s.parent.height(h);
+						$parent.height(h);
 					} else if (h < 200) {
 						h = 200;
-						s.parent.height(h);
+						$parent.height(h);
 					}
+					tabContainerScrollLeft = tabContainer.scrollLeft;
+					tabContainerStyle.width = '';
+					tabContainerInnerWidth = tabContainer.clientWidth;
+					tabContainerOuterWidth = (w - (s.colMargin + scrollBarWidth));
+					widthTabContainer = (w - s.colMargin * 2) + 'px';
+					heightTabContainer = ((s.colMargin + scrollBarWidth) + 'px');
+					if (tabContainerInnerWidth > tabContainerOuterWidth) {
+						tabContainerStyle.height = heightTabContainer;
+						$tabContainer.addClass(jS.cl.tabContainerScrollable);
+						h -= s.colMargin;
+					} else {
+						tabContainerStyle.height = null;
+						$tabContainer.removeClass(jS.cl.tabContainerScrollable);
+					}
+					tabContainerStyle.width = widthTabContainer;
+					tabContainer.scrollLeft = tabContainerScrollLeft;
 
-					h -= jS.obj.header().outerHeight() + jS.s.boxModelCorrection;
-					h -= jS.obj.tabContainer().outerHeight() + jS.s.boxModelCorrection;
+					h -= jS.obj.header().outerHeight() + s.boxModelCorrection;
+					h -= tabContainer.clientHeight + s.boxModelCorrection;
 
-					var w = s.parent[0].clientWidth,
-						uiStyle = jS.obj.ui.style,
-						paneHeight = (h - window.scrollBarSize.height - s.boxModelCorrection) + 'px',
-						paneWidth = (w - window.scrollBarSize.width) + 'px',
-						standardHeight = h + 'px',
-						standardWidth = w + 'px';
+					paneHeight = (h - window.scrollBarSize.height - s.boxModelCorrection) + 'px';
+					paneWidth = (w - window.scrollBarSize.width) + 'px';
+					standardHeight = (h + 'px');
+					standardWidth = (w + 'px');
 
 					jS.obj.panes().each(function() {
 						var style = this.style,

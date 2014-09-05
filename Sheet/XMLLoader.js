@@ -125,6 +125,50 @@
 
             return true;
 	    },
+	    jitCell: function(sheetIndex, rowIndex, columnIndex) {
+		    var spreadsheets = this.spreadsheets,
+			    xmlSpreadsheet,
+			    row,
+			    cell;
+
+		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return false;
+		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return false;
+		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return false;
+
+		    return {
+			    td: {
+				    cellIndex: columnIndex,
+				    parentNode:{
+					    rowIndex: rowIndex
+				    },
+				    html: function() {}
+			    },
+			    html: [],
+			    state: [],
+			    calcLast: -1,
+			    calcDependenciesLast: -1,
+			    cellType: cell.attributes['cellType'].nodeValue || '',
+			    formula: cell.attributes['formula'].nodeValue || '',
+			    value: cell.attributes['value'].nodeValue || ''
+		    }
+	    },
+	    title: function(sheetIndex) {
+		    var spreadsheets = this.spreadsheets,
+			    spreadsheet;
+
+		    if ((spreadsheet = spreadsheets[sheetIndex]) === undefined) return '';
+
+		    return (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '');
+	    },
+	    addSpreadsheet: function(xmlSpreadsheet, atIndex) {
+		    //TODO
+		    if (atIndex === undefined) {
+			    this.spreadsheets.append.push(jsonSpreadsheet);
+		    } else {
+			    this.json.splice(atIndex, 0, jsonSpreadsheet);
+		    }
+		    this.count = this.json.length;
+	    },
         /**
          * @returns {*|jQuery|HTMLElement} a simple html table
          * @memberOf Sheet.XMLLoader

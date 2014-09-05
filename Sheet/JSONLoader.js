@@ -127,6 +127,14 @@
 
 			return jsonSpreadsheet.title || '';
 		},
+	    addSpreadsheet: function(jsonSpreadsheet, atIndex) {
+		    if (atIndex === undefined) {
+		        this.json.push(jsonSpreadsheet);
+		    } else {
+			    this.json.splice(atIndex, 0, jsonSpreadsheet);
+		    }
+		    this.count = this.json.length;
+	    },
         /**
          * Create a table from json
          * @param {Array} json array of spreadsheets - schema:<pre>
