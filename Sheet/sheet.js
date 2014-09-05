@@ -1364,7 +1364,7 @@ $.sheet = {
 						return jS.controls.header || $([]);
 					},
 					highlighted: function() {
-						return jS.highlightedLast.obj || $([]);
+						return jS.highlighter.last || $([]);
 					},
 					menuRight:function () {
 						return jS.controls.menuRight[jS.i] || $([]);
@@ -2610,12 +2610,12 @@ $.sheet = {
 							}
 
 							label = document.createElement('td');
-							label.className = jS.cl.label;
+							label.className = jS.cl.label + ' ' + jS.cl.uiControl;
 							jS.controls.label = $(label);
 
 							//Edit box menu
 							formula = document.createElement('textarea');
-							formula.className = jS.cl.formula;
+							formula.className = jS.cl.formula + ' ' + jS.cl.uiControlTextBox;
 							formula.onkeydown = jS.evt.formula.keydown;
 							formula.onkeyup = function () {
 								jS.obj.inPlaceEdit().value = this.value;
@@ -2885,8 +2885,6 @@ $.sheet = {
 								.bind('cellEdit', jS.evt.cellEdit);
 						}
 
-						jS.themeRoller.start(table);
-
 						jS.createSpreadsheet(table, i);
 
 						jS.checkMinSize(table);
@@ -3007,6 +3005,20 @@ $.sheet = {
 						jS.controls.tabs = jS.obj.tabs().add($tab);
 
 						return tab;
+					},
+
+					customTab: function(title) {
+						var tab = document.createElement('span'),
+							$tab = jS.controls.tab[jS.i] = $(tab).appendTo(jS.obj.tabContainer());
+
+						tab.setAttribute('class', jS.cl.tab);
+						tab.setAttribute('class', jS.cl.uiTab + ' ui-corner-bottom');
+						tab.innerHTML = title;
+
+						tab.i = jS.i;
+						jS.controls.tabs = jS.obj.tabs().add($tab);
+
+						return $tab;
 					},
 
 					/**
@@ -3669,8 +3681,10 @@ $.sheet = {
 					 */
 					cellEditAbandon:function (skipCalc) {
 						(jS.obj.inPlaceEdit().destroy || emptyFN)();
-						jS.themeRoller.bar.clearActive();
-						jS.themeRoller.cell.clearHighlighted(null, true);
+
+						jS.highlighter
+							.clearBar()
+							.clear();
 
 						if (!skipCalc) {
 							jS.calc();
@@ -3681,8 +3695,8 @@ $.sheet = {
 						jS.cellLast.col = 0;
 						jS.rowLast = 0;
 						jS.colLast = 0;
-						jS.highlightedLast.start = {row:0,col:0};
-						jS.highlightedLast.end = {row:0,col:0};
+						jS.highlighter.start = {row:0,col:0};
+						jS.highlighter.end = {row:0,col:0};
 
 						jS.labelUpdate('', true);
 						jS.obj.formula()
@@ -3707,7 +3721,8 @@ $.sheet = {
 							td = jS.obj.tdActive(),
 							loc = jS.getTdLocation(td),
 							start = grid.start,
-							end = grid.end;
+							end = grid.end,
+							highlighter = jS.highlighter;
 
 						switch (e.keyCode) {
 							case key.UP:
@@ -3766,11 +3781,11 @@ $.sheet = {
 						}
 
 						//highlight the cells
-						jS.highlightedLast.start = start;
-						jS.highlightedLast.end = end;
+						jS.highlighter.start = start;
+						jS.highlighter.end = end;
 
 						jS.cycleCellArea(function (o) {
-							jS.themeRoller.cell.setHighlighted(o.td);
+							highlighter.set(o.td);
 						}, start, end);
 
 						return false;
@@ -4522,7 +4537,7 @@ $.sheet = {
 					jS.evt.cellEditDone();
 					jS.autoFillerGoToTd($td);
 					jS.cellSetActive($td, loc);
-					jS.themeRoller.cell.setHighlighted($(tds));
+					jS.highlighter.set($(tds));
 					return true;
 				},
 
@@ -5067,184 +5082,9 @@ $.sheet = {
 				},
 
 				/**
-				 * jQuery ui Themeroller integration
-				 * @memberOf jS
-				 * @namespace
+				 * @type Sheet.Highlighter
 				 */
-				themeRoller:{
-
-					/**
-					 * Starts themeroller integration
-					 * @param {jQuery|HTMLElement} sheet spreadsheet table
-					 * @memberOf jS.themeRoller
-					 */
-					start:function (sheet) {
-						jS.obj.header().addClass(jS.cl.uiControl);
-						jS.obj.label().addClass(jS.cl.uiControl);
-						jS.obj.formula().addClass(jS.cl.uiControlTextBox);
-					},
-
-					/**
-					 * Themeroller cell interactions
-					 * @memberOf jS.themeRoller
-					 * @namespace
-					 */
-					cell:{
-
-						/**
-						 * Highlights object
-						 * @param {jQuery|HTMLElement} [obj] td object
-						 * @memberOf jS.themeRoller.cell
-						 */
-						setHighlighted:function (obj) {
-							obj = obj || $([]);
-
-							var i,
-								oldObjects = jS.highlightedLast.obj,
-								actionUI = jS.obj.pane().actionUI;
-
-							//_obj is the old selected items
-							if (oldObjects && oldObjects.length > 0) {
-								i = oldObjects.length - 1;
-								do {
-									oldObjects[i].isHighlighted = false;
-								} while (i-- > 0);
-							}
-
-							if (obj.length > 0) {
-								i = obj.length - 1;
-								do {
-									if (!obj[i].isHighlighted) {
-										obj[i].isHighlighted = true;
-										if (!obj[i].className.match(jS.cl.uiTdHighlighted)) {
-											obj[i].className += ' ' + jS.cl.uiTdHighlighted;
-										}
-									}
-								} while (i-- > 0);
-							}
-
-							jS.themeRoller.cell.clearHighlighted.call(obj, oldObjects);
-
-							//Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
-							actionUI.redraw();
-						},
-
-						/**
-						 * Detects if there is a cell highlighted
-						 * @returns {Boolean}
-						 * @memberOf jS.themeRoller.cell
-						 */
-						isHighlighted:function () {
-							return (jS.highlightedLast.obj.length ? true : false);
-						},
-
-						/**
-						 * Clears highlighted cells
-						 * @param {Object} [obj]
-						 * @param {Boolean} [force]
-						 * @memberOf jS.themeRoller.cell
-						 */
-						clearHighlighted:function (obj, force) {
-							if (jS.themeRoller.cell.isHighlighted()) {
-								obj = obj || jS.highlightedLast.obj;
-
-								if (obj && obj.length) {
-									var i = obj.length - 1;
-									do {
-										if (!obj[i].isHighlighted || force) {
-											obj[i].className = obj[i].className.replace(jS.cl.uiTdHighlighted, '');
-											obj[i].isHighlighted = false;
-										}
-									} while (i-- > 0);
-								}
-							}
-
-							if (this.length) {
-								jS.highlightedLast.obj = this;
-							} else {
-								jS.highlightedLast.obj = $([]);
-							}
-						}
-					},
-
-					/**
-					 * Themeroller bar interactions
-					 * @memberOf jS.themeRoller
-					 * @namespace
-					 */
-					bar:{
-
-						/**
-						 * Adds initial style to bar
-						 * @param {jQuery|HTMLElement} o bar object
-						 * @memberOf jS.themeRoller.bar
-						 */
-						style:function (o) {
-							$(o).addClass(jS.cl.uiBar);
-						},
-
-						/**
-						 * Sets a bar to be active
-						 * @param {String} direction left or top
-						 * @param {HTMLElement} td index of bar
-						 * @memberOf jS.themeRoller.bar
-						 */
-						setActive:function (direction, td) {
-							switch (direction) {
-								case 'top':
-									jS.highlightedLast.barTop
-										.removeClass(jS.cl.uiBarHighlight);
-									jS.highlightedLast.barTop = $(td).addClass(jS.cl.uiBarHighlight);
-									break;
-								case 'left':
-									jS.highlightedLast.barLeft
-										.removeClass(jS.cl.uiBarHighlight);
-									jS.highlightedLast.barLeft = $(td).addClass(jS.cl.uiBarHighlight);
-									break;
-							}
-						},
-
-						/**
-						 * Clears bars from being active
-						 * @memberOf jS.themeRoller.bar
-						 */
-						clearActive:function () {
-							jS.highlightedLast.barLeft
-								.removeClass(jS.cl.uiBarHighlight);
-							jS.highlightedLast.barLeft = $([]);
-
-							jS.highlightedLast.barTop
-								.removeClass(jS.cl.uiBarHighlight);
-							jS.highlightedLast.barTop = $([]);
-						}
-					},
-
-					/**
-					 * Themeroller tab interactions
-					 * @memberOf jS.themeRoller
-					 * @namespace
-					 */
-					tab:{
-
-						/**
-						 * Sets a tab to be active
-						 * @memberOf jS.themeRoller.tab
-						 */
-						setActive:function () {
-							this.clearActive();
-							jS.obj.tab().addClass(jS.cl.uiTabActive);
-						},
-
-						/**
-						 * Clears a tab from being active
-						 * @memberOf jS.themeRoller.tab
-						 */
-						clearActive:function () {
-							jS.obj.tabContainer().find('span.' + jS.cl.uiTabActive)
-								.removeClass(jS.cl.uiTabActive);
-						}
-					}
-				},
+				highlighter: null,
 
 				/**
 				 * jQuery ui resizeable integration
@@ -5549,15 +5389,17 @@ $.sheet = {
 						jS.cellLast.col = jS.colLast = loc.col;
 
 						if (!doNotClearHighlighted) {
-							jS.themeRoller.cell.setHighlighted(td); //themeroll the cell and bars
-							jS.highlightedLast.start = loc;
-							jS.highlightedLast.end = loc;
+							jS.highlighter
+								.set(td) //themeroll the cell and bars
+								.setStart(loc)
+								.setEnd(loc);
 						}
 
 						if (!td.length) return;
 
-						jS.themeRoller.bar.setActive('left', td[0].barLeft);
-						jS.themeRoller.bar.setActive('top', td[0].barTop);
+						jS.highlighter
+							.setBar('left', td[0].barLeft)
+							.setBar('top', td[0].barTop);
 
 						var selectModel,
 							clearHighlightedModel;
@@ -5566,7 +5408,7 @@ $.sheet = {
 							case 'excel':
 							case 'gdrive':
 								selectModel = function () {};
-								clearHighlightedModel = function() {};//jS.themeRoller.cell.clearHighlighted;
+								clearHighlightedModel = function() {};
 								break;
 							case 'oo':
 								selectModel = function (target) {
@@ -5593,8 +5435,9 @@ $.sheet = {
 									return false;
 								}
 
-								var locEnd = jS.highlightedLast.end = jS.getTdLocation(target),
-									ok = true;
+								var locEnd = jS.highlighter.end = jS.getTdLocation(target),
+									ok = true,
+									highlighter = jS.highlighter;
 
 								//bar
 								if (
@@ -5619,7 +5462,7 @@ $.sheet = {
 
 									//highlight the cells
 									jS.cycleCellArea(function (o) {
-										jS.themeRoller.cell.setHighlighted(o.td);
+										highlighter.set(o.td);
 									}, loc, locEnd, false, true);
 								}
 								jS.followMe($(target));
@@ -5695,25 +5538,12 @@ $.sheet = {
 				},
 
 				/**
-				 * the most recent highlighted cells {td, rowStart, colStart, rowEnd, colEnd}
-				 * @memberOf jS
-				 * @type {Object}
-				 */
-				highlightedLast:{
-					obj:$([]),
-					start: {row: 0, col: 0},
-					end: {row: 0, col: 0},
-					barLeft: $([]),
-					barTop: $([])
-				},
-
-				/**
 				 * the most recent highlighted cells {td, rowStart, colStart, rowEnd, colEnd}, in order
 				 * @memberOf jS
 				 * @type {Object}
 				 */
 				highlightedLastOrdered: function() {
-					var grid = this.highlightedLast,
+					var grid = this.highlighter,
 						_grid = {start:{}, end:{}};
 
 					_grid.start.row = Math.min(grid.start.row, grid.end.row);
@@ -6819,8 +6649,8 @@ $.sheet = {
 					if (row) {
 						start = end = row;
 					} else {
-						start = math.min(jS.highlightedLast.start.row, jS.highlightedLast.end.row);
-						end = math.max(jS.highlightedLast.start.row, jS.highlightedLast.end.row);
+						start = math.min(jS.highlighter.start.row, jS.highlighter.end.row);
+						end = math.max(jS.highlighter.start.row, jS.highlighter.end.row);
 					}
 
 					qty = (end - start) + 1;
@@ -6877,8 +6707,8 @@ $.sheet = {
 					if (i) {
 						start = end = i;
 					} else {
-						start = math.min(jS.highlightedLast.start.col, jS.highlightedLast.end.col);
-						end = math.max(jS.highlightedLast.start.col, jS.highlightedLast.end.col);
+						start = math.min(jS.highlighter.start.col, jS.highlighter.end.col);
+						end = math.max(jS.highlighter.start.col, jS.highlighter.end.col);
 					}
 
 					qty = (end - start) + 1;
@@ -7100,10 +6930,15 @@ $.sheet = {
 				/**
 				 * sets active a spreadsheet inside of a sheet instance
 				 * @param {Number} [i] a sheet integer desired to show, default 0
+				 * @param {Object} [spreadsheetUI]
 				 * @memberOf jS
 				 */
-				setActiveSheet:function (i) {
-					i = i || 0;
+				setActiveSheet:function (i, spreadsheetUI) {
+					if (spreadsheetUI !== undefined) {
+						i = spreadsheetUI.i;
+					} else {
+						i = i || 0;
+					}
 
 					if (jS.cellLast.row > 0 || jS.cellLast.col > 0) {
 						jS.evt.cellEditDone();
@@ -7131,11 +6966,15 @@ $.sheet = {
 
 					jS.i = i;
 
-					enclosure = enclosures[i];
+					if (spreadsheetUI !== undefined) {
+						enclosure = spreadsheetUI.enclosure;
+					} else {
+						enclosure = enclosures[i];
+					}
 
 					enclosure.style.display = "";
 
-					jS.themeRoller.tab.setActive();
+					jS.highlighter.setTab(jS.obj.tab());
 
 					jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/i) != null;
 
@@ -7154,14 +6993,51 @@ $.sheet = {
 				 */
 				openSheet:function (tables) {
 					var lastIndex = tables.length - 1,
-						stack = [],
 						open = function() {
 							jS.setBusy(true);
 							var header = jS.controlFactory.header(),
 								ui = jS.controlFactory.ui(),
 								sheetAdder = jS.controlFactory.sheetAdder(),
 								tabContainer = jS.controlFactory.tabContainer(),
-								i;
+								i,
+								options = {
+									sizeCheck: function(spreadsheetUI) {
+										if ($.sheet.max) {
+											var size = jS.tableSize(table);
+											if (size.rows > $.sheet.max || size.cols > $.sheet.max) {
+												jS.trigger('sheetMaxSize', [table, i]);
+												s.confirm(
+													jS.msg.maxSizeBrowserLimitationOnOpen,
+													function() {me.load();}
+												);
+											} else {
+												spreadsheetUI.load();
+											}
+										} else {
+											spreadsheetUI.load();
+										}
+									},
+									initChildren: function(ui, table, i) {
+										jS.controlFactory.sheetUI(ui, table, i);
+										jS.sheetCount++;
+										jS.trigger('sheetOpened', [i]);
+									},
+									done: function(stack) {
+										jS.sheetSyncSize();
+
+										jS.setActiveSheet(0);
+
+										jS.setDirty(false);
+										jS.setBusy(false);
+
+										while (stack.length) {
+											jS.calcVisibleInit(jS.i = stack.pop());
+										}
+
+										jS.trigger('sheetAllOpened');
+									},
+									lastIndex: lastIndex
+								};
 
 							header.ui = ui;
 							header.tabContainer = tabContainer;
@@ -7178,51 +7054,6 @@ $.sheet = {
 								.append(ui)
 								.append(sheetAdder)
 								.append(tabContainer);
-
-							for (i = 0; i < tables.length; i++) {
-								new Loader(jS, i, ui, tables[i]);
-							}
-						},
-						Loader = function(jS, i, ui, table) {
-							var me = this;
-							this.i = i;
-							this.ui = ui;
-							this.table = table;
-							this.isLast = (i == lastIndex);
-							this.jS = jS;
-
-							if ($.sheet.max) {
-								var size = jS.tableSize(table);
-								if (size.rows > $.sheet.max || size.cols > $.sheet.max) {
-									jS.trigger('sheetMaxSize', [table, i]);
-									s.confirm(
-										jS.msg.maxSizeBrowserLimitationOnOpen,
-										function() {me.load();}
-									);
-								} else {
-									this.load();
-								}
-							} else {
-								this.load();
-							}
-						};
-
-					Loader.prototype = {
-						load: function() {
-							jS.controlFactory.sheetUI(this.ui, this.table, this.i);
-							jS.sheetCount++;
-
-							stack.push(this.i);
-
-							jS.trigger('sheetOpened', [this.i]);
-
-							if (this.isLast) {
-								this.loaded();
-							}
-						},
-						loaded: function() {
-							var jS = this.jS,
-								ui = this.ui;
 
 							// resizable container div
 							jS.resizableSheet(s.parent, {
@@ -7244,20 +7075,34 @@ $.sheet = {
 								}
 							});
 
-							jS.sheetSyncSize();
+							if (!s.loader) {
+								for (i = 0; i < tables.length; i++) {
+									new Sheet.SpreadsheetUI(jS, i, ui, tables[i], options);
+								}
+							} else {
+								//always load at least the first spreadsheet
+								(new Sheet.SpreadsheetUI(jS, 0, ui, tables[0], options)).loaded();
+								jS.sheetSyncSize();
 
-							jS.setActiveSheet(0);
-
-							jS.setDirty(false);
-							jS.setBusy(false);
-
-							while (stack.length) {
-								jS.calcVisibleInit(jS.i = stack.pop());
+								//set the others up to load on demand
+								for (i = 1; i < tables.length; i++) {
+									jS.i = i;
+									jS.controlFactory.customTab(s.loader.title(i))
+										.mousedown(function() {
+											jS.setBusy(true);
+											var spreadsheetUI = new Sheet.SpreadsheetUI(jS, this.i, ui, tables[this.i]);
+											jS.calcVisibleInit(this.i);
+											jS.setBusy(false);
+											jS.setActiveSheet(-1, spreadsheetUI);
+											jS.obj.tab().insertAfter(this);
+											$(this).remove();
+											jS.sheetSyncSize();
+											return false;
+										});
+								}
+								jS.i = 0;
 							}
-
-							jS.trigger('sheetAllOpened');
-						}
-					};
+						};
 
 					if (jS.isDirty) {
 						s.confirm(
@@ -7442,10 +7287,10 @@ $.sheet = {
 							stop.row = scrolledArea.end.row;
 							stop.col = last;
 
-							jS.highlightedLast.start.row = 1;
-							jS.highlightedLast.start.col = first;
-							jS.highlightedLast.end.row = size.rows;
-							jS.highlightedLast.end.col = last;
+							jS.highlighter.start.row = 1;
+							jS.highlighter.start.col = first;
+							jS.highlighter.end.row = size.rows;
+							jS.highlighter.end.col = last;
 
 							col = last;
 
@@ -7459,10 +7304,10 @@ $.sheet = {
 							stop.row = last;
 							stop.col = scrolledArea.end.col;
 
-							jS.highlightedLast.start.row = first;
-							jS.highlightedLast.start.col = 1;
-							jS.highlightedLast.end.row = last;
-							jS.highlightedLast.end.col = size.cols;
+							jS.highlighter.start.row = first;
+							jS.highlighter.start.col = 1;
+							jS.highlighter.end.row = last;
+							jS.highlighter.end.col = size.cols;
 
 							row = last;
 
@@ -7482,7 +7327,7 @@ $.sheet = {
 
 					new SetActive(begin > end);
 
-					jS.themeRoller.cell.setHighlighted($(obj));
+					jS.highlighter.set($(obj));
 				},
 
 				/**
@@ -7969,7 +7814,7 @@ $.sheet = {
 				 * @returns {jQuery|HTMLElement|Array}
 				 */
 				highlighted:function(cells) {
-					var highlighted = jS.highlightedLast.obj || $([]),
+					var highlighted = jS.highlighter.last || $([]),
 						obj = [],
 						tag,
 						i;
@@ -8394,7 +8239,8 @@ $.sheet = {
 				 */
 				formulaParser: null
 			},
-			loaderTables = [];
+			loaderTables = [],
+			loaderTable;
 
 		jS.setBusy(true);
 		s.parent[0].jS = jS;
@@ -8403,13 +8249,18 @@ $.sheet = {
 		if (!window.console) window.console = {log:function () {}};
 
 		if (!window.scrollBarSize) {
-			window.scrollBarSize = $.sheet.getScrollBarSize();
+			window.scrollBarSize = getScrollBarSize();
 		}
 
 		//ready the sheet's parser;
 		if (window.Formula) {
 			jS.formulaParser = window.Formula(jS.cellHandler);
 		}
+
+		jS.highlighter = new Sheet.Highlighter(jS.cl.uiTdHighlighted, jS.cl.uiBarHighlight, jS.cl.uiTabActive, function() {
+			//Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
+			jS.obj.pane().actionUI.redraw();
+		});
 
 		//We need to take the sheet out of the parent in order to get an accurate reading of it's height and width
 		//$(this).html(s.loading);
@@ -8499,7 +8350,9 @@ $.sheet = {
 		} else {
 			if (s.loader) {
 				while(loaderTables.length < s.loader.count) {
-					loaderTables.push(document.createElement('table'));
+					loaderTable = document.createElement('table');
+					loaderTable.setAttribute('title', s.loader.title(loaderTables.length));
+					loaderTables.push(loaderTable);
 				}
 				jS.openSheet($(loaderTables));
 			}
@@ -8640,73 +8493,5 @@ $.sheet = {
 			this.instance = [];
 		}
 		return I;
-	},
-
-	/**
-	 * Get scrollBar size
-	 * @returns {Object} {height: int, width: int}
-	 * @memberOf jQuery.sheet
-	 */
-	getScrollBarSize:function () {
-		var doc = document,
-			inner = $(document.createElement('p')).css({
-				width:'100%',
-				height:'100%'
-			}),
-			outer = $(document.createElement('div')).css({
-				position:'absolute',
-				width:'100px',
-				height:'100px',
-				top:'0',
-				left:'0',
-				visibility:'hidden',
-				overflow:'hidden'
-			}).append(inner);
-
-		$(document.body).append(outer);
-
-		var w1 = inner.width(),
-			h1 = inner.height();
-
-		outer.css('overflow', 'scroll');
-
-		var w2 = inner.width(),
-			h2 = inner.height();
-
-		if (w1 == w2 && outer[0].clientWidth) {
-			w2 = outer[0].clientWidth;
-		}
-		if (h1 == h2 && outer[0].clientHeight) {
-			h2 = outer[0].clientHeight;
-		}
-
-		outer.detach();
-
-		var w = w1 - w2, h = h1 - h2;
-
-		return {
-			width: w || 15,
-			height: h || 15
-		};
-	},
-
-	debugPositionBox:function (x, y, box, color, which) {
-		color = color || '#' + Math.floor(Math.random() * 16777215).toString(16);
-		if (box) {
-			var $box = $([]);
-			$box = $box.add(this.debugPositionBox(box.left, box.top, null, color, 'top-left'));
-			$box = $box.add(this.debugPositionBox(box.right, box.top, null, color, 'top-right'));
-			$box = $box.add(this.debugPositionBox(box.left, box.bottom, null, color, 'bottom-left'));
-			$box = $box.add(this.debugPositionBox(box.right, box.bottom, null, color, 'bottom-right'));
-			return $box;
-		}
-		return $('<div style="width: 10px; height: 10px; position: absolute;"></div>')
-			.css('top', (y - 5) + 'px')
-			.css('left', (x + 5) + 'px')
-			.css('background-color', color)
-			.click(function () {
-				console.log(which || 'none');
-			})
-			.appendTo('body');
 	}
 };

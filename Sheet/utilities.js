@@ -420,3 +420,70 @@ $.extend(Math, {
         return ret;
     }
 });
+
+/**
+ * Get scrollBar size
+ * @returns {Object} {height: int, width: int}
+ */
+var getScrollBarSize = function () {
+	var doc = document,
+		inner = $(document.createElement('p')).css({
+			width:'100%',
+			height:'100%'
+		}),
+		outer = $(document.createElement('div')).css({
+			position:'absolute',
+			width:'100px',
+			height:'100px',
+			top:'0',
+			left:'0',
+			visibility:'hidden',
+			overflow:'hidden'
+		}).append(inner);
+
+	$(document.body).append(outer);
+
+	var w1 = inner.width(),
+		h1 = inner.height();
+
+	outer.css('overflow', 'scroll');
+
+	var w2 = inner.width(),
+		h2 = inner.height();
+
+	if (w1 == w2 && outer[0].clientWidth) {
+		w2 = outer[0].clientWidth;
+	}
+	if (h1 == h2 && outer[0].clientHeight) {
+		h2 = outer[0].clientHeight;
+	}
+
+	outer.detach();
+
+	var w = w1 - w2, h = h1 - h2;
+
+	return {
+		width: w || 15,
+		height: h || 15
+	};
+};
+
+var debugPositionBox = function (x, y, box, color, which) {
+	color = color || '#' + Math.floor(Math.random() * 16777215).toString(16);
+	if (box) {
+		var $box = $([]);
+		$box = $box.add(debugPositionBox(box.left, box.top, null, color, 'top-left'));
+		$box = $box.add(debugPositionBox(box.right, box.top, null, color, 'top-right'));
+		$box = $box.add(debugPositionBox(box.left, box.bottom, null, color, 'bottom-left'));
+		$box = $box.add(debugPositionBox(box.right, box.bottom, null, color, 'bottom-right'));
+		return $box;
+	}
+	return $('<div style="width: 10px; height: 10px; position: absolute;"></div>')
+		.css('top', (y - 5) + 'px')
+		.css('left', (x + 5) + 'px')
+		.css('background-color', color)
+		.click(function () {
+			console.log(which || 'none');
+		})
+		.appendTo('body');
+};

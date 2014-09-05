@@ -119,6 +119,14 @@
 				value: cell['value'] || ''
 			}
 		},
+		title: function(sheetIndex) {
+			var json = this.json,
+				jsonSpreadsheet;
+
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return '';
+
+			return jsonSpreadsheet.title || '';
+		},
         /**
          * Create a table from json
          * @param {Array} json array of spreadsheets - schema:<pre>
@@ -377,10 +385,7 @@
             jS.i = i;
 
             return output;
-        },
-	    getCellValue: function() {
-
-	    }
+        }
     };
 
     return Constructor;
