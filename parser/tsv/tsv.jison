@@ -264,8 +264,7 @@ string :
 if (typeof GLOBAL !== 'undefined') {
     GLOBAL.window = GLOBAL;
 }
-if (!window.tsvLoaded) {
-    window.tsvLoaded = true;
+if (typeof window.TSV === 'undefined') {
     var parse = parser.parse;
     parser.parse = function(input) {
         var setInput = this.lexer.setInput;
@@ -278,4 +277,22 @@ if (!window.tsvLoaded) {
         this.parse = parse;
         return parse.call(this, input);
     };
+
+	window.TSV = function(handler) {
+		var TSVLexer = function () {};
+		TSVLexer.prototype = parser.lexer;
+
+		var TSVParser = function () {
+			this.lexer = new TSVLexer();
+			this.yy = {};
+		};
+
+		TSVParser.prototype = parser;
+		var newParser = new TSVParser;
+		newParser.setObj = function(obj) {
+			newParser.yy.obj = obj;
+		};
+		newParser.yy.handler = handler;
+		return newParser;
+	};
 }

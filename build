@@ -36,6 +36,11 @@ JS_FILES=(
 	environmentCorrection.js
 )
 
+PARSER_FILES=(
+	parser/formula/formula.js
+	parser/tsv/tsv.js
+)
+
 # ----- Do not edit past this line -----
 # CSS_TEMP="$CSS_DIR/_Sheet.css"
 
@@ -56,6 +61,12 @@ for F in ${JS_FILES[@]}; do
 done
 
 echo "${JS_WRAPPER//CODE_HERE/"$JS_TEMP"}" > $JS_COMBINED_FILE
+
+#run thru the parser files
+for F in ${PARSER_FILES[@]}; do
+  CONTENTS=$(<"$F")
+  echo "$CONTENTS" >> $JS_COMBINED_FILE
+done
 
 #compress it
 #csstidy $CSS_TEMP $CSS_COMBINED_FILE

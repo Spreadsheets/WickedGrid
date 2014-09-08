@@ -992,9 +992,6 @@ $.sheet = {
 	dependencies:{
 		coreCss:{css:'jquery.sheet.css'},
 
-		formulaParser:{script:'parser/formula/formula.js'},
-		tsvParser:{script:'parser/tsv/tsv.js'},
-
 		jQueryUI:{script:'jquery-ui/jquery-ui.min.js', thirdParty:true},
 		jQueryUIThemeRoller:{css:'jquery-ui/themes/smoothness/jquery-ui.min.css', thirdParty:true},
 
@@ -3156,6 +3153,7 @@ $.sheet = {
 				autoFillerNotGroup:true,
 
 
+				tsv: new TSV(),
 				/**
 				 * Sends tab delimited string into cells, usually a paste from external spreadsheet application
 				 * @param [oldVal] what formula should be when this is done working with all the values
@@ -3178,7 +3176,7 @@ $.sheet = {
 						return false;
 					}
 
-					var row = tsv.parse(val);
+					var row = jS.tsv.parse(val);
 
 					//Single cell value
 					if (!$.isArray(row)) {
