@@ -19,6 +19,7 @@ class formula
     public $shift = 1;
     public $reduce = 2;
     public $accept = 3;
+    public $unputStack = array();
 
     function trace()
     {
@@ -1858,45 +1859,45 @@ class formula
         
 			$this->rules = array(
 				
-					0=>"/^(?:\s+)/",
-					1=>"/^(?:\"(\\[\"]|[^\"])*\")/",
-					2=>"/^(?:'(\\[']|[^'])*')/",
-					3=>"/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+(?=[(]))/",
-					4=>"/^(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/",
-					5=>"/^(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/",
-					6=>"/^(?:SHEET[0-9]+)/",
-					7=>"/^(?:\$[A-Za-z]+\$[0-9]+)/",
-					8=>"/^(?:[A-Za-z]+[0-9]+)/",
-					9=>"/^(?:[A-Za-z]+(?=[(]))/",
-					10=>"/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/",
-					11=>"/^(?:[A-Za-z_]+)/",
-					12=>"/^(?:[0-9]+)/",
-					13=>"/^(?:\$)/",
-					14=>"/^(?:&)/",
-					15=>"/^(?: )/",
-					16=>"/^(?:[.])/",
-					17=>"/^(?::)/",
-					18=>"/^(?:;)/",
-					19=>"/^(?:,)/",
-					20=>"/^(?:\*)/",
-					21=>"/^(?:\/)/",
-					22=>"/^(?:-)/",
-					23=>"/^(?:\+)/",
-					24=>"/^(?:\^)/",
-					25=>"/^(?:\()/",
-					26=>"/^(?:\))/",
-					27=>"/^(?:>)/",
-					28=>"/^(?:<)/",
-					29=>"/^(?:NOT\b)/",
-					30=>"/^(?:PI\b)/",
-					31=>"/^(?:E\b)/",
-					32=>"/^(?:\")/",
-					33=>"/^(?:')/",
-					34=>"/^(?:!)/",
-					35=>"/^(?:=)/",
-					36=>"/^(?:%)/",
-					37=>"/^(?:[#])/",
-					38=>"/^(?:$)/"
+					0=>"/\G(?:\s+)/",
+					1=>"/\G(?:\"(\\[\"]|[^\"])*\")/",
+					2=>"/\G(?:'(\\[']|[^'])*')/",
+					3=>"/\G(?:[A-Za-z]{1,}[A-Za-z_0-9]+(?=[(]))/",
+					4=>"/\G(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/",
+					5=>"/\G(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/",
+					6=>"/\G(?:([A-Za-z0-9]+)(?=[!]))/",
+					7=>"/\G(?:\$[A-Za-z]+\$[0-9]+)/",
+					8=>"/\G(?:[A-Za-z]+[0-9]+)/",
+					9=>"/\G(?:[A-Za-z]+(?=[(]))/",
+					10=>"/\G(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/",
+					11=>"/\G(?:[A-Za-z_]+)/",
+					12=>"/\G(?:[0-9]+)/",
+					13=>"/\G(?:\$)/",
+					14=>"/\G(?:&)/",
+					15=>"/\G(?: )/",
+					16=>"/\G(?:[.])/",
+					17=>"/\G(?::)/",
+					18=>"/\G(?:;)/",
+					19=>"/\G(?:,)/",
+					20=>"/\G(?:\*)/",
+					21=>"/\G(?:\/)/",
+					22=>"/\G(?:-)/",
+					23=>"/\G(?:\+)/",
+					24=>"/\G(?:\^)/",
+					25=>"/\G(?:\()/",
+					26=>"/\G(?:\))/",
+					27=>"/\G(?:>)/",
+					28=>"/\G(?:<)/",
+					29=>"/\G(?:NOT\b)/",
+					30=>"/\G(?:PI\b)/",
+					31=>"/\G(?:E\b)/",
+					32=>"/\G(?:\")/",
+					33=>"/\G(?:')/",
+					34=>"/\G(?:!)/",
+					35=>"/\G(?:=)/",
+					36=>"/\G(?:%)/",
+					37=>"/\G(?:[#])/",
+					38=>"/\G(?:$)/"
 				);
 
 			$this->conditions = array(
@@ -1915,47 +1916,56 @@ class formula
 
 switch ($yystate) {
 case 1:
+
         return $s[$o-1];
     
 break;
 case 2:
+
         
             $thisS = $this->variable($s[$o]);
         
     
 break;
 case 3:
+
 	        
 break;
 case 4:
+
         
     
 break;
 case 5:
+
 	    
             $thisS = $s[$o] * 1;
         
     
 break;
 case 6:
+
         
 	        $thisS = substr($s[$o], 1, -1);
         
     
 break;
 case 7:
+
         
             $thisS = $s[$o-2] . '' . $s[$o];
         
     
 break;
 case 8:
+
 	    
             $thisS = $s[$o-2] == $s[$o];
         
     
 break;
 case 9:
+
 	    
 			if (is_numeric($s[$o-2]) && is_numeric($s[$o])) {
 			   $thisS = $s[$o-2] + $s[$o];
@@ -1966,134 +1976,158 @@ case 9:
     
 break;
 case 10:
+
 	    	
 break;
 case 11:
+
         
             $thisS = ($s[$o-3] * 1) <= ($s[$o] * 1);
         
     
 break;
 case 12:
+
         
             $thisS = ($s[$o-3] * 1) >= ($s[$o] * 1);
         
     
 break;
 case 13:
+
         $thisS = ($s[$o-3]) != ($s[$o]);
 
             
 break;
 case 14:
+
         $thisS = $s[$o-2] != $s[$o];
     
 break;
 case 15:
+
 	    
 		    $thisS = ($s[$o-2] * 1) > ($s[$o] * 1);
         
     
 break;
 case 16:
+
         
             $thisS = ($s[$o-2] * 1) < ($s[$o] * 1);
         
     
 break;
 case 17:
+
         
             $thisS = ($s[$o-2] * 1) - ($s[$o] * 1);
         
     
 break;
 case 18:
+
 	    
             $thisS = ($s[$o-2] * 1) * ($s[$o] * 1);
         
     
 break;
 case 19:
+
 	    
             $thisS = ($s[$o-2] * 1) / ($s[$o] * 1);
         
     
 break;
 case 20:
+
         
             $thisS = pow(($s[$o-2] * 1), ($s[$o] * 1));
         
     
 break;
 case 21:
+
 		
             $thisS = $s[$o-1] * 1;
         
 		
 break;
 case 22:
+
 	    
             $thisS = $s[$o-1] * 1;
         
 		
 break;
-case 23:/*$thisS = Math.E;*/;
+case 23:
+/*$thisS = Math.E;*/;
 break;
 case 24:
+
 	    
 		    $thisS = $this->callFunction($s[$o-2]);
         
     
 break;
 case 25:
+
 	    
             $thisS = $this->callFunction($s[$o-3], $s[$o-1]);
         
     
 break;
 case 29:
+
 	    
             $thisS = $this->fixedCellValue($s[$o]);
         
     
 break;
 case 30:
+
 	    
 	        $thisS = $this->fixedCellRangeValue($s[$o-2], $s[$o]);
         
     
 break;
 case 31:
+
 	    
             $thisS = $this->cellValue($s[$o]);
         
     
 break;
 case 32:
+
 	    
             $thisS = $this->cellRangeValue($s[$o-2], $s[$o]);
         
     
 break;
 case 33:
+
 	    
             $thisS = $this->remoteCellValue($s[$o-2], $s[$o]);
         
     
 break;
 case 34:
+
 	    
             $thisS = $this->remoteCellRangeValue($s[$o-4], $s[$o-2], $s[$o]);
         
     
 break;
 case 35:
+
 	    
             $thisS = array($s[$o]);
         
     
 break;
 case 36:
+
 	    
             $s[$o-2][] = $s[$o];
             $thisS = $s[$o-2];
@@ -2101,6 +2135,7 @@ case 36:
     
 break;
 case 37:
+
  	    
 			$s[$o-2][] = $s[$o];
 			$thisS = $s[$o-2];
@@ -2108,10 +2143,12 @@ case 37:
     
 break;
 case 38:
+
         $thisS = [$s[$o]];
     
 break;
 case 39:
+
         
             $thisS = (is_array($s[$o-2]) ? $s[$o-2] : array());
             $thisS[] = $s[$o];
@@ -2119,24 +2156,24 @@ case 39:
     
 break;
 case 40:
+
         $thisS = $s[$o];
     
 break;
 case 41:
+
         
             $thisS = $s[$o-2] . '.' . $s[$o];
         
     
 break;
 case 42:
+
         $thisS = $s[$o-1] * 0.01;
     
 break;
-case 43:
-        $thisS = $s[$o-2] + $s[$o-1] + $s[$o];
-    
-break;
-case 44:
+case 43: case 44:
+
         $thisS = $s[$o-2] + $s[$o-1] + $s[$o];
     
 break;
@@ -2310,7 +2347,6 @@ break;
     public $eof;
     public $yy = null;
     public $match = "";
-    public $matched = "";
     public $conditionStack = array();
     public $conditionStackCount = 0;
     public $rules = array();
@@ -2318,14 +2354,14 @@ break;
     public $done = false;
     public $less;
     public $more;
-    public $input;
+	public $input;
     public $offset;
     public $ranges;
     public $flex = false;
 
     function setInput($input)
     {
-        $this->input = $input;
+        $this->input = new InputReader($input);
         $this->more = $this->less = $this->done = false;
         $this->yy = new ParserValue();
         $this->conditionStack = array('INITIAL');
@@ -2342,12 +2378,11 @@ break;
 
     function input()
     {
-        $ch = $this->input[0];
+        $ch = $this->input->ch();
         $this->yy->text .= $ch;
         $this->yy->leng++;
         $this->offset++;
         $this->match .= $ch;
-        $this->matched .= $ch;
         $lines = preg_match("/(?:\r\n?|\n).*/", $ch);
         if (count($lines) > 0) {
             $this->yy->lineNo++;
@@ -2359,30 +2394,32 @@ break;
             $this->yy->loc->range->y++;
         }
 
-        $this->input = array_slice($this->input, 1);
         return $ch;
     }
 
     function unput($ch)
     {
+        $yy = new ParserValue();
+
         $len = strlen($ch);
         $lines = explode("/(?:\r\n?|\n)/", $ch);
         $linesCount = count($lines);
 
-        $this->input = $ch . $this->input;
-        $this->yy->text = substr($this->yy->text, 0, $len - 1);
+        $this->input->unCh($len);
+        $yy->text = substr($this->yy->text, 0, $len - 1);
         //$this->yylen -= $len;
         $this->offset -= $len;
         $oldLines = explode("/(?:\r\n?|\n)/", $this->match);
         $oldLinesCount = count($oldLines);
         $this->match = substr($this->match, 0, strlen($this->match) - 1);
-        $this->matched = substr($this->matched, 0, strlen($this->matched) - 1);
 
-        if (($linesCount - 1) > 0) $this->yy->lineNo -= $linesCount - 1;
+        if (($linesCount - 1) > 0) {
+            $yy->lineNo = $this->yy->lineNo - $linesCount - 1;
+        }
         $r = $this->yy->loc->range;
         $oldLinesLength = (isset($oldLines[$oldLinesCount - $linesCount]) ? strlen($oldLines[$oldLinesCount - $linesCount]) : 0);
 
-        $this->yy->loc = new ParserLocation(
+        $yy->loc = new ParserLocation(
             $this->yy->loc->firstLine,
             $this->yy->lineNo,
             $this->yy->loc->firstColumn,
@@ -2393,8 +2430,10 @@ break;
         );
 
         if (isset($this->ranges)) {
-            $this->yy->loc->range = array($r[0], $r[0] + $this->yy->leng - $len);
+            $yy->loc->range = array($r[0], $r[0] + $this->yy->leng - $len);
         }
+
+        $this->unputStack[] = $yy;
     }
 
     function more()
@@ -2404,17 +2443,22 @@ break;
 
     function pastInput()
     {
-        $past = substr($this->matched, 0, strlen($this->matched) - strlen($this->match));
+	    $matched = $this->input->toString();
+        $past = substr($matched, 0, strlen($matched) - strlen($this->match));
         return (strlen($past) > 20 ? '...' : '') . preg_replace("/\n/", "", substr($past, -20));
     }
 
     function upcomingInput()
     {
-        $next = $this->match;
-        if (strlen($next) < 20) {
-            $next .= substr($this->input, 0, 20 - strlen($next));
+        if (!$this->done) {
+            $next = $this->match;
+            if (strlen($next) < 20) {
+                $next .= substr($this->input->toString(), 0, 20 - strlen($next));
+            }
+            return preg_replace("/\n/", "", substr($next, 0, 20) . (strlen($next) > 20 ? '...' : ''));
+        } else {
+            return "";
         }
-        return preg_replace("/\n/", "", substr($next, 0, 20) . (strlen($next) > 20 ? '...' : ''));
     }
 
     function showPosition()
@@ -2431,11 +2475,14 @@ break;
 
     function next()
     {
+        if ($yy = array_pop($this->unputStack)) {
+            $this->yy = $yy;
+        }
         if ($this->done == true) {
             return $this->eof;
         }
 
-        if (empty($this->input)) {
+        if ($this->input->done) {
             $this->done = true;
         }
 
@@ -2446,7 +2493,7 @@ break;
 
         $rules = $this->currentRules();
         for ($i = 0, $j = count($rules); $i < $j; $i++) {
-            preg_match($this->rules[$rules[$i]], $this->input, $tempMatch);
+	        $tempMatch = $this->input->match($this->rules[$rules[$i]]);
             if ($tempMatch && (empty($match) || count($tempMatch[0]) > count($match[0]))) {
                 $match = $tempMatch;
                 $index = $i;
@@ -2475,33 +2522,32 @@ break;
             $this->yy->text .= $match[0];
             $this->match .= $match[0];
             $this->matches = $match;
-            $this->matched .= $match[0];
 
             $this->yy->leng = strlen($this->yy->text);
             if (isset($this->ranges)) {
                 $this->yy->loc->range = new ParserRange($this->offset, $this->offset += $this->yy->leng);
             }
             $this->more = false;
-            $this->input = substr($this->input, $matchCount, strlen($this->input));
+	        $this->input->addMatch($match[0]);
             $ruleIndex = $rules[$index];
             $nextCondition = $this->conditionStack[$this->conditionStackCount - 1];
 
             $token = $this->lexerPerformAction($ruleIndex, $nextCondition);
 
-            if ($this->done == true && empty($this->input) == false) {
+            if ($this->done == true && !$this->input->done) {
                 $this->done = false;
             }
 
             if (empty($token) == false) {
                 return $this->symbols[
-                $token
+                    $token
                 ];
             } else {
                 return null;
             }
         }
 
-        if (empty($this->input)) {
+        if ($this->input->done) {
             return $this->eof;
         } else {
             $this->lexerError("Lexical error on line " . ($this->yy->lineNo + 1) . ". Unrecognized text.\n" . $this->showPosition(), new LexerError("", -1, $this->yy->lineNo));
@@ -2541,7 +2587,6 @@ break;
     function LexerPerformAction($avoidingNameCollisions, $YY_START = null)
     {
         
-
 ;
 switch($avoidingNameCollisions) {
 case 0:/* skip whitespace */
@@ -2557,18 +2602,24 @@ break;
 case 5:return 8;
 break;
 case 6:
-	if (yy->obj.type == 'cell') return 30; if ($this->type == 'cell') return 30;
-	 return 34;
+	
+		if ($this->type == 'cell') return 30;
+		return 34;
+	
 
 break;
 case 7:
-	if (yy->obj.type == 'cell') return 27; if ($this->type == 'cell') return 27;
-     return 34;
+	
+		if ($this->type == 'cell') return 27;
+        return 34;
+    
 
 break;
 case 8:
-	if (yy->obj.type == 'cell') return 29; if ($this->type == 'cell') return 29;
-     return 34;
+	
+		if ($this->type == 'cell') return 29;
+        return 34;
+    
 
 break;
 case 9:return 24;
@@ -2659,7 +2710,9 @@ class ParserLocation
 
     public function __clone()
     {
-        return new ParserLocation($this->firstLine, $this->lastLine, $this->firstColumn, $this->lastColumn);
+        if (isset($this->range)) {
+            $this->range = clone $this->range;
+        }
     }
 }
 
@@ -2671,14 +2724,9 @@ class ParserValue
     public $text;
 
     function __clone() {
-        $clone = new ParserValue();
-        $clone->leng = $this->leng;
         if (isset($this->loc)) {
-            $clone->loc = clone $this->loc;
+            $this->loc = clone $this->loc;
         }
-        $clone->lineNo = $this->lineNo;
-        $clone->text = $this->text;
-        return $clone;
     }
 }
 
@@ -2810,5 +2858,58 @@ class ParserRange
     {
         $this->x = $x;
         $this->y = $y;
+    }
+}
+
+class InputReader
+{
+	public $done = false;
+	public $input;
+	public $length;
+	public $matches = array();
+	public $position = 0;
+
+	public function __construct($input)
+	{
+		$this->input = $input;
+		$this->length = strlen($input);
+	}
+
+	public function addMatch($match) {
+		$this->matches[] = $match;
+		$this->position += strlen($match);
+		$this->done = ($this->position >= $this->length);
+	}
+
+    public function ch()
+	{
+		$ch = $this->input{$this->position};
+		$this->addMatch($ch);
+		return $ch;
+	}
+
+	public function unCh($chLength)
+	{
+		$this->position -= $chLength;
+		$this->position = max(0, $this->position);
+		$this->done = ($this->position >= $this->length);
+	}
+
+	public function substring($start, $end) {
+		$start = ($start != 0 ? $this->position + $start : $this->position);
+		$end = ($end != 0 ? $start + $end : $this->length);
+		return substr($this->input, $start, $end);
+	}
+
+	public function match($rule) {
+		if (preg_match($rule, $this->input, $match, null, $this->position)) {
+			return $match;
+		}
+		return null;
+	}
+
+    public function toString()
+	{
+        return implode('', $this->matches);
     }
 }

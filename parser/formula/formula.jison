@@ -11,26 +11,35 @@
 									{return 'TIME_AMPM';}
 ([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?
 									{return 'TIME_24';}
-'SHEET'[0-9]+ {
-	if (yy.obj.type == 'cell') return 'SHEET';//js
-	return 'VARIABLE';//js
+([A-Za-z0-9]+)(?=[!]) {
+	//js
+		if (yy.obj.type == 'cell') return 'SHEET';
+		return 'VARIABLE';
 
-	//php if ($this->type == 'cell') return 'SHEET';
-	//php return 'VARIABLE';
+	/*php
+		if ($this->type == 'cell') return 'SHEET';
+		return 'VARIABLE';
+	*/
 }
 '$'[A-Za-z]+'$'[0-9]+ {
-	if (yy.obj.type == 'cell') return 'FIXEDCELL';//js
-	return 'VARIABLE';//js
+	//js
+		if (yy.obj.type == 'cell') return 'FIXEDCELL';
+		return 'VARIABLE';
 
-	//php if ($this->type == 'cell') return 'FIXEDCELL';
-    //php return 'VARIABLE';
+	/*php
+		if ($this->type == 'cell') return 'FIXEDCELL';
+        return 'VARIABLE';
+    */
 }
 [A-Za-z]+[0-9]+ {
-	if (yy.obj.type == 'cell') return 'CELL';//js
-	return 'VARIABLE';//js
+	//js
+		if (yy.obj.type == 'cell') return 'CELL';
+		return 'VARIABLE';
 
-	//php if ($this->type == 'cell') return 'CELL';
-    //php return 'VARIABLE';
+	/*php
+		if ($this->type == 'cell') return 'CELL';
+        return 'VARIABLE';
+    */
 }
 [A-Za-z]+(?=[(])    				{return 'FUNCTION';}
 [A-Za-z]{1,}[A-Za-z_0-9]+			{return 'VARIABLE';}
@@ -405,14 +414,14 @@ error :
 if (typeof(window) !== 'undefined') {
 	window.Formula = function(handler) {
 		var formulaLexer = function () {};
-		formulaLexer.prototype = formula.lexer;
+		formulaLexer.prototype = parser.lexer;
 
 		var formulaParser = function () {
 			this.lexer = new formulaLexer();
 			this.yy = {};
 		};
 
-		formulaParser.prototype = formula;
+		formulaParser.prototype = parser;
 		var newParser = new formulaParser;
 		newParser.setObj = function(obj) {
 			newParser.yy.obj = obj;
