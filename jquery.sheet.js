@@ -1038,21 +1038,7 @@ Sheet.StyleUpdater = (function(document) {
 
             return true;
         },
-		setCellCache: function(sheetIndex, rowIndex, columnIndex, cached) {
-			var json = this.json,
-				jsonSpreadsheet,
-				rows,
-				row,
-				cell;
-
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return;
-			if ((row = rows[rowIndex - 1]) === undefined) return;
-			if ((cell = row.columns[columnIndex - 1]) === undefined) return;
-
-			cell.cache = cached;
-		},
-		jitCell: function(sheetIndex, rowIndex, columnIndex) {
+		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			var json = this.json,
 				jsonSpreadsheet,
 				rows,
@@ -1064,14 +1050,33 @@ Sheet.StyleUpdater = (function(document) {
 			if ((row = rows[rowIndex - 1]) === undefined) return null;
 			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
 
-			return {
-				td: {
-					cellIndex: columnIndex,
+			return cell;
+		},
+		jitCell: function(sheetIndex, rowIndex, columnIndex) {
+			var json = this.json,
+				jsonSpreadsheet,
+				rows,
+				row,
+				cell,
+				fakeTd;
+
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
+			if ((row = rows[rowIndex - 1]) === undefined) return null;
+			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+
+			fakeTd = {
+				cellIndex: columnIndex,
 					parentNode:{
 						rowIndex: rowIndex
-					},
-					html: function() {}
 				},
+				html: function() {}
+			};
+
+			fakeTd[0] = fakeTd;
+
+			return {
+				td: fakeTd,
 				html: [],
 				state: [],
 				calcLast: -1,
@@ -1515,6 +1520,10 @@ Sheet.StyleUpdater = (function(document) {
 
             return true;
 	    },
+		getCell: function(sheetIndex, rowIndex, columnIndex) {
+			//TODO
+			return null;
+		},
 	    jitCell: function(sheetIndex, rowIndex, columnIndex) {
 		    var spreadsheets = this.spreadsheets,
 			    xmlSpreadsheet,
@@ -7514,7 +7523,8 @@ $.sheet = {
 						cache,
 						lookupErrors = null,
 						td,
-						loc;
+						loc,
+						jsonCell;
 
 					if (this.jS === u) {
 						//first detect if the cell exists if not return nothing
@@ -7629,7 +7639,16 @@ $.sheet = {
 								rowIndex = loc.row;
 								colIndex = loc.col;
 							}
-							s.loader.setCellCache(sheetIndex, rowIndex, colIndex, cache);
+
+							if ((jsonCell = s.loader.getCell(sheetIndex, rowIndex, colIndex)) !== null) {
+								jsonCell.formula = cell.formula;
+								jsonCell.cellType = cell.cellType;
+								jsonCell.value = cell.value;
+								jsonCell.cache = cache;
+								if (cell.uneditable === true) {
+									jsonCell.uneditable = true;
+								}
+							}
 						}
 					}
 					cell.needsUpdated = false;

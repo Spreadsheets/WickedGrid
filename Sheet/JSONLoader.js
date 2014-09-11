@@ -96,21 +96,7 @@
 
             return true;
         },
-		setCellCache: function(sheetIndex, rowIndex, columnIndex, cached) {
-			var json = this.json,
-				jsonSpreadsheet,
-				rows,
-				row,
-				cell;
-
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return;
-			if ((row = rows[rowIndex - 1]) === undefined) return;
-			if ((cell = row.columns[columnIndex - 1]) === undefined) return;
-
-			cell.cache = cached;
-		},
-		jitCell: function(sheetIndex, rowIndex, columnIndex) {
+		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			var json = this.json,
 				jsonSpreadsheet,
 				rows,
@@ -122,14 +108,33 @@
 			if ((row = rows[rowIndex - 1]) === undefined) return null;
 			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
 
-			return {
-				td: {
-					cellIndex: columnIndex,
+			return cell;
+		},
+		jitCell: function(sheetIndex, rowIndex, columnIndex) {
+			var json = this.json,
+				jsonSpreadsheet,
+				rows,
+				row,
+				cell,
+				fakeTd;
+
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
+			if ((row = rows[rowIndex - 1]) === undefined) return null;
+			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+
+			fakeTd = {
+				cellIndex: columnIndex,
 					parentNode:{
 						rowIndex: rowIndex
-					},
-					html: function() {}
 				},
+				html: function() {}
+			};
+
+			fakeTd[0] = fakeTd;
+
+			return {
+				td: fakeTd,
 				html: [],
 				state: [],
 				calcLast: -1,

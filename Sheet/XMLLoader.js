@@ -131,8 +131,9 @@
 
             return true;
 	    },
-		setCellCache: function(sheetIndex, rowIndex, columnIndex, cached) {
+		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			//TODO
+			return null;
 		},
 	    jitCell: function(sheetIndex, rowIndex, columnIndex) {
 		    var spreadsheets = this.spreadsheets,
