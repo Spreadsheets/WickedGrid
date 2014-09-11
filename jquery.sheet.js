@@ -68,50 +68,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             }
         };
 
-
-        if (Sheet.ActionUI.prototype.nthCss === null) {
-            if (max) {//this is where we check IE8 compatibility
-                Sheet.ActionUI.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-                    var style = [],
-                        index = indexes.length,
-                        repeat = this.repeat;
-
-                    css = css || '{display: none;}';
-
-                    do {
-                        if (indexes[index] > min) {
-                            style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
-                        }
-                    } while (index--);
-
-                    if (style.length) {
-                        return style.join(',') + css;
-                    }
-
-                    return '';
-                };
-            } else {
-                Sheet.ActionUI.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-                    var style = [],
-                        index = indexes.length;
-
-                    css = css || '{display: none;}';
-
-                    do {
-                        if (indexes[index] > min) {
-                            style.push(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
-                        }
-                    } while (index--);
-
-                    if (style.length) {
-                        return style.join(',') + css;
-                    }
-
-                    return '';
-                };
-            }
-        }
-
         var that = this,
             cssId = '#' + table.getAttribute('id'),
             scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
@@ -122,8 +78,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 if (indexes.length !== that.xIndex || style) {
                     that.xIndex = indexes.length || that.xIndex;
 
-                    style = style || nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
-                        nthCss('td', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1);
+                    style = style || this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
+                        this.nthCss('td', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1);
 
                     this.setStyle(style);
 
@@ -135,14 +91,14 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     return true;
                 }
                 return false;
-            }),
+            }, max),
             scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(indexes, style){
                 indexes = indexes || [];
 
                 if (indexes.length !== that.yIndex || style) {
                     that.yIndex = indexes.length || that.yIndex;
 
-                    style = style || nthCss('tr', cssId, indexes, that.frozenAt.row + 1);
+                    style = style || this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1);
 
                     this.setStyle(style);
 
@@ -154,8 +110,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     return true;
                 }
                 return false;
-            }),
-            nthCss = this.nthCss;
+            });
 
         scrollOuter.setAttribute('class', cl);
         scrollOuter.appendChild(scrollInner);
@@ -320,36 +275,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             return null;
         },
 
-        /**
-         * Repeats a string a number of times
-         * @param {String} str
-         * @param {Number} num
-         * @returns {String}
-         */
-        repeat:function (str, num) {
-            var result = '';
-            while (num > 0) {
-                if (num & 1) {
-                    result += str;
-                }
-                num >>= 1;
-                str += str;
-            }
-            return result;
-        },
 
-
-        /**
-         * Creates css for an iterated element
-         * @param {String} elementName
-         * @param {String} parentSelectorString
-         * @param {Array} indexes
-         * @param {Number} min
-         * @param {String} [css]
-         * @returns {String}
-         */
-
-        nthCss: null,
 
         /**
          * Causes the pane to redraw, really just for fixing issues in Chrome
@@ -369,20 +295,18 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             var that = this,
                 cssId = '#' + this.table.getAttribute('id'),
                 toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
-                    var style = nthCss('col', cssId, that.hiddenColumns, 0) +
-                        nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
+                    var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
+                        this.nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
 
                     this.setStyle(style);
                 }),
                 toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
-                    var style = nthCss('tr', cssId, that.hiddenRows, 0);
+                    var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
 
                     this.setStyle(style);
                 }),
-
                 i,
-                j,
-                nthCss = this.nthCss,
+				j,
                 pane = this.pane;
 
             pane.appendChild(toggleHideStyleX.styleElement);
@@ -902,11 +826,54 @@ Sheet.Highlighter = (function(document, window, $) {
     return Constructor;
 })();
 Sheet.StyleUpdater = (function(document) {
-    function Constructor(updateFn) {
+    function Constructor(updateFn, max) {
         var el = this.styleElement = document.createElement('style');
         el.styleUpdater = this;
         this.update = updateFn;
-    }
+
+		if (Sheet.StyleUpdater.prototype.nthCss === null) {
+			if (max) {//this is where we check IE8 compatibility
+				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+					var style = [],
+						index = indexes.length,
+						repeat = this.repeat;
+
+					css = css || '{display: none;}';
+
+					do {
+						if (indexes[index] > min) {
+							style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
+						}
+					} while (index--);
+
+					if (style.length) {
+						return style.join(',') + css;
+					}
+
+					return '';
+				};
+			} else {
+				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+					var style = [],
+						index = indexes.length;
+
+					css = css || '{display: none;}';
+
+					do {
+						if (indexes[index] > min) {
+							style.push(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
+						}
+					} while (index--);
+
+					if (style.length) {
+						return style.join(',') + css;
+					}
+
+					return '';
+				};
+			}
+		}
+	}
 
     //ie
     if (document.createElement('style').styleSheet) {
@@ -943,6 +910,35 @@ Sheet.StyleUpdater = (function(document) {
         };
     }
 
+	/**
+	 * Creates css for an iterated element
+	 * @param {String} elementName
+	 * @param {String} parentSelectorString
+	 * @param {Array} indexes
+	 * @param {Number} min
+	 * @param {String} [css]
+	 * @returns {String}
+	 */
+	Constructor.prototype.nthCss = null;
+
+	/**
+	 * Repeats a string a number of times
+	 * @param {String} str
+	 * @param {Number} num
+	 * @returns {String}
+	 */
+	Constructor.prototype.repeat = function (str, num) {
+		var result = '';
+		while (num > 0) {
+			if (num & 1) {
+				result += str;
+			}
+			num >>= 1;
+			str += str;
+		}
+		return result;
+	};
+
     return Constructor;
 })(document);/**
  * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
@@ -958,8 +954,13 @@ Sheet.StyleUpdater = (function(document) {
 ;Sheet.JSONLoader = (function($, document) {
     "use strict";
     function Constructor(json) {
-        this.json = json;
-        this.count = json.length;
+		if (json !== undefined) {
+			this.json = json;
+			this.count = json.length;
+		} else {
+			this.json = [];
+			this.count = 0;
+		}
     }
 
     Constructor.prototype = {
@@ -1033,6 +1034,7 @@ Sheet.StyleUpdater = (function(document) {
 
             if (cell['rowspan']) blankTd.setAttribute('rowspan', cell['rowspan'] || '');
             if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
+            if (cell['uneditable']) blankTd.setAttribute('data-uneditable', cell['uneditable'] || '');
 
             return true;
         },
@@ -1062,7 +1064,8 @@ Sheet.StyleUpdater = (function(document) {
 				calcDependenciesLast: -1,
 				cellType: cell['cellType'] || '',
 				formula: cell['formula'] || '',
-				value: cell['value'] || ''
+				value: cell['value'] || '',
+				uneditable: cell['uneditable']
 			}
 		},
 		title: function(sheetIndex) {
@@ -1166,6 +1169,7 @@ Sheet.StyleUpdater = (function(document) {
                         if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
                         if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
                         if (column['value']) td.html(column['value'] || '');
+                        if (column['uneditable']) td.html(column['uneditable'] || '');
                         if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
                         if (column['colspan']) td.attr('colspan', column['colspan'] || '');
                     }
@@ -1316,7 +1320,9 @@ Sheet.StyleUpdater = (function(document) {
                             if (cell['formula']) jsonColumn['formula'] = cell['formula'];
                             if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
                             if (cell['value']) jsonColumn['value'] = cell['value'];
+							if (cell['uneditable']) jsonColumn['uneditable'] = cell['uneditable'];
                             if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
+
 
                             if (cl.length) {
                                 jsonColumn['class'] = cl;
@@ -1338,7 +1344,7 @@ Sheet.StyleUpdater = (function(document) {
             } while (sheet--);
             jS.i = i;
 
-            return output;
+            return this.json = output;
         }
     };
 
@@ -1402,9 +1408,15 @@ Sheet.StyleUpdater = (function(document) {
      * </spreadsheets></textarea>
      */
     function Constructor(xml) {
-	    this.xml = $.parseXML(xml);
-	    this.spreadsheets = this.xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet');
-        this.count = this.xml.length;
+		if (xml !== undefined) {
+			this.xml = $.parseXML(xml);
+			this.spreadsheets = this.xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet');
+			this.count = this.xml.length;
+		} else {
+			this.xml = null;
+			this.spreadsheets = null;
+			this.count = 0;
+		}
     }
 
     Constructor.prototype = {
@@ -1748,7 +1760,12 @@ Sheet.StyleUpdater = (function(document) {
             } while (sheet--);
 
             jS.i = i;
-            return '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">' + output + '</spreadsheets>';
+
+            output = '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">' + output + '</spreadsheets>';
+
+			this.xml = $.parseXML(output);
+
+			return output;
         }
     };
 

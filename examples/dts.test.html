@@ -26,21 +26,25 @@
                     xml,
                     tables,
 		            trim = false,
-                    $dtsValue = $('#dtsValue');
+                    $dtsValue = $('#dtsValue'),
+	                loader;
 
                 switch (dtsType) {
                     case "json": trim = true;
 	                case "json_trim":
-	                    json = $.sheet.dts.fromTables.json(jS, trim);
-	                    tables = $.sheet.dts.toTables.json(json);
+		                loader = new Sheet.JSONLoader();
+	                    json = loader.fromTables(jS, trim);
+	                    tables = loader.toTables();
 
                         $dtsValue.val(JSON.stringify(json));
 	                    break;
                     case "xml":
 		                trim = true;
 	                case "xml_trim":
-	                    xml = $.sheet.dts.fromTables.xml(jS, trim);
-	                    tables = $.sheet.dts.toTables.xml(xml);
+		                loader = new Sheet.XMLLoader();
+	                    xml = loader.fromTables(jS, trim);
+	                    tables = loader.toTables();
+			            new Sheet.XMLLoader(xml);
 
                         $dtsValue.val(xml);
 		                break;
