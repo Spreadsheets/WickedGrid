@@ -57,9 +57,15 @@
      * </spreadsheets></textarea>
      */
     function Constructor(xml) {
-	    this.xml = $.parseXML(xml);
-	    this.spreadsheets = this.xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet');
-        this.count = this.xml.length;
+		if (xml !== undefined) {
+			this.xml = $.parseXML(xml);
+			this.spreadsheets = this.xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet');
+			this.count = this.xml.length;
+		} else {
+			this.xml = null;
+			this.spreadsheets = null;
+			this.count = 0;
+		}
     }
 
     Constructor.prototype = {
@@ -403,7 +409,12 @@
             } while (sheet--);
 
             jS.i = i;
-            return '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">' + output + '</spreadsheets>';
+
+            output = '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">' + output + '</spreadsheets>';
+
+			this.xml = $.parseXML(output);
+
+			return output;
         }
     };
 

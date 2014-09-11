@@ -12,8 +12,13 @@
 ;Sheet.JSONLoader = (function($, document) {
     "use strict";
     function Constructor(json) {
-        this.json = json;
-        this.count = json.length;
+		if (json !== undefined) {
+			this.json = json;
+			this.count = json.length;
+		} else {
+			this.json = [];
+			this.count = 0;
+		}
     }
 
     Constructor.prototype = {
@@ -87,6 +92,7 @@
 
             if (cell['rowspan']) blankTd.setAttribute('rowspan', cell['rowspan'] || '');
             if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
+            if (cell['uneditable']) blankTd.setAttribute('data-uneditable', cell['uneditable'] || '');
 
             return true;
         },
@@ -116,7 +122,8 @@
 				calcDependenciesLast: -1,
 				cellType: cell['cellType'] || '',
 				formula: cell['formula'] || '',
-				value: cell['value'] || ''
+				value: cell['value'] || '',
+				uneditable: cell['uneditable']
 			}
 		},
 		title: function(sheetIndex) {
@@ -220,6 +227,7 @@
                         if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
                         if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
                         if (column['value']) td.html(column['value'] || '');
+                        if (column['uneditable']) td.html(column['uneditable'] || '');
                         if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
                         if (column['colspan']) td.attr('colspan', column['colspan'] || '');
                     }
@@ -370,7 +378,9 @@
                             if (cell['formula']) jsonColumn['formula'] = cell['formula'];
                             if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
                             if (cell['value']) jsonColumn['value'] = cell['value'];
+							if (cell['uneditable']) jsonColumn['uneditable'] = cell['uneditable'];
                             if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
+
 
                             if (cl.length) {
                                 jsonColumn['class'] = cl;
@@ -392,7 +402,7 @@
             } while (sheet--);
             jS.i = i;
 
-            return output;
+            return this.json = output;
         }
     };
 

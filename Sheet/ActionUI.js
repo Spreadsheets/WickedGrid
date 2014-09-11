@@ -43,50 +43,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             }
         };
 
-
-        if (Sheet.ActionUI.prototype.nthCss === null) {
-            if (max) {//this is where we check IE8 compatibility
-                Sheet.ActionUI.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-                    var style = [],
-                        index = indexes.length,
-                        repeat = this.repeat;
-
-                    css = css || '{display: none;}';
-
-                    do {
-                        if (indexes[index] > min) {
-                            style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
-                        }
-                    } while (index--);
-
-                    if (style.length) {
-                        return style.join(',') + css;
-                    }
-
-                    return '';
-                };
-            } else {
-                Sheet.ActionUI.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-                    var style = [],
-                        index = indexes.length;
-
-                    css = css || '{display: none;}';
-
-                    do {
-                        if (indexes[index] > min) {
-                            style.push(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
-                        }
-                    } while (index--);
-
-                    if (style.length) {
-                        return style.join(',') + css;
-                    }
-
-                    return '';
-                };
-            }
-        }
-
         var that = this,
             cssId = '#' + table.getAttribute('id'),
             scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
@@ -97,8 +53,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 if (indexes.length !== that.xIndex || style) {
                     that.xIndex = indexes.length || that.xIndex;
 
-                    style = style || nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
-                        nthCss('td', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1);
+                    style = style || this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
+                        this.nthCss('td', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1);
 
                     this.setStyle(style);
 
@@ -110,14 +66,14 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     return true;
                 }
                 return false;
-            }),
+            }, max),
             scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(indexes, style){
                 indexes = indexes || [];
 
                 if (indexes.length !== that.yIndex || style) {
                     that.yIndex = indexes.length || that.yIndex;
 
-                    style = style || nthCss('tr', cssId, indexes, that.frozenAt.row + 1);
+                    style = style || this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1);
 
                     this.setStyle(style);
 
@@ -129,8 +85,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     return true;
                 }
                 return false;
-            }),
-            nthCss = this.nthCss;
+            });
 
         scrollOuter.setAttribute('class', cl);
         scrollOuter.appendChild(scrollInner);
@@ -295,36 +250,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             return null;
         },
 
-        /**
-         * Repeats a string a number of times
-         * @param {String} str
-         * @param {Number} num
-         * @returns {String}
-         */
-        repeat:function (str, num) {
-            var result = '';
-            while (num > 0) {
-                if (num & 1) {
-                    result += str;
-                }
-                num >>= 1;
-                str += str;
-            }
-            return result;
-        },
 
-
-        /**
-         * Creates css for an iterated element
-         * @param {String} elementName
-         * @param {String} parentSelectorString
-         * @param {Array} indexes
-         * @param {Number} min
-         * @param {String} [css]
-         * @returns {String}
-         */
-
-        nthCss: null,
 
         /**
          * Causes the pane to redraw, really just for fixing issues in Chrome
@@ -344,20 +270,18 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
             var that = this,
                 cssId = '#' + this.table.getAttribute('id'),
                 toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
-                    var style = nthCss('col', cssId, that.hiddenColumns, 0) +
-                        nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
+                    var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
+                        this.nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
 
                     this.setStyle(style);
                 }),
                 toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
-                    var style = nthCss('tr', cssId, that.hiddenRows, 0);
+                    var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
 
                     this.setStyle(style);
                 }),
-
                 i,
-                j,
-                nthCss = this.nthCss,
+				j,
                 pane = this.pane;
 
             pane.appendChild(toggleHideStyleX.styleElement);
