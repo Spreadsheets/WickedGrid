@@ -1038,6 +1038,20 @@ Sheet.StyleUpdater = (function(document) {
 
             return true;
         },
+		setCellCache: function(sheetIndex, rowIndex, columnIndex, cached) {
+			var json = this.json,
+				jsonSpreadsheet,
+				rows,
+				row,
+				cell;
+
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return;
+			if ((row = rows[rowIndex - 1]) === undefined) return;
+			if ((cell = row.columns[columnIndex - 1]) === undefined) return;
+
+			cell.cache = cached;
+		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex) {
 			var json = this.json,
 				jsonSpreadsheet,
@@ -1100,11 +1114,13 @@ Sheet.StyleUpdater = (function(document) {
 			 *          "height": 18, //optional
 			 *          "columns": [
 			 *              { //column A
-			 *                  "cellType":"", //optional
+			 *                  "cellType": "", //optional
 			 *                  "class": "css classes", //optional
 			 *                  "formula": "=cell formula", //optional
 			 *                  "value": "value", //optional
-			 *                  "style": "css cell style" //optional
+			 *                  "style": "css cell style", //optional
+			 *                  "uneditable": true, //optional
+			 *                  "cache": "" //optional
 			 *              },
 			 *              {} //column B
 			 *          ]
@@ -1113,11 +1129,13 @@ Sheet.StyleUpdater = (function(document) {
 			 *          "height": 18, //optional
 			 *          "columns": [
 			 *              { // column A
-			 *                  "cellType":"", //optional
+			 *                  "cellType": "", //optional
 			 *                  "class": "css classes", //optional
 			 *                  "formula": "=cell formula", //optional
 			 *                  "value": "value", //optional
 			 *                  "style": "css cell style" //optional
+			 *                  "uneditable": true, //optional
+			 *                  "cache": "" //optional
 			 *              },
 			 *              {} // column B
 			 *          ]
@@ -1140,28 +1158,37 @@ Sheet.StyleUpdater = (function(document) {
                 widths,
                 width,
                 frozenAt,
-                height;
+                height,
+				table,
+				colgroup,
+				col,
+				tr,
+				td,
+				i,
+				j,
+				k;
 
-            for (var i = 0; i < json.length; i++) {
+
+            for (i = 0; i < json.length; i++) {
                 spreadsheet = json[i];
-                var table = $(document.createElement('table'));
+                table = $(document.createElement('table'));
                 if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');
 
                 tables = tables.add(table);
 
                 rows = spreadsheet['rows'];
-                for (var j = 0; j < rows.length; j++) {
+                for (j = 0; j < rows.length; j++) {
                     row = rows[j];
                     if (height = (row['height'] + '').replace('px','')) {
-                        var tr = $(document.createElement('tr'))
+                        tr = $(document.createElement('tr'))
                             .attr('height', height)
                             .css('height', height + 'px')
                             .appendTo(table);
                     }
                     columns = row['columns'];
-                    for (var k = 0; k < columns.length; k++) {
+                    for (k = 0; k < columns.length; k++) {
                         column = columns[k];
-                        var td = $(document.createElement('td'))
+                        td = $(document.createElement('td'))
                             .appendTo(tr);
 
                         if (column['class']) td.attr('class', column['class'] || '');
@@ -1172,16 +1199,17 @@ Sheet.StyleUpdater = (function(document) {
                         if (column['uneditable']) td.html(column['uneditable'] || '');
                         if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
                         if (column['colspan']) td.attr('colspan', column['colspan'] || '');
+						if (column['cache']) td.html(column['cache']);
                     }
                 }
 
                 if (metadata = spreadsheet['metadata']) {
                     if (widths = metadata['widths']) {
-                        var colgroup = $(document.createElement('colgroup'))
+                        colgroup = $(document.createElement('colgroup'))
                             .prependTo(table);
-                        for(var k = 0; k < widths.length; k++) {
+                        for(k = 0; k < widths.length; k++) {
                             width = (widths[k] + '').replace('px', '');
-                            var col = $(document.createElement('col'))
+                            col = $(document.createElement('col'))
                                 .attr('width', width)
                                 .css('width', width + 'px')
                                 .appendTo(colgroup);
@@ -1202,7 +1230,7 @@ Sheet.StyleUpdater = (function(document) {
         },
 
         /**
-         * Create a table from json
+         * Create json from jQuery.sheet Sheet instance
          * @param {Object} jS required, the jQuery.sheet instance
          * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
          * @returns {Array}  - schema:<pre>
@@ -1220,11 +1248,13 @@ Sheet.StyleUpdater = (function(document) {
                  *          "height": "18px", //optional
                  *          "columns": [
                  *              { //column A
-                 *                  "cellType":"", //optional
+                 *                  "cellType": "", //optional
                  *                  "class": "css classes", //optional
                  *                  "formula": "=cell formula", //optional
                  *                  "value": "value", //optional
-                 *                  "style": "css cell style" //optional
+                 *                  "style": "css cell style", //optional
+                 *                  "uneditable": false,
+                 *                  "cache": ""
                  *              },
                  *              {} //column B
                  *          ]
@@ -1233,11 +1263,13 @@ Sheet.StyleUpdater = (function(document) {
                  *          "height": "18px", //optional
                  *          "columns": [
                  *              { // column A
-                 *                  "cellType":"", //optional
+                 *                  "cellType": "", //optional
                  *                  "class": "css classes", //optional
                  *                  "formula": "=cell formula", //optional
                  *                  "value": "value", //optional
-                 *                  "style": "css cell style" //optional
+                 *                  "style": "css cell style", //optional
+                 *                  "uneditable": true,
+                 *                  "cache": ""
                  *              },
                  *              {} // column B
                  *          ]
@@ -1246,7 +1278,7 @@ Sheet.StyleUpdater = (function(document) {
                  * }]</pre>
          * @memberOf Sheet.JSONLoader
          */
-        fromTables: function(jS, doNotTrim) {
+        fromSheet: function(jS, doNotTrim) {
             doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
 
             var output = [],
@@ -1321,6 +1353,7 @@ Sheet.StyleUpdater = (function(document) {
                             if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
                             if (cell['value']) jsonColumn['value'] = cell['value'];
 							if (cell['uneditable']) jsonColumn['uneditable'] = cell['uneditable'];
+							if (cell['cache']) jsonColumn['cache'] = cell['cache'];
                             if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
 
 
@@ -1329,10 +1362,10 @@ Sheet.StyleUpdater = (function(document) {
                             }
                             if (attr['rowspan']) jsonColumn['rowspan'] = attr['rowspan'].value;
                             if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
-                        }
 
-                        if (row * 1 == 1) {
-                            jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
+							if (row * 1 == 1) {
+								jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
+							}
                         }
                     } while (column-- > 1);
 
@@ -1614,9 +1647,10 @@ Sheet.StyleUpdater = (function(document) {
         },
 
         /**
-         * Create a table from xml
+         * Create xml from jQuery.sheet Sheet instance
          * @param {Object} jS the jQuery.sheet instance
          * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
+		 * @param {Boolean} [doNotParse] skips turning the created xml string back into xml
          * @returns {String} - schema:<textarea disabled=disabled>
          * <spreadsheets>
          *     <spreadsheet title="spreadsheet title">
@@ -1654,9 +1688,9 @@ Sheet.StyleUpdater = (function(document) {
          *         </rows>
          *     </spreadsheet>
          * </spreadsheets></textarea>
-         * @memberOf jQuery.sheet.dts.fromTables
+		 * @memberOf Sheet.XMLLoader
          */
-        fromTables: function(jS, doNotTrim) {
+        fromSheet: function(jS, doNotTrim, doNotParse) {
             doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
             var output = '',
                 i = 1 * jS.i,
@@ -1720,10 +1754,10 @@ Sheet.StyleUpdater = (function(document) {
                             xmlColumn += '</column>';
 
                             xmlColumns = xmlColumn + xmlColumns;
-                        }
 
-                        if (row * 1 == 1) {
-                            widths[column] = '<width>' + $(jS.col(null, column)).css('width').replace('px', '') + '</width>';
+							if (row * 1 == 1) {
+								widths[column] = '<width>' + $(jS.col(null, column)).css('width').replace('px', '') + '</width>';
+							}
                         }
 
                     } while (column -- > 1);
@@ -1763,7 +1797,9 @@ Sheet.StyleUpdater = (function(document) {
 
             output = '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">' + output + '</spreadsheets>';
 
-			this.xml = $.parseXML(output);
+			if (doNotParse !== true) {
+				this.xml = $.parseXML(output);
+			}
 
 			return output;
         }
@@ -2513,7 +2549,7 @@ $.fn.extend({
 					cell.valueOverride = cell.formula = '';
 				}
 				cell.calcLast = cell.calcDependenciesLast = 0;
-				jS.updateCellValue.call(cell);
+				jS.updateCellValue.call(cell, sheetIndex, rowIndex, colIndex);
 				jS.updateCellDependencies.call(cell);
 				return true;
 			} catch (e) {}
@@ -3694,7 +3730,7 @@ $.sheet = {
 
 									if (setupCell) {
 										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
-											jS.updateCellValue.call(cell);
+											jS.updateCellValue.call(cell, jS.i, row, at);
 										}
 									}
 
@@ -3776,7 +3812,7 @@ $.sheet = {
 
 									if (setupCell) {
 										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
-											jS.updateCellValue.call(cell);
+											jS.updateCellValue.call(cell, jS.i, row, at);
 										}
 									}
 
@@ -7471,13 +7507,16 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				updateCellValue:function (sheetIndex, rowIndex, colIndex) {
-					var sheet, row, cell, fn, lookupErrors = null;
+					var sheet,
+						row,
+						cell,
+						fn,
+						cache,
+						lookupErrors = null,
+						td,
+						loc;
 
-					sheetIndex = sheetIndex || 0;
-					rowIndex = rowIndex || -1;
-					colIndex = colIndex || -1;
-
-					if (rowIndex > -1) {
+					if (this.jS === u) {
 						//first detect if the cell exists if not return nothing
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
 							lookupErrors = s.error({error:jS.msg.notFoundSheet});
@@ -7491,9 +7530,13 @@ $.sheet = {
 							}
 						}
 
-						if (lookupErrors !== null && s.loader) {
-							if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
-								return lookupErrors
+						if (lookupErrors !== null) {
+							if (s.loader !== u) {
+								if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
+									return lookupErrors;
+								}
+							} else {
+								return lookupErrors;
 							}
 						}
 					} else {
@@ -7559,10 +7602,10 @@ $.sheet = {
 							if (cell.result && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
 								cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.result);
 							}
-							jS.filterValue.call(cell);
+							cache = jS.filterValue.call(cell);
 						} else if (cell.value && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
 							cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
-							jS.filterValue.call(cell);
+							cache = jS.filterValue.call(cell);
 						} else {
 							if (cell.value != u && cell.value.charAt) {
 								fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
@@ -7575,7 +7618,18 @@ $.sheet = {
 									}
 								}
 							}
-							jS.filterValue.call(cell);
+							cache = jS.filterValue.call(cell);
+						}
+
+						if (s.loader) {
+							td = cell.td[0];
+							if (sheetIndex === u) sheetIndex = cell.sheet;
+							if (rowIndex === u || colIndex === u) {
+								loc = jS.getTdLocation(td);
+								rowIndex = loc.row;
+								colIndex = loc.col;
+							}
+							s.loader.setCellCache(sheetIndex, rowIndex, colIndex, cache);
 						}
 					}
 					cell.needsUpdated = false;
@@ -7613,18 +7667,25 @@ $.sheet = {
 
 				/**
 				 * Filters cell's value so correct entity is displayed, use apply on cell object
+				 * @returns {String}
 				 * @memberOf jS
 				 */
 				filterValue:function () {
-					var encodedValue, html;
-					if (this.result != u) {
-						this.value = this.result.valueOf();
-						html = this.result.html;
-					} else if (typeof this.value == 'string' && this.value.length > 0) {
+					var encodedValue,
+						html,
+						result = this.result,
+						td = this.td;
+
+					if (result !== u && result !== null) {
+						this.value = result.valueOf();
+						html = result.html;
+					} else if (typeof this.value === 'string' && this.value.length > 0) {
 						encodedValue = s.encode(this.value);
 					}
 
-					this.td.html(html || encodedValue || this.value);
+					td.html(html || encodedValue || this.value);
+
+					return td[0].innerHTML;
 				},
 
 				/**
@@ -9708,7 +9769,7 @@ $.sheet = {
 					//table / tBody / tr / td
 
 					//if we are using a dataloader, get the size from that
-					if (s.loader !== null) {
+					if (s.loader) {
 						size = s.loader.size(table.spreadsheetIndex);
 
 						if (minSize !== null) {
