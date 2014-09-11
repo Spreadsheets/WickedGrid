@@ -741,7 +741,7 @@ $.fn.extend({
 					cell.valueOverride = cell.formula = '';
 				}
 				cell.calcLast = cell.calcDependenciesLast = 0;
-				jS.updateCellValue.call(cell);
+				jS.updateCellValue.call(cell, sheetIndex, rowIndex, colIndex);
 				jS.updateCellDependencies.call(cell);
 				return true;
 			} catch (e) {}
@@ -1922,7 +1922,7 @@ $.sheet = {
 
 									if (setupCell) {
 										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
-											jS.updateCellValue.call(cell);
+											jS.updateCellValue.call(cell, jS.i, row, at);
 										}
 									}
 
@@ -2004,7 +2004,7 @@ $.sheet = {
 
 									if (setupCell) {
 										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
-											jS.updateCellValue.call(cell);
+											jS.updateCellValue.call(cell, jS.i, row, at);
 										}
 									}
 
@@ -5699,13 +5699,16 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				updateCellValue:function (sheetIndex, rowIndex, colIndex) {
-					var sheet, row, cell, fn, lookupErrors = null;
+					var sheet,
+						row,
+						cell,
+						fn,
+						cache,
+						lookupErrors = null,
+						td,
+						loc;
 
-					sheetIndex = sheetIndex || 0;
-					rowIndex = rowIndex || -1;
-					colIndex = colIndex || -1;
-
-					if (rowIndex > -1) {
+					if (this.jS === u) {
 						//first detect if the cell exists if not return nothing
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
 							lookupErrors = s.error({error:jS.msg.notFoundSheet});
@@ -5719,9 +5722,13 @@ $.sheet = {
 							}
 						}
 
-						if (lookupErrors !== null && s.loader) {
-							if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
-								return lookupErrors
+						if (lookupErrors !== null) {
+							if (s.loader !== u) {
+								if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
+									return lookupErrors;
+								}
+							} else {
+								return lookupErrors;
 							}
 						}
 					} else {
@@ -5787,10 +5794,10 @@ $.sheet = {
 							if (cell.result && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
 								cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.result);
 							}
-							jS.filterValue.call(cell);
+							cache = jS.filterValue.call(cell);
 						} else if (cell.value && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
 							cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
-							jS.filterValue.call(cell);
+							cache = jS.filterValue.call(cell);
 						} else {
 							if (cell.value != u && cell.value.charAt) {
 								fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
@@ -5803,7 +5810,18 @@ $.sheet = {
 									}
 								}
 							}
-							jS.filterValue.call(cell);
+							cache = jS.filterValue.call(cell);
+						}
+
+						if (s.loader) {
+							td = cell.td[0];
+							if (sheetIndex === u) sheetIndex = cell.sheet;
+							if (rowIndex === u || colIndex === u) {
+								loc = jS.getTdLocation(td);
+								rowIndex = loc.row;
+								colIndex = loc.col;
+							}
+							s.loader.setCellCache(sheetIndex, rowIndex, colIndex, cache);
 						}
 					}
 					cell.needsUpdated = false;
@@ -5841,18 +5859,25 @@ $.sheet = {
 
 				/**
 				 * Filters cell's value so correct entity is displayed, use apply on cell object
+				 * @returns {String}
 				 * @memberOf jS
 				 */
 				filterValue:function () {
-					var encodedValue, html;
-					if (this.result != u) {
-						this.value = this.result.valueOf();
-						html = this.result.html;
-					} else if (typeof this.value == 'string' && this.value.length > 0) {
+					var encodedValue,
+						html,
+						result = this.result,
+						td = this.td;
+
+					if (result !== u && result !== null) {
+						this.value = result.valueOf();
+						html = result.html;
+					} else if (typeof this.value === 'string' && this.value.length > 0) {
 						encodedValue = s.encode(this.value);
 					}
 
-					this.td.html(html || encodedValue || this.value);
+					td.html(html || encodedValue || this.value);
+
+					return td[0].innerHTML;
 				},
 
 				/**
@@ -7936,7 +7961,7 @@ $.sheet = {
 					//table / tBody / tr / td
 
 					//if we are using a dataloader, get the size from that
-					if (s.loader !== null) {
+					if (s.loader) {
 						size = s.loader.size(table.spreadsheetIndex);
 
 						if (minSize !== null) {

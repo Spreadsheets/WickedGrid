@@ -131,6 +131,9 @@
 
             return true;
 	    },
+		setCellCache: function(sheetIndex, rowIndex, columnIndex, cached) {
+			//TODO
+		},
 	    jitCell: function(sheetIndex, rowIndex, columnIndex) {
 		    var spreadsheets = this.spreadsheets,
 			    xmlSpreadsheet,
@@ -263,9 +266,10 @@
         },
 
         /**
-         * Create a table from xml
+         * Create xml from jQuery.sheet Sheet instance
          * @param {Object} jS the jQuery.sheet instance
          * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
+		 * @param {Boolean} [doNotParse] skips turning the created xml string back into xml
          * @returns {String} - schema:<textarea disabled=disabled>
          * <spreadsheets>
          *     <spreadsheet title="spreadsheet title">
@@ -303,9 +307,9 @@
          *         </rows>
          *     </spreadsheet>
          * </spreadsheets></textarea>
-         * @memberOf jQuery.sheet.dts.fromTables
+		 * @memberOf Sheet.XMLLoader
          */
-        fromTables: function(jS, doNotTrim) {
+        fromSheet: function(jS, doNotTrim, doNotParse) {
             doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
             var output = '',
                 i = 1 * jS.i,
@@ -369,10 +373,10 @@
                             xmlColumn += '</column>';
 
                             xmlColumns = xmlColumn + xmlColumns;
-                        }
 
-                        if (row * 1 == 1) {
-                            widths[column] = '<width>' + $(jS.col(null, column)).css('width').replace('px', '') + '</width>';
+							if (row * 1 == 1) {
+								widths[column] = '<width>' + $(jS.col(null, column)).css('width').replace('px', '') + '</width>';
+							}
                         }
 
                     } while (column -- > 1);
@@ -412,7 +416,9 @@
 
             output = '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">' + output + '</spreadsheets>';
 
-			this.xml = $.parseXML(output);
+			if (doNotParse !== true) {
+				this.xml = $.parseXML(output);
+			}
 
 			return output;
         }

@@ -96,6 +96,20 @@
 
             return true;
         },
+		setCellCache: function(sheetIndex, rowIndex, columnIndex, cached) {
+			var json = this.json,
+				jsonSpreadsheet,
+				rows,
+				row,
+				cell;
+
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return;
+			if ((row = rows[rowIndex - 1]) === undefined) return;
+			if ((cell = row.columns[columnIndex - 1]) === undefined) return;
+
+			cell.cache = cached;
+		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex) {
 			var json = this.json,
 				jsonSpreadsheet,
@@ -158,11 +172,13 @@
 			 *          "height": 18, //optional
 			 *          "columns": [
 			 *              { //column A
-			 *                  "cellType":"", //optional
+			 *                  "cellType": "", //optional
 			 *                  "class": "css classes", //optional
 			 *                  "formula": "=cell formula", //optional
 			 *                  "value": "value", //optional
-			 *                  "style": "css cell style" //optional
+			 *                  "style": "css cell style", //optional
+			 *                  "uneditable": true, //optional
+			 *                  "cache": "" //optional
 			 *              },
 			 *              {} //column B
 			 *          ]
@@ -171,11 +187,13 @@
 			 *          "height": 18, //optional
 			 *          "columns": [
 			 *              { // column A
-			 *                  "cellType":"", //optional
+			 *                  "cellType": "", //optional
 			 *                  "class": "css classes", //optional
 			 *                  "formula": "=cell formula", //optional
 			 *                  "value": "value", //optional
 			 *                  "style": "css cell style" //optional
+			 *                  "uneditable": true, //optional
+			 *                  "cache": "" //optional
 			 *              },
 			 *              {} // column B
 			 *          ]
@@ -198,28 +216,37 @@
                 widths,
                 width,
                 frozenAt,
-                height;
+                height,
+				table,
+				colgroup,
+				col,
+				tr,
+				td,
+				i,
+				j,
+				k;
 
-            for (var i = 0; i < json.length; i++) {
+
+            for (i = 0; i < json.length; i++) {
                 spreadsheet = json[i];
-                var table = $(document.createElement('table'));
+                table = $(document.createElement('table'));
                 if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');
 
                 tables = tables.add(table);
 
                 rows = spreadsheet['rows'];
-                for (var j = 0; j < rows.length; j++) {
+                for (j = 0; j < rows.length; j++) {
                     row = rows[j];
                     if (height = (row['height'] + '').replace('px','')) {
-                        var tr = $(document.createElement('tr'))
+                        tr = $(document.createElement('tr'))
                             .attr('height', height)
                             .css('height', height + 'px')
                             .appendTo(table);
                     }
                     columns = row['columns'];
-                    for (var k = 0; k < columns.length; k++) {
+                    for (k = 0; k < columns.length; k++) {
                         column = columns[k];
-                        var td = $(document.createElement('td'))
+                        td = $(document.createElement('td'))
                             .appendTo(tr);
 
                         if (column['class']) td.attr('class', column['class'] || '');
@@ -230,16 +257,17 @@
                         if (column['uneditable']) td.html(column['uneditable'] || '');
                         if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
                         if (column['colspan']) td.attr('colspan', column['colspan'] || '');
+						if (column['cache']) td.html(column['cache']);
                     }
                 }
 
                 if (metadata = spreadsheet['metadata']) {
                     if (widths = metadata['widths']) {
-                        var colgroup = $(document.createElement('colgroup'))
+                        colgroup = $(document.createElement('colgroup'))
                             .prependTo(table);
-                        for(var k = 0; k < widths.length; k++) {
+                        for(k = 0; k < widths.length; k++) {
                             width = (widths[k] + '').replace('px', '');
-                            var col = $(document.createElement('col'))
+                            col = $(document.createElement('col'))
                                 .attr('width', width)
                                 .css('width', width + 'px')
                                 .appendTo(colgroup);
@@ -260,7 +288,7 @@
         },
 
         /**
-         * Create a table from json
+         * Create json from jQuery.sheet Sheet instance
          * @param {Object} jS required, the jQuery.sheet instance
          * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
          * @returns {Array}  - schema:<pre>
@@ -278,11 +306,13 @@
                  *          "height": "18px", //optional
                  *          "columns": [
                  *              { //column A
-                 *                  "cellType":"", //optional
+                 *                  "cellType": "", //optional
                  *                  "class": "css classes", //optional
                  *                  "formula": "=cell formula", //optional
                  *                  "value": "value", //optional
-                 *                  "style": "css cell style" //optional
+                 *                  "style": "css cell style", //optional
+                 *                  "uneditable": false,
+                 *                  "cache": ""
                  *              },
                  *              {} //column B
                  *          ]
@@ -291,11 +321,13 @@
                  *          "height": "18px", //optional
                  *          "columns": [
                  *              { // column A
-                 *                  "cellType":"", //optional
+                 *                  "cellType": "", //optional
                  *                  "class": "css classes", //optional
                  *                  "formula": "=cell formula", //optional
                  *                  "value": "value", //optional
-                 *                  "style": "css cell style" //optional
+                 *                  "style": "css cell style", //optional
+                 *                  "uneditable": true,
+                 *                  "cache": ""
                  *              },
                  *              {} // column B
                  *          ]
@@ -304,7 +336,7 @@
                  * }]</pre>
          * @memberOf Sheet.JSONLoader
          */
-        fromTables: function(jS, doNotTrim) {
+        fromSheet: function(jS, doNotTrim) {
             doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
 
             var output = [],
@@ -379,6 +411,7 @@
                             if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
                             if (cell['value']) jsonColumn['value'] = cell['value'];
 							if (cell['uneditable']) jsonColumn['uneditable'] = cell['uneditable'];
+							if (cell['cache']) jsonColumn['cache'] = cell['cache'];
                             if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
 
 
@@ -387,10 +420,10 @@
                             }
                             if (attr['rowspan']) jsonColumn['rowspan'] = attr['rowspan'].value;
                             if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
-                        }
 
-                        if (row * 1 == 1) {
-                            jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
+							if (row * 1 == 1) {
+								jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
+							}
                         }
                     } while (column-- > 1);
 
