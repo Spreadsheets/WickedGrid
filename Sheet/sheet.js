@@ -5706,7 +5706,8 @@ $.sheet = {
 						cache,
 						lookupErrors = null,
 						td,
-						loc;
+						loc,
+						jsonCell;
 
 					if (this.jS === u) {
 						//first detect if the cell exists if not return nothing
@@ -5821,7 +5822,16 @@ $.sheet = {
 								rowIndex = loc.row;
 								colIndex = loc.col;
 							}
-							s.loader.setCellCache(sheetIndex, rowIndex, colIndex, cache);
+
+							if ((jsonCell = s.loader.getCell(sheetIndex, rowIndex, colIndex)) !== null) {
+								jsonCell.formula = cell.formula;
+								jsonCell.cellType = cell.cellType;
+								jsonCell.value = cell.value;
+								jsonCell.cache = cache;
+								if (cell.uneditable === true) {
+									jsonCell.uneditable = true;
+								}
+							}
 						}
 					}
 					cell.needsUpdated = false;
