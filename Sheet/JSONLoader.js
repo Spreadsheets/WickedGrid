@@ -71,21 +71,35 @@
                 jsonSpreadsheet,
 				rows,
                 row,
-                cell;
+                cell,
+				jitCell,
+				html;
 
             if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return false;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return false;
             if ((row = rows[rowIndex - 1]) === undefined) return false;
             if ((cell = row.columns[columnIndex - 1]) === undefined) return false;
 
             blankCell.cellType = cell['cellType'] || '';
 
-            if (cell['formula']) {
-                blankCell.formula = cell['formula'] || '';
-                blankTd.setAttribute('data-formula', cell['formula'] || '');
-            } else {
-                blankTd.innerHTML = blankCell.value = cell['value'] || '';
-            }
+			if ((jitCell = cell.jitCell) !== undefined) {
+				blankCell.html = jitCell.html;
+				blankCell.state = jitCell.state;
+				blankCell.calcLast = jitCell.calcLast;
+				blankCell.calcDependenciesLast = jitCell.calcDependenciesLast;
+				blankCell.cellType = jitCell.cellType;
+				blankCell.value = jitCell.value;
+				blankCell.uneditable = jitCell.uneditable;
+				blankCell.sheet = jitCell.sheet;
+				blankCell.dependencies = jitCell.dependencies;
+			}
+
+			if (cell['formula']) {
+				blankCell.formula = cell['formula'] || '';
+				blankTd.setAttribute('data-formula', cell['formula'] || '');
+			} else {
+				blankTd.innerHTML = blankCell.value = cell['value'] || '';
+			}
 
             blankTd.className = cell['class'] || '';
             blankTd.setAttribute('style', cell['style'] || '');
@@ -133,7 +147,7 @@
 
 			fakeTd[0] = fakeTd;
 
-			return {
+			return cell.jitCell = {
 				td: fakeTd,
 				html: [],
 				state: [],
@@ -142,7 +156,10 @@
 				cellType: cell['cellType'] || '',
 				formula: cell['formula'] || '',
 				value: cell['value'] || '',
-				uneditable: cell['uneditable']
+				uneditable: cell['uneditable'],
+				type: 'cell',
+				sheet: sheetIndex,
+				dependencies: []
 			}
 		},
 		title: function(sheetIndex) {

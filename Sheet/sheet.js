@@ -773,7 +773,7 @@ $.fn.extend({
 				cell.formula = formula;
 				cell.valueOverride = cell.value = '';
 				cell.calcLast = cell.calcDependenciesLast = 0;
-				jS.updateCellValue(sheetIndex, rowIndex, colIndex);
+				jS.updateCellValue.call(cell, sheetIndex, rowIndex, colIndex);
 			} catch (e) {}
 		}
 		return this;
@@ -801,7 +801,7 @@ $.fn.extend({
 			try {
 				cell.html = [html];
 				cell.calcLast = cell.calcDependenciesLast = 0;
-				jS.updateCellValue(sheetIndex, rowIndex, colIndex);
+				jS.updateCellValue.call(cell, sheetIndex, rowIndex, colIndex);
 			} catch (e) {}
 		}
 		return this;
@@ -1480,7 +1480,7 @@ $.sheet = {
 					uiPane: 'ui-widget-content',
 					uiParent:'ui-widget-content ui-corner-all',
 					uiTable:'ui-widget-content',
-					uiTab:'ui-widget-header',
+					uiTab:'ui-widget-header ui-corner-bottom',
 					uiTabActive:'ui-state-highlight'
 				},
 
@@ -1923,6 +1923,7 @@ $.sheet = {
 									if (setupCell) {
 										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
 											jS.updateCellValue.call(cell, jS.i, row, at);
+											jS.updateCellDependencies.call(cell);
 										}
 									}
 
@@ -2688,9 +2689,10 @@ $.sheet = {
 					sheetAdder: function () {
 						var addSheet = document.createElement('span');
 						if (jS.isSheetEditable()) {
-							addSheet.setAttribute('class', jS.cl.sheetAdder + ' ' + jS.cl.tab + ' ' + jS.cl.uiTab + ' ui-corner-bottom');
+							addSheet.setAttribute('class', jS.cl.sheetAdder + ' ' + jS.cl.tab + ' ' + jS.cl.uiTab);
 							addSheet.setAttribute('title', jS.msg.addSheet);
-							addSheet.innerHTML = '&nbsp;+&nbsp;';
+							addSheet.innerHTML = '+';
+							addSheet.style.height = addSheet.style.width = s.colMargin + 'px';
 							addSheet.onmousedown = function () {
 								jS.addSheet();
 
@@ -2992,13 +2994,12 @@ $.sheet = {
 						var tab = document.createElement('span'),
 							$tab = jS.controls.tab[jS.i] = $(tab).appendTo(jS.obj.tabContainer());
 
-						tab.setAttribute('class', jS.cl.tab);
+						tab.setAttribute('class', jS.cl.tab + ' ' + jS.cl.uiTab);
 						jS.sheetTab(true, function(sheetTitle) {
 							tab.innerHTML = sheetTitle;
 						});
 
 						tab.i = jS.i;
-						tab.setAttribute('class',jS.cl.uiTab + ' ui-corner-bottom');
 						jS.controls.tabs = jS.obj.tabs().add($tab);
 
 						return tab;
@@ -3008,8 +3009,7 @@ $.sheet = {
 						var tab = document.createElement('span'),
 							$tab = $(tab).appendTo(jS.obj.tabContainer());
 
-						tab.setAttribute('class', jS.cl.tab);
-						tab.setAttribute('class', jS.cl.uiTab + ' ui-corner-bottom');
+						tab.setAttribute('class', jS.cl.tab + ' ' + jS.cl.uiTab);
 						tab.innerHTML = title;
 
 						return $tab;
@@ -6085,7 +6085,7 @@ $.sheet = {
 
 						cell = jS.cellHandler.createDependency.call(this, this.sheet, loc);
 
-						jS.updateCellValue.call(cell);
+						jS.updateCellValue.call(cell, this.sheet, loc.row, loc.col);
 						return (cell.valueOverride != u ? cell.valueOverride : cell.value);
 					},
 
@@ -6097,15 +6097,22 @@ $.sheet = {
 					 */
 					createDependency:function (sheetIndex, loc) {
 						var sheet, row, cell;
-						if (!(sheet = jS.spreadsheets[sheetIndex])) return null;
-						if (!(row = sheet[loc.row])) return null;
-						if (!(cell = row[loc.col])) return null;
+
+						if (s.loader) {
+							cell = s.loader.jitCell(sheetIndex, loc.row, loc.col);
+						} else {
+							if (!(sheet = jS.spreadsheets[sheetIndex])) return null;
+							if (!(row = sheet[loc.row])) return null;
+							if (!(cell = row[loc.col])) return null;
+						}
 
 						if (!cell.dependencies) cell.dependencies = [];
 
 						if ($.inArray(this, cell.dependencies) < 0) {
 							cell.dependencies.push(this);
 						}
+
+						cell.jS = jS;
 
 						return cell;
 					},
@@ -6134,7 +6141,7 @@ $.sheet = {
 								do {
 									cell = jS.spreadsheets[this.sheet][i][j];
 									jS.cellHandler.createDependency.call(this, this.sheet, {row:i, col:j});
-									result.unshift(jS.updateCellValue.call(cell));
+									result.unshift(jS.updateCellValue.call(cell, this.sheet, i, j));
 								} while(j-- > jEnd);
 							} while (i-- > iEnd);
 							return result;
@@ -6176,11 +6183,12 @@ $.sheet = {
 					 */
 					remoteCellValue:function (sheet, id) {//Example: SHEET1:A1
 						var loc = jSE.parseLocation(id),
-							sheetIndex = jSE.parseSheetLocation(sheet);
+							sheetIndex = jSE.parseSheetLocation(sheet),
+							cell;
 
-						jS.cellHandler.createDependency.call(this, sheetIndex, loc);
+						cell = jS.cellHandler.createDependency.call(this, sheetIndex, loc);
 
-						return jS.updateCellValue(sheetIndex, loc.row, loc.col);
+						return jS.updateCellValue.call(cell, sheetIndex, loc.row, loc.col);
 					},
 
 					/**
