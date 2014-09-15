@@ -174,11 +174,10 @@
 	white-space: nowrap;
 }
 .jSParent .jSSheetAdder {
-	border-left: none;
-	border-bottom: none;
-	border-top: none;
-	display: inline-block;
+	border: none;
+	display: block;
 	position: absolute;
+	text-align: center;
 }
 .jSParent .jSTab {
 	cursor: pointer;

@@ -108,13 +108,26 @@
 		    var spreadsheets = this.spreadsheets,
 			    xmlSpreadsheet,
 			    row,
-			    cell;
+			    cell,
+				jitCell;
 
 		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return false;
 		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return false;
 		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return false;
 
 		    blankCell.cellType = cell.attributes['cellType'].nodeValue || '';
+
+			if ((jitCell = cell.jitCell) !== undefined) {
+				blankCell.html = jitCell.html;
+				blankCell.state = jitCell.state;
+				blankCell.calcLast = jitCell.calcLast;
+				blankCell.calcDependenciesLast = jitCell.calcDependenciesLast;
+				blankCell.cellType = jitCell.cellType;
+				blankCell.value = jitCell.value;
+				blankCell.uneditable = jitCell.uneditable;
+				blankCell.sheet = jitCell.sheet;
+				blankCell.dependencies = jitCell.dependencies;
+			}
 
 		    if (cell.attributes['formula']) {
 			    blankCell.formula = cell.attributes['formula'].nodeValue || '';
@@ -159,7 +172,9 @@
 			    calcDependenciesLast: -1,
 			    cellType: cell.attributes['cellType'].nodeValue || '',
 			    formula: cell.attributes['formula'].nodeValue || '',
-			    value: cell.attributes['value'].nodeValue || ''
+			    value: cell.attributes['value'].nodeValue || '',
+				type: 'cell',
+				sheet: sheetIndex
 		    }
 	    },
 	    title: function(sheetIndex) {
