@@ -1009,22 +1009,15 @@ Sheet.StyleUpdater = (function(document) {
             barTd.style.height = height + 'px';
         },
         setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
-            var json = this.json,
-                jsonSpreadsheet,
-				rows,
-                row,
-                cell,
-				jitCell,
-				html;
+            var cell = this.getCell(sheetIndex, rowIndex, columnIndex),
+				jitCell;
 
-            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return false;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return false;
-            if ((row = rows[rowIndex - 1]) === undefined) return false;
-            if ((cell = row.columns[columnIndex - 1]) === undefined) return false;
+            if (cell === null) return false;
 
             blankCell.cellType = cell['cellType'] || '';
 
-			if ((jitCell = cell.jitCell) !== undefined) {
+			if (cell.getJitCell !== undefined) {
+				jitCell = cell.getJitCell();
 				blankCell.html = jitCell.html;
 				blankCell.state = jitCell.state;
 				blankCell.calcLast = jitCell.calcLast;
@@ -1034,13 +1027,24 @@ Sheet.StyleUpdater = (function(document) {
 				blankCell.uneditable = jitCell.uneditable;
 				blankCell.sheet = jitCell.sheet;
 				blankCell.dependencies = jitCell.dependencies;
-			}
+				blankCell.result = jitCell.result;
+				jitCell.jSCell = blankCell;
 
-			if (cell['formula']) {
-				blankCell.formula = cell['formula'] || '';
-				blankTd.setAttribute('data-formula', cell['formula'] || '');
+				if (cell['formula']) {
+					blankCell.formula = cell['formula'] || '';
+					blankTd.setAttribute('data-formula', cell['formula'] || '');
+					blankTd.innerHTML = jitCell.result;
+				} else {
+					blankTd.innerHTML = blankCell.value = cell['value'] || '';
+				}
 			} else {
-				blankTd.innerHTML = blankCell.value = cell['value'] || '';
+
+				if (cell['formula']) {
+					blankCell.formula = cell['formula'] || '';
+					blankTd.setAttribute('data-formula', cell['formula'] || '');
+				} else {
+					blankTd.innerHTML = blankCell.value = cell['value'] || '';
+				}
 			}
 
             blankTd.className = cell['class'] || '';
@@ -1050,6 +1054,8 @@ Sheet.StyleUpdater = (function(document) {
             if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
             if (cell['uneditable']) blankTd.setAttribute('data-uneditable', cell['uneditable'] || '');
 
+			blankTd.jSCell = blankCell;
+			blankCell.td = $(blankTd);
             return true;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
@@ -1067,17 +1073,15 @@ Sheet.StyleUpdater = (function(document) {
 			return cell;
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex) {
-			var json = this.json,
-				jsonSpreadsheet,
-				rows,
-				row,
-				cell,
-				fakeTd;
+			var cell = this.getCell(sheetIndex, rowIndex, columnIndex),
+				fakeTd,
+				jitCell;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
-			if ((row = rows[rowIndex - 1]) === undefined) return null;
-			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+			if (cell === null) return null;
+
+			if (cell.getJitCell !== undefined) {
+				return cell.getJitCell();
+			}
 
 			fakeTd = {
 				cellIndex: columnIndex,
@@ -1087,10 +1091,8 @@ Sheet.StyleUpdater = (function(document) {
 				html: function() {}
 			};
 
-			fakeTd[0] = fakeTd;
-
-			return cell.jitCell = {
-				td: fakeTd,
+			jitCell = {
+				td: {0:fakeTd},
 				html: [],
 				state: [],
 				calcLast: -1,
@@ -1103,6 +1105,12 @@ Sheet.StyleUpdater = (function(document) {
 				sheet: sheetIndex,
 				dependencies: []
 			}
+
+			cell.getJitCell = function() {
+				return jitCell;
+			};
+
+			return jitCell;
 		},
 		title: function(sheetIndex) {
 			var json = this.json,
@@ -3637,13 +3645,15 @@ $.sheet = {
 					 * @param {Number} [qty] the number of cells you'd like to add, if not specified, a dialog will ask
 					 * @param {Boolean} [isBefore] places cells before the selected cell if set to true, otherwise they will go after, or at end
 					 * @param {Boolean} [skipFormulaReParse] re-parses formulas if needed
+					 * @param {Boolean} [isInit]
 					 * @memberOf jS.controlFactory
 					 */
-					addRowMulti:function (i, qty, isBefore, skipFormulaReParse) {
+					addRowMulti:function (i, qty, isBefore, skipFormulaReParse, isInit) {
+						var addCellsType = (isInit ? 'row-init' : 'row');
 						function add(qty) {
 							if (qty) {
 								if (!n(qty)) {
-									jS.controlFactory.addCells(i, isBefore, parseInt(qty), 'row', skipFormulaReParse);
+									jS.controlFactory.addCells(i, isBefore, parseInt(qty), addCellsType, skipFormulaReParse);
 									jS.trigger('sheetAddRow', [i, isBefore, qty]);
 								}
 							}
@@ -3665,13 +3675,15 @@ $.sheet = {
 					 * @param {Number} [qty] the number of cells you'd like to add, if not specified, a dialog will ask
 					 * @param {Boolean} [isBefore] places cells before the selected cell if set to true, otherwise they will go after, or at end
 					 * @param {Boolean} [skipFormulaReParse] re-parses formulas if needed
+					 * @param {Boolean} [isInit]
 					 * @memberOf jS.controlFactory
 					 */
-					addColumnMulti:function (i, qty, isBefore, skipFormulaReParse) {
+					addColumnMulti:function (i, qty, isBefore, skipFormulaReParse, isInit) {
+						var addCellsType = (isInit ? 'col-init' : 'col');
 						function add(qty) {
 							if (qty) {
 								if (!n(qty)) {
-									jS.controlFactory.addCells(i, isBefore, parseInt(qty), 'col', skipFormulaReParse);
+									jS.controlFactory.addCells(i, isBefore, parseInt(qty), addCellsType, skipFormulaReParse);
 									jS.trigger('sheetAddColumn', [i, isBefore, qty]);
 								}
 							}
@@ -3730,6 +3742,8 @@ $.sheet = {
 
 						switch (type) {
 							case "row":
+								setupCell = null;
+							case "row-init":
 								if (!i) {
 									i = tableSize.rows;
 									isLast = true;
@@ -3769,7 +3783,7 @@ $.sheet = {
 
 									spreadsheetRow[at] = cell;
 
-									if (setupCell) {
+									if (setupCell !== null) {
 										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
 											jS.updateCellValue.call(cell, jS.i, row, at);
 											jS.updateCellDependencies.call(cell);
@@ -3787,6 +3801,8 @@ $.sheet = {
 								});
 								break;
 							case "col":
+								setupCell = null;
+							case "col-init":
 								if (!i) {
 									i = tableSize.cols;
 									isLast = true;
@@ -3852,9 +3868,10 @@ $.sheet = {
 
 									spreadsheetRow[at] = cell;
 
-									if (setupCell) {
+									if (setupCell !== null) {
 										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
 											jS.updateCellValue.call(cell, jS.i, row, at);
+											jS.updateCellDependencies.call(cell);
 										}
 									}
 
@@ -6151,7 +6168,7 @@ $.sheet = {
 						col = colEnd;
 						if (tr === undefined) {
 							if (createCellsIfNeeded) {
-								jS.controlFactory.addCells(null, false, row - (rows.length - 1), 'row');
+								jS.controlFactory.addCells(null, false, row - (rows.length - 1), 'row-init');
 								tr = rows[row];
 							} else {
 								continue;
@@ -6162,7 +6179,7 @@ $.sheet = {
 
 							if (td === undefined) {
 								if (createCellsIfNeeded) {
-									jS.controlFactory.addCells(null, false, col - (rows[0].children.length - 1), 'col');
+									jS.controlFactory.addCells(null, false, col - (rows[0].children.length - 1), 'col-init');
 									td = tr.children[col];
 								} else {
 									continue;
@@ -6914,14 +6931,14 @@ $.sheet = {
 					addCols = Math.max((frozenAt.col > addCols ? frozenAt.col + 1 : addCols), 1);
 
 					if (size.cols < addCols) {
-						jS.controlFactory.addColumnMulti(null, addCols, false, true);
+						jS.controlFactory.addColumnMulti(null, addCols, false, true, true);
 					}
 
 					//The sheet size (rows) may have changed
 					size = jS.tableSize(table);
 
 					if (size.rows < addRows) {
-						jS.controlFactory.addRowMulti(null, addRows, false, true);
+						jS.controlFactory.addRowMulti(null, addRows, false, true, true);
 					}
 				},
 
@@ -7558,7 +7575,7 @@ $.sheet = {
 						loc,
 						jsonCell;
 
-					if (this.jS === u) {
+					if (!this.jS) {
 						//first detect if the cell exists if not return nothing
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
 							lookupErrors = s.error({error:jS.msg.notFoundSheet});
@@ -7694,23 +7711,46 @@ $.sheet = {
 				 */
 				updateCellDependencies:function () {
 					if ((this.state || (this.state = [])).length) return;
-					this.state.push('updatingDependencies');
-					var dependencies = this.dependencies || []; //just in case it was never set
-					this.dependencies = [];
-					var i = dependencies.length - 1;
 
+					var dependencies,
+						dependantCell,
+						dependantCellLoc,
+						i,
+						calcLast = this.calcLast,
+						calcDependanciesLast = this.calcDependenciesLast
+
+					this.state.push('updatingDependencies');
+
+					//just in case it was never set
+					dependencies = this.dependencies || [];
+
+					//reset
+					this.dependencies = [];
+
+					//length of original
+					i = dependencies.length - 1;
+
+					//iterate through them backwards
 					if (i > -1) {
 						do {
-							var dependantCell = dependencies[i],
-								dependantCellLoc = jS.getTdLocation(dependantCell.td);
+							dependantCell = dependencies[i];
+							if (dependantCell.jSCell !== undefined) dependantCell = dependantCell.jSCell;
+							dependantCellLoc = jS.getTdLocation(dependantCell.td);
+
+
 
 							dependantCell.calcDependenciesLast = 0;
 
-							jS.updateCellValue.call(dependantCell);
+							jS.updateCellValue.call(dependantCell, dependantCell.sheet, dependantCellLoc.row, dependantCellLoc.col);
 							if (dependantCellLoc.row > 0 && dependantCellLoc.col > 0) {
 								jS.updateCellDependencies.call(dependantCell);
 							}
 						} while (i--);
+					}
+
+					//if no calculation was performed, then the dependencies have not changed
+					if (this.dependencies.length === 0 && this.calcLast === calcLast && this.calcDependenciesLast == calcDependanciesLast) {
+						this.dependencies = dependencies;
 					}
 
 					this.state.pop();
@@ -7734,8 +7774,11 @@ $.sheet = {
 						encodedValue = s.encode(this.value);
 					}
 
-					td.html(html || encodedValue || this.value);
+					if (td.html === u) {
+						return this.result;
+					}
 
+					td.html(html || encodedValue || this.value);
 					return td[0].innerHTML;
 				},
 
@@ -7947,12 +7990,19 @@ $.sheet = {
 					createDependency:function (sheetIndex, loc) {
 						var sheet, row, cell;
 
-						if (s.loader) {
-							cell = s.loader.jitCell(sheetIndex, loc.row, loc.col);
-						} else {
-							if (!(sheet = jS.spreadsheets[sheetIndex])) return null;
-							if (!(row = sheet[loc.row])) return null;
-							if (!(cell = row[loc.col])) return null;
+						if (
+							(sheet = jS.spreadsheets[sheetIndex]) === u
+							|| (row = sheet[loc.row]) === u
+							|| (cell = row[loc.col]) === u
+						) {
+							if (s.loader) {
+								cell = s.loader.jitCell(sheetIndex, loc.row, loc.col);
+								if (cell === null) {
+									return null;
+								}
+							} else {
+								return null;
+							}
 						}
 
 						if (!cell.dependencies) cell.dependencies = [];
@@ -8210,10 +8260,11 @@ $.sheet = {
 					sheetIndex = sheetIndex || jS.i;
 					if (
 						jS.readOnly[sheetIndex]
-							|| jS.isChanged(sheetIndex) === false
-							&& !refreshCalculations
-							|| !jS.formulaParser
-						) {
+						|| jS.isChanged(sheetIndex) === false
+						&& !refreshCalculations
+						|| !jS.formulaParser
+						|| s.loader !== null
+					) {
 						return false;
 					} //readonly is no calc at all
 
@@ -10468,18 +10519,24 @@ var jSE = $.sheet.engine = {
     calc:function (sheet, spreadsheet, ignite) {
         spreadsheet = spreadsheet || [];
 
-        var row = spreadsheet.length - 1, col;
-        if (row > 0) {
+        var rowIndex = spreadsheet.length - 1,
+			row,
+			colIndex,
+			cell;
+
+		if (rowIndex > 0) {
             do {
-                if (row > 0 && spreadsheet[row]) {
-                    col = spreadsheet[row].length - 1;
-                    if (col > 0) {
+                if (rowIndex > 0 && spreadsheet[rowIndex]) {
+                    row = spreadsheet[rowIndex];
+					colIndex = row.length - 1;
+                    if (colIndex > 0) {
                         do {
-                            ignite(sheet, row, col);
-                        } while (col--);
+							cell = row[colIndex];
+                            ignite.call(cell, sheet, rowIndex, colIndex);
+                        } while (colIndex--);
                     }
                 }
-            } while(row--);
+            } while(rowIndex--);
         }
     },
 
