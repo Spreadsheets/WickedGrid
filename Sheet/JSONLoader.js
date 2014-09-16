@@ -67,22 +67,15 @@
             barTd.style.height = height + 'px';
         },
         setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
-            var json = this.json,
-                jsonSpreadsheet,
-				rows,
-                row,
-                cell,
-				jitCell,
-				html;
+            var cell = this.getCell(sheetIndex, rowIndex, columnIndex),
+				jitCell;
 
-            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return false;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return false;
-            if ((row = rows[rowIndex - 1]) === undefined) return false;
-            if ((cell = row.columns[columnIndex - 1]) === undefined) return false;
+            if (cell === null) return false;
 
             blankCell.cellType = cell['cellType'] || '';
 
-			if ((jitCell = cell.jitCell) !== undefined) {
+			if (cell.getJitCell !== undefined) {
+				jitCell = cell.getJitCell();
 				blankCell.html = jitCell.html;
 				blankCell.state = jitCell.state;
 				blankCell.calcLast = jitCell.calcLast;
@@ -92,13 +85,24 @@
 				blankCell.uneditable = jitCell.uneditable;
 				blankCell.sheet = jitCell.sheet;
 				blankCell.dependencies = jitCell.dependencies;
-			}
+				blankCell.result = jitCell.result;
+				jitCell.jSCell = blankCell;
 
-			if (cell['formula']) {
-				blankCell.formula = cell['formula'] || '';
-				blankTd.setAttribute('data-formula', cell['formula'] || '');
+				if (cell['formula']) {
+					blankCell.formula = cell['formula'] || '';
+					blankTd.setAttribute('data-formula', cell['formula'] || '');
+					blankTd.innerHTML = jitCell.result;
+				} else {
+					blankTd.innerHTML = blankCell.value = cell['value'] || '';
+				}
 			} else {
-				blankTd.innerHTML = blankCell.value = cell['value'] || '';
+
+				if (cell['formula']) {
+					blankCell.formula = cell['formula'] || '';
+					blankTd.setAttribute('data-formula', cell['formula'] || '');
+				} else {
+					blankTd.innerHTML = blankCell.value = cell['value'] || '';
+				}
 			}
 
             blankTd.className = cell['class'] || '';
@@ -108,6 +112,8 @@
             if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
             if (cell['uneditable']) blankTd.setAttribute('data-uneditable', cell['uneditable'] || '');
 
+			blankTd.jSCell = blankCell;
+			blankCell.td = $(blankTd);
             return true;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
@@ -125,17 +131,15 @@
 			return cell;
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex) {
-			var json = this.json,
-				jsonSpreadsheet,
-				rows,
-				row,
-				cell,
-				fakeTd;
+			var cell = this.getCell(sheetIndex, rowIndex, columnIndex),
+				fakeTd,
+				jitCell;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
-			if ((row = rows[rowIndex - 1]) === undefined) return null;
-			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+			if (cell === null) return null;
+
+			if (cell.getJitCell !== undefined) {
+				return cell.getJitCell();
+			}
 
 			fakeTd = {
 				cellIndex: columnIndex,
@@ -145,10 +149,8 @@
 				html: function() {}
 			};
 
-			fakeTd[0] = fakeTd;
-
-			return cell.jitCell = {
-				td: fakeTd,
+			jitCell = {
+				td: {0:fakeTd},
 				html: [],
 				state: [],
 				calcLast: -1,
@@ -161,6 +163,12 @@
 				sheet: sheetIndex,
 				dependencies: []
 			}
+
+			cell.getJitCell = function() {
+				return jitCell;
+			};
+
+			return jitCell;
 		},
 		title: function(sheetIndex) {
 			var json = this.json,

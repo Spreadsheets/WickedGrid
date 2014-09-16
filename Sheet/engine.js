@@ -15,18 +15,24 @@ var jSE = $.sheet.engine = {
     calc:function (sheet, spreadsheet, ignite) {
         spreadsheet = spreadsheet || [];
 
-        var row = spreadsheet.length - 1, col;
-        if (row > 0) {
+        var rowIndex = spreadsheet.length - 1,
+			row,
+			colIndex,
+			cell;
+
+		if (rowIndex > 0) {
             do {
-                if (row > 0 && spreadsheet[row]) {
-                    col = spreadsheet[row].length - 1;
-                    if (col > 0) {
+                if (rowIndex > 0 && spreadsheet[rowIndex]) {
+                    row = spreadsheet[rowIndex];
+					colIndex = row.length - 1;
+                    if (colIndex > 0) {
                         do {
-                            ignite(sheet, row, col);
-                        } while (col--);
+							cell = row[colIndex];
+                            ignite.call(cell, sheet, rowIndex, colIndex);
+                        } while (colIndex--);
                     }
                 }
-            } while(row--);
+            } while(rowIndex--);
         }
     },
 
