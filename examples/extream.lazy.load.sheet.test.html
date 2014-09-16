@@ -38,6 +38,19 @@
 					i++;
 				}
 
+				function getDependencies(cell, fn) {
+					var i = 0,
+						dependencies = cell.dependencies,
+						dependency,
+						max = dependencies.length;
+
+					for(;i < max; i++) {
+						dependency = dependencies[i];
+						fn(dependency);
+						getDependencies(dependency, fn);
+					}
+				}
+
 				$('#sheet-json')
 					.height(400)
 					.width(400)
@@ -46,6 +59,15 @@
 						minSize: {
 							rows:15,
 							cols: 4
+						},
+						sheetCellEdited: function(event, jS, cell) {
+							var flatDependencyTree = [];
+
+							getDependencies(cell, function(dependency) {
+								flatDependencyTree.push(dependency);
+							});
+
+							console.log(flatDependencyTree);
 						}
 					});
 			});
