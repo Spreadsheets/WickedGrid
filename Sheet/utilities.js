@@ -487,3 +487,9 @@ var debugPositionBox = function (x, y, box, color, which) {
 		})
 		.appendTo('body');
 };
+
+$.printSource = function (s) {
+	var w = win.open();
+	w.document.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
+	w.document.close();
+};

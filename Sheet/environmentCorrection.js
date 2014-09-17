@@ -1,9 +1,3 @@
-$.print = function (s) {
-    var w = win.open();
-    w.document.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
-    w.document.close();
-};
-
 //This is a fix for Jison
 if (!Object.getPrototypeOf) {
     Object.getPrototypeOf = function(obj) {

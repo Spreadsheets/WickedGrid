@@ -1397,6 +1397,10 @@ var jFN = $.sheet.fn = {
                 jS.calcDependencies.call(cell, cell.calcDependenciesLast);
             };
 
+			if (this.loaderCell !== undefined) {
+				jS.s.loader.setCellAttribute(this.loaderCell, 'id', id);
+			}
+
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
 
             for (var i = 0; i < (v.length <= 50 ? v.length : 50); i++) {
@@ -1457,6 +1461,11 @@ var jFN = $.sheet.fn = {
                 jS.cellEdit($td);
             };
             radio.jSCell = cell;
+
+			if (this.loaderCell !== undefined) {
+				jS.s.loader.setCellAttribute(this.loaderCell, 'id', id);
+			}
+
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(radio);
 
             for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
@@ -1569,6 +1578,10 @@ var jFN = $.sheet.fn = {
                 jS.cellEdit($td);
             };
             html.cell = cell;
+
+			if (this.loaderCell !== undefined) {
+				jS.s.loader.setCellAttribute(this.loaderCell, 'id', id);
+			}
 
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 

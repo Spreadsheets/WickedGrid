@@ -76,8 +76,8 @@
 		<ul>
 			<li><a onclick="$(this.jS.tables()).viewSource(true); return false;" title="Shows the HTML that makes up the current spreadsheet.">Pretty Source</a></li>
 			<li><a onclick="$(this.jS.tables()).viewSource(); return false;" title="Shows the compact HTML that makes up the current spreadsheet.">Compact Source</a></li>
-			<li><a onclick="$($.sheet.dts.fromTables.xml(this.jS)).viewSource(true); return false;">As XML</a></li>
-			<li><a onclick="$.print(JSON.stringify($.sheet.dts.fromTables.json(this.jS))); return false;">As JSON</a></li>
+			<li><a onclick="$((new Sheet.XMLLoader()).fromSheet(this.jS)).viewSource(true); return false;">As XML</a></li>
+			<li><a onclick="$.printSource(JSON.stringify((new Sheet.JSONLoader()).fromSheet(this.jS))); return false;">As JSON</a></li>
 			<li>
 				<a>Function Reference</a>
 				<ul>

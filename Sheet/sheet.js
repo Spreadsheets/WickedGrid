@@ -855,7 +855,7 @@ $.fn.extend({
 				source += $(this).toCompactSource();
 			}
 		});
-		$.print(source);
+		$.printSource(source);
 
 		return source;
 	},
@@ -6228,6 +6228,10 @@ $.sheet = {
 							sheetIndex = jSE.parseSheetLocation(sheet),
 							cell;
 
+						if (sheetIndex < 0) {
+							sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
+						}
+
 						cell = jS.cellHandler.createDependency.call(this, sheetIndex, loc);
 
 						return jS.updateCellValue.call(cell, sheetIndex, loc.row, loc.col);
@@ -6246,6 +6250,9 @@ $.sheet = {
 						start = jSE.parseLocation(start);
 						end = jSE.parseLocation(end);
 
+						if (sheet < 0) {
+							sheet = jS.getSpreadsheetIndexByTitle(sheet);
+						}
 						var result = [];
 
 						for (var i = start.row; i <= end.row; i++) {
@@ -6302,7 +6309,11 @@ $.sheet = {
 					 * @memberOf jS.cellLookupHandlers
 					 */
 					fixedCellRangeValue:function (sheet, start, end) {
-						return [jSE.parseSheetLocation(sheet), jSE.parseLocation(start), jSE.parseLocation(end)];
+						sheet = jSE.parseSheetLocation(sheet);
+						if (sheet < 0) {
+							sheet = jS.getSpreadsheetIndexByTitle(sheet);
+						}
+						return [sheet, jSE.parseLocation(start), jSE.parseLocation(end)];
 					},
 
 					/**
@@ -6344,7 +6355,11 @@ $.sheet = {
 					 * @memberOf jS.cellLookupHandlers
 					 */
 					remoteCellRangeValue:function (sheet, start, end) {
-						return [jSE.parseSheetLocation(sheet), jSE.parseLocation(start), jSE.parseLocation(end)];
+						sheet = jSE.parseSheetLocation(sheet);
+						if (sheet < 0) {
+							sheet = jS.getSpreadsheetIndexByTitle(sheet);
+						}
+						return [sheet, jSE.parseLocation(start), jSE.parseLocation(end)];
 					},
 
 					/**
@@ -7068,6 +7083,27 @@ $.sheet = {
 					enclosure.scrollUI.onscroll();
 				},
 
+
+				getSpreadsheetIndexByTitle: function(title) {
+					if (s.loader) {
+						var spreadsheetIndex = s.loader.getSpreadsheetIndexByTitle(title);
+						return spreadsheetIndex;
+					}
+
+					var tables = jS.obj.tables(),
+						max = tables.length,
+						table,
+						i = 0;
+
+					for (;i < max; i++) {
+						table = tables[i];
+						if (table.getAttribute('title') == title) {
+							return table.spreadsheetIndex;
+						}
+					}
+
+					return null;
+				},
 
 
 				/**
@@ -8388,7 +8424,42 @@ $.sheet = {
 				/**
 				 * @memberOf jS
 				 */
-				formulaParser: null
+				formulaParser: null,
+
+				/**
+				 *
+				 * @param {Number} [i]
+				 * @param {Boolean} [skipStyles]
+				 */
+				print: function(i, skipStyles) {
+					i = i || jS.i;
+
+					var pWin = window.open(),
+						pDoc;
+
+
+					//popup blockers
+					if (pWin !== u) {
+						pDoc = pWin.document;
+						pDoc.write('<html>\
+	<head id="head"></head>\
+	<body>\
+		<div id="entry" class="' + jS.cl.parent + '" style="overflow: show;">\
+		</div>\
+	</body>\
+</html>');
+
+
+						if (skipStyles !== true) {
+							$(pDoc.getElementById('head')).append($('style,link').clone());
+						}
+
+						$(pDoc.getElementById('entry')).append(jS.obj.pane().cloneNode(true));
+						pDoc.close();
+						pWin.focus();
+						pWin.print();
+					}
+				}
 			},
 			loaderTables = [],
 			loaderTable;
