@@ -29,10 +29,10 @@ var jSE = $.sheet.engine = {
                         do {
 							cell = row[colIndex];
                             ignite.call(cell, sheet, rowIndex, colIndex);
-                        } while (colIndex--);
+                        } while (colIndex-- > 1);
                     }
                 }
-            } while(rowIndex--);
+            } while(rowIndex-- > 1);
         }
     },
 

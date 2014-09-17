@@ -2,25 +2,19 @@
 /* description: Parses end evaluates mathematical expressions. */
 /* lexical grammar */
 %lex
+SINGLE_QUOTED_STRING                '"'("\\"["]|[^"])*'"'
+DOUBLE_QUOTED_STRING                "'"('\\'[']|[^'])*"'"
+STRING                              [A-Za-z0-9]+
+
 %%
 \s+									{/* skip whitespace */}
-'"'("\\"["]|[^"])*'"'				{return 'STRING';}
-"'"('\\'[']|[^'])*"'"				{return 'STRING';}
-[A-Za-z]{1,}[A-Za-z_0-9]+(?=[(])    {return 'FUNCTION';}
+
+([A-Za-z]{1,})([A-Za-z_0-9]+)?(?=[(])
+									{return 'FUNCTION';}
 ([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm)
 									{return 'TIME_AMPM';}
 ([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?
 									{return 'TIME_24';}
-([A-Za-z0-9]+)(?=[!]) {
-	//js
-		if (yy.obj.type == 'cell') return 'SHEET';
-		return 'VARIABLE';
-
-	/*php
-		if ($this->type == 'cell') return 'SHEET';
-		return 'VARIABLE';
-	*/
-}
 '$'[A-Za-z]+'$'[0-9]+ {
 	//js
 		if (yy.obj.type == 'cell') return 'FIXEDCELL';
@@ -31,6 +25,31 @@
         return 'VARIABLE';
     */
 }
+
+({STRING})(?=[!]) {
+	//js
+		if (yy.obj.type == 'cell') return 'SHEET';
+		return 'VARIABLE';
+
+	/*php
+		if ($this->type == 'cell') return 'SHEET';
+		return 'VARIABLE';
+	*/
+}
+({SINGLE_QUOTED_STRING}|{DOUBLE_QUOTED_STRING}) {
+    //js
+        yytext = yytext.substring(1, yytext.length - 1);
+        if (yy.obj.type == 'cell') return 'SHEET';
+        return 'VARIABLE';
+
+    /*php
+        $yytext = substr($yytext, 1, -1);
+        if ($this->type == 'cell') return 'SHEET';
+        return 'VARIABLE';
+    */
+}
+{SINGLE_QUOTED_STRING}				{return 'STRING';}
+{DOUBLER_QUOTED_STRING}				{return 'STRING';}
 [A-Za-z]+[0-9]+ {
 	//js
 		if (yy.obj.type == 'cell') return 'CELL';
@@ -41,7 +60,6 @@
         return 'VARIABLE';
     */
 }
-[A-Za-z]+(?=[(])    				{return 'FUNCTION';}
 [A-Za-z]{1,}[A-Za-z_0-9]+			{return 'VARIABLE';}
 [A-Za-z_]+           				{return 'VARIABLE';}
 [0-9]+          			  		{return 'NUMBER';}

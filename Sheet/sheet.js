@@ -6882,10 +6882,13 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				sheetTab:function (get, callback) {
-					var sheetTab = '';
+					var sheetTab = '',
+						table;
 					if (get) {
-						sheetTab = jS.obj.table().attr('title') || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1);
+						table = jS.obj.table();
+						sheetTab = table.attr('title') || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1);
 						if (callback) {
+							table.attr('title', sheetTab);
 							callback(sheetTab);
 						}
 						return sheetTab;
