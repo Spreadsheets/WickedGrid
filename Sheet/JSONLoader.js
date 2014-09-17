@@ -114,6 +114,7 @@
 
 			blankTd.jSCell = blankCell;
 			blankCell.td = $(blankTd);
+			blankCell.loaderCell = cell;
             return true;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
@@ -178,6 +179,19 @@
 
 			return jsonSpreadsheet.title || '';
 		},
+		getSpreadsheetIndexByTitle: function(title) {
+			var json = this.json,
+				max = this.count,
+				i = 0;
+
+			for(;i < max; i++) {
+				if (json[i].title == title) {
+					return i;
+				}
+			}
+
+			return -1;
+		},
 	    addSpreadsheet: function(jsonSpreadsheet, atIndex) {
 		    if (atIndex === undefined) {
 		        this.json.push(jsonSpreadsheet);
@@ -186,6 +200,9 @@
 		    }
 		    this.count = this.json.length;
 	    },
+		setCellAttribute: function(cell, attribute, value) {
+			cell[attribute] = value;
+		},
         /**
          * Create a table from json
          * @param {Array} json array of spreadsheets - schema:<pre>

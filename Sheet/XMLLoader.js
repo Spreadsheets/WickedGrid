@@ -185,6 +185,9 @@
 
 		    return (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '');
 	    },
+		getSpreadsheetIndexByTitle: function(title) {
+			//TODO
+		},
 	    addSpreadsheet: function(xmlSpreadsheet, atIndex) {
 		    //TODO
 		    if (atIndex === undefined) {
@@ -194,6 +197,9 @@
 		    }
 		    this.count = this.json.length;
 	    },
+		setCellAttribute: function(cell, attribute, value) {
+			//TODO
+		},
         /**
          * @returns {*|jQuery|HTMLElement} a simple html table
          * @memberOf Sheet.XMLLoader

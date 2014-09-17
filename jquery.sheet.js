@@ -1056,6 +1056,7 @@ Sheet.StyleUpdater = (function(document) {
 
 			blankTd.jSCell = blankCell;
 			blankCell.td = $(blankTd);
+			blankCell.loaderCell = cell;
             return true;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
@@ -1120,6 +1121,19 @@ Sheet.StyleUpdater = (function(document) {
 
 			return jsonSpreadsheet.title || '';
 		},
+		getSpreadsheetIndexByTitle: function(title) {
+			var json = this.json,
+				max = this.count,
+				i = 0;
+
+			for(;i < max; i++) {
+				if (json[i].title == title) {
+					return i;
+				}
+			}
+
+			return -1;
+		},
 	    addSpreadsheet: function(jsonSpreadsheet, atIndex) {
 		    if (atIndex === undefined) {
 		        this.json.push(jsonSpreadsheet);
@@ -1128,6 +1142,9 @@ Sheet.StyleUpdater = (function(document) {
 		    }
 		    this.count = this.json.length;
 	    },
+		setCellAttribute: function(cell, attribute, value) {
+			cell[attribute] = value;
+		},
         /**
          * Create a table from json
          * @param {Array} json array of spreadsheets - schema:<pre>
@@ -1599,6 +1616,9 @@ Sheet.StyleUpdater = (function(document) {
 
 		    return (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '');
 	    },
+		getSpreadsheetIndexByTitle: function(title) {
+			//TODO
+		},
 	    addSpreadsheet: function(xmlSpreadsheet, atIndex) {
 		    //TODO
 		    if (atIndex === undefined) {
@@ -1608,6 +1628,9 @@ Sheet.StyleUpdater = (function(document) {
 		    }
 		    this.count = this.json.length;
 	    },
+		setCellAttribute: function(cell, attribute, value) {
+			//TODO
+		},
         /**
          * @returns {*|jQuery|HTMLElement} a simple html table
          * @memberOf Sheet.XMLLoader
@@ -2712,7 +2735,7 @@ $.fn.extend({
 				source += $(this).toCompactSource();
 			}
 		});
-		$.print(source);
+		$.printSource(source);
 
 		return source;
 	},
@@ -7575,7 +7598,7 @@ $.sheet = {
 						loc,
 						jsonCell;
 
-					if (!this.jS) {
+					if (this.jS === u) {
 						//first detect if the cell exists if not return nothing
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
 							lookupErrors = s.error({error:jS.msg.notFoundSheet});
@@ -8085,6 +8108,10 @@ $.sheet = {
 							sheetIndex = jSE.parseSheetLocation(sheet),
 							cell;
 
+						if (sheetIndex < 0) {
+							sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
+						}
+
 						cell = jS.cellHandler.createDependency.call(this, sheetIndex, loc);
 
 						return jS.updateCellValue.call(cell, sheetIndex, loc.row, loc.col);
@@ -8103,6 +8130,9 @@ $.sheet = {
 						start = jSE.parseLocation(start);
 						end = jSE.parseLocation(end);
 
+						if (sheet < 0) {
+							sheet = jS.getSpreadsheetIndexByTitle(sheet);
+						}
 						var result = [];
 
 						for (var i = start.row; i <= end.row; i++) {
@@ -8159,7 +8189,11 @@ $.sheet = {
 					 * @memberOf jS.cellLookupHandlers
 					 */
 					fixedCellRangeValue:function (sheet, start, end) {
-						return [jSE.parseSheetLocation(sheet), jSE.parseLocation(start), jSE.parseLocation(end)];
+						sheet = jSE.parseSheetLocation(sheet);
+						if (sheet < 0) {
+							sheet = jS.getSpreadsheetIndexByTitle(sheet);
+						}
+						return [sheet, jSE.parseLocation(start), jSE.parseLocation(end)];
 					},
 
 					/**
@@ -8201,7 +8235,11 @@ $.sheet = {
 					 * @memberOf jS.cellLookupHandlers
 					 */
 					remoteCellRangeValue:function (sheet, start, end) {
-						return [jSE.parseSheetLocation(sheet), jSE.parseLocation(start), jSE.parseLocation(end)];
+						sheet = jSE.parseSheetLocation(sheet);
+						if (sheet < 0) {
+							sheet = jS.getSpreadsheetIndexByTitle(sheet);
+						}
+						return [sheet, jSE.parseLocation(start), jSE.parseLocation(end)];
 					},
 
 					/**
@@ -8925,6 +8963,27 @@ $.sheet = {
 					enclosure.scrollUI.onscroll();
 				},
 
+
+				getSpreadsheetIndexByTitle: function(title) {
+					if (s.loader) {
+						var spreadsheetIndex = s.loader.getSpreadsheetIndexByTitle(title);
+						return spreadsheetIndex;
+					}
+
+					var tables = jS.obj.tables(),
+						max = tables.length,
+						table,
+						i = 0;
+
+					for (;i < max; i++) {
+						table = tables[i];
+						if (table.getAttribute('title') == title) {
+							return table.spreadsheetIndex;
+						}
+					}
+
+					return null;
+				},
 
 
 				/**
@@ -10245,7 +10304,42 @@ $.sheet = {
 				/**
 				 * @memberOf jS
 				 */
-				formulaParser: null
+				formulaParser: null,
+
+				/**
+				 *
+				 * @param {Number} [i]
+				 * @param {Boolean} [skipStyles]
+				 */
+				print: function(i, skipStyles) {
+					i = i || jS.i;
+
+					var pWin = window.open(),
+						pDoc;
+
+
+					//popup blockers
+					if (pWin !== u) {
+						pDoc = pWin.document;
+						pDoc.write('<html>\
+	<head id="head"></head>\
+	<body>\
+		<div id="entry" class="' + jS.cl.parent + '" style="overflow: show;">\
+		</div>\
+	</body>\
+</html>');
+
+
+						if (skipStyles !== true) {
+							$(pDoc.getElementById('head')).append($('style,link').clone());
+						}
+
+						$(pDoc.getElementById('entry')).append(jS.obj.pane().cloneNode(true));
+						pDoc.close();
+						pWin.focus();
+						pWin.print();
+					}
+				}
 			},
 			loaderTables = [],
 			loaderTable;
@@ -10565,7 +10659,8 @@ var jSE = $.sheet.engine = {
      * @memberOf jQuery.sheet.engine
      */
     parseSheetLocation:function (locStr) {
-        return ((locStr + '').replace('SHEET', '') * 1) - 1;
+		var sheetIndex = ((locStr + '').replace('SHEET', '') * 1) - 1;
+        return isNaN(sheetIndex) ? -1 : sheetIndex ;
     },
 
     /**
@@ -12235,6 +12330,10 @@ var jFN = $.sheet.fn = {
                 jS.calcDependencies.call(cell, cell.calcDependenciesLast);
             };
 
+			if (this.loaderCell !== undefined) {
+				jS.s.loader.setCellAttribute(this.loaderCell, 'id', id);
+			}
+
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
 
             for (var i = 0; i < (v.length <= 50 ? v.length : 50); i++) {
@@ -12295,6 +12394,11 @@ var jFN = $.sheet.fn = {
                 jS.cellEdit($td);
             };
             radio.jSCell = cell;
+
+			if (this.loaderCell !== undefined) {
+				jS.s.loader.setCellAttribute(this.loaderCell, 'id', id);
+			}
+
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(radio);
 
             for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
@@ -12407,6 +12511,10 @@ var jFN = $.sheet.fn = {
                 jS.cellEdit($td);
             };
             html.cell = cell;
+
+			if (this.loaderCell !== undefined) {
+				jS.s.loader.setCellAttribute(this.loaderCell, 'id', id);
+			}
 
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 
@@ -13136,13 +13244,13 @@ var debugPositionBox = function (x, y, box, color, which) {
 			console.log(which || 'none');
 		})
 		.appendTo('body');
-};$.print = function (s) {
-    var w = win.open();
-    w.document.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
-    w.document.close();
 };
 
-//This is a fix for Jison
+$.printSource = function (s) {
+	var w = win.open();
+	w.document.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
+	w.document.close();
+};//This is a fix for Jison
 if (!Object.getPrototypeOf) {
     Object.getPrototypeOf = function(obj) {
         return obj || {};

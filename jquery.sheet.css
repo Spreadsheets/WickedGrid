@@ -273,7 +273,7 @@
 
 .jSParent .jSEditPane
 {
-    overflow: hidden ! important;
+    overflow: hidden;
 	background-image: none ! important;
 	border-width: 0px ! important;
 	position: absolute ! important;
