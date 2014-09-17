@@ -1860,15 +1860,15 @@ class formula
 			$this->rules = array(
 				
 					0=>"/\G(?:\s+)/",
-					1=>"/\G(?:\"(\\[\"]|[^\"])*\")/",
-					2=>"/\G(?:'(\\[']|[^'])*')/",
-					3=>"/\G(?:[A-Za-z]{1,}[A-Za-z_0-9]+(?=[(]))/",
-					4=>"/\G(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/",
-					5=>"/\G(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/",
-					6=>"/\G(?:([A-Za-z0-9]+)(?=[!]))/",
-					7=>"/\G(?:\$[A-Za-z]+\$[0-9]+)/",
-					8=>"/\G(?:[A-Za-z]+[0-9]+)/",
-					9=>"/\G(?:[A-Za-z]+(?=[(]))/",
+					1=>"/\G(?:([A-Za-z]{1,})([A-Za-z_0-9]+)?(?=[(]))/",
+					2=>"/\G(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/",
+					3=>"/\G(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/",
+					4=>"/\G(?:\$[A-Za-z]+\$[0-9]+)/",
+					5=>"/\G(?:(([A-Za-z0-9]+))(?=[!]))/",
+					6=>"/\G(?:((\"(\\[\"]|[^\"])*\")|('(\\[']|[^'])*')))/",
+					7=>"/\G(?:(\"(\\[\"]|[^\"])*\"))/",
+					8=>"/\G(?:{DOUBLER_QUOTED_STRING})/",
+					9=>"/\G(?:[A-Za-z]+[0-9]+)/",
 					10=>"/\G(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/",
 					11=>"/\G(?:[A-Za-z_]+)/",
 					12=>"/\G(?:[0-9]+)/",
@@ -2591,38 +2591,44 @@ break;
 switch($avoidingNameCollisions) {
 case 0:/* skip whitespace */
 break;
-case 1:return 10;
+case 1:return 24;
 break;
-case 2:return 10;
+case 2:return 7;
 break;
-case 3:return 24;
+case 3:return 8;
 break;
-case 4:return 7;
-break;
-case 5:return 8;
-break;
-case 6:
-	
-		if ($this->type == 'cell') return 30;
-		return 34;
-	
-
-break;
-case 7:
+case 4:
 	
 		if ($this->type == 'cell') return 27;
         return 34;
     
 
 break;
-case 8:
+case 5:
+	
+		if ($this->type == 'cell') return 30;
+		return 34;
+	
+
+break;
+case 6:
+    
+        $this->yy->text = substr($this->yy->text, 1, -1);
+        if ($this->type == 'cell') return 30;
+        return 34;
+    
+
+break;
+case 7:return 10;
+break;
+case 8:return 10;
+break;
+case 9:
 	
 		if ($this->type == 'cell') return 29;
         return 34;
     
 
-break;
-case 9:return 24;
 break;
 case 10:return 34;
 break;

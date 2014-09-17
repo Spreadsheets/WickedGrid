@@ -8762,10 +8762,13 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				sheetTab:function (get, callback) {
-					var sheetTab = '';
+					var sheetTab = '',
+						table;
 					if (get) {
-						sheetTab = jS.obj.table().attr('title') || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1);
+						table = jS.obj.table();
+						sheetTab = table.attr('title') || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1);
 						if (callback) {
+							table.attr('title', sheetTab);
 							callback(sheetTab);
 						}
 						return sheetTab;
@@ -10627,10 +10630,10 @@ var jSE = $.sheet.engine = {
                         do {
 							cell = row[colIndex];
                             ignite.call(cell, sheet, rowIndex, colIndex);
-                        } while (colIndex--);
+                        } while (colIndex-- > 1);
                     }
                 }
-            } while(rowIndex--);
+            } while(rowIndex-- > 1);
         }
     },
 
@@ -14327,28 +14330,13 @@ var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
 case 0:/* skip whitespace */
 break;
-case 1:return 10;
+case 1:return 24;
 break;
-case 2:return 10;
+case 2:return 7;
 break;
-case 3:return 24;
+case 3:return 8;
 break;
-case 4:return 7;
-break;
-case 5:return 8;
-break;
-case 6:
-	//js
-		if (yy.obj.type == 'cell') return 30;
-		return 34;
-
-	/*php
-		if ($this->type == 'cell') return 30;
-		return 34;
-	*/
-
-break;
-case 7:
+case 4:
 	//js
 		if (yy.obj.type == 'cell') return 27;
 		return 34;
@@ -14359,7 +14347,35 @@ case 7:
     */
 
 break;
-case 8:
+case 5:
+	//js
+		if (yy.obj.type == 'cell') return 30;
+		return 34;
+
+	/*php
+		if ($this->type == 'cell') return 30;
+		return 34;
+	*/
+
+break;
+case 6:
+    //js
+        yy_.yytext = yy_.yytext.substring(1, yy_.yytext.length - 1);
+        if (yy.obj.type == 'cell') return 30;
+        return 34;
+
+    /*php
+        $yy_.yytext = substr($yy_.yytext, 1, -1);
+        if ($this->type == 'cell') return 30;
+        return 34;
+    */
+
+break;
+case 7:return 10;
+break;
+case 8:return 10;
+break;
+case 9:
 	//js
 		if (yy.obj.type == 'cell') return 29;
 		return 34;
@@ -14369,8 +14385,6 @@ case 8:
         return 34;
     */
 
-break;
-case 9:return 24;
 break;
 case 10:return 34;
 break;
@@ -14432,7 +14446,7 @@ case 38:return 5;
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:"(\\["]|[^"])*")/,/^(?:'(\\[']|[^'])*')/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+(?=[(]))/,/^(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/,/^(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/,/^(?:([A-Za-z0-9]+)(?=[!]))/,/^(?:\$[A-Za-z]+\$[0-9]+)/,/^(?:[A-Za-z]+[0-9]+)/,/^(?:[A-Za-z]+(?=[(]))/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/,/^(?:[A-Za-z_]+)/,/^(?:[0-9]+)/,/^(?:\$)/,/^(?:&)/,/^(?: )/,/^(?:[.])/,/^(?::)/,/^(?:;)/,/^(?:,)/,/^(?:\*)/,/^(?:\/)/,/^(?:-)/,/^(?:\+)/,/^(?:\^)/,/^(?:\()/,/^(?:\))/,/^(?:>)/,/^(?:<)/,/^(?:NOT\b)/,/^(?:PI\b)/,/^(?:E\b)/,/^(?:")/,/^(?:')/,/^(?:!)/,/^(?:=)/,/^(?:%)/,/^(?:[#])/,/^(?:$)/],
+rules: [/^(?:\s+)/,/^(?:([A-Za-z]{1,})([A-Za-z_0-9]+)?(?=[(]))/,/^(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/,/^(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/,/^(?:\$[A-Za-z]+\$[0-9]+)/,/^(?:(([A-Za-z0-9]+))(?=[!]))/,/^(?:(("(\\["]|[^"])*")|('(\\[']|[^'])*')))/,/^(?:("(\\["]|[^"])*"))/,/^(?:{DOUBLER_QUOTED_STRING})/,/^(?:[A-Za-z]+[0-9]+)/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/,/^(?:[A-Za-z_]+)/,/^(?:[0-9]+)/,/^(?:\$)/,/^(?:&)/,/^(?: )/,/^(?:[.])/,/^(?::)/,/^(?:;)/,/^(?:,)/,/^(?:\*)/,/^(?:\/)/,/^(?:-)/,/^(?:\+)/,/^(?:\^)/,/^(?:\()/,/^(?:\))/,/^(?:>)/,/^(?:<)/,/^(?:NOT\b)/,/^(?:PI\b)/,/^(?:E\b)/,/^(?:")/,/^(?:')/,/^(?:!)/,/^(?:=)/,/^(?:%)/,/^(?:[#])/,/^(?:$)/],
 conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38],"inclusive":true}}
 });
 return lexer;
