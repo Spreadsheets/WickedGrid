@@ -15,18 +15,8 @@ STRING                              [A-Za-z0-9]+
 									{return 'TIME_AMPM';}
 ([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?
 									{return 'TIME_24';}
-'$'[A-Za-z]+'$'[0-9]+ {
-	//js
-		if (yy.obj.type == 'cell') return 'FIXEDCELL';
-		return 'VARIABLE';
 
-	/*php
-		if ($this->type == 'cell') return 'FIXEDCELL';
-        return 'VARIABLE';
-    */
-}
-
-({STRING})(?=[!]) {
+({STRING})(?=[!][$A-Za-z]) {
 	//js
 		if (yy.obj.type == 'cell') return 'SHEET';
 		return 'VARIABLE';
@@ -50,20 +40,12 @@ STRING                              [A-Za-z0-9]+
 }
 {SINGLE_QUOTED_STRING}				{return 'STRING';}
 {DOUBLER_QUOTED_STRING}				{return 'STRING';}
-[A-Za-z]+[0-9]+ {
-	//js
-		if (yy.obj.type == 'cell') return 'CELL';
-		return 'VARIABLE';
 
-	/*php
-		if ($this->type == 'cell') return 'CELL';
-        return 'VARIABLE';
-    */
-}
+[A-Za-z]+                           {return 'LETTERS';}
 [A-Za-z]{1,}[A-Za-z_0-9]+			{return 'VARIABLE';}
 [A-Za-z_]+           				{return 'VARIABLE';}
 [0-9]+          			  		{return 'NUMBER';}
-"$"									{/* skip whitespace */}
+"$"									{return '$';}
 "&"                                 {return '&';}
 " "									{return ' ';}
 [.]									{return 'DECIMAL';}
@@ -287,7 +269,7 @@ expression
 	| E {/*$$ = Math.E;*/;}
 	| FUNCTION '(' ')' {
 	    //js
-			$$ = yy.handler.callFunction.call(yy.obj, $1, '');
+			$$ = yy.handler.callFunction.call(yy.obj, $1);
 
 		/*php
 		    $$ = $this->callFunction($1);
@@ -301,52 +283,69 @@ expression
             $$ = $this->callFunction($1, $3);
         */
     }
-	| cell
+	| cellRange
+	| '$'
 	| error
 	| error error
 ;
-cell :
-	FIXEDCELL {
-	    //js
-			$$ = yy.handler.fixedCellValue.call(yy.obj, $1);
 
-        /*php
-            $$ = $this->fixedCellValue($1);
-        */
-    }
-	| FIXEDCELL ':' FIXEDCELL {
+cellRange :
+	LETTERS NUMBER {
 	    //js
-           $$ = yy.handler.fixedCellRangeValue.call(yy.obj, $1, $3);
-
-	    /*php
-	        $$ = $this->fixedCellRangeValue($1, $3);
-        */
-    }
-	| CELL {
-	    //js
-			$$ = yy.handler.cellValue.call(yy.obj, $1);
+			$$ = yy.handler.cellValue.call(yy.obj, $1, $2);
         /*php
             $$ = $this->cellValue($1);
         */
     }
-	| CELL ':' CELL {
+	| LETTERS NUMBER ':' LETTERS NUMBER {
 	    //js
-			$$ = yy.handler.cellRangeValue.call(yy.obj, $1, $3);
+			$$ = yy.handler.cellRangeValue.call(yy.obj, $1, $2, $4, $5);
 
         /*php
             $$ = $this->cellRangeValue($1, $3);
         */
     }
-	| SHEET '!' CELL {
+	| SHEET '!' LETTERS NUMBER {
 	    //js
-			$$ = yy.handler.remoteCellValue.call(yy.obj, $1, $3);
+			$$ = yy.handler.remoteCellValue.call(yy.obj, $1, $3, $4);
         /*php
             $$ = $this->remoteCellValue($1, $3);
         */
     }
-	| SHEET '!' CELL ':' CELL {
+	| SHEET '!' LETTERS NUMBER ':' LETTERS NUMBER {
 	    //js
-            $$ = yy.handler.remoteCellRangeValue.call(yy.obj, $1, $3, $5);
+            $$ = yy.handler.remoteCellRangeValue.call(yy.obj, $1, $3, $4, $6, $7);
+
+        /*php
+            $$ = $this->remoteCellRangeValue($1, $3, $5);
+        */
+    }
+    | '$' LETTERS '$' NUMBER {
+        //js
+            $$ = yy.handler.fixedCellValue.call(yy.obj, $2, $4);
+
+        /*php
+            $$ = $this->fixedCellValue($1);
+        */
+    }
+    | '$' LETTERS '$' NUMBER ':' '$' LETTERS '$' NUMBER {
+        //js
+           $$ = yy.handler.fixedCellRangeValue.call(yy.obj, $2, $4, $7, $9);
+
+        /*php
+            $$ = $this->fixedCellRangeValue($1, $3);
+        */
+    }
+    | SHEET '!' '$' LETTERS '$' NUMBER {
+        //js
+            $$ = yy.handler.remoteCellValue.call(yy.obj, $1, $4, $6);
+        /*php
+            $$ = $this->remoteCellValue($1, $3);
+        */
+    }
+    | SHEET '!' '$' LETTERS '$' NUMBER ':' '$' LETTERS '$' NUMBER {
+        //js
+            $$ = yy.handler.remoteCellRangeValue.call(yy.obj, $1, $4, $6, $9, $11);
 
         /*php
             $$ = $this->remoteCellRangeValue($1, $3, $5);
@@ -388,6 +387,9 @@ expseq :
 
 variableSequence :
 	VARIABLE {
+        $$ = [$1];
+    }
+    | LETTERS {
         $$ = [$1];
     }
 	| variableSequence DECIMAL VARIABLE {

@@ -38,19 +38,15 @@ var jSE = $.sheet.engine = {
 
     /**
      * Parse a cell name to it's location
-     * @param {String} locStr "A1" = {row: 1, col: 1}
+     * @param {String} columnStr "A"
+	 * @param {String|Number} rowString "1"
      * @returns {Object} {row: 1, col: 1}
      * @memberOf jQuery.sheet.engine
      */
-    parseLocation:function (locStr) {
-        for (var firstNum = 0; firstNum < locStr.length; firstNum++) {
-            if (locStr.charCodeAt(firstNum) <= 57) {// 57 == '9'
-                break;
-            }
-        }
+    parseLocation:function (columnStr, rowString) {
         return {
-            row:parseInt(locStr.substring(firstNum)),
-            col:jSE.columnLabelIndex(locStr.substring(0, firstNum))
+            row: parseInt(rowString),
+            col: jSE.columnLabelIndex(columnStr)
         };
     },
 

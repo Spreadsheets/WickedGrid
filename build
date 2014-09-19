@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#compile parsers
+cd parser/formula
+node ../../../jison/ports/php/php.js formula.jison
+cd ../../
+
 # directories of the JS and CSS files
 # CSS_DIR='.'
 JS_IN_DIR='./Sheet'
