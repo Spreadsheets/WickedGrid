@@ -6111,12 +6111,13 @@ $.sheet = {
 
 					/**
 					 * Get cell value
-					 * @param {String} id example "A1"
+					 * @param {String} colString example "A"
+					 * @param {String} rowString example "1"
 					 * @returns {*}
 					 * @memberOf jS.cellHandler
 					 */
-					cellValue:function (id) { //Example: A1
-						var loc = jSE.parseLocation(id), cell;
+					cellValue:function (colString, rowString) {
+						var loc = jSE.parseLocation(colString, rowString), cell;
 
 						cell = jS.cellHandler.createDependency.call(this, this.sheet, loc);
 
@@ -6161,15 +6162,17 @@ $.sheet = {
 
 					/**
 					 * Get cell values as an array
-					 * @param {String} start example "A1"
-					 * @param {String} end example "B1"
+					 * @param {String} startColString example "A"
+					 * @param {String} startRowString example "1"
+					 * @param {String} endColString example "B"
+					 * @param {String} endRowString example "1"
 					 * @returns {Array}
 					 * @memberOf jS.cellHandler
 					 */
-					cellRangeValue:function (start, end) {//Example: A1:B1
-						start = jSE.parseLocation(start);
-						end = jSE.parseLocation(end);
-						var result = [],
+					cellRangeValue:function (startColString, startRowString, endColString, endRowString) {
+						var start = jSE.parseLocation(startColString, startRowString),
+							end = jSE.parseLocation(endColString, endRowString),
+							result = [],
 							i = math.max(start.row, end.row),
 							iEnd = math.min(start.row, end.row),
 							j = math.max(start.col, end.col),
@@ -6194,37 +6197,40 @@ $.sheet = {
 
 					/**
 					 * Get cell value
-					 * @param {String} id example "$A$1"
+					 * @param {String} startColString example "A"
+					 * @param {String} startRowString example "1"
+					 * @param {String} endColString example "B"
+					 * @param {String} endRowString example "1"
 					 * @returns {*}
 					 * @memberOf jS.cellHandler
 					 */
-					fixedCellValue:function (id) {
-						id = id.replace(/\$/g, '');
-						return jS.cellHandler.cellValue.call(this, id);
+					fixedCellValue:function (startColString, startRowString, endColString, endRowString) {
+						return jS.cellHandler.cellValue.call(this, startColString, startRowString, endColString, endRowString);
 					},
 
 					/**
 					 * Get cell values as an array
-					 * @param {String} start example "$A$1"
-					 * @param {String} end example "$B$1"
+					 * @param {String} startColString example "A"
+					 * @param {String} startRowString example "1"
+					 * @param {String} endColString example "B"
+					 * @param {String} endRowString example "1"
 					 * @returns {Array}
 					 * @memberOf jS.cellHandler
 					 */
-					fixedCellRangeValue:function (start, end) {
-						start = start.replace(/\$/g, '');
-						end = end.replace(/\$/g, '');
-						return jS.cellHandler.cellRangeValue.call(this, start, end);
+					fixedCellRangeValue:function (startColString, startRowString, endColString, endRowString) {
+						return jS.cellHandler.cellRangeValue.call(this, startColString, startRowString, endColString, endRowString);
 					},
 
 					/**
 					 * Get cell value from a different sheet within an instance
 					 * @param {String} sheet example "SHEET1"
-					 * @param {String} id example "A1"
+					 * @param {String} colString example "A"
+					 * @param {String} rowString example "1"
 					 * @returns {*}
 					 * @memberOf jS.cellHandler
 					 */
-					remoteCellValue:function (sheet, id) {//Example: SHEET1:A1
-						var loc = jSE.parseLocation(id),
+					remoteCellValue:function (sheet, colString, rowString) {//Example: SHEET1:A1
+						var loc = jSE.parseLocation(colString, rowString),
 							sheetIndex = jSE.parseSheetLocation(sheet),
 							cell;
 
@@ -6240,15 +6246,18 @@ $.sheet = {
 					/**
 					 * Get cell values as an array from a different sheet within an instance
 					 * @param {String} sheet example "SHEET1"
-					 * @param {String} start example "A1"
+					 * @param {String} startColString example "A"
+					 * @param {String} startRowString example "1"
+					 * @param {String} endColString example "A"
+					 * @param {String} endRowString example "1"
 					 * @param {String} end example "B1"
 					 * @returns {Array}
 					 * @memberOf jS.cellHandler
 					 */
-					remoteCellRangeValue:function (sheet, start, end) {//Example: SHEET1:A1:B2
+					remoteCellRangeValue:function (sheet, startColString, startRowString, endColString, endRowString) {//Example: SHEET1:A1:B2
 						sheet = jSE.parseSheetLocation(sheet);
-						start = jSE.parseLocation(start);
-						end = jSE.parseLocation(end);
+						var start = jSE.parseLocation(startColString, startRowString),
+							end = jSE.parseLocation(endColString, endRowString);
 
 						if (sheet < 0) {
 							sheet = jS.getSpreadsheetIndexByTitle(sheet);
@@ -6293,27 +6302,30 @@ $.sheet = {
 				cellLookupHandlers:{
 
 					/**
-					 * @param {String} id example "$A$1"
-					 * @returns {Array} [sheet, startCell, endCell]
+					 * @param {String} colString example "A"
+					 * @param {String} rowString example "10"
+					 * @returns {Object}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					fixedCellValue:function (id) {
-						return [jS.sheet, jSE.parseLocation(id), jSE.parseLocation(id)];
+					fixedCellValue:function (colString, rowString) {
+						return [jS.sheet, jSE.parseLocation(colString, rowString)];
 					},
 
 					/**
 					 * @param {String} sheet example "SHEET1"
-					 * @param {String} start example "$A$1"
-					 * @param {String} end example "$B$1"
-					 * @returns {Array} [sheet, startCell, endCell]
+					 * @param {String} startColString example "A"
+					 * @param {String} startRowString example "10"
+					 * @param {String} endColString example "A"
+					 * @param {String} endRowString example "10"
+					 * @returns {Array}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					fixedCellRangeValue:function (sheet, start, end) {
+					fixedCellRangeValue:function (sheet, startColString, startRowString, endColString, endRowString) {
 						sheet = jSE.parseSheetLocation(sheet);
 						if (sheet < 0) {
 							sheet = jS.getSpreadsheetIndexByTitle(sheet);
 						}
-						return [sheet, jSE.parseLocation(start), jSE.parseLocation(end)];
+						return [sheet, jSE.parseLocation(startColString, startRowString), jSE.parseLocation(endColString, endRowString)];
 					},
 
 					/**
@@ -6321,45 +6333,52 @@ $.sheet = {
 					 * @param id
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					cellValue:function (id) {
-
+					cellValue:function (colString, rowString) {
+						/*return {
+							sheetIndex: jS.i,
+							start: jSE.parseLocation(colString, rowString),
+							end: null
+						}*/
 					},
 
 					/**
-					 * @param {String} sheet example "SHEET1"
-					 * @param {String} start example "A1"
-					 * @param {String} end example "B1"
-					 * @returns {Array} [sheet, startCell, endCell]
+					 * @param {String} startColString example "A"
+					 * @param {String} startRowString example "10"
+					 * @param {String} endColString example "A"
+					 * @param {String} endRowString example "10"
+					 * @returns {Array}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					cellRangeValue:function (sheet, start, end) {
-						return [jS.sheet, jSE.parseLocation(start), jSE.parseLocation(end)];
+					cellRangeValue:function (startColString, startRowString, endColString, endRowString) {
+						return [jS.sheet, jSE.parseLocation(startColString, startRowString), jSE.parseLocation(endColString, endRowString)];
 					},
 
 					/**
-					 * @param {String} sheet example "SHEET1"
-					 * @param {String} id example "A1"
-					 * @returns {Array} [sheet, startCell, endCell]
+					 * @param {String} colString example "A"
+					 * @param {String} rowString example "10"
+					 * @returns {Array}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					remoteCellValue:function (sheet, id) {
-						return [jS.sheet, jSE.parseLocation(id), jSE.parseLocation(id)];
+					remoteCellValue:function (sheet, colString, rowString) {
+						return [sheet, jSE.parseLocation(colString, rowString)];
 					},
 
 					/**
 					 *
 					 * @param {String} sheet example "SHEET1"
-					 * @param {String} start example "A1"
-					 * @param {String} end example "B1"
-					 * @returns {Array} [sheet, startCell, endCell]
+					 * @param {String} startColString example "A"
+					 * @param {String} startRowString example "10"
+					 * @param {String} endColString example "A"
+					 * @param {String} endRowString example "10"
+					 * @returns {Array}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					remoteCellRangeValue:function (sheet, start, end) {
+					remoteCellRangeValue:function (sheet, startColString, startRowString, endColString, endRowString) {
 						sheet = jSE.parseSheetLocation(sheet);
 						if (sheet < 0) {
 							sheet = jS.getSpreadsheetIndexByTitle(sheet);
 						}
-						return [sheet, jSE.parseLocation(start), jSE.parseLocation(end)];
+						return [sheet, jSE.parseLocation(startColString, startRowString), jSE.parseLocation(endColString, endRowString)];
 					},
 
 					/**
@@ -6385,12 +6404,22 @@ $.sheet = {
 					var formulaParser = Formula($.extend({}, jS.cellHandler, jS.cellLookupHandlers));
 					formulaParser.setObj(this);
 
-					var args = formulaParser.parse(this.formula),
-						lookupTable = [];
+					var args = jS.formulaParser.parse(this.formula),
+						lookupTable = [],
+						row,
+						col,
+						sheetIndex = args.sheetIndex,
+						start = args.start,
+						end = args.end,
+						rowMax,
+						colMax;
 
-					for (var row = args[1].row; row <= args[2].row; row++) {
-						for (var col = args[1].col; col <= args[2].col; col++) {
-							lookupTable.push(jS.getCell(row, col, args[0]));
+					rowMax = end.row;
+					colMax = end.col;
+
+					for (row = start.row; row <= rowMax; row++) {
+						for (col = start.col; col <= colMax; col++) {
+							lookupTable.push(jS.getCell(row, col, sheetIndex));
 						}
 					}
 
@@ -6464,7 +6493,7 @@ $.sheet = {
 								pos.col = colIndex = min(row.length - 1, initCols);
 								if (colIndex > 0) {
 									do {
-										ignite.apply(row[colIndex]);
+										ignite.call(row[colIndex], sheetIndex, rowIndex, colIndex);
 									} while (colIndex-- > 1);
 								}
 							}
