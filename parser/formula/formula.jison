@@ -16,7 +16,7 @@ STRING                              [A-Za-z0-9]+
 ([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?
 									{return 'TIME_24';}
 
-({STRING})(?=[!][$A-Za-z]) {
+({STRING})(?=[!]) {
 	//js
 		if (yy.obj.type == 'cell') return 'SHEET';
 		return 'VARIABLE';
@@ -26,7 +26,7 @@ STRING                              [A-Za-z0-9]+
 		return 'VARIABLE';
 	*/
 }
-({SINGLE_QUOTED_STRING}|{DOUBLE_QUOTED_STRING}) {
+({SINGLE_QUOTED_STRING}|{DOUBLE_QUOTED_STRING})(?=[!]) {
     //js
         yytext = yytext.substring(1, yytext.length - 1);
         if (yy.obj.type == 'cell') return 'SHEET';
@@ -41,8 +41,8 @@ STRING                              [A-Za-z0-9]+
 {SINGLE_QUOTED_STRING}				{return 'STRING';}
 {DOUBLER_QUOTED_STRING}				{return 'STRING';}
 
-[A-Za-z]+                           {return 'LETTERS';}
-[A-Za-z]{1,}[A-Za-z_0-9]+			{return 'VARIABLE';}
+[A-Z]+(?=[0-9$])                     {return 'LETTERS';}
+[A-Za-z]{1,}[A-Za-z_0-9]+   		{return 'VARIABLE';}
 [A-Za-z_]+           				{return 'VARIABLE';}
 [0-9]+          			  		{return 'NUMBER';}
 "$"									{return '$';}
@@ -69,6 +69,7 @@ STRING                              [A-Za-z0-9]+
 "!"									{return "!";}
 "="									{return '=';}
 "%"									{return '%';}
+'#REF!'                             {return 'STRING';}
 [#]									{return '#';}
 <<EOF>>								{return 'EOF';}
 
@@ -98,6 +99,7 @@ expressions
 expression
     : variableSequence {
         //js
+            
 		    $$ = yy.handler.variable.apply(yy.obj, $1);
 
         /*php
@@ -106,17 +108,20 @@ expression
     }
 	| TIME_AMPM {
 	    //js
+	        
             $$ = yy.handler.time.call(yy.obj, $1, true);
         //
     }
 	| TIME_24 {
         //js
+            
             $$ = yy.handler.time.call(yy.obj, $1);
         //
 
     }
 	| number {
 	    //js
+	        
             $$ = yy.handler.number($1);
 
         /*php
@@ -125,6 +130,7 @@ expression
     }
 	| STRING {
         //js
+            
             $$ = $1.substring(1, $1.length - 1);
         /*php
 	        $$ = substr($1, 1, -1);
@@ -132,6 +138,7 @@ expression
     }
     | expression '&' expression {
         //js
+            
             $$ = $1.toString() + $3.toString();
 
         /*php
@@ -140,6 +147,7 @@ expression
     }
 	| expression '=' expression {
 	    //js
+	        
             $$ = yy.handler.callFunction.call(yy.obj, 'EQUAL', [$1, $3]);
 
         /*php
@@ -148,6 +156,7 @@ expression
     }
 	| expression '+' expression {
 	    //js
+
 			$$ = yy.handler.performMath('+', $1, $3);
 
         /*php
@@ -160,11 +169,13 @@ expression
     }
 	| '(' expression ')' {
 	    //js
+	        
 	        $$ = yy.handler.number($2);
         //
 	}
 	| expression '<' '=' expression {
         //js
+            
             $$ = yy.handler.callFunction.call(yy.obj, 'LESS_EQUAL', [$1, $3]);
 
         /*php
@@ -173,6 +184,7 @@ expression
     }
     | expression '>' '=' expression {
         //js
+            
             $$ = yy.handler.callFunction.call(yy.obj, 'GREATER_EQUAL', [$1, $3]);
 
         /*php
@@ -183,16 +195,19 @@ expression
         $$ = ($1) != ($4);
 
         //js
+            
 			if (isNaN($$)) {
 			    $$ = 0;
 			}
         //
     }
 	| expression NOT expression {
+		
         $$ = $1 != $3;
     }
 	| expression '>' expression {
 	    //js
+	        
 			$$ = yy.handler.callFunction.call(yy.obj, 'GREATER', [$1, $3]);
 
 		/*php
@@ -201,6 +216,7 @@ expression
     }
 	| expression '<' expression {
         //js
+            
             $$ = yy.handler.callFunction.call(yy.obj, 'LESS', [$1, $3]);
 
         /*php
@@ -209,6 +225,7 @@ expression
     }
 	| expression '-' expression {
         //js
+            
             $$ = yy.handler.performMath('-', $1, $3);
 
         /*php
@@ -217,6 +234,7 @@ expression
     }
 	| expression '*' expression {
 	    //js
+	        
             $$ = yy.handler.performMath('*', $1, $3);
 
         /*php
@@ -225,6 +243,7 @@ expression
     }
 	| expression '/' expression {
 	    //js
+	        
             $$ = yy.handler.performMath('/', $1, $3);
 
         /*php
@@ -233,6 +252,7 @@ expression
     }
 	| expression '^' expression {
         //js
+            
             var n1 = yy.handler.number($1),
                 n2 = yy.handler.number($3);
 
@@ -244,6 +264,7 @@ expression
     }
 	| '-' expression {
 		//js
+			
 			var n1 = yy.handler.numberInverted($2);
 			$$ = n1;
 			if (isNaN($$)) {
@@ -256,6 +277,7 @@ expression
 		}
 	| '+' expression {
 	    //js
+	        
 			var n1 = yy.handler.number($2);
 			$$ = n1;
 			if (isNaN($$)) {
@@ -269,6 +291,7 @@ expression
 	| E {/*$$ = Math.E;*/;}
 	| FUNCTION '(' ')' {
 	    //js
+	        
 			$$ = yy.handler.callFunction.call(yy.obj, $1);
 
 		/*php
@@ -277,6 +300,7 @@ expression
     }
 	| FUNCTION '(' expseq ')' {
 	    //js
+	        
 			$$ = yy.handler.callFunction.call(yy.obj, $1, $3);
 
         /*php
@@ -284,14 +308,12 @@ expression
         */
     }
 	| cellRange
-	| '$'
-	| error
-	| error error
 ;
 
 cellRange :
 	LETTERS NUMBER {
 	    //js
+	        
 			$$ = yy.handler.cellValue.call(yy.obj, $1, $2);
         /*php
             $$ = $this->cellValue($1);
@@ -328,9 +350,41 @@ cellRange :
             $$ = $this->fixedCellValue($1);
         */
     }
+    | '$' LETTERS NUMBER {
+        //js
+            $$ = yy.handler.fixedCellValue.call(yy.obj, $2, $3);
+
+        /*php
+            $$ = $this->fixedCellValue($1);
+        */
+    }
+    | LETTERS '$' NUMBER {
+        //js
+            $$ = yy.handler.fixedCellValue.call(yy.obj, $1, $3);
+
+        /*php
+            $$ = $this->fixedCellValue($1);
+        */
+    }
     | '$' LETTERS '$' NUMBER ':' '$' LETTERS '$' NUMBER {
         //js
            $$ = yy.handler.fixedCellRangeValue.call(yy.obj, $2, $4, $7, $9);
+
+        /*php
+            $$ = $this->fixedCellRangeValue($1, $3);
+        */
+    }
+    | '$' LETTERS NUMBER ':' '$' LETTERS NUMBER {
+        //js
+           $$ = yy.handler.fixedCellRangeValue.call(yy.obj, $2, $3, $6, $7);
+
+        /*php
+            $$ = $this->fixedCellRangeValue($1, $3);
+        */
+    }
+    | LETTERS '$' NUMBER ':' LETTERS '$' NUMBER {
+        //js
+           $$ = yy.handler.fixedCellRangeValue.call(yy.obj, $1, $3, $5, $7);
 
         /*php
             $$ = $this->fixedCellRangeValue($1, $3);
@@ -362,6 +416,8 @@ expseq :
             $$ = array($1);
         */
     }
+    | expseq ';'
+    | expseq ','
 	| expseq ';' expression {
 	    //js
 	        $1.push($3);
@@ -418,15 +474,6 @@ number :
     }
 	| number '%' {
         $$ = $1 * 0.01;
-    }
-;
-
-error :
-	'#' VARIABLE '!' {
-        $$ = $1 + $2 + $3;
-    }
-    | VARIABLE '#' VARIABLE '!' {
-        $$ = $2 + $3 + $4;
     }
 ;
 

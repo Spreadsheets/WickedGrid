@@ -2125,7 +2125,7 @@ $.sheet = {
 						table.corner = tdCorner;
 						jS.controls.barTopParent[jS.i] = $(barTopParent);
 
-						i = Math.min(existingTdsInFirstRow, s.initCalcCols) - 1;
+						i = Math.min(existingTdsInFirstRow, s.initCalcCols);
 
 						if (i > 0) {
 							do {
@@ -2139,7 +2139,7 @@ $.sheet = {
 								cols[i].bar = td;
 								td.col = cols[i];
 								barTopParent.insertBefore(td, tdCorner.nextSibling);
-							} while (i-- > 0);
+							} while (i-- > 1);
 						}
 
 						table.barTop = jS.controls.barTopParent[jS.i].children();
@@ -5913,7 +5913,9 @@ $.sheet = {
 					if (result !== u && result !== null) {
 						this.value = result.valueOf();
 						html = result.html;
-					} else if (typeof this.value === 'string' && this.value.length > 0) {
+					}
+
+					if (typeof this.value === 'string' && this.value.length > 0) {
 						encodedValue = s.encode(this.value);
 					}
 
@@ -6071,7 +6073,7 @@ $.sheet = {
 								type2IsNumber = false;
 						}
 
-						if (!type1IsNumber) {
+						if (!type1IsNumber && mathType !== '+') {
 							errors.push('not a number: ' + num1);
 							num1 = 0;
 						}
