@@ -2,8 +2,11 @@
 /* description: Parses end evaluates mathematical expressions. */
 /* lexical grammar */
 %lex
-DOUBLE_QUOTED_STRING                '"'("\\"["]|[^"])*'"'
-SINGLE_QUOTED_STRING                "'"('\\'[']|[^'])*"'"
+DOUBLE_QUOTED_STRING                ["]("\\"["]|[^"])*["]
+SINGLE_QUOTED_STRING                [']('\\'[']|[^'])*[']
+ESCAPED_DOUBLE_QUOTED_STRING        [\\]["].+?[\\]["]
+ESCAPED_SINGLE_QUOTED_STRING        [\\]['].+?[\\][']
+
 STRING                              [A-Za-z0-9]+
 
 %%
@@ -40,6 +43,8 @@ STRING                              [A-Za-z0-9]+
 }
 ({SINGLE_QUOTED_STRING})			{return 'STRING';}
 ({DOUBLE_QUOTED_STRING})			{return 'STRING';}
+({ESCAPED_SINGLE_QUOTED_STRING})	{return 'ESCAPED_STRING';}
+({ESCAPED_DOUBLE_QUOTED_STRING})	{return 'ESCAPED_STRING';}
 
 [A-Z]+(?=[0-9$])                    {return 'LETTERS';}
 [A-Za-z]{1,}[A-Za-z_0-9]+   		{return 'VARIABLE';}
@@ -66,10 +71,12 @@ STRING                              [A-Za-z0-9]+
 "E"									{return 'E';}
 '"'									{return '"';}
 "'"									{return "'";}
+'\"'								{return '\"';}
+"\'"								{return "\'";}
 "!"									{return "!";}
 "="									{return '=';}
 "%"									{return '%';}
-'#REF!'                             {return 'STRING';}
+'#REF!'                             {return 'REF';}
 [#]									{return '#';}
 <<EOF>>								{return 'EOF';}
 
@@ -91,7 +98,10 @@ STRING                              [A-Za-z0-9]+
 %% /* language grammar */
 
 expressions
-    : expression EOF {
+    : EOF {
+        return null;
+    }
+    | expression EOF {
         return $1;
     }
 ;
@@ -134,6 +144,14 @@ expression
             $$ = $1.substring(1, $1.length - 1);
         /*php
 	        $$ = substr($1, 1, -1);
+        */
+    }
+    | ESCAPED_STRING {
+        //js
+
+            $$ = $1.substring(2, $1.length - 2);
+        /*php
+            $$ = substr($1, 2, -2);
         */
     }
     | LETTERS {
@@ -314,100 +332,91 @@ expression
 ;
 
 cellRange :
-	LETTERS NUMBER {
+	cell {
 	    //js
 	        
-			$$ = yy.handler.cellValue.call(yy.obj, $1, $2);
+			$$ = yy.handler.cellValue.call(yy.obj, $1);
+
         /*php
             $$ = $this->cellValue($1);
         */
     }
-	| LETTERS NUMBER ':' LETTERS NUMBER {
+	| cell ':' cell {
 	    //js
-			$$ = yy.handler.cellRangeValue.call(yy.obj, $1, $2, $4, $5);
+			$$ = yy.handler.cellRangeValue.call(yy.obj, $1, $3);
 
         /*php
             $$ = $this->cellRangeValue($1, $3);
         */
     }
-	| SHEET '!' LETTERS NUMBER {
+	| SHEET '!' cell {
 	    //js
-			$$ = yy.handler.remoteCellValue.call(yy.obj, $1, $3, $4);
+			$$ = yy.handler.remoteCellValue.call(yy.obj, $1, $3);
+
         /*php
             $$ = $this->remoteCellValue($1, $3);
         */
     }
-	| SHEET '!' LETTERS NUMBER ':' LETTERS NUMBER {
+	| SHEET '!' cell ':' cell {
 	    //js
-            $$ = yy.handler.remoteCellRangeValue.call(yy.obj, $1, $3, $4, $6, $7);
+            $$ = yy.handler.remoteCellRangeValue.call(yy.obj, $1, $3, $5);
 
         /*php
             $$ = $this->remoteCellRangeValue($1, $3, $5);
         */
     }
-    | '$' LETTERS '$' NUMBER {
-        //js
-            $$ = yy.handler.fixedCellValue.call(yy.obj, $2, $4);
+;
 
-        /*php
-            $$ = $this->fixedCellValue($1);
-        */
-    }
-    | '$' LETTERS NUMBER {
+cell
+	//valid first
+	: LETTERS NUMBER {
+		//js
+			$$ = {
+				colString: $1,
+				rowString: $2
+			};
+	}
+	| '$' LETTERS NUMBER {
+		//js
+            $$ = {
+                colString: $2,
+                rowString: $3
+            };
+	}
+	| LETTERS '$' NUMBER {
         //js
-            $$ = yy.handler.fixedCellValue.call(yy.obj, $2, $3);
+            $$ = {
+                colString: $1,
+                rowString: $3
+            };
+    }
+	| '$' LETTERS '$' NUMBER {
+        //js
+            $$ = {
+                colString: $2,
+                rowString: $4
+            };
+    }
 
-        /*php
-            $$ = $this->fixedCellValue($1);
-        */
-    }
-    | LETTERS '$' NUMBER {
-        //js
-            $$ = yy.handler.fixedCellValue.call(yy.obj, $1, $3);
+	//invalid
+	| REF NUMBER {return 'REF';}
+	| LETTERS REF {return 'REF';}
+	| REF REF {return 'REF';}
 
-        /*php
-            $$ = $this->fixedCellValue($1);
-        */
-    }
-    | '$' LETTERS '$' NUMBER ':' '$' LETTERS '$' NUMBER {
-        //js
-           $$ = yy.handler.fixedCellRangeValue.call(yy.obj, $2, $4, $7, $9);
+	//invalid
+    | '$' REF NUMBER {return 'REF';}
+    | '$' LETTERS REF {return 'REF';}
+    | '$' REF REF {return 'REF';}
 
-        /*php
-            $$ = $this->fixedCellRangeValue($1, $3);
-        */
-    }
-    | '$' LETTERS NUMBER ':' '$' LETTERS NUMBER {
-        //js
-           $$ = yy.handler.fixedCellRangeValue.call(yy.obj, $2, $3, $6, $7);
+	//invalid
+    | REF '$' NUMBER {return 'REF';}
+    | LETTERS '$' REF {return 'REF';}
+    | REF '$' REF {return 'REF';}
 
-        /*php
-            $$ = $this->fixedCellRangeValue($1, $3);
-        */
-    }
-    | LETTERS '$' NUMBER ':' LETTERS '$' NUMBER {
-        //js
-           $$ = yy.handler.fixedCellRangeValue.call(yy.obj, $1, $3, $5, $7);
-
-        /*php
-            $$ = $this->fixedCellRangeValue($1, $3);
-        */
-    }
-    | SHEET '!' '$' LETTERS '$' NUMBER {
-        //js
-            $$ = yy.handler.remoteCellValue.call(yy.obj, $1, $4, $6);
-        /*php
-            $$ = $this->remoteCellValue($1, $3);
-        */
-    }
-    | SHEET '!' '$' LETTERS '$' NUMBER ':' '$' LETTERS '$' NUMBER {
-        //js
-            $$ = yy.handler.remoteCellRangeValue.call(yy.obj, $1, $4, $6, $9, $11);
-
-        /*php
-            $$ = $this->remoteCellRangeValue($1, $3, $5);
-        */
-    }
+	//invalid
+	| '$' REF '$' NUMBER {return 'REF';}
+    | '$' LETTERS '$' NUMBER {return 'REF';}
+    | '$' REF '$' REF {return 'REF';}
 ;
 
 expseq :
