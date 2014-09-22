@@ -2,8 +2,8 @@
 /* description: Parses end evaluates mathematical expressions. */
 /* lexical grammar */
 %lex
-SINGLE_QUOTED_STRING                '"'("\\"["]|[^"])*'"'
-DOUBLE_QUOTED_STRING                "'"('\\'[']|[^'])*"'"
+DOUBLE_QUOTED_STRING                '"'("\\"["]|[^"])*'"'
+SINGLE_QUOTED_STRING                "'"('\\'[']|[^'])*"'"
 STRING                              [A-Za-z0-9]+
 
 %%
