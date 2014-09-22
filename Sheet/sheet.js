@@ -1900,7 +1900,7 @@ $.sheet = {
 									return;
 								}
 
-								o.setCreateBarFn(function(at) {
+								o.setCreateBarFn(function (at) {
 									var barParent = document.createElement('tr'),
 										bar = document.createElement('td');
 
@@ -1909,7 +1909,7 @@ $.sheet = {
 									bar.type = 'bar';
 									bar.style.height = height;
 									barParent.appendChild(bar);
-									tBody.insertBefore(barParent, tBody.children[at + 1]);
+									tBody.insertBefore(barParent, tBody.children[at]);
 
 									bar.innerHTML = barParent.rowIndex;
 									controlY.splice(at, 0, $(bar));
@@ -1919,26 +1919,33 @@ $.sheet = {
 									return barParent;
 								});
 
-								o.setCreateCellFn(function(row, at, rowParent) {
-									var td = document.createElement('td'),
-										cell = jS.createUnboundCell(jS.i, td),
-										spreadsheetRow = spreadsheet[row];
+								if (setupCell !== null) {
+									o.setCreateCellFn(function (row, at, rowParent) {
+										var td = document.createElement('td'),
+											cell = jS.createUnboundCell(jS.i, td),
+											spreadsheetRow = spreadsheet[row];
 
-									spreadsheetRow[at] = cell;
+										spreadsheetRow[at] = cell;
 
-									if (setupCell !== null) {
 										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
 											jS.updateCellValue.call(cell, jS.i, row, at);
 											jS.updateCellDependencies.call(cell);
 										}
-									}
 
-									rowParent.insertBefore(td, rowParent.children[at]);
+										rowParent.insertBefore(td, rowParent.children[at]);
 
-									jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
-								});
+										jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
+									});
+								} else {
+									o.setCreateCellFn(function (row, at, rowParent) {
+										var td = document.createElement('td');
 
-								o.setAddedFinished(function(i, _offset) {
+										rowParent.insertBefore(td, rowParent.children[at]);
+										jS.createCell(jS.i, row, at);
+									});
+								}
+
+								o.setAddedFinished(function(_offset) {
 									jS.refreshRowLabels(i);
 									offset = _offset;
 								});
@@ -1999,29 +2006,38 @@ $.sheet = {
 										barParent: barParent
 									};
 								});
-								o.setCreateCellFn(function(row, at, createdBar) {
-									var td = document.createElement('td'),
-										cell = jS.createUnboundCell(jS.i, td),
-										rowParent = tBody.children[row],
-										spreadsheetRow = spreadsheet[row];
+								if (setupCell !== null) {
+									o.setCreateCellFn(function (row, at, createdBar) {
+										var td = document.createElement('td'),
+											cell = jS.createUnboundCell(jS.i, td),
+											rowParent = tBody.children[row],
+											spreadsheetRow = spreadsheet[row];
 
-									if (spreadsheetRow === undefined) {
-										spreadsheet[row] = spreadsheetRow = [];
-									}
+										if (spreadsheetRow === undefined) {
+											spreadsheet[row] = spreadsheetRow = [];
+										}
 
-									spreadsheetRow[at] = cell;
+										spreadsheetRow[at] = cell;
 
-									if (setupCell !== null) {
 										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
 											jS.updateCellValue.call(cell, jS.i, row, at);
 											jS.updateCellDependencies.call(cell);
 										}
-									}
 
-									rowParent.insertBefore(td, rowParent.children[at]);
+										rowParent.insertBefore(td, rowParent.children[at]);
 
-									jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
-								});
+										jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
+									});
+								} else {
+									o.setCreateCellFn(function (row, at, createdBar) {
+										var td = document.createElement('td'),
+											rowParent = tBody.children[row];
+
+										rowParent.insertBefore(td, rowParent.children[at]);
+										spreadsheet[row].splice(at, 0, {});
+										jS.createCell(jS.i, row, at);
+									});
+								}
 
 								o.setAddedFinished(function(_offset) {
 									jS.refreshColumnLabels(i);
@@ -4900,14 +4916,24 @@ $.sheet = {
 						lastLoc = {row:size.rows, col:size.cols};
 					}
 
-					var row = lastLoc.row, col;
-					if (row < firstLoc.row) return;
+					var spreadsheet = jS.spreadsheets[i],
+						rowIndex = lastLoc.row,
+						colIndex,
+						row,
+						cell;
+
+					if (rowIndex < firstLoc.row) return;
+
 					do {
-						col = lastLoc.col;
+						colIndex = lastLoc.col;
+						row = spreadsheet[rowIndex];
 						do {
-							fn.call(jS.spreadsheets[i][row][col], i, row, col);
-						} while (col-- > firstLoc.col);
-					} while (row-- > firstLoc.row);
+							cell  = row[colIndex];
+							fn.call(cell, i, rowIndex, colIndex);
+						}
+						while (colIndex-- > firstLoc.col);
+					}
+					while (rowIndex-- > firstLoc.row);
 				},
 
 				/**
