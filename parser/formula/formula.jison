@@ -38,10 +38,10 @@ STRING                              [A-Za-z0-9]+
         return 'VARIABLE';
     */
 }
-{SINGLE_QUOTED_STRING}				{return 'STRING';}
-{DOUBLER_QUOTED_STRING}				{return 'STRING';}
+({SINGLE_QUOTED_STRING})			{return 'STRING';}
+({DOUBLE_QUOTED_STRING})			{return 'STRING';}
 
-[A-Z]+(?=[0-9$])                     {return 'LETTERS';}
+[A-Z]+(?=[0-9$])                    {return 'LETTERS';}
 [A-Za-z]{1,}[A-Za-z_0-9]+   		{return 'VARIABLE';}
 [A-Za-z_]+           				{return 'VARIABLE';}
 [0-9]+          			  		{return 'NUMBER';}
@@ -135,6 +135,9 @@ expression
         /*php
 	        $$ = substr($1, 1, -1);
         */
+    }
+    | LETTERS {
+        $$ = $1;
     }
     | expression '&' expression {
         //js
@@ -443,9 +446,6 @@ expseq :
 
 variableSequence :
 	VARIABLE {
-        $$ = [$1];
-    }
-    | LETTERS {
         $$ = [$1];
     }
 	| variableSequence DECIMAL VARIABLE {
