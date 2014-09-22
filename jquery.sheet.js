@@ -3911,7 +3911,12 @@ $.sheet = {
 								} else {
 									o.setCreateCellFn(function (row, at, createdBar) {
 										var td = document.createElement('td'),
-											rowParent = tBody.children[row];
+											rowParent = tBody.children[row],
+											spreadsheetRow = spreadsheet[row];
+
+										if (spreadsheetRow === undefined) {
+											spreadsheet[row] = spreadsheetRow = [];
+										}
 
 										rowParent.insertBefore(td, rowParent.children[at]);
 										spreadsheet[row].splice(at, 0, {});
@@ -8019,13 +8024,12 @@ $.sheet = {
 
 					/**
 					 * Get cell value
-					 * @param {String} colString example "A"
-					 * @param {String} rowString example "1"
+					 * @param {Object} cellRef
 					 * @returns {*}
 					 * @memberOf jS.cellHandler
 					 */
-					cellValue:function (colString, rowString) {
-						var loc = jSE.parseLocation(colString, rowString), cell;
+					cellValue:function (cellRef) {
+						var loc = jSE.parseLocation(cellRef.colString, cellRef.rowString), cell;
 
 						cell = jS.cellHandler.createDependency.call(this, this.sheet, loc);
 
@@ -8070,22 +8074,20 @@ $.sheet = {
 
 					/**
 					 * Get cell values as an array
-					 * @param {String} startColString example "A"
-					 * @param {String} startRowString example "1"
-					 * @param {String} endColString example "B"
-					 * @param {String} endRowString example "1"
+					 * @param {Object} start
+					 * @param {Object} end
 					 * @returns {Array}
 					 * @memberOf jS.cellHandler
 					 */
-					cellRangeValue:function (startColString, startRowString, endColString, endRowString) {
-						var start = jSE.parseLocation(startColString, startRowString),
-							end = jSE.parseLocation(endColString, endRowString),
+					cellRangeValue:function (start, end) {
+						var _start = jSE.parseLocation(start.colString, start.rowString),
+							_end = jSE.parseLocation(end.colString, end.rowString),
 							result = [],
-							i = math.max(start.row, end.row),
-							iEnd = math.min(start.row, end.row),
-							j = math.max(start.col, end.col),
+							i = math.max(_start.row, _end.row),
+							iEnd = math.min(_start.row, _end.row),
+							j = math.max(_start.col, _end.col),
 							jStart = j,
-							jEnd = math.min(start.col, end.col),
+							jEnd = math.min(_start.col, _end.col),
 							cell;
 
 						if (i >= iEnd || j >= jEnd) {
@@ -8105,40 +8107,35 @@ $.sheet = {
 
 					/**
 					 * Get cell value
-					 * @param {String} startColString example "A"
-					 * @param {String} startRowString example "1"
-					 * @param {String} endColString example "B"
-					 * @param {String} endRowString example "1"
+					 * @param {Object} start
+					 * @param {Object} end
 					 * @returns {*}
 					 * @memberOf jS.cellHandler
 					 */
-					fixedCellValue:function (startColString, startRowString, endColString, endRowString) {
-						return jS.cellHandler.cellValue.call(this, startColString, startRowString, endColString, endRowString);
+					fixedCellValue:function (start, end) {
+						return jS.cellHandler.cellValue.call(this, start.colString, start.rowString, end.colString, end.rowString);
 					},
 
 					/**
 					 * Get cell values as an array
-					 * @param {String} startColString example "A"
-					 * @param {String} startRowString example "1"
-					 * @param {String} endColString example "B"
-					 * @param {String} endRowString example "1"
+					 * @param {Object} start
+					 * @param {Object} end
 					 * @returns {Array}
 					 * @memberOf jS.cellHandler
 					 */
-					fixedCellRangeValue:function (startColString, startRowString, endColString, endRowString) {
-						return jS.cellHandler.cellRangeValue.call(this, startColString, startRowString, endColString, endRowString);
+					fixedCellRangeValue:function (start, end) {
+						return jS.cellHandler.cellRangeValue.call(this, start.colString, start.rowString, end.colString, end.rowString);
 					},
 
 					/**
 					 * Get cell value from a different sheet within an instance
 					 * @param {String} sheet example "SHEET1"
-					 * @param {String} colString example "A"
-					 * @param {String} rowString example "1"
+					 * @param {Object} cellRef
 					 * @returns {*}
 					 * @memberOf jS.cellHandler
 					 */
-					remoteCellValue:function (sheet, colString, rowString) {//Example: SHEET1:A1
-						var loc = jSE.parseLocation(colString, rowString),
+					remoteCellValue:function (sheet, cellRef) {
+						var loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
 							sheetIndex = jSE.parseSheetLocation(sheet),
 							cell;
 
@@ -8154,26 +8151,23 @@ $.sheet = {
 					/**
 					 * Get cell values as an array from a different sheet within an instance
 					 * @param {String} sheet example "SHEET1"
-					 * @param {String} startColString example "A"
-					 * @param {String} startRowString example "1"
-					 * @param {String} endColString example "A"
-					 * @param {String} endRowString example "1"
-					 * @param {String} end example "B1"
+					 * @param {Object} start
+					 * @param {Object} end
 					 * @returns {Array}
 					 * @memberOf jS.cellHandler
 					 */
-					remoteCellRangeValue:function (sheet, startColString, startRowString, endColString, endRowString) {//Example: SHEET1:A1:B2
+					remoteCellRangeValue:function (sheet, start, end) {//Example: SHEET1:A1:B2
 						sheet = jSE.parseSheetLocation(sheet);
-						var start = jSE.parseLocation(startColString, startRowString),
-							end = jSE.parseLocation(endColString, endRowString);
+						var _start = jSE.parseLocation(start.colString, start.rowString),
+							_end = jSE.parseLocation(end.colString, end.rowString);
 
 						if (sheet < 0) {
 							sheet = jS.getSpreadsheetIndexByTitle(sheet);
 						}
 						var result = [];
 
-						for (var i = start.row; i <= end.row; i++) {
-							for (var j = start.col; j <= end.col; j++) {
+						for (var i = _start.row; i <= _end.row; i++) {
+							for (var j = _start.col; j <= _end.col; j++) {
 								result.push(jS.updateCellValue(sheet, i, j));
 							}
 						}
@@ -8210,55 +8204,45 @@ $.sheet = {
 				cellLookupHandlers:{
 
 					/**
-					 * @param {String} colString example "A"
-					 * @param {String} rowString example "10"
+					 * @param {Object} cellRef
 					 * @returns {Object}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					fixedCellValue:function (colString, rowString) {
-						return [jS.sheet, jSE.parseLocation(colString, rowString)];
+					fixedCellValue:function (cellRef) {
+						return [jS.sheet, jSE.parseLocation(cellRef.colString, cellRef.rowString)];
 					},
 
 					/**
 					 * @param {String} sheet example "SHEET1"
-					 * @param {String} startColString example "A"
-					 * @param {String} startRowString example "10"
-					 * @param {String} endColString example "A"
-					 * @param {String} endRowString example "10"
+					 * @param {Object} start
+					 * @param {Object} end
 					 * @returns {Array}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					fixedCellRangeValue:function (sheet, startColString, startRowString, endColString, endRowString) {
+					fixedCellRangeValue:function (sheet, start, end) {
 						sheet = jSE.parseSheetLocation(sheet);
 						if (sheet < 0) {
 							sheet = jS.getSpreadsheetIndexByTitle(sheet);
 						}
-						return [sheet, jSE.parseLocation(startColString, startRowString), jSE.parseLocation(endColString, endRowString)];
+						return [sheet, jSE.parseLocation(start.colString, start.rowString), jSE.parseLocation(end.colString, end.rowString)];
 					},
 
 					/**
 					 * doesn't do anything right now
-					 * @param id
+					 * @param cellRef
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					cellValue:function (colString, rowString) {
-						/*return {
-							sheetIndex: jS.i,
-							start: jSE.parseLocation(colString, rowString),
-							end: null
-						}*/
+					cellValue:function (cellRef) {
 					},
 
 					/**
-					 * @param {String} startColString example "A"
-					 * @param {String} startRowString example "10"
-					 * @param {String} endColString example "A"
-					 * @param {String} endRowString example "10"
+					 * @param {Object} start
+					 * @param {Object} end
 					 * @returns {Array}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					cellRangeValue:function (startColString, startRowString, endColString, endRowString) {
-						return [jS.sheet, jSE.parseLocation(startColString, startRowString), jSE.parseLocation(endColString, endRowString)];
+					cellRangeValue:function (sheet, start, end) {
+						return [jS.sheet, jSE.parseLocation(start.colString, start.rowString), jSE.parseLocation(end.colString, end.rowString)];
 					},
 
 					/**
@@ -8267,26 +8251,24 @@ $.sheet = {
 					 * @returns {Array}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					remoteCellValue:function (sheet, colString, rowString) {
-						return [sheet, jSE.parseLocation(colString, rowString)];
+					remoteCellValue:function (sheet, cellRef) {
+						return [sheet, jSE.parseLocation(cellRef.colString, cellRef.rowString)];
 					},
 
 					/**
 					 *
 					 * @param {String} sheet example "SHEET1"
-					 * @param {String} startColString example "A"
-					 * @param {String} startRowString example "10"
-					 * @param {String} endColString example "A"
-					 * @param {String} endRowString example "10"
+					 * @param {Object} start
+					 * @param {Object} end
 					 * @returns {Array}
 					 * @memberOf jS.cellLookupHandlers
 					 */
-					remoteCellRangeValue:function (sheet, startColString, startRowString, endColString, endRowString) {
+					remoteCellRangeValue:function (sheet, start, end) {
 						sheet = jSE.parseSheetLocation(sheet);
 						if (sheet < 0) {
 							sheet = jS.getSpreadsheetIndexByTitle(sheet);
 						}
-						return [sheet, jSE.parseLocation(startColString, startRowString), jSE.parseLocation(endColString, endRowString)];
+						return [sheet, jSE.parseLocation(start.colString, start.rowString), jSE.parseLocation(end.colString, end.rowString)];
 					},
 
 					/**
@@ -13400,12 +13382,12 @@ if (!Array.prototype.indexOf) {
   }
 */
 var parser = (function(){
-var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,4],$V1=[1,5],$V2=[1,7],$V3=[1,8],$V4=[1,11],$V5=[1,9],$V6=[1,10],$V7=[1,12],$V8=[1,13],$V9=[1,16],$Va=[1,17],$Vb=[1,18],$Vc=[1,15],$Vd=[1,20],$Ve=[1,21],$Vf=[1,22],$Vg=[1,23],$Vh=[1,24],$Vi=[1,25],$Vj=[1,26],$Vk=[1,27],$Vl=[1,28],$Vm=[1,29],$Vn=[5,12,13,14,16,17,18,19,20,21,22,23,33,34],$Vo=[5,12,13,14,16,17,18,19,20,21,22,23,33,34,36],$Vp=[5,12,13,14,16,17,18,19,20,21,22,23,33,34,37],$Vq=[5,13,14,16,17,18,19,20,33,34],$Vr=[5,13,16,17,18,19,33,34],$Vs=[5,13,14,16,17,18,19,20,21,22,33,34],$Vt=[16,33,34];
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,5],$V1=[1,6],$V2=[1,8],$V3=[1,9],$V4=[1,10],$V5=[1,13],$V6=[1,11],$V7=[1,12],$V8=[1,14],$V9=[1,15],$Va=[1,20],$Vb=[1,18],$Vc=[1,21],$Vd=[1,22],$Ve=[1,17],$Vf=[1,24],$Vg=[1,25],$Vh=[1,26],$Vi=[1,27],$Vj=[1,28],$Vk=[1,29],$Vl=[1,30],$Vm=[1,31],$Vn=[1,32],$Vo=[1,33],$Vp=[4,13,14,15,17,18,19,20,21,22,23,24,36,37],$Vq=[1,36],$Vr=[1,37],$Vs=[1,38],$Vt=[4,13,14,15,17,18,19,20,21,22,23,24,36,37,39],$Vu=[4,13,14,15,17,18,19,20,21,22,23,24,36,37,40],$Vv=[4,13,14,15,17,18,19,20,21,22,23,24,30,36,37],$Vw=[4,14,15,17,18,19,20,21,36,37],$Vx=[1,73],$Vy=[4,14,17,18,19,20,36,37],$Vz=[4,14,15,17,18,19,20,21,22,23,36,37],$VA=[17,36,37];
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"expressions":3,"expression":4,"EOF":5,"variableSequence":6,"TIME_AMPM":7,"TIME_24":8,"number":9,"STRING":10,"LETTERS":11,"&":12,"=":13,"+":14,"(":15,")":16,"<":17,">":18,"NOT":19,"-":20,"*":21,"/":22,"^":23,"E":24,"FUNCTION":25,"expseq":26,"cellRange":27,"NUMBER":28,":":29,"SHEET":30,"!":31,"$":32,";":33,",":34,"VARIABLE":35,"DECIMAL":36,"%":37,"$accept":0,"$end":1},
-terminals_: {2:"error",5:"EOF",7:"TIME_AMPM",8:"TIME_24",10:"STRING",11:"LETTERS",12:"&",13:"=",14:"+",15:"(",16:")",17:"<",18:">",19:"NOT",20:"-",21:"*",22:"/",23:"^",24:"E",25:"FUNCTION",28:"NUMBER",29:":",30:"SHEET",31:"!",32:"$",33:";",34:",",35:"VARIABLE",36:"DECIMAL",37:"%"},
-productions_: [0,[3,2],[4,1],[4,1],[4,1],[4,1],[4,1],[4,1],[4,3],[4,3],[4,3],[4,3],[4,4],[4,4],[4,4],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,3],[4,2],[4,2],[4,1],[4,3],[4,4],[4,1],[27,2],[27,5],[27,4],[27,7],[27,4],[27,3],[27,3],[27,9],[27,7],[27,7],[27,6],[27,11],[26,1],[26,2],[26,2],[26,3],[26,3],[6,1],[6,3],[9,1],[9,3],[9,2]],
+symbols_: {"error":2,"expressions":3,"EOF":4,"expression":5,"variableSequence":6,"TIME_AMPM":7,"TIME_24":8,"number":9,"STRING":10,"ESCAPED_STRING":11,"LETTERS":12,"&":13,"=":14,"+":15,"(":16,")":17,"<":18,">":19,"NOT":20,"-":21,"*":22,"/":23,"^":24,"E":25,"FUNCTION":26,"expseq":27,"cellRange":28,"cell":29,":":30,"SHEET":31,"!":32,"NUMBER":33,"$":34,"REF":35,";":36,",":37,"VARIABLE":38,"DECIMAL":39,"%":40,"$accept":0,"$end":1},
+terminals_: {2:"error",4:"EOF",7:"TIME_AMPM",8:"TIME_24",10:"STRING",11:"ESCAPED_STRING",12:"LETTERS",13:"&",14:"=",15:"+",16:"(",17:")",18:"<",19:">",20:"NOT",21:"-",22:"*",23:"/",24:"^",25:"E",26:"FUNCTION",30:":",31:"SHEET",32:"!",33:"NUMBER",34:"$",35:"REF",36:";",37:",",38:"VARIABLE",39:"DECIMAL",40:"%"},
+productions_: [0,[3,1],[3,2],[5,1],[5,1],[5,1],[5,1],[5,1],[5,1],[5,1],[5,3],[5,3],[5,3],[5,3],[5,4],[5,4],[5,4],[5,3],[5,3],[5,3],[5,3],[5,3],[5,3],[5,3],[5,2],[5,2],[5,1],[5,3],[5,4],[5,1],[28,1],[28,3],[28,3],[28,5],[29,2],[29,3],[29,3],[29,4],[29,2],[29,2],[29,2],[29,3],[29,3],[29,3],[29,3],[29,3],[29,3],[29,4],[29,4],[29,4],[27,1],[27,2],[27,2],[27,3],[27,3],[6,1],[6,3],[9,1],[9,3],[9,2]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -13413,10 +13395,15 @@ var $0 = $$.length - 1;
 switch (yystate) {
 case 1:
 
-        return $$[$0-1];
+        return null;
     
 break;
 case 2:
+
+        return $$[$0-1];
+    
+break;
+case 3:
 
         //js
             
@@ -13427,7 +13414,7 @@ case 2:
         */
     
 break;
-case 3:
+case 4:
 
 	    //js
 	        
@@ -13435,7 +13422,7 @@ case 3:
         //
     
 break;
-case 4:
+case 5:
 
         //js
             
@@ -13444,7 +13431,7 @@ case 4:
 
     
 break;
-case 5:
+case 6:
 
 	    //js
 	        
@@ -13455,7 +13442,7 @@ case 5:
         */
     
 break;
-case 6:
+case 7:
 
         //js
             
@@ -13465,12 +13452,22 @@ case 6:
         */
     
 break;
-case 7: case 47:
+case 8:
+
+        //js
+
+            this.$ = $$[$0].substring(2, $$[$0].length - 2);
+        /*php
+            this.$ = substr($$[$0], 2, -2);
+        */
+    
+break;
+case 9: case 57:
 
         this.$ = $$[$0];
     
 break;
-case 8:
+case 10:
 
         //js
             
@@ -13481,7 +13478,7 @@ case 8:
         */
     
 break;
-case 9:
+case 11:
 
 	    //js
 	        
@@ -13492,7 +13489,7 @@ case 9:
         */
     
 break;
-case 10:
+case 12:
 
 	    //js
 
@@ -13507,7 +13504,7 @@ case 10:
         */
     
 break;
-case 11:
+case 13:
 
 	    //js
 	        
@@ -13515,7 +13512,7 @@ case 11:
         //
 	
 break;
-case 12:
+case 14:
 
         //js
             
@@ -13526,7 +13523,7 @@ case 12:
         */
     
 break;
-case 13:
+case 15:
 
         //js
             
@@ -13537,7 +13534,7 @@ case 13:
         */
     
 break;
-case 14:
+case 16:
 
         this.$ = ($$[$0-3]) != ($$[$0]);
 
@@ -13549,13 +13546,13 @@ case 14:
         //
     
 break;
-case 15:
+case 17:
 
 		
         this.$ = $$[$0-2] != $$[$0];
     
 break;
-case 16:
+case 18:
 
 	    //js
 	        
@@ -13566,7 +13563,7 @@ case 16:
         */
     
 break;
-case 17:
+case 19:
 
         //js
             
@@ -13577,7 +13574,7 @@ case 17:
         */
     
 break;
-case 18:
+case 20:
 
         //js
             
@@ -13588,7 +13585,7 @@ case 18:
         */
     
 break;
-case 19:
+case 21:
 
 	    //js
 	        
@@ -13599,7 +13596,7 @@ case 19:
         */
     
 break;
-case 20:
+case 22:
 
 	    //js
 	        
@@ -13610,7 +13607,7 @@ case 20:
         */
     
 break;
-case 21:
+case 23:
 
         //js
             
@@ -13624,7 +13621,7 @@ case 21:
         */
     
 break;
-case 22:
+case 24:
 
 		//js
 			
@@ -13639,7 +13636,7 @@ case 22:
         */
 		
 break;
-case 23:
+case 25:
 
 	    //js
 	        
@@ -13654,10 +13651,10 @@ case 23:
         */
 		
 break;
-case 24:
+case 26:
 /*this.$ = Math.E;*/;
 break;
-case 25:
+case 27:
 
 	    //js
 	        
@@ -13668,7 +13665,7 @@ case 25:
         */
     
 break;
-case 26:
+case 28:
 
 	    //js
 	        
@@ -13679,125 +13676,78 @@ case 26:
         */
     
 break;
-case 28:
-
-	    //js
-	        
-			this.$ = yy.handler.cellValue.call(yy.obj, $$[$0-1], $$[$0]);
-        /*php
-            this.$ = $this->cellValue($$[$0-1]);
-        */
-    
-break;
-case 29:
-
-	    //js
-			this.$ = yy.handler.cellRangeValue.call(yy.obj, $$[$0-4], $$[$0-3], $$[$0-1], $$[$0]);
-
-        /*php
-            this.$ = $this->cellRangeValue($$[$0-4], $$[$0-2]);
-        */
-    
-break;
 case 30:
 
 	    //js
-			this.$ = yy.handler.remoteCellValue.call(yy.obj, $$[$0-3], $$[$0-1], $$[$0]);
+	        
+			this.$ = yy.handler.cellValue.call(yy.obj, $$[$0]);
+
         /*php
-            this.$ = $this->remoteCellValue($$[$0-3], $$[$0-1]);
+            this.$ = $this->cellValue($$[$0]);
         */
     
 break;
 case 31:
 
 	    //js
-            this.$ = yy.handler.remoteCellRangeValue.call(yy.obj, $$[$0-6], $$[$0-4], $$[$0-3], $$[$0-1], $$[$0]);
+			this.$ = yy.handler.cellRangeValue.call(yy.obj, $$[$0-2], $$[$0]);
 
         /*php
-            this.$ = $this->remoteCellRangeValue($$[$0-6], $$[$0-4], $$[$0-2]);
+            this.$ = $this->cellRangeValue($$[$0-2], $$[$0]);
         */
     
 break;
 case 32:
 
-        //js
-            this.$ = yy.handler.fixedCellValue.call(yy.obj, $$[$0-2], $$[$0]);
+	    //js
+			this.$ = yy.handler.remoteCellValue.call(yy.obj, $$[$0-2], $$[$0]);
 
         /*php
-            this.$ = $this->fixedCellValue($$[$0-3]);
+            this.$ = $this->remoteCellValue($$[$0-2], $$[$0]);
         */
     
 break;
 case 33:
 
-        //js
-            this.$ = yy.handler.fixedCellValue.call(yy.obj, $$[$0-1], $$[$0]);
+	    //js
+            this.$ = yy.handler.remoteCellRangeValue.call(yy.obj, $$[$0-4], $$[$0-2], $$[$0]);
 
         /*php
-            this.$ = $this->fixedCellValue($$[$0-2]);
+            this.$ = $this->remoteCellRangeValue($$[$0-4], $$[$0-2], $$[$0]);
         */
     
 break;
 case 34:
 
-        //js
-            this.$ = yy.handler.fixedCellValue.call(yy.obj, $$[$0-2], $$[$0]);
-
-        /*php
-            this.$ = $this->fixedCellValue($$[$0-2]);
-        */
-    
+		//js
+			this.$ = {
+				colString: $$[$0-1],
+				rowString: $$[$0]
+			};
+	
 break;
 case 35:
 
-        //js
-           this.$ = yy.handler.fixedCellRangeValue.call(yy.obj, $$[$0-7], $$[$0-5], $$[$0-2], $$[$0]);
-
-        /*php
-            this.$ = $this->fixedCellRangeValue($$[$0-8], $$[$0-6]);
-        */
-    
+		//js
+            this.$ = {
+                colString: $$[$0-1],
+                rowString: $$[$0]
+            };
+	
 break;
-case 36:
-
-        //js
-           this.$ = yy.handler.fixedCellRangeValue.call(yy.obj, $$[$0-5], $$[$0-4], $$[$0-1], $$[$0]);
-
-        /*php
-            this.$ = $this->fixedCellRangeValue($$[$0-6], $$[$0-4]);
-        */
-    
-break;
-case 37:
+case 36: case 37:
 
         //js
-           this.$ = yy.handler.fixedCellRangeValue.call(yy.obj, $$[$0-6], $$[$0-4], $$[$0-2], $$[$0]);
-
-        /*php
-            this.$ = $this->fixedCellRangeValue($$[$0-6], $$[$0-4]);
-        */
+            this.$ = {
+                colString: $$[$0-2],
+                rowString: $$[$0]
+            };
     
 break;
-case 38:
-
-        //js
-            this.$ = yy.handler.remoteCellValue.call(yy.obj, $$[$0-5], $$[$0-2], $$[$0]);
-        /*php
-            this.$ = $this->remoteCellValue($$[$0-5], $$[$0-3]);
-        */
-    
+case 38: case 39: case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47: case 48: case 49:
+return 'REF';
 break;
-case 39:
-
-        //js
-            this.$ = yy.handler.remoteCellRangeValue.call(yy.obj, $$[$0-10], $$[$0-7], $$[$0-5], $$[$0-2], $$[$0]);
-
-        /*php
-            this.$ = $this->remoteCellRangeValue($$[$0-10], $$[$0-8], $$[$0-6]);
-        */
-    
-break;
-case 40:
+case 50:
 
 	    //js
             this.$ = [$$[$0]];
@@ -13807,7 +13757,7 @@ case 40:
         */
     
 break;
-case 43:
+case 53:
 
 	    //js
 	        $$[$0-2].push($$[$0]);
@@ -13819,7 +13769,7 @@ case 43:
         */
     
 break;
-case 44:
+case 54:
 
  	    //js
 	        $$[$0-2].push($$[$0]);
@@ -13831,12 +13781,12 @@ case 44:
         */
     
 break;
-case 45:
+case 55:
 
         this.$ = [$$[$0]];
     
 break;
-case 46:
+case 56:
 
         //js
             this.$ = ($.isArray($$[$0-2]) ? $$[$0-2] : [$$[$0-2]]);
@@ -13848,7 +13798,7 @@ case 46:
         */
     
 break;
-case 48:
+case 58:
 
         //js
             this.$ = ($$[$0-2] + '.' + $$[$0]) * 1;
@@ -13858,15 +13808,15 @@ case 48:
         */
     
 break;
-case 49:
+case 59:
 
         this.$ = $$[$0-1] * 0.01;
     
 break;
 }
 },
-table: [{3:1,4:2,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{1:[3]},{5:[1,19],12:$Vd,13:$Ve,14:$Vf,17:$Vg,18:$Vh,19:$Vi,20:$Vj,21:$Vk,22:$Vl,23:$Vm},o($Vn,[2,2],{36:[1,30]}),o($Vn,[2,3]),o($Vn,[2,4]),o($Vn,[2,5],{37:[1,31]}),o($Vn,[2,6]),o($Vn,[2,7],{28:[1,32],32:[1,33]}),{4:34,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:35,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:36,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},o($Vn,[2,24]),{15:[1,37]},o($Vn,[2,27]),o($Vo,[2,45]),o($Vp,[2,47],{36:[1,38]}),{31:[1,39]},{11:[1,40]},{1:[2,1]},{4:41,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:42,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:43,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:46,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,13:[1,44],14:$V4,15:$V5,18:[1,45],20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:48,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,13:[1,47],14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:49,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:50,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:51,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:52,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:53,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{35:[1,54]},o($Vp,[2,49]),o($Vn,[2,28],{29:[1,55]}),{28:[1,56]},{12:$Vd,13:$Ve,14:$Vf,16:[1,57],17:$Vg,18:$Vh,19:$Vi,20:$Vj,21:$Vk,22:$Vl,23:$Vm},o($Vq,[2,22],{12:$Vd,21:$Vk,22:$Vl,23:$Vm}),o($Vq,[2,23],{12:$Vd,21:$Vk,22:$Vl,23:$Vm}),{4:60,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,16:[1,58],20:$V6,24:$V7,25:$V8,26:59,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{28:[1,61]},{11:[1,62],32:[1,63]},{28:[1,65],32:[1,64]},o([5,16,33,34],[2,8],{12:$Vd,13:$Ve,14:$Vf,17:$Vg,18:$Vh,19:$Vi,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),o([5,13,16,33,34],[2,9],{12:$Vd,14:$Vf,17:$Vg,18:$Vh,19:$Vi,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),o($Vq,[2,10],{12:$Vd,21:$Vk,22:$Vl,23:$Vm}),{4:66,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},{4:67,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},o($Vr,[2,17],{12:$Vd,14:$Vf,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),{4:68,6:3,7:$V0,8:$V1,9:6,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,27:14,28:$V9,30:$Va,32:$Vb,35:$Vc},o($Vr,[2,16],{12:$Vd,14:$Vf,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),o([5,13,16,19,33,34],[2,15],{12:$Vd,14:$Vf,17:$Vg,18:$Vh,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),o($Vq,[2,18],{12:$Vd,21:$Vk,22:$Vl,23:$Vm}),o($Vs,[2,19],{12:$Vd,23:$Vm}),o($Vs,[2,20],{12:$Vd,23:$Vm}),o([5,13,14,16,17,18,19,20,21,22,23,33,34],[2,21],{12:$Vd}),o($Vo,[2,46]),{11:[1,69]},o($Vn,[2,34],{29:[1,70]}),o($Vn,[2,11]),o($Vn,[2,25]),{16:[1,71],33:[1,72],34:[1,73]},o($Vt,[2,40],{12:$Vd,13:$Ve,14:$Vf,17:$Vg,18:$Vh,19:$Vi,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),o($Vp,[2,48]),{28:[1,74]},{11:[1,75]},{28:[1,76]},o($Vn,[2,33],{29:[1,77]}),o($Vr,[2,12],{12:$Vd,14:$Vf,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),o($Vr,[2,14],{12:$Vd,14:$Vf,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),o($Vr,[2,13],{12:$Vd,14:$Vf,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),{28:[1,78]},{11:[1,79]},o($Vn,[2,26]),o($Vt,[2,41],{6:3,9:6,27:14,4:80,7:$V0,8:$V1,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,28:$V9,30:$Va,32:$Vb,35:$Vc}),o($Vt,[2,42],{6:3,9:6,27:14,4:81,7:$V0,8:$V1,10:$V2,11:$V3,14:$V4,15:$V5,20:$V6,24:$V7,25:$V8,28:$V9,30:$Va,32:$Vb,35:$Vc}),o($Vn,[2,30],{29:[1,82]}),{32:[1,83]},o($Vn,[2,32],{29:[1,84]}),{32:[1,85]},o($Vn,[2,29]),{32:[1,86]},o($Vt,[2,43],{12:$Vd,13:$Ve,14:$Vf,17:$Vg,18:$Vh,19:$Vi,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),o($Vt,[2,44],{12:$Vd,13:$Ve,14:$Vf,17:$Vg,18:$Vh,19:$Vi,20:$Vj,21:$Vk,22:$Vl,23:$Vm}),{11:[1,87]},{28:[1,88]},{32:[1,89]},{11:[1,90]},{28:[1,91]},{28:[1,92]},o($Vn,[2,38],{29:[1,93]}),{11:[1,94]},{28:[1,95]},o($Vn,[2,37]),o($Vn,[2,31]),{32:[1,96]},{32:[1,97]},o($Vn,[2,36]),{11:[1,98]},{28:[1,99]},{32:[1,100]},o($Vn,[2,35]),{28:[1,101]},o($Vn,[2,39])],
-defaultActions: {19:[2,1]},
+table: [{3:1,4:[1,2],5:3,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{1:[3]},{1:[2,1]},{4:[1,23],13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo},o($Vp,[2,3],{39:[1,34]}),o($Vp,[2,4]),o($Vp,[2,5]),o($Vp,[2,6],{40:[1,35]}),o($Vp,[2,7]),o($Vp,[2,8]),o($Vp,[2,9],{33:$Vq,34:$Vr,35:$Vs}),{5:39,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:40,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:41,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},o($Vp,[2,26]),{16:[1,42]},o($Vp,[2,29]),o($Vt,[2,55]),o($Vu,[2,57],{39:[1,43]}),o($Vp,[2,30],{30:[1,44]}),{32:[1,45]},{12:[1,46],35:[1,47]},{33:[1,48],34:[1,50],35:[1,49]},{1:[2,2]},{5:51,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:52,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:53,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:56,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,14:[1,54],15:$V5,16:$V6,19:[1,55],21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:58,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,14:[1,57],15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:59,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:60,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:61,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:62,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:63,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{38:[1,64]},o($Vu,[2,59]),o($Vv,[2,34]),{33:[1,65],35:[1,66]},o($Vv,[2,39]),{13:$Vf,14:$Vg,15:$Vh,17:[1,67],18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo},o($Vw,[2,24],{13:$Vf,22:$Vm,23:$Vn,24:$Vo}),o($Vw,[2,25],{13:$Vf,22:$Vm,23:$Vn,24:$Vo}),{5:70,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,17:[1,68],21:$V7,25:$V8,26:$V9,27:69,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{33:[1,71]},{12:$Vx,29:72,34:$Vc,35:$Vd},{12:$Vx,29:74,34:$Vc,35:$Vd},{33:[1,75],34:[1,76],35:[1,77]},{33:[1,78],34:[1,80],35:[1,79]},o($Vv,[2,38]),o($Vv,[2,40]),{33:[1,81],35:[1,82]},o([4,17,36,37],[2,10],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o([4,14,17,36,37],[2,11],{13:$Vf,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vw,[2,12],{13:$Vf,22:$Vm,23:$Vn,24:$Vo}),{5:83,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:84,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},o($Vy,[2,19],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),{5:85,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},o($Vy,[2,18],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o([4,14,17,20,36,37],[2,17],{13:$Vf,15:$Vh,18:$Vi,19:$Vj,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vw,[2,20],{13:$Vf,22:$Vm,23:$Vn,24:$Vo}),o($Vz,[2,21],{13:$Vf,24:$Vo}),o($Vz,[2,22],{13:$Vf,24:$Vo}),o([4,14,15,17,18,19,20,21,22,23,24,36,37],[2,23],{13:$Vf}),o($Vt,[2,56]),o($Vv,[2,36]),o($Vv,[2,45]),o($Vp,[2,13]),o($Vp,[2,27]),{17:[1,86],36:[1,87],37:[1,88]},o($VA,[2,50],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vu,[2,58]),o($Vp,[2,31]),{33:$Vq,34:$Vr,35:$Vs},o($Vp,[2,32],{30:[1,89]}),o($Vv,[2,35]),{33:[1,90]},o($Vv,[2,42]),o($Vv,[2,41]),o($Vv,[2,43]),{33:[1,91],35:[1,92]},o($Vv,[2,44]),o($Vv,[2,46]),o($Vy,[2,14],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vy,[2,16],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vy,[2,15],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vp,[2,28]),o($VA,[2,51],{6:4,9:7,28:16,29:19,5:93,7:$V0,8:$V1,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve}),o($VA,[2,52],{6:4,9:7,28:16,29:19,5:94,7:$V0,8:$V1,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve}),{12:$Vx,29:95,34:$Vc,35:$Vd},o($Vv,[2,37]),o($Vv,[2,47]),o($Vv,[2,49]),o($VA,[2,53],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($VA,[2,54],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vp,[2,33])],
+defaultActions: {2:[2,1],23:[2,2]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -14360,7 +14310,7 @@ var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
 case 0:/* skip whitespace */
 break;
-case 1:return 25;
+case 1:return 26;
 break;
 case 2:return 7;
 break;
@@ -14368,25 +14318,25 @@ case 3:return 8;
 break;
 case 4:
 	//js
-		if (yy.obj.type == 'cell') return 30;
-		return 35;
+		if (yy.obj.type == 'cell') return 31;
+		return 38;
 
 	/*php
-		if ($this->type == 'cell') return 30;
-		return 35;
+		if ($this->type == 'cell') return 31;
+		return 38;
 	*/
 
 break;
 case 5:
     //js
         yy_.yytext = yy_.yytext.substring(1, yy_.yytext.length - 1);
-        if (yy.obj.type == 'cell') return 30;
-        return 35;
+        if (yy.obj.type == 'cell') return 31;
+        return 38;
 
     /*php
         $yy_.yytext = substr($yy_.yytext, 1, -1);
-        if ($this->type == 'cell') return 30;
-        return 35;
+        if ($this->type == 'cell') return 31;
+        return 38;
     */
 
 break;
@@ -14396,70 +14346,78 @@ case 7:return 10;
 break;
 case 8:return 11;
 break;
-case 9:return 35;
+case 9:return 11;
 break;
-case 10:return 35;
+case 10:return 12;
 break;
-case 11:return 28;
+case 11:return 38;
 break;
-case 12:return 32;
+case 12:return 38;
 break;
-case 13:return 12;
+case 13:return 33;
 break;
-case 14:return ' ';
+case 14:return 34;
 break;
-case 15:return 36;
+case 15:return 13;
 break;
-case 16:return 29;
+case 16:return ' ';
 break;
-case 17:return 33;
+case 17:return 39;
 break;
-case 18:return 34;
+case 18:return 30;
 break;
-case 19:return 21;
+case 19:return 36;
 break;
-case 20:return 22;
+case 20:return 37;
 break;
-case 21:return 20;
+case 21:return 22;
 break;
-case 22:return 14;
+case 22:return 23;
 break;
-case 23:return 23;
+case 23:return 21;
 break;
 case 24:return 15;
 break;
-case 25:return 16;
+case 25:return 24;
 break;
-case 26:return 18;
+case 26:return 16;
 break;
 case 27:return 17;
 break;
 case 28:return 19;
 break;
-case 29:return 'PI';
+case 29:return 18;
 break;
-case 30:return 24;
+case 30:return 20;
 break;
-case 31:return '"';
+case 31:return 'PI';
 break;
-case 32:return "'";
+case 32:return 25;
 break;
-case 33:return "!";
+case 33:return '"';
 break;
-case 34:return 13;
+case 34:return "'";
 break;
-case 35:return 37;
+case 35:return '\"';
 break;
-case 36:return 10;
+case 36:return "\'";
 break;
-case 37:return '#';
+case 37:return "!";
 break;
-case 38:return 5;
+case 38:return 14;
+break;
+case 39:return 40;
+break;
+case 40:return 35;
+break;
+case 41:return '#';
+break;
+case 42:return 4;
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:([A-Za-z]{1,})([A-Za-z_0-9]+)?(?=[(]))/,/^(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/,/^(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/,/^(?:(([A-Za-z0-9]+))(?=[!]))/,/^(?:(('(\\[']|[^'])*')|("(\\["]|[^"])*"))(?=[!]))/,/^(?:(('(\\[']|[^'])*')))/,/^(?:(("(\\["]|[^"])*")))/,/^(?:[A-Z]+(?=[0-9$]))/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/,/^(?:[A-Za-z_]+)/,/^(?:[0-9]+)/,/^(?:\$)/,/^(?:&)/,/^(?: )/,/^(?:[.])/,/^(?::)/,/^(?:;)/,/^(?:,)/,/^(?:\*)/,/^(?:\/)/,/^(?:-)/,/^(?:\+)/,/^(?:\^)/,/^(?:\()/,/^(?:\))/,/^(?:>)/,/^(?:<)/,/^(?:NOT\b)/,/^(?:PI\b)/,/^(?:E\b)/,/^(?:")/,/^(?:')/,/^(?:!)/,/^(?:=)/,/^(?:%)/,/^(?:#REF!)/,/^(?:[#])/,/^(?:$)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:([A-Za-z]{1,})([A-Za-z_0-9]+)?(?=[(]))/,/^(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/,/^(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/,/^(?:(([A-Za-z0-9]+))(?=[!]))/,/^(?:((['](\\[']|[^'])*['])|(["](\\["]|[^"])*["]))(?=[!]))/,/^(?:((['](\\[']|[^'])*['])))/,/^(?:((["](\\["]|[^"])*["])))/,/^(?:(([\\]['].+?[\\]['])))/,/^(?:(([\\]["].+?[\\]["])))/,/^(?:[A-Z]+(?=[0-9$]))/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/,/^(?:[A-Za-z_]+)/,/^(?:[0-9]+)/,/^(?:\$)/,/^(?:&)/,/^(?: )/,/^(?:[.])/,/^(?::)/,/^(?:;)/,/^(?:,)/,/^(?:\*)/,/^(?:\/)/,/^(?:-)/,/^(?:\+)/,/^(?:\^)/,/^(?:\()/,/^(?:\))/,/^(?:>)/,/^(?:<)/,/^(?:NOT\b)/,/^(?:PI\b)/,/^(?:E\b)/,/^(?:")/,/^(?:')/,/^(?:\\")/,/^(?:\\')/,/^(?:!)/,/^(?:=)/,/^(?:%)/,/^(?:#REF!)/,/^(?:[#])/,/^(?:$)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42],"inclusive":true}}
 });
 return lexer;
 })();
