@@ -1874,8 +1874,8 @@ $.sheet = {
 							rowBarClasses = jS.cl.barLeft + ' ' + jS.cl.uiBar,
 							colBarClasses = jS.cl.barTop + ' ' + jS.cl.uiBar,
 							loc,
-							loader = s.loader || {},
-							setupCell = loader.setupCell || null,
+							loader = (s.loader !== null ? s.loader : null),
+							setupCell = (loader !== null ? loader.setupCell : null),
 							controlX = jS.controls.bar.x.td[jS.i] || (jS.controls.bar.x.td[jS.i] = []),
 							controlY = jS.controls.bar.y.td[jS.i] || (jS.controls.bar.y.td[jS.i] = []),
 							tableSize = table.size();
@@ -4299,9 +4299,9 @@ $.sheet = {
 					var rows = jS.rows(table),
 						row,
 						col,
-						loader = s.loader || {},
+						loader = (s.loader !== null ? s.loader : null),
 						standardHeight = s.colMargin + 'px',
-						setRowHeight = loader.setRowHeight || function(sheetIndex, rowIndex, barTd) {
+						setRowHeight = (loader !== null ? loader.setRowHeight : function(sheetIndex, rowIndex, barTd) {
 							var sibling,
 								style,
 								height = standardHeight;
@@ -4312,7 +4312,7 @@ $.sheet = {
 							if (style.height !== undefined) height = style.height;
 
 							barTd.style.height = height;
-						};
+						});
 
 					rowStart = rowStart || 0;
 					rowEnd = rowEnd || rows.length - 1;
@@ -5026,10 +5026,10 @@ $.sheet = {
 						firstTr,
 						hasTBody,
 						hasColGroup,
-						loader = s.loader || {},
-						setWidth =  loader.setWidth || function(sheetIndex, columnIndex, colElement) {
+						loader = (s.loader !== null ? s.loader : null),
+						setWidth = (loader !== null ? loader.setWidth : function(sheetIndex, columnIndex, colElement) {
 							colElement.style.width = w;
-						};
+						});
 
 					if (i > -1) {
 						do {
@@ -5744,32 +5744,35 @@ $.sheet = {
 						cell,
 						fn,
 						cache,
-						lookupErrors = null,
+						foundSheet = false,
+						foundRow = false,
+						foundCell = false,
 						td,
 						loc,
-						jsonCell;
+						jsonCell,
+						errorResult = [];
 
-					if (this.jS === u) {
+					if (this === null || this.jS === u) {
 						//first detect if the cell exists if not return nothing
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
-							lookupErrors = s.error({error:jS.msg.notFoundSheet});
+							errorResult.push('#REF!');
 						} else {
-							if (lookupErrors === null && (row = sheet[rowIndex]) === undefined) {
-								lookupErrors = s.error({error:jS.msg.notFoundRow});
-							} else {
-								if (lookupErrors === null && (cell = row[colIndex]) === undefined) {
-									lookupErrors = s.error({error:jS.msg.notFoundColumn});
+							foundSheet = true;
+							if ((row = sheet[rowIndex]) !== undefined) {
+								foundRow = true;
+								if ((cell = row[colIndex]) !== undefined) {
+									foundCell = true;
 								}
 							}
 						}
 
-						if (lookupErrors !== null) {
-							if (s.loader !== u) {
+						if (foundCell === false) {
+							if (s.loader !== null) {
 								if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
-									return lookupErrors;
+									return errorResult.join('');
 								}
 							} else {
-								return lookupErrors;
+								return errorResult.join('');
 							}
 						}
 					} else {
@@ -5777,7 +5780,8 @@ $.sheet = {
 					}
 
 					if (cell === undefined) {
-						throw new Error("cell doesn't exist");
+						//return cell doesn't exist
+						return '';
 					}
 
 					cell.oldValue = cell.value; //we detect the last value, so that we don't have to update all cell, thus saving resources
@@ -5809,7 +5813,7 @@ $.sheet = {
 
 						cell.calcCount++;
 						if (cell.formula) {
-							try {
+							//try {
 								if (cell.formula.charAt(0) == '=') {
 									cell.formula = cell.formula.substring(1);
 								}
@@ -5827,9 +5831,9 @@ $.sheet = {
 								jS.callStack++;
 								formulaParser.setObj(cell);
 								cell.result = formulaParser.parse(cell.formula);
-							} catch (e) {
-								cell.result = e.toString();
-							}
+							//} catch (e) {
+							//	cell.result = e.toString();
+							//}
 							jS.callStack--;
 
 							if (cell.result && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
@@ -5854,7 +5858,7 @@ $.sheet = {
 							cache = jS.filterValue.call(cell);
 						}
 
-						if (s.loader) {
+						if (s.loader !== null) {
 							td = cell.td[0];
 							if (sheetIndex === u) sheetIndex = cell.sheet;
 							if (rowIndex === u || colIndex === u) {
@@ -6171,7 +6175,7 @@ $.sheet = {
 							|| (row = sheet[loc.row]) === u
 							|| (cell = row[loc.col]) === u
 						) {
-							if (s.loader) {
+							if (s.loader !== null) {
 								cell = s.loader.jitCell(sheetIndex, loc.row, loc.col);
 								if (cell === null) {
 									return null;
@@ -7127,7 +7131,7 @@ $.sheet = {
 
 
 				getSpreadsheetIndexByTitle: function(title) {
-					if (s.loader) {
+					if (s.loader !== null) {
 						var spreadsheetIndex = s.loader.getSpreadsheetIndexByTitle(title);
 						return spreadsheetIndex;
 					}
@@ -7239,7 +7243,7 @@ $.sheet = {
 
 
 
-							if (!s.loader) {
+							if (s.loader === null) {
 								for (i = 0; i < tables.length; i++) {
 									new Sheet.SpreadsheetUI(i, ui, tables[i], options);
 									jS.sheetCount++;
@@ -8100,7 +8104,7 @@ $.sheet = {
 					//table / tBody / tr / td
 
 					//if we are using a dataloader, get the size from that
-					if (s.loader) {
+					if (s.loader !== null) {
 						size = s.loader.size(table.spreadsheetIndex);
 
 						if (minSize !== null) {
@@ -8612,7 +8616,7 @@ $.sheet = {
 		if (s.origHtml.length) {
 			jS.openSheet(s.origHtml);
 		} else {
-			if (s.loader) {
+			if (s.loader !== null) {
 				while(loaderTables.length < s.loader.count) {
 					loaderTable = document.createElement('table');
 					loaderTable.setAttribute('title', s.loader.title(loaderTables.length));
