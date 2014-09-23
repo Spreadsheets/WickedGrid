@@ -1381,7 +1381,7 @@ var jFN = $.sheet.fn = {
             v = arrHelpers.flatten(arguments);
             v = arrHelpers.unique(v);
             loc = jS.getTdLocation(cell.td);
-            id = "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+            id = (this.id !== null ? this.id + '-dropdown' : "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I);
 
             select = document.createElement('select');
             select.setAttribute('name', id);
@@ -1396,10 +1396,6 @@ var jFN = $.sheet.fn = {
                 cell.value = this.value;
                 jS.calcDependencies.call(cell, cell.calcDependenciesLast);
             };
-
-			if (this.loaderCell !== undefined) {
-				jS.s.loader.setCellAttribute(this.loaderCell, 'id', id);
-			}
 
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
 
@@ -1453,7 +1449,7 @@ var jFN = $.sheet.fn = {
             loc = jS.getTdLocation(cell.td);
             $td = $(cell.td);
             inputs = [];
-            id = "radio" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+            id = (this.id !== null ? this.id + '-radio' : "radio" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I);
 
             radio = document.createElement('span');
             radio.className = 'jSRadio';
@@ -1461,10 +1457,6 @@ var jFN = $.sheet.fn = {
                 jS.cellEdit($td);
             };
             radio.jSCell = cell;
-
-			if (this.loaderCell !== undefined) {
-				jS.s.loader.setCellAttribute(this.loaderCell, 'id', id);
-			}
 
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(radio);
 
@@ -1543,10 +1535,11 @@ var jFN = $.sheet.fn = {
             loc = jS.getTdLocation(cell.td);
             checkbox = $([]);
             $td = $(cell.td);
-            id = "checkbox" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+            id = (this.id !== null ? this.id + 'checkbox' : "checkbox" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I);
             checkbox = document.createElement('input');
             checkbox.setAttribute('type', 'checkbox');
             checkbox.setAttribute('name', id);
+			checkbox.setAttribute('id', id);
             checkbox.className = id;
             checkbox.value = v;
             checkbox.onchange = function () {
@@ -1578,10 +1571,6 @@ var jFN = $.sheet.fn = {
                 jS.cellEdit($td);
             };
             html.cell = cell;
-
-			if (this.loaderCell !== undefined) {
-				jS.s.loader.setCellAttribute(this.loaderCell, 'id', id);
-			}
 
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 

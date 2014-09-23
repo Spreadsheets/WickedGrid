@@ -575,13 +575,21 @@ $.fn.extend({
 						},
 						date: function(value) {
 							var date = globalize.parseDate(value);
-							date.html = globalize.format(date, 'd');
-							return date;
+							if (date === null) {
+								return value;
+							} else {
+								date.html = globalize.format(date, 'd');
+								return date;
+							}
 						},
 						time: function(value) {
 							var date = globalize.parseDate(value);
-							date.html = globalize.format(date, 't');
-							return date;
+							if (date === null) {
+								return value;
+							} else {
+								date.html = globalize.format(date, 't');
+								return date;
+							}
 						},
 						currency: function(value) {
 							var num = (n(value) ? globalize.parseFloat(value) : value * 1),
@@ -1461,27 +1469,7 @@ $.sheet = {
 					tdMenu:'jSTdMenu',
 					title:'jSTitle',
 					enclosure:'jSEnclosure',
-					ui:'jSUI',
-					uiAutoFiller:'ui-state-active',
-					uiBar:'ui-widget-header',
-					uiBarHighlight:'ui-state-active',
-					uiBarHandleFreezeLeft:'ui-state-default',
-					uiBarHandleFreezeTop:'ui-state-default',
-					uiBarMenuTop:'ui-state-default',
-					uiTdActive:'ui-state-active',
-					uiTdHighlighted:'ui-state-highlight',
-					uiControl:'ui-widget-header ui-corner-top',
-					uiControlTextBox:'ui-widget-content',
-					uiFullScreen:'ui-widget-content ui-corner-all',
-					uiInPlaceEdit:'ui-state-highlight',
-					uiMenu:'ui-widget-header',
-					uiMenuUl:'ui-widget-header',
-					uiMenuLi:'ui-widget-header',
-					uiPane: 'ui-widget-content',
-					uiParent:'ui-widget-content ui-corner-all',
-					uiTable:'ui-widget-content',
-					uiTab:'ui-widget-header ui-corner-bottom',
-					uiTabActive:'ui-state-highlight'
+					ui:'jSUI'
 				},
 
 				/**
@@ -1525,7 +1513,7 @@ $.sheet = {
 					(this.obj.inPlaceEdit().destroy || emptyFN)();
 					s.parent
 						.trigger('sheetKill')
-						.removeClass(jS.cl.uiParent)
+						.removeClass(jS.theme.parent)
 						.html('');
 
 					s.parent[0].jS = u;
@@ -1642,7 +1630,8 @@ $.sheet = {
 						jS: jS,
 						state: [],
 						needsUpdated: true,
-						uneditable: td.getAttribute('data-uneditable') || false
+						uneditable: td.getAttribute('data-uneditable') || false,
+						id: td.getAttribute('id') || null
 					};
 
 					if (jSCell.formula && jSCell.formula.charAt(0) == '=') {
@@ -1728,7 +1717,8 @@ $.sheet = {
 						jS: jS,
 						state: [],
 						needsUpdated: true,
-						uneditable: false
+						uneditable: false,
+						id: null
 					};
 				},
 
@@ -1871,8 +1861,8 @@ $.sheet = {
 							offset,
 							width = s.newColumnWidth + 'px',
 							height = s.colMargin + 'px',
-							rowBarClasses = jS.cl.barLeft + ' ' + jS.cl.uiBar,
-							colBarClasses = jS.cl.barTop + ' ' + jS.cl.uiBar,
+							rowBarClasses = jS.cl.barLeft + ' ' + jS.theme.bar,
+							colBarClasses = jS.cl.barTop + ' ' + jS.theme.bar,
 							loc,
 							loader = (s.loader !== null ? s.loader : null),
 							setupCell = (loader !== null ? loader.setupCell : null),
@@ -2207,7 +2197,7 @@ $.sheet = {
 								tds = firstRow.children,
 								$handle = pane.freezeHandleTop = $(handle)
 									.appendTo(pane)
-									.addClass(jS.cl.uiBarHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
+									.addClass(jS.theme.barHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
 									.height(bar.height())
 									.css('left', (pos.left - handle.clientWidth) + 'px')
 									.attr('title', jS.msg.dragToFreezeCol);
@@ -2280,7 +2270,7 @@ $.sheet = {
 								trs = pane.table.tBody.children,
 								$handle = pane.freezeHandleLeft = $(handle)
 									.appendTo(pane)
-									.addClass(jS.cl.uiBarHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
+									.addClass(jS.theme.barHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
 									.width(bar.width())
 									.css('top', (pos.top - handle.clientHeight) + 'px')
 									.attr('title', jS.msg.dragToFreezeRow);
@@ -2343,17 +2333,17 @@ $.sheet = {
 						switch (bar) {
 							case "top":
 								menu = $(document.createElement('div'))
-									.addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
+									.addClass(jS.theme.menu + ' ' + jS.cl.tdMenu);
 								jS.controls.bar.x.menu[jS.i] = menu;
 								break;
 							case "left":
 								menu = $(document.createElement('div'))
-									.addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
+									.addClass(jS.theme.menu + ' ' + jS.cl.tdMenu);
 								jS.controls.bar.y.menu[jS.i] = menu;
 								break;
 							case "cell":
 								menu = $(document.createElement('div'))
-									.addClass(jS.cl.uiMenu + ' ' + jS.cl.tdMenu);
+									.addClass(jS.theme.menu + ' ' + jS.cl.tdMenu);
 								jS.controls.tdMenu[jS.i] = menu;
 								break;
 						}
@@ -2438,7 +2428,7 @@ $.sheet = {
 							if (!barMenuParentTop.length) {
 
 								barMenuParentTop = $(document.createElement('div'))
-									.addClass(jS.cl.uiBarMenuTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barTopMenuButton)
+									.addClass(jS.theme.barMenuTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barTopMenuButton)
 									.append(
 										$(document.createElement('span'))
 											.addClass('ui-icon ui-icon-triangle-1-s')
@@ -2566,7 +2556,7 @@ $.sheet = {
 
 						header.appendChild(firstRow);
 						firstRow.appendChild(firstRowTr);
-						header.className = jS.cl.header + ' ' + jS.cl.uiControl;
+						header.className = jS.cl.header + ' ' + jS.theme.control;
 
 						jS.controls.header = $(header);
 
@@ -2593,11 +2583,11 @@ $.sheet = {
 							if (menu.is('ul')) {
 								menu
 									.find("ul").hide()
-									.addClass(jS.cl.uiMenuUl);
+									.addClass(jS.theme.menuUl);
 
 								menu
 									.find("li")
-									.addClass(jS.cl.uiMenuLi)
+									.addClass(jS.theme.menuLi)
 									.hover(function () {
 										$(this).find('ul:first')
 											.hide()
@@ -2638,12 +2628,12 @@ $.sheet = {
 							}
 
 							label = document.createElement('td');
-							label.className = jS.cl.label + ' ' + jS.cl.uiControl;
+							label.className = jS.cl.label + ' ' + jS.theme.control;
 							jS.controls.label = $(label);
 
 							//Edit box menu
 							formula = document.createElement('textarea');
-							formula.className = jS.cl.formula + ' ' + jS.cl.uiControlTextBox;
+							formula.className = jS.cl.formula + ' ' + jS.theme.controlTextBox;
 							formula.onkeydown = jS.evt.formula.keydown;
 							formula.onkeyup = function () {
 								jS.obj.inPlaceEdit().value = this.value;
@@ -2719,7 +2709,7 @@ $.sheet = {
 					sheetAdder: function () {
 						var addSheet = document.createElement('span');
 						if (jS.isSheetEditable()) {
-							addSheet.setAttribute('class', jS.cl.sheetAdder + ' ' + jS.cl.tab + ' ' + jS.cl.uiTab);
+							addSheet.setAttribute('class', jS.cl.sheetAdder + ' ' + jS.cl.tab + ' ' + jS.theme.tab);
 							addSheet.setAttribute('title', jS.msg.addSheet);
 							addSheet.innerHTML = '+';
 							addSheet.style.height = addSheet.style.width = s.colMargin + 'px';
@@ -2992,7 +2982,7 @@ $.sheet = {
 						enclosure.scrollUI = pane.scrollUI = scrollUI;
 						enclosure.appendChild(enclosure.scrollUI);
 
-						pane.setAttribute('class', jS.cl.pane + ' ' + jS.cl.uiPane);
+						pane.setAttribute('class', jS.cl.pane + ' ' + jS.theme.pane);
 						enclosure.appendChild(pane);
 						enclosure.setAttribute('class', jS.cl.enclosure);
 
@@ -3024,7 +3014,7 @@ $.sheet = {
 						var tab = document.createElement('span'),
 							$tab = jS.controls.tab[jS.i] = $(tab).appendTo(jS.obj.tabContainer());
 
-						tab.setAttribute('class', jS.cl.tab + ' ' + jS.cl.uiTab);
+						tab.setAttribute('class', jS.cl.tab + ' ' + jS.theme.tab);
 						jS.sheetTab(true, function(sheetTitle) {
 							tab.innerHTML = sheetTitle;
 						});
@@ -3039,7 +3029,7 @@ $.sheet = {
 						var tab = document.createElement('span'),
 							$tab = $(tab).appendTo(jS.obj.tabContainer());
 
-						tab.setAttribute('class', jS.cl.tab + ' ' + jS.cl.uiTab);
+						tab.setAttribute('class', jS.cl.tab + ' ' + jS.theme.tab);
 						tab.innerHTML = title;
 
 						return $tab;
@@ -3075,7 +3065,7 @@ $.sheet = {
 						$textarea = $(textarea);
 						pane.inPlaceEdit = textarea;
 						textarea.i = jS.i;
-						textarea.className = jS.cl.inPlaceEdit + ' ' + jS.cl.uiInPlaceEdit;
+						textarea.className = jS.cl.inPlaceEdit + ' ' + jS.theme.inPlaceEdit;
 						textarea.td = td[0];
 						textarea.goToTd = function() {
 							this.offset = td.position();
@@ -3150,7 +3140,7 @@ $.sheet = {
 
 						autoFiller.i = jS.i;
 
-						autoFiller.className = jS.cl.autoFiller + ' ' + jS.cl.uiAutoFiller;
+						autoFiller.className = jS.cl.autoFiller + ' ' + jS.theme.autoFiller;
 						handle.className = jS.cl.autoFillerHandle;
 						cover.className = jS.cl.autoFillerCover;
 
@@ -4172,7 +4162,7 @@ $.sheet = {
 							fullScreen = document.createElement('div'),
 							events = $._data(s.parent[0], 'events');
 
-						fullScreen.className = jS.cl.fullScreen + ' ' + jS.cl.uiFullScreen + ' ' + jS.cl.parent;
+						fullScreen.className = jS.cl.fullScreen + ' ' + jS.theme.fullScreen + ' ' + jS.cl.parent;
 
 						fullScreen.origParent = parent;
 						s.parent = jS.controls.fullScreen = $(fullScreen)
@@ -4252,7 +4242,7 @@ $.sheet = {
 					var $table = $(table);
 					jS.controls.table[jS.i] = $table
 						.addClass(jS.cl.table)
-						.addClass(jS.cl.uiTable)
+						.addClass(jS.theme.table)
 						.attr('id', jS.id + jS.i)
 						.attr('border', '1px')
 						.attr('cellpadding', '0')
@@ -4359,7 +4349,7 @@ $.sheet = {
 									td.type = 'bar';
 									td.entity = 'left';
 									td.innerHTML = row;
-									td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.cl.uiBar;
+									td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.theme.bar;
 									setRowHeight.call(loader, i, row, td);
 								}
 
@@ -4367,13 +4357,13 @@ $.sheet = {
 									td.type = 'bar';
 									td.entity = 'top';
 									td.innerHTML = jSE.columnLabelString(col);
-									td.className = jS.cl.barTop + ' ' + jS.cl.barTop + '_' + jS.i + ' ' + jS.cl.uiBar;
+									td.className = jS.cl.barTop + ' ' + jS.cl.barTop + '_' + jS.i + ' ' + jS.theme.bar;
 								}
 
 								if (row == 0 && col == 0) { //corner
 									td.type = 'bar';
 									td.entity = 'corner';
-									td.className = jS.cl.uiBar + ' ' + ' ' + jS.cl.barCorner;
+									td.className = jS.theme.bar + ' ' + ' ' + jS.cl.barCorner;
 									jS.controls.bar.corner[jS.i] = td;
 								}
 							}
@@ -5117,6 +5107,11 @@ $.sheet = {
 				},
 
 				/**
+				 * @type Sheet.Theme
+				 */
+				theme: null,
+
+				/**
 				 * @type Sheet.Highlighter
 				 */
 				highlighter: null,
@@ -5334,11 +5329,11 @@ $.sheet = {
 					sheets = (makeClone ? sheets.clone() : sheets);
 
 					//Get rid of highlighted cells and active cells
-					sheets.find('td.' + jS.cl.uiTdActive)
-						.removeClass(jS.cl.uiTdActive);
+					sheets.find('td.' + jS.theme.tdActive)
+						.removeClass(jS.theme.tdActive);
 
-					sheets.find('td.' + jS.cl.uiTdHighlighted)
-						.removeClass(jS.cl.uiTdHighlighted);
+					sheets.find('td.' + jS.theme.tdHighlighted)
+						.removeClass(jS.theme.tdHighlighted);
 					return sheets;
 				},
 
@@ -5744,22 +5739,20 @@ $.sheet = {
 						cell,
 						fn,
 						cache,
-						foundSheet = false,
-						foundRow = false,
-						foundCell = false,
+						foundCell,
 						td,
 						loc,
 						jsonCell,
-						errorResult = [];
+						errorResult = '';
 
 					if (this === null || this.jS === u) {
+						foundCell = false;
 						//first detect if the cell exists if not return nothing
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
-							errorResult.push('#REF!');
+							errorResult = new String(errorResult);
+							errorResult.html = '#REF!';
 						} else {
-							foundSheet = true;
 							if ((row = sheet[rowIndex]) !== undefined) {
-								foundRow = true;
 								if ((cell = row[colIndex]) !== undefined) {
 									foundCell = true;
 								}
@@ -5769,10 +5762,10 @@ $.sheet = {
 						if (foundCell === false) {
 							if (s.loader !== null) {
 								if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
-									return errorResult.join('');
+									return errorResult;
 								}
 							} else {
-								return errorResult.join('');
+								return errorResult;
 							}
 						}
 					} else {
@@ -5813,7 +5806,7 @@ $.sheet = {
 
 						cell.calcCount++;
 						if (cell.formula) {
-							//try {
+							try {
 								if (cell.formula.charAt(0) == '=') {
 									cell.formula = cell.formula.substring(1);
 								}
@@ -5831,9 +5824,9 @@ $.sheet = {
 								jS.callStack++;
 								formulaParser.setObj(cell);
 								cell.result = formulaParser.parse(cell.formula);
-							//} catch (e) {
-							//	cell.result = e.toString();
-							//}
+							} catch (e) {
+								cell.result = e.toString();
+							}
 							jS.callStack--;
 
 							if (cell.result && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
@@ -8525,7 +8518,9 @@ $.sheet = {
 			jS.formulaParser = window.Formula(jS.cellHandler);
 		}
 
-		jS.highlighter = new Sheet.Highlighter(jS.cl.uiTdHighlighted, jS.cl.uiBarHighlight, jS.cl.uiTabActive, function() {
+		jS.theme = new Sheet.Theme(s.theme);
+
+		jS.highlighter = new Sheet.Highlighter(jS.theme.tdHighlighted, jS.theme.barHighlight, jS.theme.tabActive, function() {
 			//Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
 			jS.obj.pane().actionUI.redraw();
 		});
@@ -8611,7 +8606,7 @@ $.sheet = {
 
 		jS.s = s;
 
-		s.parent.addClass(jS.cl.uiParent);
+		s.parent.addClass(jS.theme.parent);
 
 		if (s.origHtml.length) {
 			jS.openSheet(s.origHtml);

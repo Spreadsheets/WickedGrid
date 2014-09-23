@@ -399,24 +399,25 @@ cell
     }
 
 	//invalid
-	| REF NUMBER {return 'REF';}
-	| LETTERS REF {return 'REF';}
-	| REF REF {return 'REF';}
+	| REF {return '#REF!';}
+	| REF NUMBER {return '#REF!';}
+	| LETTERS REF {return '#REF!';}
+	| REF REF {return '#REF!';}
 
 	//invalid
-    | '$' REF NUMBER {return 'REF';}
-    | '$' LETTERS REF {return 'REF';}
-    | '$' REF REF {return 'REF';}
+    | '$' REF NUMBER {return '#REF!';}
+    | '$' LETTERS REF {return '#REF!';}
+    | '$' REF REF {return '#REF!';}
 
 	//invalid
-    | REF '$' NUMBER {return 'REF';}
-    | LETTERS '$' REF {return 'REF';}
-    | REF '$' REF {return 'REF';}
+    | REF '$' NUMBER {return '#REF!';}
+    | LETTERS '$' REF {return '#REF!';}
+    | REF '$' REF {return '#REF!';}
 
 	//invalid
-	| '$' REF '$' NUMBER {return 'REF';}
-    | '$' LETTERS '$' NUMBER {return 'REF';}
-    | '$' REF '$' REF {return 'REF';}
+	| '$' REF '$' NUMBER {return '#REF!';}
+    | '$' LETTERS '$' NUMBER {return '#REF!';}
+    | '$' REF '$' REF {return '#REF!';}
 ;
 
 expseq :

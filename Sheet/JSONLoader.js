@@ -111,6 +111,9 @@
             if (cell['rowspan']) blankTd.setAttribute('rowspan', cell['rowspan'] || '');
             if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
             if (cell['uneditable']) blankTd.setAttribute('data-uneditable', cell['uneditable'] || '');
+			if (cell['id']) {
+				blankTd.setAttribute('id', blankCell.id = cell['id']);
+			}
 
 			blankTd.jSCell = blankCell;
 			blankCell.td = $(blankTd);
@@ -162,7 +165,8 @@
 				uneditable: cell['uneditable'],
 				type: 'cell',
 				sheet: sheetIndex,
-				dependencies: []
+				dependencies: [],
+				id: null
 			}
 
 			cell.getJitCell = function() {
@@ -304,6 +308,7 @@
                         if (column['uneditable']) td.html(column['uneditable'] || '');
                         if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
                         if (column['colspan']) td.attr('colspan', column['colspan'] || '');
+						if (column['id']) td.attr('id', column['id'] || '');
 						if (column['cache']) td.html(column['cache']);
                     }
                 }
@@ -358,8 +363,9 @@
                  *                  "formula": "=cell formula", //optional
                  *                  "value": "value", //optional
                  *                  "style": "css cell style", //optional
-                 *                  "uneditable": false,
-                 *                  "cache": ""
+                 *                  "uneditable": false,  //optional
+                 *                  "cache": "",  //optional
+                 *                  "id": "" //optional
                  *              },
                  *              {} //column B
                  *          ]
@@ -373,8 +379,9 @@
                  *                  "formula": "=cell formula", //optional
                  *                  "value": "value", //optional
                  *                  "style": "css cell style", //optional
-                 *                  "uneditable": true,
-                 *                  "cache": ""
+                 *                  "uneditable": true, //optional
+                 *                  "cache": "", //optional
+                 *                  "id": "" //optional
                  *              },
                  *              {} // column B
                  *          ]
@@ -459,6 +466,7 @@
                             if (cell['value']) jsonColumn['value'] = cell['value'];
 							if (cell['uneditable']) jsonColumn['uneditable'] = cell['uneditable'];
 							if (cell['cache']) jsonColumn['cache'] = cell['cache'];
+							if (cell['id']) jsonColumn['id'] = cell['id'];
                             if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
 
 
