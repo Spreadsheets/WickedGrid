@@ -33,7 +33,7 @@
                     case "json": trim = true;
 	                case "json_trim":
 		                loader = new Sheet.JSONLoader();
-	                    json = loader.fromTables(jS, trim);
+	                    json = loader.fromSheet(jS, trim);
 	                    tables = loader.toTables();
 
                         $dtsValue.val(JSON.stringify(json));
@@ -42,7 +42,7 @@
 		                trim = true;
 	                case "xml_trim":
 		                loader = new Sheet.XMLLoader();
-	                    xml = loader.fromTables(jS, trim);
+	                    xml = loader.fromSheet(jS, trim);
 	                    tables = loader.toTables();
 			            new Sheet.XMLLoader(xml);
 
@@ -108,7 +108,7 @@
                     </tr>
                     <tr>
                         <td></td>
-                        <td></td>
+                        <td data-formula="=DROPDOWN(1,2,3,4,5)" id="rating1">4</td>
                         <td></td>
                         <td></td>
                         <td></td>

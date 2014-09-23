@@ -26,6 +26,7 @@ JS_FILES=(
 	Base.js
 	ActionUI.js
 	SpreadsheetUI.js
+	Theme.js
 	Highlighter.js
 	ColumnAdder.js
 	RowAdder.js
