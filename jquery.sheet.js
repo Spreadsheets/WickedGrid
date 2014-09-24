@@ -239,14 +239,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 scrolledTo = this.scrolledArea.end;
 
                 if (direction.left) {
-					console.log('left');
                     x--;
                     this.scrollTo({
                         axis:'x',
                         value:scrolledTo.col - 1
                     });
                 } else if (direction.right) {
-					console.log('right');
                     x++;
                     this.scrollTo({
                         axis:'x',
@@ -255,14 +253,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 }
 
                 if (direction.up) {
-					console.log('up');
                     y--;
                     this.scrollTo({
                         axis:'y',
                         value:scrolledTo.row - 1
                     });
                 } else if (direction.down) {
-					console.log('down');
 					y++;
                     this.scrollTo({
                         axis:'y',
@@ -1178,15 +1174,17 @@ Sheet.StyleUpdater = (function(document) {
 						td.setAttribute('data-formula', cell['formula'] || '');
 						$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
 					} else {
-						td.innerHTML = cell['value'] || '';
+						$td.html(cell['value']);
 					}
 				} else {
 					cell = createCellFn(td);
+					cell.value = jsonCell['value'];
 					if (jsonCell['formula']) {
 						cell.formula = jsonCell['formula'] || '';
 						td.setAttribute('data-formula', jsonCell['formula'] || '');
 					} else {
-						td.innerHTML = jsonCell['value'] || '';
+						console.log(jsonCell['value']);
+						$td.html(jsonCell['value']);
 					}
 				}
 

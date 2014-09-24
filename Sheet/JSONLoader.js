@@ -82,15 +82,17 @@
 						td.setAttribute('data-formula', cell['formula'] || '');
 						$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
 					} else {
-						td.innerHTML = cell['value'] || '';
+						$td.html(cell['value']);
 					}
 				} else {
 					cell = createCellFn(td);
+					cell.value = jsonCell['value'];
 					if (jsonCell['formula']) {
 						cell.formula = jsonCell['formula'] || '';
 						td.setAttribute('data-formula', jsonCell['formula'] || '');
 					} else {
-						td.innerHTML = jsonCell['value'] || '';
+						console.log(jsonCell['value']);
+						$td.html(jsonCell['value']);
 					}
 				}
 
