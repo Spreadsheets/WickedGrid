@@ -1,9 +1,12 @@
 Sheet.Theme = (function($) {
 	function Constructor(theme) {
+		theme = theme || Sheet.defaultTheme;
+
 		switch (theme) {
 			case Sheet.customTheme:
 				this.cl = Constructor.customClasses;
 				break;
+
 
 			case Sheet.bootstrapTheme:
 				this.cl = Constructor.bootstrapClasses;
@@ -11,7 +14,6 @@ Sheet.Theme = (function($) {
 
 			default:
 			case Sheet.themeRollerTheme:
-
 				this.cl = Constructor.themeRollerClasses;
 				break;
 		}
@@ -33,12 +35,14 @@ Sheet.Theme = (function($) {
 		fullScreen:'ui-widget-content ui-corner-all',
 		inPlaceEdit:'ui-state-highlight',
 		menu:'ui-widget-header',
+		menuFixed: '',
 		menuUl:'ui-widget-header',
 		menuLi:'ui-widget-header',
+		menuHover: 'ui-state-highlight',
 		pane: 'ui-widget-content',
 		parent:'ui-widget-content ui-corner-all',
 		table:'ui-widget-content',
-		tab:'ui-widget-header ui-corner-bottom',
+		tab:'ui-widget-header',
 		tabActive:'ui-state-highlight',
 		barResizer:'ui-state-highlight',
 		barFreezer:'ui-state-highlight',
@@ -55,16 +59,18 @@ Sheet.Theme = (function($) {
 		tdActive:'active',
 		tdHighlighted:'bg-info',
 		control:'bg-primary',
-		controlTextBox:'',
+		controlTextBox:'form-control',
 		fullScreen:'',
 		inPlaceEdit:'form-control',
-		menu:'',
-		menuUl:'',
-		menuLi:'',
+		menu:'panel panel-default',
+		menuFixed: 'nav navbar-nav',
+		menuUl:'panel-info',
+		menuLi:'active',
+		menuHover: 'bg-primary active',
 		pane: 'well',
 		parent:'panel panel-default',
 		table:'table table-bordered table-condensed',
-		tab:'btn btn-default btn-xs',
+		tab:'btn-default btn-xs',
 		tabActive:'active',
 		barResizer:'bg-info',
 		barFreezer:'bg-warning',
@@ -85,8 +91,10 @@ Sheet.Theme = (function($) {
 		fullScreen:'',
 		inPlaceEdit:'',
 		menu:'',
+		menuFixed: '',
 		menuUl:'',
 		menuLi:'',
+		menuHover: '',
 		pane: '',
 		parent:'',
 		table:'',

@@ -161,8 +161,9 @@
 				type: 'cell',
 				sheet: sheetIndex,
 				dependencies: [],
-				id: null
-			}
+				id: null,
+				loadedFrom: cell
+			};
 
 			cell.getJitCell = function() {
 				return jitCell;

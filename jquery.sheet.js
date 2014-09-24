@@ -24,6 +24,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
     "use strict";
 
     var Sheet = {
+	defaultTheme: 0,
 	themeRollerTheme: 0,
 	bootstrapTheme: 1,
 	customTheme: 2,
@@ -584,10 +585,13 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 	return Constructor;
 })();Sheet.Theme = (function($) {
 	function Constructor(theme) {
+		theme = theme || Sheet.defaultTheme;
+
 		switch (theme) {
 			case Sheet.customTheme:
 				this.cl = Constructor.customClasses;
 				break;
+
 
 			case Sheet.bootstrapTheme:
 				this.cl = Constructor.bootstrapClasses;
@@ -595,7 +599,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			default:
 			case Sheet.themeRollerTheme:
-
 				this.cl = Constructor.themeRollerClasses;
 				break;
 		}
@@ -617,12 +620,14 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		fullScreen:'ui-widget-content ui-corner-all',
 		inPlaceEdit:'ui-state-highlight',
 		menu:'ui-widget-header',
+		menuFixed: '',
 		menuUl:'ui-widget-header',
 		menuLi:'ui-widget-header',
+		menuHover: 'ui-state-highlight',
 		pane: 'ui-widget-content',
 		parent:'ui-widget-content ui-corner-all',
 		table:'ui-widget-content',
-		tab:'ui-widget-header ui-corner-bottom',
+		tab:'ui-widget-header',
 		tabActive:'ui-state-highlight',
 		barResizer:'ui-state-highlight',
 		barFreezer:'ui-state-highlight',
@@ -639,16 +644,18 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		tdActive:'active',
 		tdHighlighted:'bg-info',
 		control:'bg-primary',
-		controlTextBox:'',
+		controlTextBox:'form-control',
 		fullScreen:'',
 		inPlaceEdit:'form-control',
-		menu:'',
-		menuUl:'',
-		menuLi:'',
+		menu:'panel panel-default',
+		menuFixed: 'nav navbar-nav',
+		menuUl:'panel-info',
+		menuLi:'active',
+		menuHover: 'bg-primary active',
 		pane: 'well',
 		parent:'panel panel-default',
 		table:'table table-bordered table-condensed',
-		tab:'btn btn-default btn-xs',
+		tab:'btn-default btn-xs',
 		tabActive:'active',
 		barResizer:'bg-info',
 		barFreezer:'bg-warning',
@@ -669,8 +676,10 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		fullScreen:'',
 		inPlaceEdit:'',
 		menu:'',
+		menuFixed: '',
 		menuUl:'',
 		menuLi:'',
+		menuHover: '',
 		pane: '',
 		parent:'',
 		table:'',
@@ -1253,8 +1262,9 @@ Sheet.StyleUpdater = (function(document) {
 				type: 'cell',
 				sheet: sheetIndex,
 				dependencies: [],
-				id: null
-			}
+				id: null,
+				loadedFrom: cell
+			};
 
 			cell.getJitCell = function() {
 				return jitCell;
@@ -4344,7 +4354,7 @@ $.sheet = {
 					 * @memberOf jS.controlFactory
 					 */
 					menu:function (bar, menuItems) {
-						var menu, buttons = $([]);
+						var menu, buttons = $([]), hoverClass = jS.theme.menuHover;
 
 						switch (bar) {
 							case "top":
@@ -4389,10 +4399,10 @@ $.sheet = {
 											})
 											.appendTo(menu)
 											.hover(function() {
-												buttons.removeClass('ui-state-highlight');
-												$(this).addClass('ui-state-highlight');
+												buttons.removeClass(hoverClass);
+												$(this).addClass(hoverClass);
 											}, function() {
-												$(this).removeClass('ui-state-highlight');
+												$(this).removeClass(hoverClass);
 											})
 									);
 
@@ -4619,11 +4629,13 @@ $.sheet = {
 						if (jS.isSheetEditable()) {
 							if (s.menuLeft) {
 								menuLeft = document.createElement('td');
-								menuLeft.className = jS.cl.menu + ' ' + jS.cl.menuFixed;
+								menuLeft.className = jS.cl.menu + ' ' + jS.cl.menuFixed + ' ' + jS.theme.menuFixed;
 								firstRowTr.insertBefore(menuLeft, title);
 
 								jS.controls.menuLeft[jS.i] = $(menuLeft)
-									.append(makeMenu(s.menuLeft));
+									.append(makeMenu(s.menuLeft))
+									.children()
+									.addClass(jS.theme.menuFixed);
 
 								jS.controls.menuLeft[jS.i].find('img').load(function () {
 									jS.sheetSyncSize();
@@ -4636,7 +4648,9 @@ $.sheet = {
 								firstRowTr.appendChild(menuRight);
 
 								jS.controls.menuRight[jS.i] = $(menuRight)
-									.append(makeMenu(s.menuRight));
+									.append(makeMenu(s.menuRight))
+									.children()
+									.addClass(jS.theme.menuFixed);
 
 								jS.controls.menuRight[jS.i].find('img').load(function () {
 									jS.sheetSyncSize();
@@ -7850,6 +7864,10 @@ $.sheet = {
 								jS.callStack++;
 								formulaParser.setObj(cell);
 								cell.result = formulaParser.parse(cell.formula);
+
+								if (cell.hasOwnProperty('loadedFrom')) {
+									s.loader.setCellAttribute(cell.loadedFrom, 'cache', cell.result);
+								}
 							} catch (e) {
 								cell.result = e.toString();
 							}
@@ -9354,7 +9372,7 @@ $.sheet = {
 					if (tabContainerInnerWidth > tabContainerOuterWidth) {
 						tabContainerStyle.height = heightTabContainer;
 						$tabContainer.addClass(jS.cl.tabContainerScrollable);
-						h -= s.colMargin;
+						h -= scrollBarWidth;
 					} else {
 						tabContainerStyle.height = null;
 						$tabContainer.removeClass(jS.cl.tabContainerScrollable);
