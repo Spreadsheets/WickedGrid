@@ -2273,9 +2273,7 @@ $.sheet = {
 									.appendTo(pane)
 									.addClass(jS.theme.barHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
 									.width(bar.width())
-									.css({
-										'top': (pos.top - handle.clientHeight) + 'px'
-									})
+									.css('top', (pos.top - handle.clientHeight + 1) + 'px')
 									.attr('title', jS.msg.dragToFreezeRow);
 
 							jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
@@ -2672,6 +2670,9 @@ $.sheet = {
 							formulaParent.appendChild(formulaResize);
 							secondRowTr.appendChild(label);
 							secondRowTr.appendChild(formulaParent);
+
+							//spacer
+							secondRowTr.appendChild(document.createElement('td'));
 
 							jS.resizableSheet($(formulaResize), {
 								minHeight:jS.controls.formula.height(),
