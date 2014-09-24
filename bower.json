@@ -40,6 +40,7 @@
     "Javascript-Undo-Manager": "*",
     "ThemeSwitcher": "https://github.com/josephbulger/ThemeSwitcher.git",
     "jquery-ui": "~1.11.0",
-    "MouseWheel": "https://github.com/robertleeplummerjr/MouseWheel.git"
+    "MouseWheel": "https://github.com/robertleeplummerjr/MouseWheel.git",
+    "bootstrap": "~3.2.0"
   }
 }

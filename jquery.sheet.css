@@ -9,8 +9,9 @@
 
 .jSParent .jSFormula
 {
-	width: 99%;
-    height: 17px;
+	width: 100%;
+    height: 24px;
+	font-weight: normal;
 }
 
 .jSParent .jSFormulaParent
@@ -178,6 +179,7 @@
 	display: block;
 	position: absolute;
 	text-align: center;
+	min-width: 18px;
 }
 .jSParent .jSTab {
 	cursor: pointer;
@@ -226,7 +228,7 @@
 	color:  inherit ! important;
 	background-image: none ! important;
 }
-.jSParent .jS td {
+.jSParent .jS td, .jSParent .jS th {
 	height: inherit;
 	border-width: 0px 0px 1px 1px;
 	border-color: inherit;
@@ -242,16 +244,17 @@
 	-ms-text-overflow: ellipsis;
 }
 
-.jSParent .jS td.jSBarCorner {
+.jSParent .jS th.jSBarCorner {
 	border-width: 0px 0px 1px 0px;
 }
 
-.jSParent .jS td.jSBarLeft {
+.jSParent .jS th.jSBarLeft {
 	border-width: 0px 0px 1px 0px;
 }
 
-.jSParent .jS td.jSBarTop {
+.jSParent .jS th.jSBarTop {
 	border-width: 0px 0px 1px 1px;
+	text-align: center;
 }
 
 .jSParent .jSCellHighighted {
@@ -298,10 +301,13 @@
 	border: none ! important;
 	position: absolute ! important;
 }
-
+.jSParent .jSBarTopParent .jSBarController {
+	height: 0 !important;
+	max-height: 0 !important;
+}
 .jSParent .jSBarTopParent .jSBarController .ui-resizable-handle {
 	width: 10px;
-	top: -3px;
+	top: -1px !important;
 	right: -6px;
 	border-top-width: 0px;
 	border-bottom-width: 0px;
@@ -342,7 +348,7 @@
 
 .jSParent .jSBarHandleFreezeTop
 {
-	top: 1px ! important;
+	top: 1px;
 	cursor: move ! important;
 	width: 10px;
 	position: absolute;
@@ -351,7 +357,7 @@
 
 .jSParent .jSBarHandleFreezeLeft
 {
-	left: 1px ! important;
+	left: 0px;
 	cursor: move ! important;
 	height: 10px;
 	position: absolute;

@@ -1442,6 +1442,7 @@ $.sheet = {
 					autoFillerCover:'jSAutoFillerCover',
 					barCorner:'jSBarCorner',
 					barController:'jSBarController',
+					barControllerChild: 'jSBarControllerChild',
 					barHelper:'jSBarHelper',
 					barLeft:'jSBarLeft',
 					barHandleFreezeLeft:'jSBarHandleFreezeLeft',
@@ -1892,7 +1893,7 @@ $.sheet = {
 
 								o.setCreateBarFn(function (at) {
 									var barParent = document.createElement('tr'),
-										bar = document.createElement('td');
+										bar = document.createElement('th');
 
 									bar.setAttribute('class', rowBarClasses);
 									bar.entity = 'left';
@@ -1958,7 +1959,7 @@ $.sheet = {
 								o.setCreateBarFn(function(at) {
 									var barParent = tBody.children[0],
 										col = document.createElement('col'),
-										topBar = document.createElement('td'),
+										topBar = document.createElement('th'),
 										leftBar,
 										rowParent = tBody.children[1]; //the very first row may not exist yet
 
@@ -1971,7 +1972,7 @@ $.sheet = {
 
 									//If the row has not been created lets set it up
 									if (rowParent === undefined) {
-										leftBar = document.createElement('td');
+										leftBar = document.createElement('th');
 										leftBar.setAttribute('class', rowBarClasses);
 										leftBar.entity = 'left';
 										leftBar.type = 'bar';
@@ -2092,7 +2093,7 @@ $.sheet = {
 						//table / tBody / tr
 						if (i > 0) {
 							do {
-								tr[i].insertBefore(document.createElement('td'), tr[i].children[0]);
+								tr[i].insertBefore(document.createElement('th'), tr[i].children[0]);
 							} while(i-- > 1); //We only go till row 1, row 0 is handled by barTop with corner etc
 						}
 					},
@@ -2109,7 +2110,7 @@ $.sheet = {
 							trFirst = table.tBody.children[0],
 
 							colCorner = document.createElement('col'), //left column & corner
-							tdCorner = document.createElement('td'),
+							thCorner = document.createElement('th'),
 
 							barTopParent = document.createElement('tr'),
 							existingTdsInFirstRow = 0;
@@ -2128,28 +2129,28 @@ $.sheet = {
 						colCorner.style.width = colCorner.width;
 						colGroup.insertBefore(colCorner, colGroup.children[0]); //end col corner
 
-						barTopParent.appendChild(tdCorner);
+						barTopParent.appendChild(thCorner);
 
 						barTopParent.className = jS.cl.barTopParent;
 						table.tBody.insertBefore(barTopParent, table.tBody.children[0]);
 						table.barTopParent = barTopParent;
-						table.corner = tdCorner;
+						table.corner = thCorner;
 						jS.controls.barTopParent[jS.i] = $(barTopParent);
 
 						i = Math.min(existingTdsInFirstRow, s.initCalcCols);
 
 						if (i > 0) {
 							do {
-								var td = document.createElement('td');
+								var th = document.createElement('th');
 								if (!cols[i]) {
 									cols[i] = document.createElement('col');
 									colGroup.insertBefore(cols[i], colCorner.nextSibling);
 
 								}
 
-								cols[i].bar = td;
-								td.col = cols[i];
-								barTopParent.insertBefore(td, tdCorner.nextSibling);
+								cols[i].bar = th;
+								th.col = cols[i];
+								barTopParent.insertBefore(th, thCorner.nextSibling);
 							} while (i-- > 1);
 						}
 
@@ -2214,7 +2215,7 @@ $.sheet = {
 									highlighter = $(document.createElement('div'))
 										.appendTo(pane)
 										.css('position', 'absolute')
-										.addClass('ui-state-highlight ' + jS.cl.barHelper)
+										.addClass(jS.theme.barFreezeIndicator + ' ' + jS.cl.barHelper)
 										.height(pane.table.corner.clientHeight)
 										.fadeTo(0,0.33);
 								},
@@ -2272,7 +2273,9 @@ $.sheet = {
 									.appendTo(pane)
 									.addClass(jS.theme.barHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
 									.width(bar.width())
-									.css('top', (pos.top - handle.clientHeight) + 'px')
+									.css({
+										'top': (pos.top - handle.clientHeight) + 'px'
+									})
 									.attr('title', jS.msg.dragToFreezeRow);
 
 							jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
@@ -2286,7 +2289,7 @@ $.sheet = {
 									highlighter = $(document.createElement('div'))
 										.appendTo(pane)
 										.css('position', 'absolute')
-										.addClass('ui-state-highlight ' + jS.cl.barHelper)
+										.addClass(jS.theme.barFreezeIndicator + ' ' + jS.cl.barHelper)
 										.width(handle.clientWidth)
 										.fadeTo(0,0.33);
 								},
@@ -2712,7 +2715,6 @@ $.sheet = {
 							addSheet.setAttribute('class', jS.cl.sheetAdder + ' ' + jS.cl.tab + ' ' + jS.theme.tab);
 							addSheet.setAttribute('title', jS.msg.addSheet);
 							addSheet.innerHTML = '+';
-							addSheet.style.height = addSheet.style.width = s.colMargin + 'px';
 							addSheet.onmousedown = function () {
 								jS.addSheet();
 
@@ -4094,7 +4096,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				isBar:function (o) {
-					if (o && o.tagName && o.tagName == 'TD' && o.type && o.type == 'bar') {
+					if (o && o.tagName && o.tagName == 'TH' && o.type && o.type == 'bar') {
 						return true;
 					}
 					return false;
@@ -5200,9 +5202,8 @@ $.sheet = {
 						jS.obj.barTopControls().remove();
 						var barController = document.createElement('div'),
 							$barController = $(barController)
-								.addClass(jS.cl.barController + ' ui-state-highlight')
+								.addClass(jS.cl.barController + ' ' + jS.theme.barResizer)
 								.width($bar.width())
-								.height(0)
 								.prependTo($bar),
 							col,
 							handle;
@@ -5254,7 +5255,7 @@ $.sheet = {
 						var offset = $bar.offset(),
 							barController = document.createElement('div'),
 							$barController = $(barController)
-								.addClass(jS.cl.barController + ' ui-state-highlight')
+								.addClass(jS.cl.barController + ' ' + jS.theme.barResizer)
 								.prependTo($bar)
 								.offset({
 									top:offset.top,
@@ -5265,7 +5266,7 @@ $.sheet = {
 							parent = td.parentNode,
 							child = document.createElement('div'),
 							$child = $(child)
-								.addClass('jSBarControllerChild')
+								.addClass(jS.cl.barControllerChild)
 								.height($bar.height())
 								.prependTo($barController),
 							handle;
@@ -5806,7 +5807,7 @@ $.sheet = {
 
 						cell.calcCount++;
 						if (cell.formula) {
-							try {
+							//try {
 								if (cell.formula.charAt(0) == '=') {
 									cell.formula = cell.formula.substring(1);
 								}
@@ -5824,9 +5825,9 @@ $.sheet = {
 								jS.callStack++;
 								formulaParser.setObj(cell);
 								cell.result = formulaParser.parse(cell.formula);
-							} catch (e) {
-								cell.result = e.toString();
-							}
+							//} catch (e) {
+							//	cell.result = e.toString();
+							//}
 							jS.callStack--;
 
 							if (cell.result && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
@@ -6150,8 +6151,13 @@ $.sheet = {
 
 						cell = jS.cellHandler.createDependency.call(this, this.sheet, loc);
 
-						jS.updateCellValue.call(cell, this.sheet, loc.row, loc.col);
-						return (cell.valueOverride != u ? cell.valueOverride : cell.value);
+						if (cell !== null) {
+
+							jS.updateCellValue.call(cell, this.sheet, loc.row, loc.col);
+							return (cell.valueOverride != u ? cell.valueOverride : cell.value);
+						} else {
+							return '';
+						}
 					},
 
 					/**

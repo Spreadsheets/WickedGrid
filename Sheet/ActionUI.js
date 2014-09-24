@@ -54,7 +54,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     that.xIndex = indexes.length || that.xIndex;
 
                     style = style || this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
-                        this.nthCss('td', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1);
+                        this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1);
 
                     this.setStyle(style);
 

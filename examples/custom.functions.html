@@ -12,11 +12,24 @@
         <script type="text/javascript">
 	        $.sheet.preLoad('../');
             $(function(){
-                $('#sheetParent').sheet();
+                $('#sheetParent').sheet({
+	                formulaFunctions: {
+		                CHECKBOX: function() {
+			                var result = new String("I am a checkbox");
+			                return result;
+		                }
+	                }
+                });
 			});
         </script>
     </head>
     <body>
-		<div id="sheetParent"></div>
+		<div id="sheetParent">
+			<table>
+				<tr>
+					<td data-formula="CHECKBOX(A2)"></td>
+				</tr>
+			</table>
+		</div>
     </body>
 </html>

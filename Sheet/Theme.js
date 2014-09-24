@@ -38,30 +38,36 @@ Sheet.Theme = (function($) {
 		parent:'ui-widget-content ui-corner-all',
 		table:'ui-widget-content',
 		tab:'ui-widget-header ui-corner-bottom',
-		tabActive:'ui-state-highlight'
+		tabActive:'ui-state-highlight',
+		barResizer:'ui-state-highlight',
+		barFreezer:'ui-state-highlight',
+		barFreezeIndicator:'ui-state-highlight'
 	};
 
 	Constructor.bootstrapClasses = {
-		autoFiller:'',
-		bar:'',
-		barHighlight:'',
-		barHandleFreezeLeft:'',
-		barHandleFreezeTop:'',
-		barMenuTop:'',
-		tdActive:'',
-		tdHighlighted:'',
-		control:'',
+		autoFiller:'btn-info',
+		bar:'bg-default',
+		barHighlight:'active',
+		barHandleFreezeLeft:'bg-warning',
+		barHandleFreezeTop:'bg-warning',
+		barMenuTop:'bg-info',
+		tdActive:'active',
+		tdHighlighted:'bg-info',
+		control:'bg-default',
 		controlTextBox:'',
 		fullScreen:'',
-		inPlaceEdit:'',
+		inPlaceEdit:'form-control',
 		menu:'',
 		menuUl:'',
 		menuLi:'',
-		pane: '',
-		parent:'',
-		table:'',
-		tab:'',
-		tabActive:''
+		pane: 'bg-default',
+		parent:'btn-default',
+		table:'table table-bordered table-condensed',
+		tab:'btn btn-default btn-xs',
+		tabActive:'active',
+		barResizer:'',
+		barFreezer:'',
+		barFreezeIndicator:''
 	};
 
 	Constructor.customClasses = {
@@ -84,7 +90,10 @@ Sheet.Theme = (function($) {
 		parent:'',
 		table:'',
 		tab:'',
-		tabActive:''
+		tabActive:'',
+		barResizer:'',
+		barFreezer:'',
+		barFreezeIndicator:''
 	};
 
 	return Constructor;
