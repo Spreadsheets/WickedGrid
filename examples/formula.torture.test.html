@@ -14,8 +14,9 @@
         $.sheet.preLoad('../');
         $(function() {
             $('#sheetParent').sheet({
+	            initScrollRows: 20,
+	            initScrollCols: 10,
 	            loader: new Sheet.JSONLoader(
-
 		            //spreadsheets
 		            [
 			            //spreadsheet

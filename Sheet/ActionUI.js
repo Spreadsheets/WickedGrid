@@ -184,7 +184,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                         value:scrolledTo.row - 1
                     });
                 } else if (direction.down) {
-                    y++;
+					y++;
                     this.scrollTo({
                         axis:'y',
                         value:scrolledTo.row + 1

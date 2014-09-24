@@ -66,60 +66,50 @@
 
             barTd.style.height = height + 'px';
         },
-        setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
-            var cell = this.getCell(sheetIndex, rowIndex, columnIndex),
-				jitCell;
+        setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
+            var td = document.createElement('td'),
+				$td = $(td),
+				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),
+				cell;
 
-            if (cell === null) return false;
+            if (jsonCell !== null) {
 
-            blankCell.cellType = cell['cellType'] || '';
+				if (jsonCell.getJitCell !== undefined) {
+					cell = jsonCell.getJitCell();
+					delete jsonCell.getJitCell;
 
-			if (cell.getJitCell !== undefined) {
-				jitCell = cell.getJitCell();
-				delete cell.getJitCell;
-				blankCell.html = jitCell.html;
-				blankCell.state = jitCell.state;
-				blankCell.calcLast = jitCell.calcLast;
-				blankCell.calcDependenciesLast = 0;
-				blankCell.cellType = 0;
-				blankCell.value = jitCell.value;
-				blankCell.uneditable = jitCell.uneditable;
-				blankCell.sheet = jitCell.sheet;
-				blankCell.dependencies = jitCell.dependencies;
-				blankCell.result = jitCell.result;
-				jitCell.jSCell = blankCell;
-
-				if (cell['formula']) {
-					blankCell.formula = cell['formula'] || '';
-					blankTd.setAttribute('data-formula', cell['formula'] || '');
-					blankTd.innerHTML = jitCell.result;
+					if (cell['formula']) {
+						td.setAttribute('data-formula', cell['formula'] || '');
+						$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
+					} else {
+						td.innerHTML = cell['value'] || '';
+					}
 				} else {
-					blankTd.innerHTML = blankCell.value = cell['value'] || '';
+					cell = createCellFn(td);
+					if (jsonCell['formula']) {
+						cell.formula = jsonCell['formula'] || '';
+						td.setAttribute('data-formula', jsonCell['formula'] || '');
+					} else {
+						td.innerHTML = jsonCell['value'] || '';
+					}
+				}
+
+				td.className = jsonCell['class'] || '';
+				td.setAttribute('style', jsonCell['style'] || '');
+
+				if (jsonCell['rowspan']) td.setAttribute('rowspan', jsonCell['rowspan'] || '');
+				if (jsonCell['colspan']) td.setAttribute('colspan', jsonCell['colspan'] || '');
+				if (jsonCell['uneditable']) td.setAttribute('data-uneditable', jsonCell['uneditable'] || '');
+				if (jsonCell['id']) {
+					td.setAttribute('id', jsonCell['id']);
 				}
 			} else {
-
-				if (cell['formula']) {
-					blankCell.formula = cell['formula'] || '';
-					blankTd.setAttribute('data-formula', cell['formula'] || '');
-				} else {
-					blankTd.innerHTML = blankCell.value = cell['value'] || '';
-				}
+				cell = createCellFn(td);
 			}
 
-            blankTd.className = cell['class'] || '';
-            blankTd.setAttribute('style', cell['style'] || '');
-
-            if (cell['rowspan']) blankTd.setAttribute('rowspan', cell['rowspan'] || '');
-            if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
-            if (cell['uneditable']) blankTd.setAttribute('data-uneditable', cell['uneditable'] || '');
-			if (cell['id']) {
-				blankTd.setAttribute('id', blankCell.id = cell['id']);
-			}
-
-			blankTd.jSCell = blankCell;
-			blankCell.td = $(blankTd);
-			blankCell.loaderCell = cell;
-            return true;
+			td.jSCell = cell;
+			cell.td = $td;
+            return cell;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			var json = this.json,
@@ -158,6 +148,7 @@
 				td: {0:fakeTd},
 				html: [],
 				state: [],
+				calcCount: 0,
 				calcLast: -1,
 				calcDependenciesLast: -1,
 				cellType: cell['cellType'] || '',
