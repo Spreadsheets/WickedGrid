@@ -2100,8 +2100,8 @@ $.sheet = {
 							}
 						}
 
-						colCorner.width = s.colMargin + 'px';
-						colCorner.style.width = colCorner.width;
+
+						colCorner.style.width = colCorner.style.minWidth = s.colMargin + 'px';
 						colGroup.insertBefore(colCorner, colGroup.children[0]); //end col corner
 
 						barTopParent.appendChild(thCorner);
@@ -2110,6 +2110,7 @@ $.sheet = {
 						table.tBody.insertBefore(barTopParent, table.tBody.children[0]);
 						table.barTopParent = barTopParent;
 						table.corner = thCorner;
+						thCorner.col = colCorner;
 						jS.controls.barTopParent[jS.i] = $(barTopParent);
 
 						i = Math.min(existingTdsInFirstRow, s.initCalcCols);
@@ -2162,15 +2163,15 @@ $.sheet = {
 
 							jS.obj.barHelper().remove();
 
-							var bar = jS.obj.barTop(frozenAt.col + 1),
+							var table = pane.table,
+								tBody = table.tBody,
+								firstRow = tBody.children[0],
+								tds = firstRow.children,
+								bar = $(tds[frozenAt.col + 1]),
 								pos = bar.position(),
 								highlighter,
 								offset = $(pane).offset(),
 								handle = document.createElement('div'),
-								table = pane.table,
-								tBody = table.tBody,
-								firstRow = tBody.children[0],
-								tds = firstRow.children,
 								$handle = pane.freezeHandleTop = $(handle)
 									.appendTo(pane)
 									.addClass(jS.theme.barHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
@@ -2238,12 +2239,14 @@ $.sheet = {
 
 							jS.obj.barHelper().remove();
 
-							var bar = $(pane.table.tBody.children[frozenAt.row + 1].children[0]),
+							var table = pane.table,
+								tBody = table.tBody,
+								bar = $(tBody.children[frozenAt.row + 1].children[0]),
 								pos = bar.position(),
 								highlighter,
 								offset = $(pane).offset(),
 								handle = document.createElement('div'),
-								trs = pane.table.tBody.children,
+								trs = tBody.children,
 								$handle = pane.freezeHandleLeft = $(handle)
 									.appendTo(pane)
 									.addClass(jS.theme.barHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
@@ -4354,14 +4357,16 @@ $.sheet = {
 					} while (row-- > rowStart);
 				},
 				updateYBarWidthToCorner: function(actionUI) {
-					return;
 					//TODO, get working on scroll
-					var corner = jS.obj.corner(),
+					var scrolledArea = actionUI.scrolledArea,
 						table = actionUI.table,
-						tableRows = table.size().rows,
-						idealTarget = s.initCalcRows + actionUI.scrolledArea.end.row,
-						realTarget = (idealTarget < tableRows ? idealTarget : tableRows),
-						td = table.children[realTarget].children[0];
+						tBody = table.tBody,
+						corner = table.corner,
+						target = Math.min(s.initCalcRows + scrolledArea.end.row, tBody.lastChild.rowIndex),
+						th = tBody.children[target].children[0];
+
+					corner.col.style.width = s.colMargin + 'px';
+					corner.col.style.width = th.scrollWidth + 'px';
 				},
 
 				toggleHideRow: function(i) {
