@@ -76,11 +76,12 @@
 
 			if (cell.getJitCell !== undefined) {
 				jitCell = cell.getJitCell();
+				delete cell.getJitCell;
 				blankCell.html = jitCell.html;
 				blankCell.state = jitCell.state;
 				blankCell.calcLast = jitCell.calcLast;
-				blankCell.calcDependenciesLast = jitCell.calcDependenciesLast;
-				blankCell.cellType = jitCell.cellType;
+				blankCell.calcDependenciesLast = 0;
+				blankCell.cellType = 0;
 				blankCell.value = jitCell.value;
 				blankCell.uneditable = jitCell.uneditable;
 				blankCell.sheet = jitCell.sheet;

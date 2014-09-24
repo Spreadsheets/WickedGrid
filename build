@@ -24,6 +24,7 @@ JS_COMBINED_FILE_MIN="$JS_OUT_DIR/jquery.sheet.min.js"
 JS_FILES=(
 	#constructors first
 	Base.js
+	CellRange.js
 	ActionUI.js
 	SpreadsheetUI.js
 	Theme.js

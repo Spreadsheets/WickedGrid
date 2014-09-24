@@ -13,25 +13,66 @@
     <script type="text/javascript">
         $.sheet.preLoad('../');
         $(function() {
-            $('#sheetParent').sheet();
+            $('#sheetParent').sheet({
+	            loader: new Sheet.JSONLoader(
+
+		            //spreadsheets
+		            [
+			            //spreadsheet
+			            {
+				            title: 'Formula Torture Test',
+				            rows: [
+					            {
+						            columns: [
+							            {
+								            formula: "=Calc1!H247"
+							            }
+						            ]
+					            },
+					            {
+						            columns: [
+							            {
+								            formula: "Fac1Type"
+							            }
+						            ]
+					            },
+					            {
+						            columns: [
+							            {
+								            formula: "=DROPDOWN('Single \" \\' \\\" value',\\'Single ' Escaped \" Value\\', \"Double ' \\\" \\' Value\", \\\"Double \" Escaped \'Value'\\\")"
+							            }
+						            ]
+					            },
+					            {
+						            columns: [
+							            {
+								            formula: "Values!A1"
+							            }
+						            ]
+					            }
+				            ]
+			            },
+
+			            {
+				            title: 'Values',
+				            rows: [
+					            {
+						            columns: [
+							            {
+								            formula: "dropdown('No','Yes')",
+								            value: "No"
+							            }
+						            ]
+					            }
+				            ]
+			            }
+		            ]
+	            )
+            });
         });
     </script>
 </head>
 <body>
-<div id="sheetParent" title="Cell Types">
-    <table>
-		<tbody>
-			<tr>
-				<td data-formula="=Calc1!H247"></td>
-			</tr>
-			<tr>
-				<td data-formula="Fac1Type"></td>
-			</tr>
-			<tr>
-				<td data-formula="=DROPDOWN('THIS IS A TEST','Another Test')"></td>
-			</tr>
-		</tbody>
-    </table>
-</div>
+<div id="sheetParent" title="Cell Types"></div>
 </body>
 </html>
