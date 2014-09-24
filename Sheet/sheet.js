@@ -322,7 +322,7 @@ $.fn.extend({
 	 *	  Formula Example (will output 200)
 	 *		  =newVariable + 100
 	 *
-	 * cellSelectModel {String} default 'excel', accepts 'excel', 'oo', or 'gdrive', makes the select model act differently
+	 * cellSelectModel {String} default Sheet.excelSelectModel, accepts Sheet.excelSelectModel, Sheet.openOfficeSelectModel, or Sheet.googleDriveSelectModel, makes the select model act differently
 	 *
 	 * autoAddCells {Boolean} default true, allows you to add cells by selecting the last row/column and add cells by pressing either tab (column) or enter (row)
 	 *
@@ -399,11 +399,11 @@ $.fn.extend({
 					calcOff:false,
 					lockFormulas:false,
 					parent:me,
-					colMargin:18,
+					colMargin:20,
 					boxModelCorrection:2,
 					formulaFunctions:{},
 					formulaVariables:{},
-					cellSelectModel:'excel',
+					cellSelectModel:Sheet.excelSelectModel,
 					autoAddCells:true,
 					resizableCells:true,
 					resizableSheet:true,
@@ -1883,13 +1883,15 @@ $.sheet = {
 
 								if (setupCell !== null) {
 									o.setCreateCellFn(function (row, at, rowParent) {
-										var td = document.createElement('td'),
-											cell = jS.createUnboundCell(jS.i, td),
+										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
+												return jS.createUnboundCell(jS.i, td);
+											}),
+											td = cell.td[0],
 											spreadsheetRow = spreadsheet[row];
 
 										spreadsheetRow[at] = cell;
 
-										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
+										if (cell.calcLast < 0) {
 											jS.updateCellValue.call(cell, jS.i, row, at);
 											jS.updateCellDependencies.call(cell);
 										}
@@ -1970,8 +1972,10 @@ $.sheet = {
 								});
 								if (setupCell !== null) {
 									o.setCreateCellFn(function (row, at, createdBar) {
-										var td = document.createElement('td'),
-											cell = jS.createUnboundCell(jS.i, td),
+										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
+												return jS.createUnboundCell(jS.i, td);
+											}),
+											td = cell.td[0],
 											rowParent = tBody.children[row],
 											spreadsheetRow = spreadsheet[row];
 
@@ -1981,7 +1985,7 @@ $.sheet = {
 
 										spreadsheetRow[at] = cell;
 
-										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
+										if (cell.calcLast < 0) {
 											jS.updateCellValue.call(cell, jS.i, row, at);
 											jS.updateCellDependencies.call(cell);
 										}
@@ -5070,10 +5074,11 @@ $.sheet = {
 						actionUI = jS.obj.pane().actionUI,
 						frozenAt = actionUI.frozenAt;
 
-					addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1);
-					addCols = Math.max((frozenAt.col > addCols ? frozenAt.col + 1 : addCols), 1);
+					addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1, s.initScrollRows)
+					addCols = Math.max((frozenAt.col > addCols ? frozenAt.col + 1 : addCols), 1, s.initScrollCols);
 
 					if (size.cols < addCols) {
+						addCols -= size.cols;
 						jS.controlFactory.addColumnMulti(null, addCols, false, true, true);
 					}
 
@@ -5081,6 +5086,7 @@ $.sheet = {
 					size = jS.tableSize(table);
 
 					if (size.rows < addRows) {
+						addRows -= size.rows;
 						jS.controlFactory.addRowMulti(null, addRows, false, true, true);
 					}
 				},
@@ -5413,12 +5419,12 @@ $.sheet = {
 							clearHighlightedModel;
 
 						switch (s.cellSelectModel) {
-							case 'excel':
-							case 'gdrive':
+							case Sheet.excelSelectModel:
+							case Sheet.googleDriveSelectModel:
 								selectModel = function () {};
 								clearHighlightedModel = function() {};
 								break;
-							case 'oo':
+							case Sheet.openOfficeSelectModel:
 								selectModel = function (target) {
 									if (jS.isCell(target)) {
 										jS.cellEdit($(target));
@@ -5723,7 +5729,7 @@ $.sheet = {
 						jsonCell,
 						errorResult = '';
 
-					if (this === null || this.jS === u) {
+					if (this === u || this === null || this.jS === u) {
 						foundCell = false;
 						//first detect if the cell exists if not return nothing
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
@@ -7474,7 +7480,7 @@ $.sheet = {
 						 */
 							SetActive = function (before) {
 							switch (s.cellSelectModel) {
-								case 'oo': //follow cursor behavior
+								case Sheet.openOfficeSelectModel: //follow cursor behavior
 									this.row = (before ? start.row : stop.row);
 									this.col = (before ? start.col : stop.col);
 									this.td = jS.getTd(jS.i, this.row, this.col);

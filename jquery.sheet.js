@@ -24,9 +24,13 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
     "use strict";
 
     var Sheet = {
-	CustomTheme: -1,
-	ThemeRollerTheme: 0,
-	BootstrapTheme: 1
+	themeRollerTheme: 0,
+	bootstrapTheme: 1,
+	customTheme: 2,
+
+	excelSelectModel: 0,
+	googleDriveSelectModel: 1,
+	openOfficeSelectModel: 2
 };Sheet.CellRange = (function() {
 	function Constructor(cells) {
 		this.cells = cells || [];
@@ -235,12 +239,14 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 scrolledTo = this.scrolledArea.end;
 
                 if (direction.left) {
+					console.log('left');
                     x--;
                     this.scrollTo({
                         axis:'x',
                         value:scrolledTo.col - 1
                     });
                 } else if (direction.right) {
+					console.log('right');
                     x++;
                     this.scrollTo({
                         axis:'x',
@@ -249,13 +255,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 }
 
                 if (direction.up) {
+					console.log('up');
                     y--;
                     this.scrollTo({
                         axis:'y',
                         value:scrolledTo.row - 1
                     });
                 } else if (direction.down) {
-                    y++;
+					console.log('down');
+					y++;
                     this.scrollTo({
                         axis:'y',
                         value:scrolledTo.row + 1
@@ -581,16 +589,16 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 })();Sheet.Theme = (function($) {
 	function Constructor(theme) {
 		switch (theme) {
-			case Sheet.CustomTheme:
+			case Sheet.customTheme:
 				this.cl = Constructor.customClasses;
 				break;
 
-			case Sheet.BootstrapTheme:
+			case Sheet.bootstrapTheme:
 				this.cl = Constructor.bootstrapClasses;
 				break;
 
 			default:
-			case Sheet.ThemeRollerTheme:
+			case Sheet.themeRollerTheme:
 
 				this.cl = Constructor.themeRollerClasses;
 				break;
@@ -1154,60 +1162,50 @@ Sheet.StyleUpdater = (function(document) {
 
             barTd.style.height = height + 'px';
         },
-        setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
-            var cell = this.getCell(sheetIndex, rowIndex, columnIndex),
-				jitCell;
+        setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
+            var td = document.createElement('td'),
+				$td = $(td),
+				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),
+				cell;
 
-            if (cell === null) return false;
+            if (jsonCell !== null) {
 
-            blankCell.cellType = cell['cellType'] || '';
+				if (jsonCell.getJitCell !== undefined) {
+					cell = jsonCell.getJitCell();
+					delete jsonCell.getJitCell;
 
-			if (cell.getJitCell !== undefined) {
-				jitCell = cell.getJitCell();
-				delete cell.getJitCell;
-				blankCell.html = jitCell.html;
-				blankCell.state = jitCell.state;
-				blankCell.calcLast = jitCell.calcLast;
-				blankCell.calcDependenciesLast = 0;
-				blankCell.cellType = 0;
-				blankCell.value = jitCell.value;
-				blankCell.uneditable = jitCell.uneditable;
-				blankCell.sheet = jitCell.sheet;
-				blankCell.dependencies = jitCell.dependencies;
-				blankCell.result = jitCell.result;
-				jitCell.jSCell = blankCell;
-
-				if (cell['formula']) {
-					blankCell.formula = cell['formula'] || '';
-					blankTd.setAttribute('data-formula', cell['formula'] || '');
-					blankTd.innerHTML = jitCell.result;
+					if (cell['formula']) {
+						td.setAttribute('data-formula', cell['formula'] || '');
+						$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
+					} else {
+						td.innerHTML = cell['value'] || '';
+					}
 				} else {
-					blankTd.innerHTML = blankCell.value = cell['value'] || '';
+					cell = createCellFn(td);
+					if (jsonCell['formula']) {
+						cell.formula = jsonCell['formula'] || '';
+						td.setAttribute('data-formula', jsonCell['formula'] || '');
+					} else {
+						td.innerHTML = jsonCell['value'] || '';
+					}
+				}
+
+				td.className = jsonCell['class'] || '';
+				td.setAttribute('style', jsonCell['style'] || '');
+
+				if (jsonCell['rowspan']) td.setAttribute('rowspan', jsonCell['rowspan'] || '');
+				if (jsonCell['colspan']) td.setAttribute('colspan', jsonCell['colspan'] || '');
+				if (jsonCell['uneditable']) td.setAttribute('data-uneditable', jsonCell['uneditable'] || '');
+				if (jsonCell['id']) {
+					td.setAttribute('id', jsonCell['id']);
 				}
 			} else {
-
-				if (cell['formula']) {
-					blankCell.formula = cell['formula'] || '';
-					blankTd.setAttribute('data-formula', cell['formula'] || '');
-				} else {
-					blankTd.innerHTML = blankCell.value = cell['value'] || '';
-				}
+				cell = createCellFn(td);
 			}
 
-            blankTd.className = cell['class'] || '';
-            blankTd.setAttribute('style', cell['style'] || '');
-
-            if (cell['rowspan']) blankTd.setAttribute('rowspan', cell['rowspan'] || '');
-            if (cell['colspan']) blankTd.setAttribute('colspan', cell['colspan'] || '');
-            if (cell['uneditable']) blankTd.setAttribute('data-uneditable', cell['uneditable'] || '');
-			if (cell['id']) {
-				blankTd.setAttribute('id', blankCell.id = cell['id']);
-			}
-
-			blankTd.jSCell = blankCell;
-			blankCell.td = $(blankTd);
-			blankCell.loaderCell = cell;
-            return true;
+			td.jSCell = cell;
+			cell.td = $td;
+            return cell;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			var json = this.json,
@@ -1246,6 +1244,7 @@ Sheet.StyleUpdater = (function(document) {
 				td: {0:fakeTd},
 				html: [],
 				state: [],
+				calcCount: 0,
 				calcLast: -1,
 				calcDependenciesLast: -1,
 				cellType: cell['cellType'] || '',
@@ -2361,7 +2360,7 @@ $.fn.extend({
 	 *	  Formula Example (will output 200)
 	 *		  =newVariable + 100
 	 *
-	 * cellSelectModel {String} default 'excel', accepts 'excel', 'oo', or 'gdrive', makes the select model act differently
+	 * cellSelectModel {String} default Sheet.excelSelectModel, accepts Sheet.excelSelectModel, Sheet.openOfficeSelectModel, or Sheet.googleDriveSelectModel, makes the select model act differently
 	 *
 	 * autoAddCells {Boolean} default true, allows you to add cells by selecting the last row/column and add cells by pressing either tab (column) or enter (row)
 	 *
@@ -2438,11 +2437,11 @@ $.fn.extend({
 					calcOff:false,
 					lockFormulas:false,
 					parent:me,
-					colMargin:18,
+					colMargin:20,
 					boxModelCorrection:2,
 					formulaFunctions:{},
 					formulaVariables:{},
-					cellSelectModel:'excel',
+					cellSelectModel:Sheet.excelSelectModel,
 					autoAddCells:true,
 					resizableCells:true,
 					resizableSheet:true,
@@ -3922,13 +3921,15 @@ $.sheet = {
 
 								if (setupCell !== null) {
 									o.setCreateCellFn(function (row, at, rowParent) {
-										var td = document.createElement('td'),
-											cell = jS.createUnboundCell(jS.i, td),
+										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
+												return jS.createUnboundCell(jS.i, td);
+											}),
+											td = cell.td[0],
 											spreadsheetRow = spreadsheet[row];
 
 										spreadsheetRow[at] = cell;
 
-										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
+										if (cell.calcLast < 0) {
 											jS.updateCellValue.call(cell, jS.i, row, at);
 											jS.updateCellDependencies.call(cell);
 										}
@@ -4009,8 +4010,10 @@ $.sheet = {
 								});
 								if (setupCell !== null) {
 									o.setCreateCellFn(function (row, at, createdBar) {
-										var td = document.createElement('td'),
-											cell = jS.createUnboundCell(jS.i, td),
+										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
+												return jS.createUnboundCell(jS.i, td);
+											}),
+											td = cell.td[0],
 											rowParent = tBody.children[row],
 											spreadsheetRow = spreadsheet[row];
 
@@ -4020,7 +4023,7 @@ $.sheet = {
 
 										spreadsheetRow[at] = cell;
 
-										if (setupCell.call(loader, jS.i, row, at, cell, td)) {
+										if (cell.calcLast < 0) {
 											jS.updateCellValue.call(cell, jS.i, row, at);
 											jS.updateCellDependencies.call(cell);
 										}
@@ -7109,10 +7112,11 @@ $.sheet = {
 						actionUI = jS.obj.pane().actionUI,
 						frozenAt = actionUI.frozenAt;
 
-					addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1);
-					addCols = Math.max((frozenAt.col > addCols ? frozenAt.col + 1 : addCols), 1);
+					addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1, s.initScrollRows)
+					addCols = Math.max((frozenAt.col > addCols ? frozenAt.col + 1 : addCols), 1, s.initScrollCols);
 
 					if (size.cols < addCols) {
+						addCols -= size.cols;
 						jS.controlFactory.addColumnMulti(null, addCols, false, true, true);
 					}
 
@@ -7120,6 +7124,7 @@ $.sheet = {
 					size = jS.tableSize(table);
 
 					if (size.rows < addRows) {
+						addRows -= size.rows;
 						jS.controlFactory.addRowMulti(null, addRows, false, true, true);
 					}
 				},
@@ -7452,12 +7457,12 @@ $.sheet = {
 							clearHighlightedModel;
 
 						switch (s.cellSelectModel) {
-							case 'excel':
-							case 'gdrive':
+							case Sheet.excelSelectModel:
+							case Sheet.googleDriveSelectModel:
 								selectModel = function () {};
 								clearHighlightedModel = function() {};
 								break;
-							case 'oo':
+							case Sheet.openOfficeSelectModel:
 								selectModel = function (target) {
 									if (jS.isCell(target)) {
 										jS.cellEdit($(target));
@@ -7762,7 +7767,7 @@ $.sheet = {
 						jsonCell,
 						errorResult = '';
 
-					if (this === null || this.jS === u) {
+					if (this === u || this === null || this.jS === u) {
 						foundCell = false;
 						//first detect if the cell exists if not return nothing
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
@@ -9513,7 +9518,7 @@ $.sheet = {
 						 */
 							SetActive = function (before) {
 							switch (s.cellSelectModel) {
-								case 'oo': //follow cursor behavior
+								case Sheet.openOfficeSelectModel: //follow cursor behavior
 									this.row = (before ? start.row : stop.row);
 									this.col = (before ? start.col : stop.col);
 									this.td = jS.getTd(jS.i, this.row, this.col);

@@ -1,16 +1,16 @@
 Sheet.Theme = (function($) {
 	function Constructor(theme) {
 		switch (theme) {
-			case Sheet.CustomTheme:
+			case Sheet.customTheme:
 				this.cl = Constructor.customClasses;
 				break;
 
-			case Sheet.BootstrapTheme:
+			case Sheet.bootstrapTheme:
 				this.cl = Constructor.bootstrapClasses;
 				break;
 
 			default:
-			case Sheet.ThemeRollerTheme:
+			case Sheet.themeRollerTheme:
 
 				this.cl = Constructor.themeRollerClasses;
 				break;
