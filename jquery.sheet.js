@@ -270,9 +270,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 if (i < 25) {
                     break;
                 }
-            }
 
-            this.scrollStop();
+				this.scrollStop();
+            }
         },
 
         /**
@@ -1172,7 +1172,9 @@ Sheet.StyleUpdater = (function(document) {
 
 					if (cell['formula']) {
 						td.setAttribute('data-formula', cell['formula'] || '');
-						$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
+						if (cell.result !== null) {
+							$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
+						}
 					} else {
 						$td.html(cell['value']);
 					}
@@ -8984,52 +8986,6 @@ $.sheet = {
 						);
 						return null;
 					}
-				},
-
-				/**
-				 * detects if a td is not visible
-				 * @param {jQuery|HTMLElement} $td
-				 * @memberOf jS
-				 * @returns {Boolean|Object}
-				 */
-				tdNotVisible:function($td) {
-					var pane = jS.obj.pane(),
-						td = $td[0],
-						visibleFold = {
-							top:0,
-							bottom:pane.clientHeight,
-							left:0,
-							right:pane.clientWidth
-						},
-
-						tdWidth = $td.width(),
-						tdHeight = $td.height(),
-						tdLocation = {
-							top:td.offsetTop,
-							bottom:td.offsetTop + tdHeight,
-							left:td.offsetLeft,
-							right:td.offsetLeft + tdWidth
-						},
-						$tdParent = $td.parent();
-
-					if (!td.col) {
-						return false;
-					}
-
-					var xHidden = $(td.barTop).is(':hidden'),
-						yHidden = $tdParent.is(':hidden'),
-						hidden = {
-							up:yHidden,
-							down:tdLocation.bottom > visibleFold.bottom && tdHeight <= pane.clientHeight,
-							left:xHidden,
-							right:tdLocation.right > visibleFold.right && tdWidth <= pane.clientWidth
-						};
-
-					if (hidden.up || hidden.down || hidden.left || hidden.right) {
-						return hidden;
-					}
-
-					return false;
 				},
 
 				/**

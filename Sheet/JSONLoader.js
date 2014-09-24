@@ -80,7 +80,9 @@
 
 					if (cell['formula']) {
 						td.setAttribute('data-formula', cell['formula'] || '');
-						$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
+						if (cell.result !== null) {
+							$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
+						}
 					} else {
 						$td.html(cell['value']);
 					}
