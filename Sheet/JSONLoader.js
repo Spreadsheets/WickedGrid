@@ -91,7 +91,6 @@
 						cell.formula = jsonCell['formula'] || '';
 						td.setAttribute('data-formula', jsonCell['formula'] || '');
 					} else {
-						console.log(jsonCell['value']);
 						$td.html(jsonCell['value']);
 					}
 				}
