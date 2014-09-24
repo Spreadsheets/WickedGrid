@@ -1142,35 +1142,6 @@ $.sheet = {
 			math = Math,
 			n = isNaN,
 			nAN = NaN,
-			jSCellRange = function(cells) {
-				this.cells = cells || [];
-			},
-			jSCP = jSCellRange.prototype = {
-				clone: function() {
-					var clones = [];
-					for(var i = 0; i < this.cells.length;i++) {
-						var cell = this.cells[i],
-							clone = {
-								value:cell.value,
-								formula:cell.formula,
-								td: cell.td,
-								dependencies: cell.dependencies,
-								needsUpdated: cell.needsUpdated,
-								calcCount: cell.calcCount,
-								sheet: cell.sheet,
-								calcLast: cell.calcLast,
-								html: cell.html,
-								state: cell.state,
-								jS: cell.jS,
-								calcDependenciesLast: cell.calcDependenciesLast,
-								style: cell.style || cell.td.attr('style') || '',
-								cl: cell.cl || cell.td.attr('class') || ''
-							};
-						clones.push(clone);
-					}
-					return new jSCellRange(clones);
-				}
-			},
 
 			/**
 			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index].
@@ -1230,13 +1201,13 @@ $.sheet = {
 							menu:[],
 							menuParent:[],
 							parent:[],
-							td:[],
-							tds:function () {
-								var tds = $([]);
-								for (var i in this.td[jS.i]) {
-									tds.pushStack(this.td[jS.i][i]);
+							th:[],
+							ths:function () {
+								var ths = $([]);
+								for (var i in this.th[jS.i]) {
+									ths.pushStack(this.th[jS.i][i]);
 								}
-								return tds;
+								return ths;
 							}
 						},
 						y:{
@@ -1244,13 +1215,13 @@ $.sheet = {
 							handleFreeze:[],
 							menu:[],
 							parent:[],
-							td:[],
-							tds:function () {
-								var tds = $([]);
-								for (var i in this.td[jS.i]) {
-									tds.pushStack(this.td[jS.i][i]);
+							th:[],
+							ths:function () {
+								var ths = $([]);
+								for (var i in this.th[jS.i]) {
+									ths.pushStack(this.th[jS.i][i]);
 								}
-								return tds;
+								return ths;
 							}
 						}
 					},
@@ -1306,13 +1277,13 @@ $.sheet = {
 						return jS.controls.bar.helper[jS.i] || (jS.controls.bar.helper[jS.i] = $([]));
 					},
 					barLeft:function (i) {
-						return (jS.controls.bar.y.td[jS.i] && jS.controls.bar.y.td[jS.i][i] ? jS.controls.bar.y.td[jS.i][i] : $([]));
+						return (jS.controls.bar.y.th[jS.i] && jS.controls.bar.y.th[jS.i][i] ? jS.controls.bar.y.th[jS.i][i] : $([]));
 					},
 					barLeftControls:function () {
 						return jS.controls.bar.y.controls[jS.i] || $([]);
 					},
 					barLefts:function () {
-						return jS.controls.bar.y.tds();
+						return jS.controls.bar.y.ths();
 					},
 					barHandleFreezeLeft:function () {
 						return jS.controls.bar.y.handleFreeze[jS.i] || $([]);
@@ -1321,13 +1292,13 @@ $.sheet = {
 						return jS.controls.bar.y.menu[jS.i] || $([]);
 					},
 					barTop:function (i) {
-						return (jS.controls.bar.x.td[jS.i] && jS.controls.bar.x.td[jS.i][i] ? jS.controls.bar.x.td[jS.i][i] : $([]));
+						return (jS.controls.bar.x.th[jS.i] && jS.controls.bar.x.th[jS.i][i] ? jS.controls.bar.x.th[jS.i][i] : $([]));
 					},
 					barTopControls:function () {
 						return jS.controls.bar.x.controls[jS.i] || $([]);
 					},
 					barTops:function () {
-						return jS.controls.bar.x.tds();
+						return jS.controls.bar.x.ths();
 					},
 					barTopParent:function () {
 						return jS.controls.bar.x.parent[jS.i] || $([]);
@@ -1652,15 +1623,15 @@ $.sheet = {
 					jS.shortenCellLookupTime(colIndex, jSCell, td, col, tr, tBody, table);
 
 					//now create row
-					if (!(tdsY = jS.controls.bar.y.td[sheetIndex])) {
-						tdsY = jS.controls.bar.y.td[sheetIndex] = [];
+					if (!(tdsY = jS.controls.bar.y.th[sheetIndex])) {
+						tdsY = jS.controls.bar.y.th[sheetIndex] = [];
 					}
 					if (!tdsY[rowIndex]) {
 						tdsY[rowIndex] = $(tr.children[0]);
 					}
 
-					if (!(tdsX = jS.controls.bar.x.td[sheetIndex])) {
-						tdsX = jS.controls.bar.x.td[sheetIndex] = [];
+					if (!(tdsX = jS.controls.bar.x.th[sheetIndex])) {
+						tdsX = jS.controls.bar.x.th[sheetIndex] = [];
 					}
 					if (!tdsX[colIndex]) {
 						tdsX[colIndex] = $(tBody.children[0].children[colIndex]);
@@ -1867,8 +1838,8 @@ $.sheet = {
 							loc,
 							loader = (s.loader !== null ? s.loader : null),
 							setupCell = (loader !== null ? loader.setupCell : null),
-							controlX = jS.controls.bar.x.td[jS.i] || (jS.controls.bar.x.td[jS.i] = []),
-							controlY = jS.controls.bar.y.td[jS.i] || (jS.controls.bar.y.td[jS.i] = []),
+							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
+							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
 							tableSize = table.size();
 
 						qty = qty || 1;
@@ -1983,7 +1954,7 @@ $.sheet = {
 										tBody.appendChild(rowParent);
 
 										leftBar.innerHTML = rowParent.rowIndex;
-										controlX.splice(0, 0, $(leftBar));
+										controlY.splice(0, 0, $(leftBar));
 									}
 
 									colGroup.insertBefore(col, colGroup.children[at]);
@@ -4043,13 +4014,16 @@ $.sheet = {
 						}
 					}
 
-					var tds = jS.controls.bar.x.td[jS.i];
+					var ths = jS.controls.bar.x.th[jS.i],
+						th;
 
-					if (!tds) return;
+					if (!ths) return;
 
-					for (var i = Math.max(start, 0); i < tds.length; i++) {
-						if (i) {//greater than 1 (corner)
-							tds[i].text(jSE.columnLabelString(tds[i][0].cellIndex));
+					for (var i = Math.max(start, 0); i < ths.length; i++) {
+						//greater than 1 (corner)
+						if (i > 0) {
+							th = ths[i];
+							th.text(jSE.columnLabelString(th[0].cellIndex));
 						}
 					}
 				},
@@ -4064,15 +4038,17 @@ $.sheet = {
 				refreshRowLabels:function (start, end) {
 					start = start || 0;
 
-					var tds = jS.controls.bar.y.td[jS.i];
+					var ths = jS.controls.bar.y.th[jS.i],
+						th;
 
-					if (!tds) return;
+					if (!ths) return;
 
-					end = end || tds.length;
+					end = end || ths.length;
 
 					for (var i = start; i < end; i++) {
-						if (i) {
-							$(tds[i]).text(tds[i][0].parentNode.rowIndex);
+						if (i > 0) {
+							th = ths[i];
+							th.text(th[0].parentNode.rowIndex);
 						}
 					}
 				},
@@ -5808,7 +5784,7 @@ $.sheet = {
 
 						cell.calcCount++;
 						if (cell.formula) {
-							//try {
+							try {
 								if (cell.formula.charAt(0) == '=') {
 									cell.formula = cell.formula.substring(1);
 								}
@@ -5826,9 +5802,9 @@ $.sheet = {
 								jS.callStack++;
 								formulaParser.setObj(cell);
 								cell.result = formulaParser.parse(cell.formula);
-							//} catch (e) {
-							//	cell.result = e.toString();
-							//}
+							} catch (e) {
+								cell.result = e.toString();
+							}
 							jS.callStack--;
 
 							if (cell.result && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
@@ -6206,23 +6182,32 @@ $.sheet = {
 					cellRangeValue:function (start, end) {
 						var _start = jSE.parseLocation(start.colString, start.rowString),
 							_end = jSE.parseLocation(end.colString, end.rowString),
+							rowIndex = math.max(_start.row, _end.row),
+							rowIndexEnd = math.min(_start.row, _end.row),
+							colIndexStart = math.max(_start.col, _end.col),
+							colIndexEnd = math.min(_start.col, _end.col),
+							sheet = jS.spreadsheets[this.sheet],
+							createDependency = jS.cellHandler.createDependency,
+							updateCellValue = jS.updateCellValue,
 							result = [],
-							i = math.max(_start.row, _end.row),
-							iEnd = math.min(_start.row, _end.row),
-							j = math.max(_start.col, _end.col),
-							jStart = j,
-							jEnd = math.min(_start.col, _end.col),
-							cell;
+							colIndex,
+							cell,
+							row;
 
-						if (i >= iEnd || j >= jEnd) {
+
+
+						if (rowIndex >= rowIndexEnd || colIndex >= colIndexEnd) {
+
 							do {
-								j = jStart;
+								colIndex = colIndexStart;
+								row = sheet[rowIndex];
 								do {
-									cell = jS.spreadsheets[this.sheet][i][j];
-									jS.cellHandler.createDependency.call(this, this.sheet, {row:i, col:j});
-									result.unshift(jS.updateCellValue.call(cell, this.sheet, i, j));
-								} while(j-- > jEnd);
-							} while (i-- > iEnd);
+									cell = row[colIndex];
+									createDependency.call(this, this.sheet, {row:rowIndex, col:colIndex});
+									result.unshift(updateCellValue.call(cell, this.sheet, rowIndex, colIndex));
+								} while(colIndex-- > colIndexEnd);
+							} while (rowIndex-- > rowIndexEnd);
+
 							return result;
 						}
 
@@ -6727,7 +6712,7 @@ $.sheet = {
 						jS.controls.bar.x.menuParent.splice(oldI, 1);
 					}
 					jS.controls.bar.x.parent.splice(oldI, 1);
-					jS.controls.bar.x.td.splice(oldI, 1);
+					jS.controls.bar.x.th.splice(oldI, 1);
 					jS.controls.bar.y.controls.splice(oldI, 1);
 					jS.controls.bar.y.handleFreeze.splice(oldI, 1);
 					jS.controls.bar.y.controls.splice(oldI, 1);
@@ -6736,7 +6721,7 @@ $.sheet = {
 						jS.controls.bar.y.menuParent.splice(oldI, 1);
 					}
 					jS.controls.bar.y.parent.splice(oldI, 1);
-					jS.controls.bar.y.td.splice(oldI, 1);
+					jS.controls.bar.y.th.splice(oldI, 1);
 					jS.controls.barMenuLeft.splice(oldI, 1);
 					jS.controls.barMenuTop.splice(oldI, 1);
 					jS.controls.barLeft.splice(oldI, 1);
@@ -6807,7 +6792,7 @@ $.sheet = {
 					} while (start < i--);
 
 					//now remove bar
-					jS.controls.bar.y.td[jS.i].splice(start, qty);
+					jS.controls.bar.y.th[jS.i].splice(start, qty);
 
 					//now remove cells
 					jS.spreadsheets[jS.i].splice(start, qty);
@@ -6884,7 +6869,7 @@ $.sheet = {
 					} while (start < j--);
 
 					//remove column
-					jS.controls.bar.x.td[jS.i].splice(start, qty);
+					jS.controls.bar.x.th[jS.i].splice(start, qty);
 
 					//remove cells
 					k = jS.spreadsheets[jS.i].length - qty;
@@ -7855,8 +7840,8 @@ $.sheet = {
 							id = jS.undo.id;
 						}
 
-						var before = new jSCellRange(cells).clone().cells,
-							after = (fn ? new jSCellRange(fn(cells)).clone().cells : before);
+						var before = (new Sheet.CellRange(cells)).clone().cells,
+							after = (fn ? (new Sheet.CellRange(fn(cells)).clone()).cells : before);
 
 						before.id = id;
 						after.id = id;
@@ -8098,22 +8083,11 @@ $.sheet = {
 					var lastRow,
 						loc,
 						size = {},
-						minSize = s.minSize;
+						minSize = s.minSize || {rows: 1, cols: 1},
+						loaderSize;
 
 					table = table || jS.obj.table()[0];
 					//table / tBody / tr / td
-
-					//if we are using a dataloader, get the size from that
-					if (s.loader !== null) {
-						size = s.loader.size(table.spreadsheetIndex);
-
-						if (minSize !== null) {
-							size.rows = Math.max(size.rows, minSize.rows);
-							size.cols = Math.max(size.cols, minSize.cols);
-						}
-
-						return size;
-					}
 
 					if (
 						(size.cols = s.initScrollCols) > 0
@@ -8125,6 +8099,14 @@ $.sheet = {
 						loc = jS.getTdLocation(lastRow[lastRow.length - 1]);
 						size.cols = loc.col;
 						size.rows = loc.row;
+					}
+
+					//if we are using a dataloader, get the size from that too and compare
+					if (s.loader !== null) {
+						loaderSize = s.loader.size(table.spreadsheetIndex);
+
+						size.rows = Math.max(loaderSize.rows, size.rows, minSize.rows);
+						size.cols = Math.max(loaderSize.cols, size.cols, minSize.cols);
 					}
 
 					return size;
