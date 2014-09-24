@@ -2307,7 +2307,7 @@ $.sheet = {
 					 * @memberOf jS.controlFactory
 					 */
 					menu:function (bar, menuItems) {
-						var menu, buttons = $([]);
+						var menu, buttons = $([]), hoverClass = jS.theme.menuHover;
 
 						switch (bar) {
 							case "top":
@@ -2352,10 +2352,10 @@ $.sheet = {
 											})
 											.appendTo(menu)
 											.hover(function() {
-												buttons.removeClass('ui-state-highlight');
-												$(this).addClass('ui-state-highlight');
+												buttons.removeClass(hoverClass);
+												$(this).addClass(hoverClass);
 											}, function() {
-												$(this).removeClass('ui-state-highlight');
+												$(this).removeClass(hoverClass);
 											})
 									);
 
@@ -2582,11 +2582,13 @@ $.sheet = {
 						if (jS.isSheetEditable()) {
 							if (s.menuLeft) {
 								menuLeft = document.createElement('td');
-								menuLeft.className = jS.cl.menu + ' ' + jS.cl.menuFixed;
+								menuLeft.className = jS.cl.menu + ' ' + jS.cl.menuFixed + ' ' + jS.theme.menuFixed;
 								firstRowTr.insertBefore(menuLeft, title);
 
 								jS.controls.menuLeft[jS.i] = $(menuLeft)
-									.append(makeMenu(s.menuLeft));
+									.append(makeMenu(s.menuLeft))
+									.children()
+									.addClass(jS.theme.menuFixed);
 
 								jS.controls.menuLeft[jS.i].find('img').load(function () {
 									jS.sheetSyncSize();
@@ -2599,7 +2601,9 @@ $.sheet = {
 								firstRowTr.appendChild(menuRight);
 
 								jS.controls.menuRight[jS.i] = $(menuRight)
-									.append(makeMenu(s.menuRight));
+									.append(makeMenu(s.menuRight))
+									.children()
+									.addClass(jS.theme.menuFixed);
 
 								jS.controls.menuRight[jS.i].find('img').load(function () {
 									jS.sheetSyncSize();
@@ -5813,6 +5817,10 @@ $.sheet = {
 								jS.callStack++;
 								formulaParser.setObj(cell);
 								cell.result = formulaParser.parse(cell.formula);
+
+								if (cell.hasOwnProperty('loadedFrom')) {
+									s.loader.setCellAttribute(cell.loadedFrom, 'cache', cell.result);
+								}
 							} catch (e) {
 								cell.result = e.toString();
 							}
@@ -7317,7 +7325,7 @@ $.sheet = {
 					if (tabContainerInnerWidth > tabContainerOuterWidth) {
 						tabContainerStyle.height = heightTabContainer;
 						$tabContainer.addClass(jS.cl.tabContainerScrollable);
-						h -= s.colMargin;
+						h -= scrollBarWidth;
 					} else {
 						tabContainerStyle.height = null;
 						$tabContainer.removeClass(jS.cl.tabContainerScrollable);

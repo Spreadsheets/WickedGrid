@@ -11,7 +11,7 @@
 .jSParent .jSFormula
 {
 	width: 100%;
-    height: 18px;
+    height: 22px;
 	font-weight: normal;
 	padding: 0;
 	outline: none;
@@ -75,6 +75,10 @@
 {
 	border-width: 0px ! important;
     cursor: pointer;
+}
+.jSTdMenu hr
+{
+	margin: 0;
 }
 .jSMenu {
 	padding: 3px;
@@ -165,31 +169,32 @@
 .jSParent .jSTabContainer
 {
 	overflow-x: hidden;
-	overflow-y: hidden;
-	height: 18px;
+	height: 21px;
 	display: inline-block;
 	position: absolute;
-	margin-left: 17px;
+	margin-left: 18px;
 }
 .jSParent .jSTabContainerScrollable {
 	overflow-x: auto;
 }
 .jSParent .jSTabContainer span
 {
-	border-bottom: none;
-	border-top: none;
+	border-width: 0;
 	padding: 2px 5px 2px 5px ! important;
+	margin-left: 1px;
 	cursor: pointer;
 	white-space: nowrap;
-	border-top-left-radius: 0;
-	border-top-right-radius: 0;
+	border-radius: 0;
+	height: 22px;
 }
 .jSParent .jSSheetAdder {
-	border: none;
+	border-width: 0;
 	display: block;
 	position: absolute;
 	text-align: center;
-	min-width: 18px;
+	width: 18px;
+	height: 19px;
+	border-bottom-left-radius: inherit;
 }
 .jSParent .jSTab {
 	cursor: pointer;
