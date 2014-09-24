@@ -195,9 +195,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 if (i < 25) {
                     break;
                 }
-            }
 
-            this.scrollStop();
+				this.scrollStop();
+            }
         },
 
         /**

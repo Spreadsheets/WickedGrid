@@ -6952,52 +6952,6 @@ $.sheet = {
 				},
 
 				/**
-				 * detects if a td is not visible
-				 * @param {jQuery|HTMLElement} $td
-				 * @memberOf jS
-				 * @returns {Boolean|Object}
-				 */
-				tdNotVisible:function($td) {
-					var pane = jS.obj.pane(),
-						td = $td[0],
-						visibleFold = {
-							top:0,
-							bottom:pane.clientHeight,
-							left:0,
-							right:pane.clientWidth
-						},
-
-						tdWidth = $td.width(),
-						tdHeight = $td.height(),
-						tdLocation = {
-							top:td.offsetTop,
-							bottom:td.offsetTop + tdHeight,
-							left:td.offsetLeft,
-							right:td.offsetLeft + tdWidth
-						},
-						$tdParent = $td.parent();
-
-					if (!td.col) {
-						return false;
-					}
-
-					var xHidden = $(td.barTop).is(':hidden'),
-						yHidden = $tdParent.is(':hidden'),
-						hidden = {
-							up:yHidden,
-							down:tdLocation.bottom > visibleFold.bottom && tdHeight <= pane.clientHeight,
-							left:xHidden,
-							right:tdLocation.right > visibleFold.right && tdWidth <= pane.clientWidth
-						};
-
-					if (hidden.up || hidden.down || hidden.left || hidden.right) {
-						return hidden;
-					}
-
-					return false;
-				},
-
-				/**
 				 * scrolls the sheet to the selected cell
 				 * @param {jQuery|HTMLElement} [$td] default is tdActive
 				 * @param {boolean} [dontMoveAutoFiller] keeps autoFillerHandler in default position
