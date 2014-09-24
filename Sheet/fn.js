@@ -1369,8 +1369,9 @@ var jFN = $.sheet.fn = {
     DROPDOWN:function () {
         var cell = this,
             jS = this.jS,
+			td = this.td,
             v,
-            html = this.td.children().detach(),
+            html = (td.children ? td.children().detach() : ''),
             loc,
             $td = $(cell.td),
             select,
@@ -1433,8 +1434,9 @@ var jFN = $.sheet.fn = {
     RADIO:function () {
         var cell = this,
             jS = this.jS,
+			td = this.td,
             v,
-            html = this.td.children().detach(),
+            html = (td.children ? td.children().detach() : ''),
             loc,
             $td,
             inputs,
@@ -1523,7 +1525,8 @@ var jFN = $.sheet.fn = {
 
         var cell = this,
             jS = this.jS,
-            html = this.td.children().detach(),
+			td = this.td,
+            html = (td.children ? td.children().detach() : ''),
             loc,
             checkbox,
             $td,
