@@ -9,8 +9,9 @@ Sheet.Theme = (function($) {
 				this.cl = Constructor.bootstrapClasses;
 				break;
 
-			case Sheet.ThemeRollerTheme:
 			default:
+			case Sheet.ThemeRollerTheme:
+
 				this.cl = Constructor.themeRollerClasses;
 				break;
 		}
@@ -46,28 +47,28 @@ Sheet.Theme = (function($) {
 
 	Constructor.bootstrapClasses = {
 		autoFiller:'btn-info',
-		bar:'bg-default',
-		barHighlight:'active',
+		bar:'bg-primary',
+		barHighlight:'label-info',
 		barHandleFreezeLeft:'bg-warning',
 		barHandleFreezeTop:'bg-warning',
-		barMenuTop:'bg-info',
+		barMenuTop:'bg-warning',
 		tdActive:'active',
 		tdHighlighted:'bg-info',
-		control:'bg-default',
+		control:'bg-primary',
 		controlTextBox:'',
 		fullScreen:'',
 		inPlaceEdit:'form-control',
 		menu:'',
 		menuUl:'',
 		menuLi:'',
-		pane: 'bg-default',
-		parent:'btn-default',
+		pane: 'well',
+		parent:'panel panel-default',
 		table:'table table-bordered table-condensed',
 		tab:'btn btn-default btn-xs',
 		tabActive:'active',
-		barResizer:'',
-		barFreezer:'',
-		barFreezeIndicator:''
+		barResizer:'bg-info',
+		barFreezer:'bg-warning',
+		barFreezeIndicator:'bg-warning'
 	};
 
 	Constructor.customClasses = {

@@ -539,14 +539,17 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 })();Sheet.Theme = (function($) {
 	function Constructor(theme) {
 		switch (theme) {
-			case Sheet.BootstrapTheme:
-				this.cl = Constructor.bootstrapClasses;
-				break;
 			case Sheet.CustomTheme:
 				this.cl = Constructor.customClasses;
 				break;
+
+			case Sheet.BootstrapTheme:
+				this.cl = Constructor.bootstrapClasses;
+				break;
+
 			default:
 			case Sheet.ThemeRollerTheme:
+
 				this.cl = Constructor.themeRollerClasses;
 				break;
 		}
@@ -582,28 +585,28 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 	Constructor.bootstrapClasses = {
 		autoFiller:'btn-info',
-		bar:'bg-default',
-		barHighlight:'active',
+		bar:'bg-primary',
+		barHighlight:'label-info',
 		barHandleFreezeLeft:'bg-warning',
 		barHandleFreezeTop:'bg-warning',
-		barMenuTop:'bg-info',
+		barMenuTop:'bg-warning',
 		tdActive:'active',
 		tdHighlighted:'bg-info',
-		control:'bg-default',
+		control:'bg-primary',
 		controlTextBox:'',
 		fullScreen:'',
 		inPlaceEdit:'form-control',
 		menu:'',
 		menuUl:'',
 		menuLi:'',
-		pane: 'bg-default',
-		parent:'btn-default',
+		pane: 'well',
+		parent:'panel panel-default',
 		table:'table table-bordered table-condensed',
 		tab:'btn btn-default btn-xs',
 		tabActive:'active',
-		barResizer:'',
-		barFreezer:'',
-		barFreezeIndicator:''
+		barResizer:'bg-info',
+		barFreezer:'bg-warning',
+		barFreezeIndicator:'bg-warning'
 	};
 
 	Constructor.customClasses = {
@@ -4266,9 +4269,7 @@ $.sheet = {
 									.appendTo(pane)
 									.addClass(jS.theme.barHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
 									.width(bar.width())
-									.css({
-										'top': (pos.top - handle.clientHeight) + 'px'
-									})
+									.css('top', (pos.top - handle.clientHeight + 1) + 'px')
 									.attr('title', jS.msg.dragToFreezeRow);
 
 							jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
@@ -4665,6 +4666,9 @@ $.sheet = {
 							formulaParent.appendChild(formulaResize);
 							secondRowTr.appendChild(label);
 							secondRowTr.appendChild(formulaParent);
+
+							//spacer
+							secondRowTr.appendChild(document.createElement('td'));
 
 							jS.resizableSheet($(formulaResize), {
 								minHeight:jS.controls.formula.height(),
