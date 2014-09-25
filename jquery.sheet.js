@@ -3764,6 +3764,35 @@ $.sheet = {
 				},
 
 				/**
+				 * A flat list of all dependencies
+				 * @param cell
+				 * @returns {Array}
+				 * @memberOf jS
+				 */
+				getAllCellDependencies: function(cell) {
+					function getDependencies(_cell, fn) {
+						var i = 0,
+							dependencies = _cell.dependencies,
+							dependency,
+							max = dependencies.length;
+
+						for(;i < max; i++) {
+							dependency = dependencies[i];
+							fn(dependency);
+							getDependencies(dependency, fn);
+						}
+					}
+
+					var flatDependencyTree = [];
+
+					getDependencies(cell, function(dependency) {
+						flatDependencyTree.push(dependency);
+					});
+
+					return flatDependencyTree;
+				},
+
+				/**
 				 * Tracks which spreadsheet is active to intercept keystrokes for navigation
 				 * @type {Boolean}
 				 * @memberOf jS
