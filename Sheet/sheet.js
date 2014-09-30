@@ -650,18 +650,20 @@ $.fn.extend({
 				me.html(tables);
 
 				for (var event in events) {
-					if (settings[events[event]]) {
+					if (events.hasOwnProperty(event)) {
 						me.unbind(events[event]);
 					}
 				}
 			}
 
-			if ((this.className || '').match(/\bnotEditable\b/i) != null) {
+			if ((this.className || '').match(/\bnot-editable\b/i) != null) {
 				settings['editable'] = false;
 			}
 
 			for (var i in events) {
-				if (settings[events[i]]) me.bind(events[i], settings[events[i]]);
+				if (events.hasOwnProperty(i)) {
+					me.bind(events[i], settings[events[i]]);
+				}
 			}
 
 			if (!$.sheet.instance.length) $.sheet.instance = [];
@@ -1262,7 +1264,7 @@ $.sheet = {
 				},
 
 				/**
-				 * Object selectors for interacting with a spreadsheet, dynamically id'd from both sheet index and instance index
+				 * Object selectors for interacting with a spreadsheet
 				 * @memberOf jS
 				 * @type {Object}
 				 */
@@ -1319,7 +1321,7 @@ $.sheet = {
 						return jS.controls.tdMenu[jS.i] || $([]);
 					},
 					cellsEdited: function () {
-						return jS.controls.cellsEdited[jS.i] || $([]);
+						return (jS.controls.cellsEdited !== u ? jS.controls.cellsEdited : jS.controls.cellsEdited = []);
 					},
 					chart:function () {
 						return jS.controls.chart[jS.i] || $([]);
@@ -2954,7 +2956,9 @@ $.sheet = {
 							enclosure = document.createElement('div'),
 							$enclosure = $(enclosure),
 							actionUI = new Sheet.ActionUI(enclosure, pane, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
-							scrollUI = actionUI.scrollUI;
+							scrollUI = actionUI.scrollUI,
+							mostEverScrollLeft = 0,
+							mostEverScrollTop = 0;
 
 						table.size = function() { return jS.tableSize(table); };
 						pane.size = function() { return jS.sheetSize(table); };
@@ -2966,17 +2970,17 @@ $.sheet = {
 
 								if (xUpdated || yUpdated) {
 
-									if (xUpdated) {
-										setTimeout(function(){
-											jS.calcVisibleCol(actionUI);
-										}, 0);
+									if (xUpdated && this.scrollLeft > mostEverScrollLeft) {
+										mostEverScrollLeft = this.scrollLeft;
+										jS.calcVisibleCol(actionUI);
 									}
 
 									if (yUpdated) {
-										setTimeout(function() {
+										if (this.scrollTop > mostEverScrollTop) {
+											mostEverScrollTop = this.scrollTop;
 											jS.calcVisibleRow(actionUI);
-											jS.updateYBarWidthToCorner(actionUI);
-										}, 0);
+										}
+										jS.updateYBarWidthToCorner(actionUI);
 									}
 
 									jS.obj.barHelper().remove();
@@ -3677,7 +3681,7 @@ $.sheet = {
 
 									if (!cell.edited) {
 										cell.edited = true;
-										jS.controls.cellsEdited[jS.i] = jS.obj.cellsEdited().add(cell);
+										jS.obj.cellsEdited().push(cell);
 									}
 
 									s.parent.one('sheetPreCalculation', function () {
@@ -4390,13 +4394,19 @@ $.sheet = {
 					} while (row-- > rowStart);
 				},
 				updateYBarWidthToCorner: function(actionUI) {
-					//TODO, get working on scroll
 					var scrolledArea = actionUI.scrolledArea,
 						table = actionUI.table,
 						tBody = table.tBody,
 						corner = table.corner,
 						target = Math.min(s.initCalcRows + scrolledArea.end.row, tBody.lastChild.rowIndex),
-						th = tBody.children[target].children[0];
+						tr = tBody.children[target],
+						th;
+
+					if (tr === u) {
+						return;
+					}
+
+					th = tr.children[0];
 
 					corner.col.style.width = s.colMargin + 'px';
 					corner.col.style.width = th.scrollWidth + 'px';
@@ -5625,7 +5635,6 @@ $.sheet = {
 						$td,
 						i = tds.length - 1,
 						cells = jS.obj.cellsEdited(),
-						cellsEdited = jS.controls.cellsEdited[jS.i],
 						hasClass;
 
 					//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
@@ -5649,7 +5658,7 @@ $.sheet = {
 
 							if (!td.jSCell.edited) {
 								td.jSCell.edited = true;
-								cellsEdited = cells.add(td.jSCell);
+								cells.push(td.jSCell);
 							}
 
 						} while (i--);
@@ -5718,8 +5727,7 @@ $.sheet = {
 						$td,
 						i = tds.length - 1,
 						size,
-						cells = jS.obj.cellsEdited(),
-						cellsEdited = jS.controls.cellsEdited[jS.i];
+						cells = jS.obj.cellsEdited();
 
 					//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 
@@ -5732,7 +5740,7 @@ $.sheet = {
 
 							if (!td.jSCell.edited) {
 								td.jSCell.edited = true;
-								cellsEdited = cells.add(td.jSCell);
+								cells.push(td.jSCell);
 							}
 						} while(i--);
 						return true;
@@ -5748,7 +5756,7 @@ $.sheet = {
 				callStack:0,
 
 				/**
-				 * Ignites calculation with cell, is recursively called if cell uses value from another cell, can be sent indexes, or be called via .apply(cell)
+				 * Ignites calculation with cell, is recursively called if cell uses value from another cell, can be sent indexes, or be called via .call(cell)
 				 * @param {Number} [sheetIndex] sheet index within instance
 				 * @param {Number} [rowIndex] row index
 				 * @param {Number} [colIndex] col index
@@ -5773,6 +5781,7 @@ $.sheet = {
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
 							errorResult = new String(errorResult);
 							errorResult.html = '#REF!';
+							errorResult.cell = null;
 						} else {
 							if ((row = sheet[rowIndex]) !== undefined) {
 								if ((cell = row[colIndex]) !== undefined) {
@@ -5784,7 +5793,11 @@ $.sheet = {
 						if (foundCell === false) {
 							if (s.loader !== null) {
 								if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
-									return errorResult;
+									if (s.loader.hasSpreadsheetAtIndex(sheetIndex)) {
+										return '';
+									} else {
+										return '#REF!';
+									}
 								}
 							} else {
 								return errorResult;
@@ -5846,12 +5859,12 @@ $.sheet = {
 								jS.callStack++;
 								formulaParser.setObj(cell);
 								cell.result = formulaParser.parse(cell.formula);
-
+								cell.result.cell = cell;
 								if (cell.hasOwnProperty('loadedFrom')) {
 									s.loader.setCellAttribute(cell.loadedFrom, 'cache', cell.result);
 								}
 							} catch (e) {
-								cell.result = e.toString();
+									cell.result = e.toString();
 							}
 							jS.callStack--;
 
@@ -5897,6 +5910,22 @@ $.sheet = {
 							}
 						}
 					}
+					//setup value trace
+					if (cell.value === u) {
+						cell.value = new String('');
+					}
+
+					cell.value.cell = cell;
+
+					if (cell.value.cell === u) {
+						switch (typeof(cell.value)) {
+							case 'string':
+							default:
+								cell.value = new String(cell.value);
+								cell.value.cell = cell;
+						}
+					}
+
 					cell.needsUpdated = false;
 					cell.state.pop();
 					return (cell.valueOverride != u ? cell.valueOverride : cell.value);
@@ -5914,7 +5943,7 @@ $.sheet = {
 						dependantCellLoc,
 						i,
 						calcLast = this.calcLast,
-						calcDependanciesLast = this.calcDependenciesLast
+						calcDependenciesLast = this.calcDependenciesLast;
 
 					this.state.push('updatingDependencies');
 
@@ -5946,7 +5975,7 @@ $.sheet = {
 					}
 
 					//if no calculation was performed, then the dependencies have not changed
-					if (this.dependencies.length === 0 && this.calcLast === calcLast && this.calcDependenciesLast == calcDependanciesLast) {
+					if (this.dependencies.length === 0 && this.calcLast === calcLast && this.calcDependenciesLast === calcDependenciesLast) {
 						this.dependencies = dependencies;
 					}
 
@@ -6174,7 +6203,7 @@ $.sheet = {
 					cellValue:function (cellRef) {
 						var loc = jSE.parseLocation(cellRef.colString, cellRef.rowString), cell;
 
-						cell = jS.cellHandler.createDependency.call(this, this.sheet, loc);
+						cell = jS.cellHandler.createDependencyOnLocation.call(this, this.sheet, loc.row, loc.col);
 
 						if (cell !== null) {
 
@@ -6188,26 +6217,25 @@ $.sheet = {
 					/**
 					 * Creates a relationship between 2 cells, where the formula originates and the cell that is required to supply a value to
 					 * @param {Number} sheetIndex
-					 * @param {Object} loc {row, col}
+					 * @param {Number} rowIndex
+					 * @param {Number} colIndex
 					 * @returns {Object}
 					 */
-					createDependency:function (sheetIndex, loc) {
+					createDependencyOnLocation:function (sheetIndex, rowIndex, colIndex) {
 						var sheet, row, cell;
 
 						if (
 							(sheet = jS.spreadsheets[sheetIndex]) === u
-							|| (row = sheet[loc.row]) === u
-							|| (cell = row[loc.col]) === u
+							|| (row = sheet[rowIndex]) === u
+							|| (cell = row[colIndex]) === u
 						) {
 							if (s.loader !== null) {
-								cell = s.loader.jitCell(sheetIndex, loc.row, loc.col);
-								if (cell === null) {
-									return null;
-								}
-							} else {
-								return null;
+								cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex);
 							}
 						}
+
+						if (cell === u || cell === null) return null;
+
 
 						if (!cell.dependencies) cell.dependencies = [];
 
@@ -6218,6 +6246,16 @@ $.sheet = {
 						cell.jS = jS;
 
 						return cell;
+					},
+
+					createDependencyOnCell:function(cell) {
+						if (!cell.dependencies) cell.dependencies = [];
+
+						if ($.inArray(this, cell.dependencies) < 0) {
+							cell.dependencies.push(this);
+						}
+
+						cell.jS = jS;
 					},
 
 					/**
@@ -6235,23 +6273,29 @@ $.sheet = {
 							colIndexStart = math.max(_start.col, _end.col),
 							colIndexEnd = math.min(_start.col, _end.col),
 							sheet = jS.spreadsheets[this.sheet],
-							createDependency = jS.cellHandler.createDependency,
+							createDependencyOnLocation = jS.cellHandler.createDependencyOnLocation,
+							createDependencyOnCell = jS.cellHandler.createDependencyOnCell,
 							updateCellValue = jS.updateCellValue,
 							result = [],
 							colIndex,
 							cell,
 							row;
 
+						if (sheet === u) {
+							jS.spreadsheets[this.sheet] = sheet = {};
+						}
 
-
-						if (rowIndex >= rowIndexEnd || colIndex >= colIndexEnd) {
-
+						if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
 							do {
 								colIndex = colIndexStart;
-								row = sheet[rowIndex];
+								row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
 								do {
-									cell = row[colIndex];
-									createDependency.call(this, this.sheet, {row:rowIndex, col:colIndex});
+									if (row === null || (cell = row[colIndex]) === u) {
+										cell = createDependencyOnLocation.call(this, this.sheet, rowIndex, colIndex);
+									} else {
+										createDependencyOnCell.call(this, cell);
+									}
+
 									result.unshift(updateCellValue.call(cell, this.sheet, rowIndex, colIndex));
 								} while(colIndex-- > colIndexEnd);
 							} while (rowIndex-- > rowIndexEnd);
@@ -6300,7 +6344,7 @@ $.sheet = {
 							sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
 						}
 
-						cell = jS.cellHandler.createDependency.call(this, sheetIndex, loc);
+						cell = jS.cellHandler.createDependencyOnLocation.call(this, sheetIndex, loc.row, loc.col);
 
 						return jS.updateCellValue.call(cell, sheetIndex, loc.row, loc.col);
 					},
@@ -6313,19 +6357,20 @@ $.sheet = {
 					 * @returns {Array}
 					 * @memberOf jS.cellHandler
 					 */
-					remoteCellRangeValue:function (sheet, start, end) {//Example: SHEET1:A1:B2
-						sheet = jSE.parseSheetLocation(sheet);
+					remoteCellRangeValue:function (sheet, start, end) {
 						var _start = jSE.parseLocation(start.colString, start.rowString),
-							_end = jSE.parseLocation(end.colString, end.rowString);
+							_end = jSE.parseLocation(end.colString, end.rowString),
+							sheetIndex = jSE.parseSheetLocation(sheet);
 
-						if (sheet < 0) {
-							sheet = jS.getSpreadsheetIndexByTitle(sheet);
+						if (sheetIndex < 0) {
+							sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
 						}
+
 						var result = [];
 
 						for (var i = _start.row; i <= _end.row; i++) {
 							for (var j = _start.col; j <= _end.col; j++) {
-								result.push(jS.updateCellValue(sheet, i, j));
+								result.push(jS.updateCellValue(sheetIndex, i, j));
 							}
 						}
 
@@ -6338,139 +6383,24 @@ $.sheet = {
 					 * @param {Array} [args] arguments needing to be sent to function
 					 * @returns {*}
 					 * @memberOf jS.cellHandler
+					 * @this {Sheet.Cell}
 					 */
 					callFunction:function (fn, args) {
 						fn = fn.toUpperCase();
 						args = args || [];
 
-						if ($.sheet.fn[fn]) {
+						var actualFn = $.sheet.fn[fn],
+							result;
+
+						if (actualFn !== u) {
 							this.fnCount++;
-							var result = $.sheet.fn[fn].apply(this, args);
+							result = actualFn.apply(this, args);
+
 							return result;
 						} else {
 							return s.error({error:"Function " + fn + " Not Found"});
 						}
 					}
-				},
-
-				/**
-				 * Cell lookup handlers
-				 * @memberOf jS
-				 * @namespace
-				 */
-				cellLookupHandlers:{
-
-					/**
-					 * @param {Object} cellRef
-					 * @returns {Object}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					fixedCellValue:function (cellRef) {
-						return [jS.sheet, jSE.parseLocation(cellRef.colString, cellRef.rowString)];
-					},
-
-					/**
-					 * @param {String} sheet example "SHEET1"
-					 * @param {Object} start
-					 * @param {Object} end
-					 * @returns {Array}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					fixedCellRangeValue:function (sheet, start, end) {
-						sheet = jSE.parseSheetLocation(sheet);
-						if (sheet < 0) {
-							sheet = jS.getSpreadsheetIndexByTitle(sheet);
-						}
-						return [sheet, jSE.parseLocation(start.colString, start.rowString), jSE.parseLocation(end.colString, end.rowString)];
-					},
-
-					/**
-					 * doesn't do anything right now
-					 * @param cellRef
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					cellValue:function (cellRef) {
-					},
-
-					/**
-					 * @param {Object} start
-					 * @param {Object} end
-					 * @returns {Array}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					cellRangeValue:function (sheet, start, end) {
-						return [jS.sheet, jSE.parseLocation(start.colString, start.rowString), jSE.parseLocation(end.colString, end.rowString)];
-					},
-
-					/**
-					 * @param {String} colString example "A"
-					 * @param {String} rowString example "10"
-					 * @returns {Array}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					remoteCellValue:function (sheet, cellRef) {
-						return [sheet, jSE.parseLocation(cellRef.colString, cellRef.rowString)];
-					},
-
-					/**
-					 *
-					 * @param {String} sheet example "SHEET1"
-					 * @param {Object} start
-					 * @param {Object} end
-					 * @returns {Array}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					remoteCellRangeValue:function (sheet, start, end) {
-						sheet = jSE.parseSheetLocation(sheet);
-						if (sheet < 0) {
-							sheet = jS.getSpreadsheetIndexByTitle(sheet);
-						}
-						return [sheet, jSE.parseLocation(start.colString, start.rowString), jSE.parseLocation(end.colString, end.rowString)];
-					},
-
-					/**
-					 * @returns {*}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					callFunction:function () {
-						if (arguments[0] == "VLOOKUP" || arguments[0] == "HLOOKUP" && arguments[1]) {
-							if (arguments[1] && arguments[1][1]) {
-								return arguments[1][1];
-							}
-							return [];
-						}
-					}
-				},
-
-				/**
-				 * Looks up cell using jS.cellLookupHandlers
-				 * @returns {Array}
-				 * @memberOf jS
-				 */
-				cellLookup:function () {
-					var formulaParser = Formula($.extend({}, jS.cellHandler, jS.cellLookupHandlers));
-					formulaParser.setObj(this);
-
-					var args = jS.formulaParser.parse(this.formula),
-						lookupTable = [],
-						row,
-						col,
-						sheetIndex = args.sheetIndex,
-						start = args.start,
-						end = args.end,
-						rowMax,
-						colMax;
-
-					rowMax = end.row;
-					colMax = end.col;
-
-					for (row = start.row; row <= rowMax; row++) {
-						for (col = start.col; col <= colMax; col++) {
-							lookupTable.push(jS.getCell(row, col, sheetIndex));
-						}
-					}
-
-					return lookupTable;
 				},
 
 				/**
@@ -6497,20 +6427,47 @@ $.sheet = {
 						|| jS.isChanged(sheetIndex) === false
 						&& !refreshCalculations
 						|| !jS.formulaParser
-						|| s.loader !== null
 					) {
 						return false;
 					} //readonly is no calc at all
 
 					jS.calcLast = new Date();
 
-					var sheet = jS.spreadsheetToArray(null, sheetIndex);
-					jSE.calc(sheetIndex, sheet, jS.updateCellValue);
-					jS.trigger('sheetCalculation', [
-						{which:'spreadsheet', sheet:sheet, index:sheetIndex}
-					]);
+					if (s.loader !== null) {
+						s.loader.cycleCells(sheetIndex, jS.updateCellValue);
+					} else {
+						var sheet = jS.spreadsheetToArray(null, sheetIndex);
+						jSE.calc(sheetIndex, sheet, jS.updateCellValue);
+						jS.trigger('sheetCalculation', [
+							{which:'spreadsheet', sheet:sheet, index:sheetIndex}
+						]);
+					}
 					jS.setChanged(false);
 					return true;
+				},
+
+				/**
+				 * Where jS.spreadsheets are all calculated, and returned to their td counterpart
+				 * @param {Number} [sheetIndex] table index
+				 * @param {Boolean} [refreshCalculations]
+				 * @memberOf jS
+				 */
+				calcAll: function(refreshCalculations) {
+					var sheetIndex = 0,
+						max;
+					if (s.loader) {
+						max = s.loader.count;
+
+						for(;sheetIndex < max; sheetIndex++) {
+							jS.calc(sheetIndex, refreshCalculations);
+						}
+					} else {
+						max = jS.spreadsheets.length;
+
+						for(;sheetIndex < max; sheetIndex++) {
+							jS.calc(sheetIndex, refreshCalculations);
+						}
+					}
 				},
 
 				calcVisiblePos: {
@@ -6586,7 +6543,7 @@ $.sheet = {
 											jS.createCell(jS.i, rowIndex, colIndex);
 											cell = spreadsheet[rowIndex][colIndex];
 										}
-										ignite.apply(cell);
+										ignite.call(cell, sheetIndex, rowIndex, colIndex);
 									} while (colIndex-- > 1);
 								}
 							} else {
@@ -6598,7 +6555,7 @@ $.sheet = {
 											offset--;
 										}
 										if ((row = spreadsheet[rowIndex]) !== undefined) {
-											ignite.apply(row[colIndex] || (row[colIndex] = []));
+											ignite.call(row[colIndex] || (row[colIndex] = {}), sheetIndex, rowIndex, colIndex);
 										}
 									} while (colIndex-- > 1);
 								}

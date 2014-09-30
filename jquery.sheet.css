@@ -172,28 +172,27 @@
 	height: 21px;
 	display: inline-block;
 	position: absolute;
-	margin-left: 18px;
+	margin-left: 19px;
 }
 .jSParent .jSTabContainerScrollable {
 	overflow-x: auto;
 }
 .jSParent .jSTabContainer span
 {
-	border-width: 0;
+	border-width: 0 1px 0 1px;
 	padding: 2px 5px 2px 5px ! important;
-	margin-left: 1px;
 	cursor: pointer;
 	white-space: nowrap;
 	border-radius: 0;
 	height: 22px;
 }
 .jSParent .jSSheetAdder {
-	border-width: 0;
+	border-width: 0 1px 0 0;
 	display: block;
 	position: absolute;
 	text-align: center;
 	width: 18px;
-	height: 19px;
+	height: 20px;
 	border-bottom-left-radius: inherit;
 }
 .jSParent .jSTab {

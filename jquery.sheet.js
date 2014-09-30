@@ -1175,13 +1175,12 @@ Sheet.StyleUpdater = (function(document) {
 
             if (jsonCell !== null) {
 
-				if (jsonCell.getJitCell !== undefined) {
-					cell = jsonCell.getJitCell();
-					delete jsonCell.getJitCell;
+				if (jsonCell.getCell !== undefined) {
+					cell = jsonCell.getCell();
 
 					if (cell['formula']) {
 						td.setAttribute('data-formula', cell['formula'] || '');
-						if (cell.result !== null) {
+						if (cell.hasOwnProperty('result') && cell.result !== null) {
 							$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
 						}
 					} else {
@@ -1229,15 +1228,18 @@ Sheet.StyleUpdater = (function(document) {
 
 			return cell;
 		},
-		jitCell: function(sheetIndex, rowIndex, columnIndex) {
-			var cell = this.getCell(sheetIndex, rowIndex, columnIndex),
-				fakeTd,
+		jitCell: function(sheetIndex, rowIndex, columnIndex, jsonCell) {
+			var fakeTd,
 				jitCell;
 
-			if (cell === null) return null;
+			if (jsonCell === undefined) {
+				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
+			}
 
-			if (cell.getJitCell !== undefined) {
-				return cell.getJitCell();
+			if (jsonCell === null) return null;
+
+			if (jsonCell.getCell !== undefined) {
+				return jsonCell.getCell();
 			}
 
 			fakeTd = {
@@ -1255,18 +1257,18 @@ Sheet.StyleUpdater = (function(document) {
 				calcCount: 0,
 				calcLast: -1,
 				calcDependenciesLast: -1,
-				cellType: cell['cellType'] || '',
-				formula: cell['formula'] || '',
-				value: cell['value'] || '',
-				uneditable: cell['uneditable'],
+				cellType: jsonCell['cellType'] || '',
+				formula: jsonCell['formula'] || '',
+				value: jsonCell['value'] || '',
+				uneditable: jsonCell['uneditable'],
 				type: 'cell',
 				sheet: sheetIndex,
 				dependencies: [],
 				id: null,
-				loadedFrom: cell
+				loadedFrom: jsonCell
 			};
 
-			cell.getJitCell = function() {
+			jsonCell.getCell = function() {
 				return jitCell;
 			};
 
@@ -1279,6 +1281,9 @@ Sheet.StyleUpdater = (function(document) {
 			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return '';
 
 			return jsonSpreadsheet.title || '';
+		},
+		hasSpreadsheetAtIndex: function(index) {
+			return (this.json[index] !== undefined);
 		},
 		getSpreadsheetIndexByTitle: function(title) {
 			var json = this.json,
@@ -1301,8 +1306,53 @@ Sheet.StyleUpdater = (function(document) {
 		    }
 		    this.count = this.json.length;
 	    },
+		getCellAttribute: function(cell, attribute) {
+			return cell[attribute];
+		},
 		setCellAttribute: function(cell, attribute, value) {
 			cell[attribute] = value;
+		},
+		cycleCells: function(sheetIndex, fn) {
+			var json = this.json,
+				jsonSpreadsheet,
+				rows,
+				columns,
+				jsonCell,
+				row,
+				rowIndex,
+				columnIndex;
+
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
+			if ((rowIndex = (rows = jsonSpreadsheet.rows).length) < 1) return;
+			if (rows[0].columns.length < 1) return;
+
+			rowIndex--;
+			do
+			{
+				row = rows[rowIndex];
+				columns = row.columns;
+				columnIndex = columns.length - 1;
+				do
+				{
+					jsonCell = columns[columnIndex];
+					fn.call(this.jitCell(sheetIndex, rowIndex, columnIndex, jsonCell), sheetIndex, rowIndex, columnIndex);
+				}
+				while (columnIndex-- > 0);
+			}
+			while (rowIndex-- > 0);
+
+		},
+		cycleCellsAll: function(fn) {
+			var json = this.json,
+				sheetIndex = json.length - 1;
+
+			if (sheetIndex < 0) return;
+
+			do
+			{
+				this.cycleCells(sheetIndex, fn);
+			}
+			while (sheetIndex-- > 0);
 		},
         /**
          * Create a table from json
@@ -2697,18 +2747,20 @@ $.fn.extend({
 				me.html(tables);
 
 				for (var event in events) {
-					if (settings[events[event]]) {
+					if (events.hasOwnProperty(event)) {
 						me.unbind(events[event]);
 					}
 				}
 			}
 
-			if ((this.className || '').match(/\bnotEditable\b/i) != null) {
+			if ((this.className || '').match(/\bnot-editable\b/i) != null) {
 				settings['editable'] = false;
 			}
 
 			for (var i in events) {
-				if (settings[events[i]]) me.bind(events[i], settings[events[i]]);
+				if (events.hasOwnProperty(i)) {
+					me.bind(events[i], settings[events[i]]);
+				}
 			}
 
 			if (!$.sheet.instance.length) $.sheet.instance = [];
@@ -3309,7 +3361,7 @@ $.sheet = {
 				},
 
 				/**
-				 * Object selectors for interacting with a spreadsheet, dynamically id'd from both sheet index and instance index
+				 * Object selectors for interacting with a spreadsheet
 				 * @memberOf jS
 				 * @type {Object}
 				 */
@@ -3366,7 +3418,7 @@ $.sheet = {
 						return jS.controls.tdMenu[jS.i] || $([]);
 					},
 					cellsEdited: function () {
-						return jS.controls.cellsEdited[jS.i] || $([]);
+						return (jS.controls.cellsEdited !== u ? jS.controls.cellsEdited : jS.controls.cellsEdited = []);
 					},
 					chart:function () {
 						return jS.controls.chart[jS.i] || $([]);
@@ -5001,7 +5053,9 @@ $.sheet = {
 							enclosure = document.createElement('div'),
 							$enclosure = $(enclosure),
 							actionUI = new Sheet.ActionUI(enclosure, pane, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
-							scrollUI = actionUI.scrollUI;
+							scrollUI = actionUI.scrollUI,
+							mostEverScrollLeft = 0,
+							mostEverScrollTop = 0;
 
 						table.size = function() { return jS.tableSize(table); };
 						pane.size = function() { return jS.sheetSize(table); };
@@ -5013,17 +5067,17 @@ $.sheet = {
 
 								if (xUpdated || yUpdated) {
 
-									if (xUpdated) {
-										setTimeout(function(){
-											jS.calcVisibleCol(actionUI);
-										}, 0);
+									if (xUpdated && this.scrollLeft > mostEverScrollLeft) {
+										mostEverScrollLeft = this.scrollLeft;
+										jS.calcVisibleCol(actionUI);
 									}
 
 									if (yUpdated) {
-										setTimeout(function() {
+										if (this.scrollTop > mostEverScrollTop) {
+											mostEverScrollTop = this.scrollTop;
 											jS.calcVisibleRow(actionUI);
-											jS.updateYBarWidthToCorner(actionUI);
-										}, 0);
+										}
+										jS.updateYBarWidthToCorner(actionUI);
 									}
 
 									jS.obj.barHelper().remove();
@@ -5724,7 +5778,7 @@ $.sheet = {
 
 									if (!cell.edited) {
 										cell.edited = true;
-										jS.controls.cellsEdited[jS.i] = jS.obj.cellsEdited().add(cell);
+										jS.obj.cellsEdited().push(cell);
 									}
 
 									s.parent.one('sheetPreCalculation', function () {
@@ -6437,13 +6491,19 @@ $.sheet = {
 					} while (row-- > rowStart);
 				},
 				updateYBarWidthToCorner: function(actionUI) {
-					//TODO, get working on scroll
 					var scrolledArea = actionUI.scrolledArea,
 						table = actionUI.table,
 						tBody = table.tBody,
 						corner = table.corner,
 						target = Math.min(s.initCalcRows + scrolledArea.end.row, tBody.lastChild.rowIndex),
-						th = tBody.children[target].children[0];
+						tr = tBody.children[target],
+						th;
+
+					if (tr === u) {
+						return;
+					}
+
+					th = tr.children[0];
 
 					corner.col.style.width = s.colMargin + 'px';
 					corner.col.style.width = th.scrollWidth + 'px';
@@ -7672,7 +7732,6 @@ $.sheet = {
 						$td,
 						i = tds.length - 1,
 						cells = jS.obj.cellsEdited(),
-						cellsEdited = jS.controls.cellsEdited[jS.i],
 						hasClass;
 
 					//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
@@ -7696,7 +7755,7 @@ $.sheet = {
 
 							if (!td.jSCell.edited) {
 								td.jSCell.edited = true;
-								cellsEdited = cells.add(td.jSCell);
+								cells.push(td.jSCell);
 							}
 
 						} while (i--);
@@ -7765,8 +7824,7 @@ $.sheet = {
 						$td,
 						i = tds.length - 1,
 						size,
-						cells = jS.obj.cellsEdited(),
-						cellsEdited = jS.controls.cellsEdited[jS.i];
+						cells = jS.obj.cellsEdited();
 
 					//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
 
@@ -7779,7 +7837,7 @@ $.sheet = {
 
 							if (!td.jSCell.edited) {
 								td.jSCell.edited = true;
-								cellsEdited = cells.add(td.jSCell);
+								cells.push(td.jSCell);
 							}
 						} while(i--);
 						return true;
@@ -7795,7 +7853,7 @@ $.sheet = {
 				callStack:0,
 
 				/**
-				 * Ignites calculation with cell, is recursively called if cell uses value from another cell, can be sent indexes, or be called via .apply(cell)
+				 * Ignites calculation with cell, is recursively called if cell uses value from another cell, can be sent indexes, or be called via .call(cell)
 				 * @param {Number} [sheetIndex] sheet index within instance
 				 * @param {Number} [rowIndex] row index
 				 * @param {Number} [colIndex] col index
@@ -7820,6 +7878,7 @@ $.sheet = {
 						if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
 							errorResult = new String(errorResult);
 							errorResult.html = '#REF!';
+							errorResult.cell = null;
 						} else {
 							if ((row = sheet[rowIndex]) !== undefined) {
 								if ((cell = row[colIndex]) !== undefined) {
@@ -7831,7 +7890,11 @@ $.sheet = {
 						if (foundCell === false) {
 							if (s.loader !== null) {
 								if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
-									return errorResult;
+									if (s.loader.hasSpreadsheetAtIndex(sheetIndex)) {
+										return '';
+									} else {
+										return '#REF!';
+									}
 								}
 							} else {
 								return errorResult;
@@ -7893,12 +7956,12 @@ $.sheet = {
 								jS.callStack++;
 								formulaParser.setObj(cell);
 								cell.result = formulaParser.parse(cell.formula);
-
+								cell.result.cell = cell;
 								if (cell.hasOwnProperty('loadedFrom')) {
 									s.loader.setCellAttribute(cell.loadedFrom, 'cache', cell.result);
 								}
 							} catch (e) {
-								cell.result = e.toString();
+									cell.result = e.toString();
 							}
 							jS.callStack--;
 
@@ -7944,6 +8007,22 @@ $.sheet = {
 							}
 						}
 					}
+					//setup value trace
+					if (cell.value === u) {
+						cell.value = new String('');
+					}
+
+					cell.value.cell = cell;
+
+					if (cell.value.cell === u) {
+						switch (typeof(cell.value)) {
+							case 'string':
+							default:
+								cell.value = new String(cell.value);
+								cell.value.cell = cell;
+						}
+					}
+
 					cell.needsUpdated = false;
 					cell.state.pop();
 					return (cell.valueOverride != u ? cell.valueOverride : cell.value);
@@ -7961,7 +8040,7 @@ $.sheet = {
 						dependantCellLoc,
 						i,
 						calcLast = this.calcLast,
-						calcDependanciesLast = this.calcDependenciesLast
+						calcDependenciesLast = this.calcDependenciesLast;
 
 					this.state.push('updatingDependencies');
 
@@ -7993,7 +8072,7 @@ $.sheet = {
 					}
 
 					//if no calculation was performed, then the dependencies have not changed
-					if (this.dependencies.length === 0 && this.calcLast === calcLast && this.calcDependenciesLast == calcDependanciesLast) {
+					if (this.dependencies.length === 0 && this.calcLast === calcLast && this.calcDependenciesLast === calcDependenciesLast) {
 						this.dependencies = dependencies;
 					}
 
@@ -8221,7 +8300,7 @@ $.sheet = {
 					cellValue:function (cellRef) {
 						var loc = jSE.parseLocation(cellRef.colString, cellRef.rowString), cell;
 
-						cell = jS.cellHandler.createDependency.call(this, this.sheet, loc);
+						cell = jS.cellHandler.createDependencyOnLocation.call(this, this.sheet, loc.row, loc.col);
 
 						if (cell !== null) {
 
@@ -8235,26 +8314,25 @@ $.sheet = {
 					/**
 					 * Creates a relationship between 2 cells, where the formula originates and the cell that is required to supply a value to
 					 * @param {Number} sheetIndex
-					 * @param {Object} loc {row, col}
+					 * @param {Number} rowIndex
+					 * @param {Number} colIndex
 					 * @returns {Object}
 					 */
-					createDependency:function (sheetIndex, loc) {
+					createDependencyOnLocation:function (sheetIndex, rowIndex, colIndex) {
 						var sheet, row, cell;
 
 						if (
 							(sheet = jS.spreadsheets[sheetIndex]) === u
-							|| (row = sheet[loc.row]) === u
-							|| (cell = row[loc.col]) === u
+							|| (row = sheet[rowIndex]) === u
+							|| (cell = row[colIndex]) === u
 						) {
 							if (s.loader !== null) {
-								cell = s.loader.jitCell(sheetIndex, loc.row, loc.col);
-								if (cell === null) {
-									return null;
-								}
-							} else {
-								return null;
+								cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex);
 							}
 						}
+
+						if (cell === u || cell === null) return null;
+
 
 						if (!cell.dependencies) cell.dependencies = [];
 
@@ -8265,6 +8343,16 @@ $.sheet = {
 						cell.jS = jS;
 
 						return cell;
+					},
+
+					createDependencyOnCell:function(cell) {
+						if (!cell.dependencies) cell.dependencies = [];
+
+						if ($.inArray(this, cell.dependencies) < 0) {
+							cell.dependencies.push(this);
+						}
+
+						cell.jS = jS;
 					},
 
 					/**
@@ -8282,23 +8370,29 @@ $.sheet = {
 							colIndexStart = math.max(_start.col, _end.col),
 							colIndexEnd = math.min(_start.col, _end.col),
 							sheet = jS.spreadsheets[this.sheet],
-							createDependency = jS.cellHandler.createDependency,
+							createDependencyOnLocation = jS.cellHandler.createDependencyOnLocation,
+							createDependencyOnCell = jS.cellHandler.createDependencyOnCell,
 							updateCellValue = jS.updateCellValue,
 							result = [],
 							colIndex,
 							cell,
 							row;
 
+						if (sheet === u) {
+							jS.spreadsheets[this.sheet] = sheet = {};
+						}
 
-
-						if (rowIndex >= rowIndexEnd || colIndex >= colIndexEnd) {
-
+						if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
 							do {
 								colIndex = colIndexStart;
-								row = sheet[rowIndex];
+								row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
 								do {
-									cell = row[colIndex];
-									createDependency.call(this, this.sheet, {row:rowIndex, col:colIndex});
+									if (row === null || (cell = row[colIndex]) === u) {
+										cell = createDependencyOnLocation.call(this, this.sheet, rowIndex, colIndex);
+									} else {
+										createDependencyOnCell.call(this, cell);
+									}
+
 									result.unshift(updateCellValue.call(cell, this.sheet, rowIndex, colIndex));
 								} while(colIndex-- > colIndexEnd);
 							} while (rowIndex-- > rowIndexEnd);
@@ -8347,7 +8441,7 @@ $.sheet = {
 							sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
 						}
 
-						cell = jS.cellHandler.createDependency.call(this, sheetIndex, loc);
+						cell = jS.cellHandler.createDependencyOnLocation.call(this, sheetIndex, loc.row, loc.col);
 
 						return jS.updateCellValue.call(cell, sheetIndex, loc.row, loc.col);
 					},
@@ -8360,19 +8454,20 @@ $.sheet = {
 					 * @returns {Array}
 					 * @memberOf jS.cellHandler
 					 */
-					remoteCellRangeValue:function (sheet, start, end) {//Example: SHEET1:A1:B2
-						sheet = jSE.parseSheetLocation(sheet);
+					remoteCellRangeValue:function (sheet, start, end) {
 						var _start = jSE.parseLocation(start.colString, start.rowString),
-							_end = jSE.parseLocation(end.colString, end.rowString);
+							_end = jSE.parseLocation(end.colString, end.rowString),
+							sheetIndex = jSE.parseSheetLocation(sheet);
 
-						if (sheet < 0) {
-							sheet = jS.getSpreadsheetIndexByTitle(sheet);
+						if (sheetIndex < 0) {
+							sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
 						}
+
 						var result = [];
 
 						for (var i = _start.row; i <= _end.row; i++) {
 							for (var j = _start.col; j <= _end.col; j++) {
-								result.push(jS.updateCellValue(sheet, i, j));
+								result.push(jS.updateCellValue(sheetIndex, i, j));
 							}
 						}
 
@@ -8385,139 +8480,24 @@ $.sheet = {
 					 * @param {Array} [args] arguments needing to be sent to function
 					 * @returns {*}
 					 * @memberOf jS.cellHandler
+					 * @this {Sheet.Cell}
 					 */
 					callFunction:function (fn, args) {
 						fn = fn.toUpperCase();
 						args = args || [];
 
-						if ($.sheet.fn[fn]) {
+						var actualFn = $.sheet.fn[fn],
+							result;
+
+						if (actualFn !== u) {
 							this.fnCount++;
-							var result = $.sheet.fn[fn].apply(this, args);
+							result = actualFn.apply(this, args);
+
 							return result;
 						} else {
 							return s.error({error:"Function " + fn + " Not Found"});
 						}
 					}
-				},
-
-				/**
-				 * Cell lookup handlers
-				 * @memberOf jS
-				 * @namespace
-				 */
-				cellLookupHandlers:{
-
-					/**
-					 * @param {Object} cellRef
-					 * @returns {Object}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					fixedCellValue:function (cellRef) {
-						return [jS.sheet, jSE.parseLocation(cellRef.colString, cellRef.rowString)];
-					},
-
-					/**
-					 * @param {String} sheet example "SHEET1"
-					 * @param {Object} start
-					 * @param {Object} end
-					 * @returns {Array}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					fixedCellRangeValue:function (sheet, start, end) {
-						sheet = jSE.parseSheetLocation(sheet);
-						if (sheet < 0) {
-							sheet = jS.getSpreadsheetIndexByTitle(sheet);
-						}
-						return [sheet, jSE.parseLocation(start.colString, start.rowString), jSE.parseLocation(end.colString, end.rowString)];
-					},
-
-					/**
-					 * doesn't do anything right now
-					 * @param cellRef
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					cellValue:function (cellRef) {
-					},
-
-					/**
-					 * @param {Object} start
-					 * @param {Object} end
-					 * @returns {Array}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					cellRangeValue:function (sheet, start, end) {
-						return [jS.sheet, jSE.parseLocation(start.colString, start.rowString), jSE.parseLocation(end.colString, end.rowString)];
-					},
-
-					/**
-					 * @param {String} colString example "A"
-					 * @param {String} rowString example "10"
-					 * @returns {Array}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					remoteCellValue:function (sheet, cellRef) {
-						return [sheet, jSE.parseLocation(cellRef.colString, cellRef.rowString)];
-					},
-
-					/**
-					 *
-					 * @param {String} sheet example "SHEET1"
-					 * @param {Object} start
-					 * @param {Object} end
-					 * @returns {Array}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					remoteCellRangeValue:function (sheet, start, end) {
-						sheet = jSE.parseSheetLocation(sheet);
-						if (sheet < 0) {
-							sheet = jS.getSpreadsheetIndexByTitle(sheet);
-						}
-						return [sheet, jSE.parseLocation(start.colString, start.rowString), jSE.parseLocation(end.colString, end.rowString)];
-					},
-
-					/**
-					 * @returns {*}
-					 * @memberOf jS.cellLookupHandlers
-					 */
-					callFunction:function () {
-						if (arguments[0] == "VLOOKUP" || arguments[0] == "HLOOKUP" && arguments[1]) {
-							if (arguments[1] && arguments[1][1]) {
-								return arguments[1][1];
-							}
-							return [];
-						}
-					}
-				},
-
-				/**
-				 * Looks up cell using jS.cellLookupHandlers
-				 * @returns {Array}
-				 * @memberOf jS
-				 */
-				cellLookup:function () {
-					var formulaParser = Formula($.extend({}, jS.cellHandler, jS.cellLookupHandlers));
-					formulaParser.setObj(this);
-
-					var args = jS.formulaParser.parse(this.formula),
-						lookupTable = [],
-						row,
-						col,
-						sheetIndex = args.sheetIndex,
-						start = args.start,
-						end = args.end,
-						rowMax,
-						colMax;
-
-					rowMax = end.row;
-					colMax = end.col;
-
-					for (row = start.row; row <= rowMax; row++) {
-						for (col = start.col; col <= colMax; col++) {
-							lookupTable.push(jS.getCell(row, col, sheetIndex));
-						}
-					}
-
-					return lookupTable;
 				},
 
 				/**
@@ -8544,20 +8524,47 @@ $.sheet = {
 						|| jS.isChanged(sheetIndex) === false
 						&& !refreshCalculations
 						|| !jS.formulaParser
-						|| s.loader !== null
 					) {
 						return false;
 					} //readonly is no calc at all
 
 					jS.calcLast = new Date();
 
-					var sheet = jS.spreadsheetToArray(null, sheetIndex);
-					jSE.calc(sheetIndex, sheet, jS.updateCellValue);
-					jS.trigger('sheetCalculation', [
-						{which:'spreadsheet', sheet:sheet, index:sheetIndex}
-					]);
+					if (s.loader !== null) {
+						s.loader.cycleCells(sheetIndex, jS.updateCellValue);
+					} else {
+						var sheet = jS.spreadsheetToArray(null, sheetIndex);
+						jSE.calc(sheetIndex, sheet, jS.updateCellValue);
+						jS.trigger('sheetCalculation', [
+							{which:'spreadsheet', sheet:sheet, index:sheetIndex}
+						]);
+					}
 					jS.setChanged(false);
 					return true;
+				},
+
+				/**
+				 * Where jS.spreadsheets are all calculated, and returned to their td counterpart
+				 * @param {Number} [sheetIndex] table index
+				 * @param {Boolean} [refreshCalculations]
+				 * @memberOf jS
+				 */
+				calcAll: function(refreshCalculations) {
+					var sheetIndex = 0,
+						max;
+					if (s.loader) {
+						max = s.loader.count;
+
+						for(;sheetIndex < max; sheetIndex++) {
+							jS.calc(sheetIndex, refreshCalculations);
+						}
+					} else {
+						max = jS.spreadsheets.length;
+
+						for(;sheetIndex < max; sheetIndex++) {
+							jS.calc(sheetIndex, refreshCalculations);
+						}
+					}
 				},
 
 				calcVisiblePos: {
@@ -8633,7 +8640,7 @@ $.sheet = {
 											jS.createCell(jS.i, rowIndex, colIndex);
 											cell = spreadsheet[rowIndex][colIndex];
 										}
-										ignite.apply(cell);
+										ignite.call(cell, sheetIndex, rowIndex, colIndex);
 									} while (colIndex-- > 1);
 								}
 							} else {
@@ -8645,7 +8652,7 @@ $.sheet = {
 											offset--;
 										}
 										if ((row = spreadsheet[rowIndex]) !== undefined) {
-											ignite.apply(row[colIndex] || (row[colIndex] = []));
+											ignite.call(row[colIndex] || (row[colIndex] = {}), sheetIndex, rowIndex, colIndex);
 										}
 									} while (colIndex-- > 1);
 								}
@@ -11842,8 +11849,8 @@ var jFN = $.sheet.fn = {
      * @returns {*}
      * @memberOf jFN
      */
-    TEXT:function () {
-        return this.jS.s.error({error:'Not Yet Implemented'});
+    TEXT:function (value, formatText) {
+        return value;
     },
     /**
      * string function
@@ -12692,7 +12699,7 @@ var jFN = $.sheet.fn = {
             }
 
             html = document.createElement('span');
-            html.className='SCheckbox';
+            html.className='jSCheckbox';
             html.appendChild(checkbox);
             label = document.createElement('span');
             label.textContent = label.innerText = v;
@@ -12859,29 +12866,40 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
-        var jS = this.jS,
-            lookupTable = this.jS.cellLookup.call(this),
-            result = {html: '#N/A', value:''};
+		var jS = this.jS,
+			found = null,
+			result = {html: '#N/A', value:''},
+			range = tableArray[0],
+			cell,
+			loc;
 
-        indexNumber = indexNumber || 1;
+		indexNumber = indexNumber || 1;
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
-        if (isNaN(value)) {
-            var i = tableArray[0].indexOf(value);
-            if (i > -1) {
-                result = jS.updateCellValue(lookupTable[i].sheet, indexNumber, jS.getTdLocation(lookupTable[i].td).col);
-            }
-        } else {
-            arrHelpers.getClosestNum(value, tableArray[0], function(closest, i) {
-                var num = jS.updateCellValue(lookupTable[i].sheet, indexNumber, jS.getTdLocation(lookupTable[i].td).col);
+		if ((isNaN(value) && value != '#REF!') || value.length === 0) {
 
-                if (notExactMatch) {
-                    result = num;
-                } else if (num == value) {
-                    result = num;
-                }
-            });
-        }
+			if (notExactMatch) {
+				found = arrHelpers.lSearch(range, value);
+			} else {
+				var i = range.indexOf(value);
+				if (i > -1) {
+					found = range[i];
+				}
+			}
+		} else {
+			arrHelpers.getClosestNum(value, range, function(closest, i) {
+				if (notExactMatch) {
+					found = closest;
+				} else if (closest == value) {
+					found = closest;
+				}
+			});
+		}
+
+		if (found !== null && (cell = found.cell) !== undefined) {
+			loc = jS.getTdLocation(cell.td);
+			result = jS.updateCellValue(cell.sheet, loc.row, indexNumber);
+		}
 
         return result;
     },
@@ -12896,27 +12914,38 @@ var jFN = $.sheet.fn = {
      */
     VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
         var jS = this.jS,
-            lookupTable = this.jS.cellLookup.call(this),
-            result = {html: '#N/A', value:''};
+			found = null,
+            result = {html: '#N/A', value:''},
+			range = tableArray[0],
+			cell,
+			loc;
 
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
-        if (isNaN(value)) {
-            var i = tableArray[0].indexOf(value);
-            if (i > -1) {
-                result = jS.updateCellValue(lookupTable[i].sheet, indexNumber, jS.getTdLocation(lookupTable[i].td).col);
-            }
-        } else {
-            arrHelpers.getClosestNum(value, tableArray[0], function(closest, i) {
-                var num = jS.updateCellValue(lookupTable[i].sheet, jS.getTdLocation(lookupTable[i].td).row, indexNumber);
+        if ((isNaN(value) && value != '#REF!') || value.length === 0) {
 
+			if (notExactMatch) {
+				found = arrHelpers.lSearch(range, value);
+			} else {
+				var i = range.indexOf(value);
+				if (i > -1) {
+					found = range[i];
+				}
+			}
+        } else {
+            arrHelpers.getClosestNum(value, range, function(closest, i) {
                 if (notExactMatch) {
-                    result = num;
-                } else if (num == value) {
-                    result = num;
+                    found = closest;
+                } else if (closest == value) {
+                    found = closest;
                 }
             });
         }
+
+		if (found !== null && (cell = found.cell) !== undefined) {
+			loc = jS.getTdLocation(cell.td);
+			result = jS.updateCellValue(cell.sheet, indexNumber, loc.col);
+		}
 
         return result;
     },
@@ -13082,7 +13111,56 @@ var arrHelpers = window.arrHelpers = {
         }
         //no length
         return false;
-    }
+    },
+	//http://stackoverflow.com/questions/11919065/sort-an-array-by-the-levenshtein-distance-with-best-performance-in-javascript
+	levenshtein: (function() {
+		var row2 = [];
+		return function(s1, s2) {
+			if (s1 === s2) {
+				return 0;
+			} else {
+				var s1_len = s1.length, s2_len = s2.length;
+				if (s1_len && s2_len) {
+					var i1 = 0, i2 = 0, a, b, c, c2, row = row2;
+					while (i1 < s1_len)
+						row[i1] = ++i1;
+					while (i2 < s2_len) {
+						c2 = s2.charCodeAt(i2);
+						a = i2;
+						++i2;
+						b = i2;
+						for (i1 = 0; i1 < s1_len; ++i1) {
+							c = a + (s1.charCodeAt(i1) === c2 ? 0 : 1);
+							a = row[i1];
+							b = b < a ? (b < c ? b + 1 : c) : (a < c ? a + 1 : c);
+							row[i1] = b;
+						}
+					}
+					return b;
+				} else {
+					return s1_len + s2_len;
+				}
+			}
+		};
+	})(),
+	lSearch: function(arr, value) {
+		var i = 0,
+			item,
+			max = arr.length,
+			found = -1,
+			distance;
+
+		for(;i < max; i++) {
+			item = arr[i];
+			distance = new Number(this.levenshtein(item, value));
+			distance.item = item;
+			if (distance < found) {
+				found = distance;
+			}
+		}
+
+		return (distance !== undefined ? distance.item : null);
+	}
 };
 
 var dates = {
@@ -13665,7 +13743,7 @@ case 14:
 
         //js
             
-            this.$ = yy.handler.callFunction.call(yy.obj, 'LESS_EQUAL', [$$[$0-3], $$[$0-1]]);
+            this.$ = yy.handler.callFunction.call(yy.obj, 'LESS_EQUAL', [$$[$0-3], $$[$0]]);
 
         /*php
             this.$ = ($$[$0-3] * 1) <= ($$[$0] * 1);
@@ -13676,7 +13754,7 @@ case 15:
 
         //js
             
-            this.$ = yy.handler.callFunction.call(yy.obj, 'GREATER_EQUAL', [$$[$0-3], $$[$0-1]]);
+            this.$ = yy.handler.callFunction.call(yy.obj, 'GREATER_EQUAL', [$$[$0-3], $$[$0]]);
 
         /*php
             this.$ = ($$[$0-3] * 1) >= ($$[$0] * 1);
@@ -13974,15 +14052,32 @@ parseError: function parseError(str, hash) {
     }
 },
 parse: function parse(input) {
-    var self = this, stack = [0], tstack = [], vstack = [null], lstack = [], table = this.table, yytext = '', yylineno = 0, yyleng = 0, recovering = 0, TERROR = 2, EOF = 1;
+    var self = this,
+        stack = [0],
+        tstack = [], // token stack
+        vstack = [null], // semantic value stack
+        lstack = [], // location stack
+        table = this.table,
+        yytext = '',
+        yylineno = 0,
+        yyleng = 0,
+        recovering = 0,
+        TERROR = 2,
+        EOF = 1;
+
     var args = lstack.slice.call(arguments, 1);
+
+    //this.reductionCount = this.shiftCount = 0;
+
     var lexer = Object.create(this.lexer);
     var sharedState = { yy: {} };
+    // copy state
     for (var k in this.yy) {
-        if (Object.prototype.hasOwnProperty.call(this.yy, k)) {
-            sharedState.yy[k] = this.yy[k];
-        }
+      if (Object.prototype.hasOwnProperty.call(this.yy, k)) {
+        sharedState.yy[k] = this.yy[k];
+      }
     }
+
     lexer.setInput(input, sharedState.yy);
     sharedState.yy.lexer = lexer;
     sharedState.yy.parser = this;
@@ -13991,123 +14086,216 @@ parse: function parse(input) {
     }
     var yyloc = lexer.yylloc;
     lstack.push(yyloc);
+
     var ranges = lexer.options && lexer.options.ranges;
+
     if (typeof sharedState.yy.parseError === 'function') {
         this.parseError = sharedState.yy.parseError;
     } else {
         this.parseError = Object.getPrototypeOf(this).parseError;
     }
-    function popStack(n) {
+
+    function popStack (n) {
         stack.length = stack.length - 2 * n;
         vstack.length = vstack.length - n;
         lstack.length = lstack.length - n;
     }
-    _token_stack:
-        function lex() {
-            var token;
-            token = lexer.lex() || EOF;
-            if (typeof token !== 'number') {
-                token = self.symbols_[token] || token;
-            }
-            return token;
+
+_token_stack:
+    function lex() {
+        var token;
+        token = lexer.lex() || EOF;
+        // if token isn't its numeric value, convert
+        if (typeof token !== 'number') {
+            token = self.symbols_[token] || token;
         }
+        return token;
+    }
+
     var symbol, preErrorSymbol, state, action, a, r, yyval = {}, p, len, newState, expected;
     while (true) {
+        // retreive state number from top of stack
         state = stack[stack.length - 1];
+
+        // use default actions if available
         if (this.defaultActions[state]) {
             action = this.defaultActions[state];
         } else {
             if (symbol === null || typeof symbol == 'undefined') {
                 symbol = lex();
             }
+            // read action for current state and first input
             action = table[state] && table[state][symbol];
         }
-                    if (typeof action === 'undefined' || !action.length || !action[0]) {
-                var errStr = '';
+
+_handle_error:
+        // handle parse error
+        if (typeof action === 'undefined' || !action.length || !action[0]) {
+            var error_rule_depth;
+            var errStr = '';
+
+            // Return the rule stack depth where the nearest error rule can be found.
+            // Return FALSE when no error recovery rule was found.
+            function locateNearestErrorRecoveryRule(state) {
+                var stack_probe = stack.length - 1;
+                var depth = 0;
+
+                // try to recover from error
+                for(;;) {
+                    // check for error recovery rule in this state
+                    if ((TERROR.toString()) in table[state]) {
+                        return depth;
+                    }
+                    if (state === 0 || stack_probe < 2) {
+                        return false; // No suitable error recovery rule available.
+                    }
+                    stack_probe -= 2; // popStack(1): [symbol, action]
+                    state = stack[stack_probe];
+                    ++depth;
+                }
+            }
+
+            if (!recovering) {
+                // first see if there's any chance at hitting an error recovery rule:
+                error_rule_depth = locateNearestErrorRecoveryRule(state);
+
+                // Report error
                 expected = [];
                 for (p in table[state]) {
                     if (this.terminals_[p] && p > TERROR) {
-                        expected.push('\'' + this.terminals_[p] + '\'');
+                        expected.push("'"+this.terminals_[p]+"'");
                     }
                 }
                 if (lexer.showPosition) {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ':\n' + lexer.showPosition() + '\nExpecting ' + expected.join(', ') + ', got \'' + (this.terminals_[symbol] || symbol) + '\'';
+                    errStr = 'Parse error on line '+(yylineno+1)+":\n"+lexer.showPosition()+"\nExpecting "+expected.join(', ') + ", got '" + (this.terminals_[symbol] || symbol)+ "'";
                 } else {
-                    errStr = 'Parse error on line ' + (yylineno + 1) + ': Unexpected ' + (symbol == EOF ? 'end of input' : '\'' + (this.terminals_[symbol] || symbol) + '\'');
+                    errStr = 'Parse error on line '+(yylineno+1)+": Unexpected " +
+                                  (symbol == EOF ? "end of input" :
+                                              ("'"+(this.terminals_[symbol] || symbol)+"'"));
                 }
-                this.parseError(errStr, {
+                var error = this.parseError(errStr, {
                     text: lexer.match,
                     token: this.terminals_[symbol] || symbol,
                     line: lexer.yylineno,
                     loc: yyloc,
-                    expected: expected
+                    expected: expected,
+                    recoverable: (error_rule_depth !== false)
                 });
+
+                //if we are done, and there is an error, yet have been handled via an override, then return
+                if (this.done) {
+                    if (error === undefined) {
+                        return errStr;
+                    } else {
+                        return error;
+                    }
+                }
+            } else if (preErrorSymbol !== EOF) {
+                error_rule_depth = locateNearestErrorRecoveryRule(state);
             }
-        if (action[0] instanceof Array && action.length > 1) {
-            throw new Error('Parse Error: multiple actions possible at state: ' + state + ', token: ' + symbol);
-        }
-        switch (action[0]) {
-        case 1:
-            stack.push(symbol);
-            vstack.push(lexer.yytext);
-            lstack.push(lexer.yylloc);
-            stack.push(action[1]);
-            symbol = null;
-            if (!preErrorSymbol) {
+
+            // just recovered from another error
+            if (recovering == 3) {
+                if (symbol === EOF || preErrorSymbol === EOF) {
+                    throw new Error(errStr || 'Parsing halted while starting to recover from another error.');
+                }
+
+                // discard current lookahead and grab another
                 yyleng = lexer.yyleng;
                 yytext = lexer.yytext;
                 yylineno = lexer.yylineno;
                 yyloc = lexer.yylloc;
-                if (recovering > 0) {
-                    recovering--;
-                }
-            } else {
-                symbol = preErrorSymbol;
-                preErrorSymbol = null;
+                symbol = lex();
             }
-            break;
-        case 2:
-            len = this.productions_[action[1]][1];
-            yyval.$ = vstack[vstack.length - len];
-            yyval._$ = {
-                first_line: lstack[lstack.length - (len || 1)].first_line,
-                last_line: lstack[lstack.length - 1].last_line,
-                first_column: lstack[lstack.length - (len || 1)].first_column,
-                last_column: lstack[lstack.length - 1].last_column
-            };
-            if (ranges) {
-                yyval._$.range = [
-                    lstack[lstack.length - (len || 1)].range[0],
-                    lstack[lstack.length - 1].range[1]
-                ];
+
+            // try to recover from error
+            if (error_rule_depth === false) {
+                throw new Error(errStr || 'Parsing halted. No suitable error recovery rule available.');
             }
-            r = this.performAction.apply(yyval, [
-                yytext,
-                yyleng,
-                yylineno,
-                sharedState.yy,
-                action[1],
-                vstack,
-                lstack
-            ].concat(args));
-            if (typeof r !== 'undefined') {
-                return r;
-            }
-            if (len) {
-                stack = stack.slice(0, -1 * len * 2);
-                vstack = vstack.slice(0, -1 * len);
-                lstack = lstack.slice(0, -1 * len);
-            }
-            stack.push(this.productions_[action[1]][0]);
-            vstack.push(yyval.$);
-            lstack.push(yyval._$);
-            newState = table[stack[stack.length - 2]][stack[stack.length - 1]];
-            stack.push(newState);
-            break;
-        case 3:
-            return true;
+            popStack(error_rule_depth);
+
+            preErrorSymbol = (symbol == TERROR ? null : symbol); // save the lookahead token
+            symbol = TERROR;         // insert generic error symbol as new lookahead
+            state = stack[stack.length-1];
+            action = table[state] && table[state][TERROR];
+            recovering = 3; // allow 3 real symbols to be shifted before reporting a new error
         }
+
+        // this shouldn't happen, unless resolve defaults are off
+        if (action[0] instanceof Array && action.length > 1) {
+            throw new Error('Parse Error: multiple actions possible at state: '+state+', token: '+symbol);
+        }
+
+        switch (action[0]) {
+            case 1: // shift
+                //this.shiftCount++;
+
+                stack.push(symbol);
+                vstack.push(lexer.yytext);
+                lstack.push(lexer.yylloc);
+                stack.push(action[1]); // push state
+                symbol = null;
+                if (!preErrorSymbol) { // normal execution/no error
+                    yyleng = lexer.yyleng;
+                    yytext = lexer.yytext;
+                    yylineno = lexer.yylineno;
+                    yyloc = lexer.yylloc;
+                    if (recovering > 0) {
+                        recovering--;
+                    }
+                } else {
+                    // error just occurred, resume old lookahead f/ before error
+                    symbol = preErrorSymbol;
+                    preErrorSymbol = null;
+                }
+                break;
+
+            case 2:
+                // reduce
+                //this.reductionCount++;
+
+                len = this.productions_[action[1]][1];
+
+                // perform semantic action
+                yyval.$ = vstack[vstack.length-len]; // default to $$ = $1
+                // default location, uses first token for firsts, last for lasts
+                yyval._$ = {
+                    first_line: lstack[lstack.length-(len||1)].first_line,
+                    last_line: lstack[lstack.length-1].last_line,
+                    first_column: lstack[lstack.length-(len||1)].first_column,
+                    last_column: lstack[lstack.length-1].last_column
+                };
+                if (ranges) {
+                  yyval._$.range = [lstack[lstack.length-(len||1)].range[0], lstack[lstack.length-1].range[1]];
+                }
+                r = this.performAction.apply(yyval, [yytext, yyleng, yylineno, sharedState.yy, action[1], vstack, lstack].concat(args));
+
+                if (typeof r !== 'undefined') {
+                    return r;
+                }
+
+                // pop off stack
+                if (len) {
+                    stack = stack.slice(0,-1*len*2);
+                    vstack = vstack.slice(0, -1*len);
+                    lstack = lstack.slice(0, -1*len);
+                }
+
+                stack.push(this.productions_[action[1]][0]);    // push nonterminal (reduce)
+                vstack.push(yyval.$);
+                lstack.push(yyval._$);
+                // goto new state = table[STATE][NONTERMINAL]
+                newState = table[stack[stack.length-2]][stack[stack.length-1]];
+                stack.push(newState);
+                break;
+
+            case 3:
+                // accept
+                return true;
+        }
+
     }
+
     return true;
 }};
 
@@ -14118,7 +14306,20 @@ if (typeof(window) !== 'undefined') {
 
 		var formulaParser = function () {
 			this.lexer = new formulaLexer();
-			this.yy = {};
+			this.yy = {
+				parseError: function(msg, hash) {
+					this.done = true;
+					var result = new String(msg);
+					result.hash = hash;
+					return result;
+				},
+				lexerError: function(msg, hash) {
+					this.done = true;
+					var result = new String(msg);
+                    result.hash = hash;
+                    return result;
+				}
+			};
 		};
 
 		formulaParser.prototype = parser;

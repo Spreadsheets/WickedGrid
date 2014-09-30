@@ -714,8 +714,10 @@ var jFN = $.sheet.fn = {
      * @returns {*}
      * @memberOf jFN
      */
-    TEXT:function () {
-        return this.jS.s.error({error:'Not Yet Implemented'});
+    TEXT:function (value, formatText) {
+		//for the time being
+		//TODO: fully implement
+        return value;
     },
     /**
      * string function
@@ -1564,7 +1566,7 @@ var jFN = $.sheet.fn = {
             }
 
             html = document.createElement('span');
-            html.className='SCheckbox';
+            html.className='jSCheckbox';
             html.appendChild(checkbox);
             label = document.createElement('span');
             label.textContent = label.innerText = v;
@@ -1731,29 +1733,40 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
-        var jS = this.jS,
-            lookupTable = this.jS.cellLookup.call(this),
-            result = {html: '#N/A', value:''};
+		var jS = this.jS,
+			found = null,
+			result = {html: '#N/A', value:''},
+			range = tableArray[0],
+			cell,
+			loc;
 
-        indexNumber = indexNumber || 1;
+		indexNumber = indexNumber || 1;
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
-        if (isNaN(value)) {
-            var i = tableArray[0].indexOf(value);
-            if (i > -1) {
-                result = jS.updateCellValue(lookupTable[i].sheet, indexNumber, jS.getTdLocation(lookupTable[i].td).col);
-            }
-        } else {
-            arrHelpers.getClosestNum(value, tableArray[0], function(closest, i) {
-                var num = jS.updateCellValue(lookupTable[i].sheet, indexNumber, jS.getTdLocation(lookupTable[i].td).col);
+		if ((isNaN(value) && value != '#REF!') || value.length === 0) {
 
-                if (notExactMatch) {
-                    result = num;
-                } else if (num == value) {
-                    result = num;
-                }
-            });
-        }
+			if (notExactMatch) {
+				found = arrHelpers.lSearch(range, value);
+			} else {
+				var i = range.indexOf(value);
+				if (i > -1) {
+					found = range[i];
+				}
+			}
+		} else {
+			arrHelpers.getClosestNum(value, range, function(closest, i) {
+				if (notExactMatch) {
+					found = closest;
+				} else if (closest == value) {
+					found = closest;
+				}
+			});
+		}
+
+		if (found !== null && (cell = found.cell) !== undefined) {
+			loc = jS.getTdLocation(cell.td);
+			result = jS.updateCellValue(cell.sheet, loc.row, indexNumber);
+		}
 
         return result;
     },
@@ -1768,27 +1781,38 @@ var jFN = $.sheet.fn = {
      */
     VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
         var jS = this.jS,
-            lookupTable = this.jS.cellLookup.call(this),
-            result = {html: '#N/A', value:''};
+			found = null,
+            result = {html: '#N/A', value:''},
+			range = tableArray[0],
+			cell,
+			loc;
 
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
-        if (isNaN(value)) {
-            var i = tableArray[0].indexOf(value);
-            if (i > -1) {
-                result = jS.updateCellValue(lookupTable[i].sheet, indexNumber, jS.getTdLocation(lookupTable[i].td).col);
-            }
-        } else {
-            arrHelpers.getClosestNum(value, tableArray[0], function(closest, i) {
-                var num = jS.updateCellValue(lookupTable[i].sheet, jS.getTdLocation(lookupTable[i].td).row, indexNumber);
+        if ((isNaN(value) && value != '#REF!') || value.length === 0) {
 
+			if (notExactMatch) {
+				found = arrHelpers.lSearch(range, value);
+			} else {
+				var i = range.indexOf(value);
+				if (i > -1) {
+					found = range[i];
+				}
+			}
+        } else {
+            arrHelpers.getClosestNum(value, range, function(closest, i) {
                 if (notExactMatch) {
-                    result = num;
-                } else if (num == value) {
-                    result = num;
+                    found = closest;
+                } else if (closest == value) {
+                    found = closest;
                 }
             });
         }
+
+		if (found !== null && (cell = found.cell) !== undefined) {
+			loc = jS.getTdLocation(cell.td);
+			result = jS.updateCellValue(cell.sheet, indexNumber, loc.col);
+		}
 
         return result;
     },

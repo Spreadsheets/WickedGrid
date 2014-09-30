@@ -197,7 +197,7 @@ expression
 	| expression '<' '=' expression {
         //js
             
-            $$ = yy.handler.callFunction.call(yy.obj, 'LESS_EQUAL', [$1, $3]);
+            $$ = yy.handler.callFunction.call(yy.obj, 'LESS_EQUAL', [$1, $4]);
 
         /*php
             $$ = ($1 * 1) <= ($4 * 1);
@@ -206,7 +206,7 @@ expression
     | expression '>' '=' expression {
         //js
             
-            $$ = yy.handler.callFunction.call(yy.obj, 'GREATER_EQUAL', [$1, $3]);
+            $$ = yy.handler.callFunction.call(yy.obj, 'GREATER_EQUAL', [$1, $4]);
 
         /*php
             $$ = ($1 * 1) >= ($4 * 1);
@@ -495,7 +495,20 @@ if (typeof(window) !== 'undefined') {
 
 		var formulaParser = function () {
 			this.lexer = new formulaLexer();
-			this.yy = {};
+			this.yy = {
+				parseError: function(msg, hash) {
+					this.done = true;
+					var result = new String(msg);
+					result.hash = hash;
+					return result;
+				},
+				lexerError: function(msg, hash) {
+					this.done = true;
+					var result = new String(msg);
+                    result.hash = hash;
+                    return result;
+				}
+			};
 		};
 
 		formulaParser.prototype = parser;
