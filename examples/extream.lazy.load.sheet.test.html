@@ -31,7 +31,8 @@
 			).done(function() {
 				var args = arguments,
 					loader = new Sheet.JSONLoader([]),
-					i = 0;
+					i = 0,
+					edited = [];
 
 				while (i<args.length) {
 					loader.addSpreadsheet(args[i][0][0]);
@@ -48,7 +49,23 @@
 							cols: 4
 						},
 						sheetCellEdited: function(event, jS, cell) {
-							console.log(cell.jS.getAllCellDependencies(cell));
+							var i = 0,
+								depends = jS.getAllCellDependencies(cell),
+								max = depends.length,
+								dCell;
+
+							if (edited.indexOf(cell) < 0) {
+								edited.push(cell);
+							}
+
+							for (; i < max; i++) {
+								dCell = depends[i];
+								if (edited.indexOf(dCell) < 0) {
+									edited.push(dCell);
+								}
+							}
+
+							console.log(edited);
 						}
 					});
 			});
