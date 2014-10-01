@@ -1039,6 +1039,8 @@ $.sheet = {
 		gRaphaelLine:{script:'graphael/g.line.js', thirdParty:true},
 		gRaphaelPie:{script:'graphael/g.pie.js', thirdParty:true},
 
+		thaw: {script:"thaw.js/thaw.js", thirdParty:true},
+
 		undoManager:{script: 'Javascript-Undo-Manager/js/undomanager.js', thirdParty:true},
 
 		zeroClipboard:{script:'zeroclipboard/dist/ZeroClipboard.min.js', thirdParty:true}
@@ -1144,6 +1146,7 @@ $.sheet = {
 			math = Math,
 			n = isNaN,
 			nAN = NaN,
+			thaw = window.thaw,
 
 			/**
 			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index].
@@ -5876,7 +5879,7 @@ $.sheet = {
 							cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
 							cache = jS.filterValue.call(cell);
 						} else {
-							if (cell.value != u && cell.value.charAt) {
+							if (typeof cell.value === 'string') {
 								fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
 								if (fn) {
 									cell.valueOverride = fn.call(cell, cell.value);
@@ -5902,7 +5905,7 @@ $.sheet = {
 							if ((jsonCell = s.loader.getCell(sheetIndex, rowIndex, colIndex)) !== null) {
 								jsonCell.formula = cell.formula;
 								jsonCell.cellType = cell.cellType;
-								jsonCell.value = cell.value;
+								jsonCell.value = cell.value + '';
 								jsonCell.cache = cache;
 								if (cell.uneditable === true) {
 									jsonCell.uneditable = true;
@@ -6487,7 +6490,8 @@ $.sheet = {
 						rowIndex = min(spreadsheet.length - 1, initRows),
 						row,
 						colIndex,
-						pos = {row: -1, col: -1};
+						pos = {row: -1, col: -1},
+						stack = [];
 
 
 					if (rowIndex > 0) {
@@ -6497,7 +6501,14 @@ $.sheet = {
 								pos.col = colIndex = min(row.length - 1, initCols);
 								if (colIndex > 0) {
 									do {
-										ignite.call(row[colIndex], sheetIndex, rowIndex, colIndex);
+										stack.push({
+											cell: row[colIndex],
+											rowIndex: rowIndex,
+											colIndex: colIndex,
+											make: function() {
+												ignite.call(this.cell, sheetIndex, this.rowIndex, this.colIndex);
+											}
+										});
 									} while (colIndex-- > 1);
 								}
 							}
@@ -6526,7 +6537,8 @@ $.sheet = {
 						colIndex,
 						oldPos = this.calcVisiblePos,
 						newPos = {row: rowIndex, col: oldPos.col},
-						cell;
+						cell,
+						stack = [];
 
 					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
 					targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
@@ -6539,32 +6551,57 @@ $.sheet = {
 							if ((row = spreadsheet[rowIndex]) !== undefined) {
 								if (colIndex > 0) {
 									do {
-										if ((cell = row[colIndex]) === undefined) {
-											jS.createCell(jS.i, rowIndex, colIndex);
-											cell = spreadsheet[rowIndex][colIndex];
-										}
-										ignite.call(cell, sheetIndex, rowIndex, colIndex);
+
+										stack.push({
+											row: row,
+											cell: row[colIndex],
+											rowIndex: rowIndex,
+											colIndex: colIndex,
+											make: function() {
+												var that = this;
+												if ((this.cell = this.row[this.colIndex]) === undefined) {
+													jS.createCell(jS.i, this.rowIndex, this.colIndex);
+													this.cell = spreadsheet[this.rowIndex][this.colIndex];
+												}
+
+												ignite.call(that.cell, sheetIndex, that.rowIndex, that.colIndex);
+											}
+										});
 									} while (colIndex-- > 1);
 								}
 							} else {
 								if (colIndex > 0) {
 									do {
 										var offset = rowIndex;
-										while (offset > 0 && spreadsheet[offset] === undefined) {
-											this.createSpreadsheetForArea(actionUI.table, sheetIndex, offset, offset, colIndex, colIndex, true);
-											offset--;
-										}
-										if ((row = spreadsheet[rowIndex]) !== undefined) {
-											ignite.call(row[colIndex] || (row[colIndex] = {}), sheetIndex, rowIndex, colIndex);
-										}
+										stack.push({
+											row: row,
+											cell: row !== u ? row[colIndex] : u,
+											rowIndex: rowIndex,
+											colIndex: colIndex,
+											offset: offset,
+											make: function() {
+												while (this.offset > 0 && spreadsheet[this.offset] === undefined) {
+													jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.offset, this.offset, this.colIndex, this.colIndex, true);
+													this.offset--;
+												}
+												if ((this.row = spreadsheet[this.rowIndex]) !== undefined) {
+													ignite.call(this.row[this.colIndex] !== u ? this.row[this.colIndex] : (this.row[this.colIndex] = {}), sheetIndex, this.rowIndex, this.colIndex);
+												}
+											}
+										});
 									} while (colIndex-- > 1);
 								}
 							}
 						} while (rowIndex-- > oldPos.row);
-
 					}
 
 					this.calcVisiblePos = newPos;
+
+					thaw(stack, {
+						each: function() {
+							this.make();
+						}
+					});
 
 					jS.trigger('sheetCalculation', [
 						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
@@ -6587,7 +6624,8 @@ $.sheet = {
 						colIndex,
 						cell,
 						oldPos = this.calcVisiblePos,
-						newPos = {row: oldPos.row, col: oldPos.col};
+						newPos = {row: oldPos.row, col: oldPos.col},
+						stack = [];
 
 					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
 					targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
@@ -6597,18 +6635,31 @@ $.sheet = {
 						do {
 							colIndex = targetCol;
 							row = spreadsheet[rowIndex];
-							if (row === undefined || row[colIndex] === undefined) {
-								this.createSpreadsheetForArea(actionUI.table, sheetIndex, rowIndex, rowIndex, colIndex, colIndex, true);
-								row = spreadsheet[rowIndex];
-							}
+							stack.push({
+								row: row,
+								cell: row[colIndex],
+								rowIndex: rowIndex,
+								colIndex: colIndex,
+								make: function() {
+									if (this.row === undefined || this.cell === undefined) {
+										jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
+										this.row = spreadsheet[this.rowIndex];
+									}
 
-							cell = row[colIndex];
-							ignite.apply(cell);
-
+									cell = this.row[this.colIndex];
+									ignite.call(cell, sheetIndex, this.rowIndex, this.colIndex);
+								}
+							});
 						} while(rowIndex-- > 1);
 					}
 
 					this.calcVisiblePos = newPos;
+
+					thaw(stack,{
+						each: function() {
+							this.make();
+						}
+					});
 
 					jS.trigger('sheetCalculation', [
 						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}

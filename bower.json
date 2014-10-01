@@ -3,7 +3,7 @@
   "version": "master",
   "homepage": "https://github.com/Spreadsheets/jQuery.sheet",
   "authors": [
-    "Robert Plummer <robertleeplummerjr@gmail.com>"
+    "Robert Plummer <robertleeplummerjr@gmail.com> (http://visop-dev.com)"
   ],
   "description": "The Ajax Spreadsheet",
   "main": "jquery.sheet.js",
@@ -41,6 +41,7 @@
     "ThemeSwitcher": "https://github.com/josephbulger/ThemeSwitcher.git",
     "jquery-ui": "~1.11.0",
     "MouseWheel": "https://github.com/robertleeplummerjr/MouseWheel.git",
-    "bootstrap": "~3.2.0"
+    "bootstrap": "~3.2.0",
+    "thaw.js": "*"
   }
 }
