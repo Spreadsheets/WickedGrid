@@ -3,7 +3,7 @@
     function Constructor() {
         this.qty = -1;
 
-        this.addedFinished = null;
+        this.addedFinishedFn = null;
         this.createBar = null;
         this.createCell = null;
     }
@@ -28,8 +28,8 @@
 
             return true;
         },
-        setAddedFinished: function(fn) {
-            this.addedFinished = fn;
+        setAddedFinishedFn: function(fn) {
+            this.addedFinishedFn = fn;
         },
         setCreateBarFn: function(fn) {
             this.createBar = fn;
@@ -54,8 +54,8 @@
                 }
             }
 
-            if (this.addedFinished !== null) {
-                this.addedFinished({
+            if (this.addedFinishedFn !== null) {
+                this.addedFinishedFn({
                     row: this.qty,
                     col: 0
                 });
