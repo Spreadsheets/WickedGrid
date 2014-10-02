@@ -1874,7 +1874,8 @@ $.sheet = {
 							setupCell = (loader !== null ? loader.setupCell : null),
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
-							tableSize = table.size();
+							tableSize = table.size(),
+							frag = document.createDocumentFragment();
 
 						qty = qty || 1;
 						type = type || 'col';
@@ -1905,7 +1906,7 @@ $.sheet = {
 									bar.type = 'bar';
 									bar.style.height = height;
 									barParent.appendChild(bar);
-									tBody.insertBefore(barParent, tBody.children[at]);
+									frag.appendChild(barParent);
 
 									bar.innerHTML = barParent.rowIndex;
 									controlY.splice(at, 0, $(bar));
@@ -1943,7 +1944,8 @@ $.sheet = {
 									});
 								}
 
-								o.setAddedFinished(function(_offset) {
+								o.setAddedFinishedFn(function(_offset) {
+									tBody.insertBefore(frag, tBody.children[i].nextSibling);
 									jS.refreshRowLabels(i);
 									offset = _offset;
 								});
@@ -2044,7 +2046,7 @@ $.sheet = {
 									});
 								}
 
-								o.setAddedFinished(function(_offset) {
+								o.setAddedFinishedFn(function(_offset) {
 									jS.refreshColumnLabels(i);
 									offset = _offset;
 								});
@@ -4308,7 +4310,7 @@ $.sheet = {
 				 * @param {Number} [rowEnd]
 				 * @param {Number} [colStart]
 				 * @param {Number} [colEnd]
-				 * @oaram {Boolean} [createCellsIfNeeded]
+				 * @param {Boolean} [createCellsIfNeeded]
 				 * @memberOf jS
 				 */
 				createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd, createCellsIfNeeded) {
@@ -5801,6 +5803,11 @@ $.sheet = {
 									} else {
 										return '#REF!';
 									}
+								} else {
+									if (typeof cell.value === 'string') {
+										cell.td[0].innerHTML = cell.value;
+										return cell.value;
+									}
 								}
 							} else {
 								return errorResult;
@@ -5867,7 +5874,7 @@ $.sheet = {
 									s.loader.setCellAttribute(cell.loadedFrom, 'cache', cell.result);
 								}
 							} catch (e) {
-									cell.result = e.toString();
+								cell.result = e.toString();
 							}
 							jS.callStack--;
 

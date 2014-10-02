@@ -3,9 +3,9 @@
     function Constructor() {
         this.qty = -1;
 
-        this.addedFinished = null;
-        this.createBar = null;
-        this.createCell = null;
+        this.addedFinishedFn = null;
+        this.createBarFn = null;
+        this.createCellFn = null;
     }
 
     Constructor.prototype = {
@@ -28,14 +28,14 @@
 
             return true;
         },
-        setAddedFinished: function(fn) {
-            this.addedFinished = fn;
+		setAddedFinishedFn: function(fn) {
+            this.addedFinishedFn = fn;
         },
         setCreateBarFn: function(fn) {
-            this.createBar = fn;
+            this.createBarFn = fn;
         },
         setCreateCellFn: function(fn) {
-            this.createCell = fn;
+            this.createCellFn = fn;
         },
         createCells:function (i, size, isBefore) {
             var offset = (isBefore ? 0 : 1),
@@ -47,15 +47,15 @@
 
             for (; col < colMax; col++) {
 
-                bar = this.createBar(col + offset);
+                bar = this.createBarFn(col + offset);
 
                 for (row = 1; row <= rowMax; row++) {
-                    this.createCell(row, col + offset, bar);
+                    this.createCellFn(row, col + offset, bar);
                 }
             }
 
-            if (this.addedFinished !== null) {
-                this.addedFinished({
+            if (this.addedFinishedFn !== null) {
+                this.addedFinishedFn({
                     row: 0,
                     col: this.qty
                 });

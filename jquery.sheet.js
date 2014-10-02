@@ -856,9 +856,9 @@ Sheet.Highlighter = (function(document, window, $) {
     function Constructor() {
         this.qty = -1;
 
-        this.addedFinished = null;
-        this.createBar = null;
-        this.createCell = null;
+        this.addedFinishedFn = null;
+        this.createBarFn = null;
+        this.createCellFn = null;
     }
 
     Constructor.prototype = {
@@ -881,14 +881,14 @@ Sheet.Highlighter = (function(document, window, $) {
 
             return true;
         },
-        setAddedFinished: function(fn) {
-            this.addedFinished = fn;
+		setAddedFinishedFn: function(fn) {
+            this.addedFinishedFn = fn;
         },
         setCreateBarFn: function(fn) {
-            this.createBar = fn;
+            this.createBarFn = fn;
         },
         setCreateCellFn: function(fn) {
-            this.createCell = fn;
+            this.createCellFn = fn;
         },
         createCells:function (i, size, isBefore) {
             var offset = (isBefore ? 0 : 1),
@@ -900,15 +900,15 @@ Sheet.Highlighter = (function(document, window, $) {
 
             for (; col < colMax; col++) {
 
-                bar = this.createBar(col + offset);
+                bar = this.createBarFn(col + offset);
 
                 for (row = 1; row <= rowMax; row++) {
-                    this.createCell(row, col + offset, bar);
+                    this.createCellFn(row, col + offset, bar);
                 }
             }
 
-            if (this.addedFinished !== null) {
-                this.addedFinished({
+            if (this.addedFinishedFn !== null) {
+                this.addedFinishedFn({
                     row: 0,
                     col: this.qty
                 });
@@ -922,7 +922,7 @@ Sheet.Highlighter = (function(document, window, $) {
     function Constructor() {
         this.qty = -1;
 
-        this.addedFinished = null;
+        this.addedFinishedFn = null;
         this.createBar = null;
         this.createCell = null;
     }
@@ -947,8 +947,8 @@ Sheet.Highlighter = (function(document, window, $) {
 
             return true;
         },
-        setAddedFinished: function(fn) {
-            this.addedFinished = fn;
+        setAddedFinishedFn: function(fn) {
+            this.addedFinishedFn = fn;
         },
         setCreateBarFn: function(fn) {
             this.createBar = fn;
@@ -973,8 +973,8 @@ Sheet.Highlighter = (function(document, window, $) {
                 }
             }
 
-            if (this.addedFinished !== null) {
-                this.addedFinished({
+            if (this.addedFinishedFn !== null) {
+                this.addedFinishedFn({
                     row: this.qty,
                     col: 0
                 });
@@ -1110,7 +1110,7 @@ Sheet.StyleUpdater = (function(document) {
  *
  */
 
-;Sheet.JSONLoader = (function($, document) {
+;Sheet.JSONLoader = (function($, document, String) {
     "use strict";
     function Constructor(json) {
 		if (json !== undefined) {
@@ -1230,7 +1230,8 @@ Sheet.StyleUpdater = (function(document) {
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex, jsonCell) {
 			var fakeTd,
-				jitCell;
+				jitCell,
+				value;
 
 			if (jsonCell === undefined) {
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
@@ -1249,6 +1250,7 @@ Sheet.StyleUpdater = (function(document) {
 				},
 				html: function() {}
 			};
+			value = jsonCell['value'];
 
 			jitCell = {
 				td: {0:fakeTd},
@@ -1259,7 +1261,7 @@ Sheet.StyleUpdater = (function(document) {
 				calcDependenciesLast: -1,
 				cellType: jsonCell['cellType'] || '',
 				formula: jsonCell['formula'] || '',
-				value: jsonCell['value'] || '',
+				value: (value !== undefined && value !== null ? new String(value) : new String()),
 				uneditable: jsonCell['uneditable'],
 				type: 'cell',
 				sheet: sheetIndex,
@@ -1267,6 +1269,8 @@ Sheet.StyleUpdater = (function(document) {
 				id: null,
 				loadedFrom: jsonCell
 			};
+
+			jitCell.value.cell = jitCell;
 
 			jsonCell.getCell = function() {
 				return jitCell;
@@ -1642,7 +1646,7 @@ Sheet.StyleUpdater = (function(document) {
     };
 
     return Constructor;
-})(jQuery, document);/**
+})(jQuery, document, String);/**
  * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
  * @author RobertLeePlummerJr@gmail.com
  * $Id: jquery.sheet.dts.js 933 2013-08-28 12:59:30Z robertleeplummerjr $
@@ -3971,7 +3975,8 @@ $.sheet = {
 							setupCell = (loader !== null ? loader.setupCell : null),
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
-							tableSize = table.size();
+							tableSize = table.size(),
+							frag = document.createDocumentFragment();
 
 						qty = qty || 1;
 						type = type || 'col';
@@ -4002,7 +4007,7 @@ $.sheet = {
 									bar.type = 'bar';
 									bar.style.height = height;
 									barParent.appendChild(bar);
-									tBody.insertBefore(barParent, tBody.children[at]);
+									frag.appendChild(barParent);
 
 									bar.innerHTML = barParent.rowIndex;
 									controlY.splice(at, 0, $(bar));
@@ -4040,7 +4045,8 @@ $.sheet = {
 									});
 								}
 
-								o.setAddedFinished(function(_offset) {
+								o.setAddedFinishedFn(function(_offset) {
+									tBody.insertBefore(frag, tBody.children[i].nextSibling);
 									jS.refreshRowLabels(i);
 									offset = _offset;
 								});
@@ -4141,7 +4147,7 @@ $.sheet = {
 									});
 								}
 
-								o.setAddedFinished(function(_offset) {
+								o.setAddedFinishedFn(function(_offset) {
 									jS.refreshColumnLabels(i);
 									offset = _offset;
 								});
@@ -6405,7 +6411,7 @@ $.sheet = {
 				 * @param {Number} [rowEnd]
 				 * @param {Number} [colStart]
 				 * @param {Number} [colEnd]
-				 * @oaram {Boolean} [createCellsIfNeeded]
+				 * @param {Boolean} [createCellsIfNeeded]
 				 * @memberOf jS
 				 */
 				createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd, createCellsIfNeeded) {
@@ -7898,6 +7904,11 @@ $.sheet = {
 									} else {
 										return '#REF!';
 									}
+								} else {
+									if (typeof cell.value === 'string') {
+										cell.td[0].innerHTML = cell.value;
+										return cell.value;
+									}
 								}
 							} else {
 								return errorResult;
@@ -7964,7 +7975,7 @@ $.sheet = {
 									s.loader.setCellAttribute(cell.loadedFrom, 'cache', cell.result);
 								}
 							} catch (e) {
-									cell.result = e.toString();
+								cell.result = e.toString();
 							}
 							jS.callStack--;
 

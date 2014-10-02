@@ -9,7 +9,7 @@
  *
  */
 
-;Sheet.JSONLoader = (function($, document) {
+;Sheet.JSONLoader = (function($, document, String) {
     "use strict";
     function Constructor(json) {
 		if (json !== undefined) {
@@ -129,7 +129,8 @@
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex, jsonCell) {
 			var fakeTd,
-				jitCell;
+				jitCell,
+				value;
 
 			if (jsonCell === undefined) {
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
@@ -148,6 +149,7 @@
 				},
 				html: function() {}
 			};
+			value = jsonCell['value'];
 
 			jitCell = {
 				td: {0:fakeTd},
@@ -158,7 +160,7 @@
 				calcDependenciesLast: -1,
 				cellType: jsonCell['cellType'] || '',
 				formula: jsonCell['formula'] || '',
-				value: jsonCell['value'] || '',
+				value: (value !== undefined && value !== null ? new String(value) : new String()),
 				uneditable: jsonCell['uneditable'],
 				type: 'cell',
 				sheet: sheetIndex,
@@ -166,6 +168,8 @@
 				id: null,
 				loadedFrom: jsonCell
 			};
+
+			jitCell.value.cell = jitCell;
 
 			jsonCell.getCell = function() {
 				return jitCell;
@@ -541,4 +545,4 @@
     };
 
     return Constructor;
-})(jQuery, document);
+})(jQuery, document, String);
