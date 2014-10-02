@@ -53,8 +53,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 if (indexes.length !== that.xIndex || style) {
                     that.xIndex = indexes.length || that.xIndex;
 
-                    style = style || this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
-                        this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1);
+
+                    if (style === undefined) {
+                        var col = that.frozenAt.col;
+
+                        style =
+                            this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
+                            this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1) +
+                            cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}';
+                    }
 
                     this.setStyle(style);
 
@@ -73,7 +80,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                 if (indexes.length !== that.yIndex || style) {
                     that.yIndex = indexes.length || that.yIndex;
 
-                    style = style || this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1);
+                    if (style === undefined) {
+                        var row = that.frozenAt.row;
+                        style =
+                            this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1) +
+                            cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ * {display: none;}';
+                    }
 
                     this.setStyle(style);
 
@@ -184,7 +196,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                         value:scrolledTo.row - 1
                     });
                 } else if (direction.down) {
-					y++;
+                    y++;
                     this.scrollTo({
                         axis:'y',
                         value:scrolledTo.row + 1
@@ -196,7 +208,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     break;
                 }
 
-				this.scrollStop();
+                this.scrollStop();
             }
         },
 
@@ -281,7 +293,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
                     this.setStyle(style);
                 }),
                 i,
-				j,
+                j,
                 pane = this.pane;
 
             pane.appendChild(toggleHideStyleX.styleElement);
