@@ -635,8 +635,8 @@ $.fn.extend({
 							callbackIfFalse();
 						}
 					},
-					initCalcRows: 40,
-					initCalcCols: 20,
+					initCalcRows: 20,
+					initCalcCols: 10,
 					initScrollRows: 0,
 					initScrollCols: 0,
 					loader: null
@@ -2970,30 +2970,42 @@ $.sheet = {
 
 						scrollUI.onscroll = function() {
 							if (!jS.isBusy()) {
-								var xUpdated = actionUI.scrollTo({axis:'x', pixel:this.scrollLeft}),
-									yUpdated = actionUI.scrollTo({axis:'y', pixel:this.scrollTop});
+								var that = this,
+									xUpdated,
+									yUpdated;
 
-								if (xUpdated || yUpdated) {
+								thaw([
+									function() {
+										xUpdated = actionUI.scrollTo({axis:'x', pixel:that.scrollLeft});
+									},
 
-									if (xUpdated && this.scrollLeft > mostEverScrollLeft) {
-										mostEverScrollLeft = this.scrollLeft;
-										jS.calcVisibleCol(actionUI);
-									}
+									function() {
+										yUpdated = actionUI.scrollTo({axis:'y', pixel:that.scrollTop});
+									},
 
-									if (yUpdated) {
-										if (this.scrollTop > mostEverScrollTop) {
-											mostEverScrollTop = this.scrollTop;
-											jS.calcVisibleRow(actionUI);
+									function() {
+										if (xUpdated || yUpdated) {
+											if (xUpdated && that.scrollLeft > mostEverScrollLeft) {
+												mostEverScrollLeft = that.scrollLeft;
+												jS.calcVisibleCol(actionUI);
+											}
+
+											if (yUpdated) {
+												if (that.scrollTop > mostEverScrollTop) {
+													mostEverScrollTop = that.scrollTop;
+													jS.calcVisibleRow(actionUI);
+												}
+												jS.updateYBarWidthToCorner(actionUI);
+											}
+
+											jS.obj.barHelper().remove();
+											jS.autoFillerGoToTd();
+											if (pane.inPlaceEdit) {
+												pane.inPlaceEdit.goToTd();
+											}
 										}
-										jS.updateYBarWidthToCorner(actionUI);
 									}
-
-									jS.obj.barHelper().remove();
-									jS.autoFillerGoToTd();
-									if (pane.inPlaceEdit) {
-										pane.inPlaceEdit.goToTd();
-									}
-								}
+								]);
 							}
 						};
 						scrollUI.onmousedown = function() {
@@ -6522,10 +6534,18 @@ $.sheet = {
 						} while(rowIndex-- > 1);
 					}
 
+					thaw(stack, {
+						each: function() {
+							this.make();
+						},
+						done: function() {
+							jS.trigger('sheetCalculation', [
+								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
+							]);
+						}
+					});
+
 					this.calcVisiblePos = pos;
-					jS.trigger('sheetCalculation', [
-						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
-					]);
 					jS.setChanged(false);
 				},
 				calcVisibleRow: function(actionUI, sheetIndex) {
