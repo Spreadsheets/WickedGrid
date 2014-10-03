@@ -6034,10 +6034,18 @@ $.sheet = {
 						html = this.value;
 					}
 
-
 					switch (typeof html) {
 						case 'object':
 							if (html.appendChild !== u) {
+
+								//if html already belongs to another element, just return nothing for it's cache.
+								if (html.parentNode !== null) {
+									td.innerHTML = this.value.valueOf();
+									return '';
+								}
+
+								//otherwise, append it to this td
+								td.innerHTML = '';
 								td.appendChild(html);
 								break;
 							}

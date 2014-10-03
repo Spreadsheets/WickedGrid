@@ -1372,15 +1372,22 @@ var jFN = $.sheet.fn = {
         var cell = this,
             jS = this.jS,
             td = this.td,
-            $td = $(cell.td),
+            $td,
             v,
-            html = (td !== null ? $td.children().detach() : null),
+            html,
             loc,
             select,
             id,
             result;
 
-        if (html === null || cell.needsUpdated || !html.length) {
+	    if (td === null) {
+		    return cell.value;
+	    }
+
+	    $td = $(cell.td);
+	    html = $td.children().detach();
+
+        if (html === null || cell.needsUpdated || html.length < 1) {
             v = arrHelpers.flatten(arguments);
             v = arrHelpers.unique(v);
             loc = jS.getTdLocation(cell.td);
@@ -1422,9 +1429,13 @@ var jFN = $.sheet.fn = {
             select.value = cell.value || v[0];
             select.onchange();
         }
+
         if (typeof cell.value !== 'object') {
             result = new String(cell.value);
+        } else {
+	        result = cell.value;
         }
+
         result.html = select;
         return result;
     },
@@ -1437,8 +1448,9 @@ var jFN = $.sheet.fn = {
         var cell = this,
             jS = this.jS,
             td = this.td,
+	        $td,
             v,
-            html = (td.children ? td.children().detach() : ''),
+            html,
             loc,
             inputs,
             $inputs,
@@ -1446,7 +1458,14 @@ var jFN = $.sheet.fn = {
             id,
             result;
 
-        if (!html.length || cell.needsUpdated) {
+	    if (td === null) {
+		    return cell.value;
+	    }
+
+	    $td = $(cell.td);
+	    html = $td.children().detach();
+
+        if (html === null || html.length < 1 || cell.needsUpdated) {
             v = arrHelpers.flatten(arguments);
             v = arrHelpers.unique(v);
             loc = jS.getTdLocation(cell.td);
@@ -1457,7 +1476,7 @@ var jFN = $.sheet.fn = {
             radio = document.createElement('span');
             radio.className = 'jSRadio';
             radio.onmousedown = function () {
-                jS.cellEdit($td);
+                jS.cellEdit(td);
             };
             radio.jSCell = cell;
 
@@ -1507,9 +1526,11 @@ var jFN = $.sheet.fn = {
             }
         }
 
-        if (typeof cell.value != 'object') {
-            result = new String(cell.value);
-        }
+	    if (typeof cell.value !== 'object') {
+		    result = new String(cell.value);
+	    } else {
+		    result = cell.value;
+	    }
 
         result.html = radio;
 
@@ -1527,7 +1548,7 @@ var jFN = $.sheet.fn = {
         var cell = this,
             jS = this.jS,
             td = this.td,
-            html = (td.children ? td.children().detach() : ''),
+            html,
             loc,
             checkbox,
             $td,
@@ -1535,7 +1556,14 @@ var jFN = $.sheet.fn = {
             id,
             result;
 
-        if ((!html.length || cell.needsUpdated)) {
+	    if (td === null) {
+		    return cell.value;
+	    }
+
+	    $td = $(cell.td);
+	    html = $td.children().detach();
+
+        if (html === null || html.length < 1 || cell.needsUpdated) {
             loc = jS.getTdLocation(cell.td);
             checkbox = $([]);
             $td = $(cell.td);
@@ -1572,7 +1600,7 @@ var jFN = $.sheet.fn = {
             html.appendChild(label);
             html.appendChild(document.createElement('br'));
             html.onmousedown = function () {
-                jS.cellEdit($td);
+                jS.cellEdit(td);
             };
             html.cell = cell;
 
@@ -1584,9 +1612,21 @@ var jFN = $.sheet.fn = {
             }
         }
 
-        result = new String(cell.value == 'true' || $(checkbox).is(':checked') ? v : '');
+	    if (
+		    //when spreadsheet initiates, this will be the value
+		    cell.value == 'true'
+
+	        //otherwise we are dependent on the checkbox being checked
+	        || $(checkbox).is(':checked')
+	    ) {
+		    result = new String(v);
+	    } else {
+		    result = new String('');
+	    }
+
         result.html = html;
-        return result;
+
+	    return result;
     },
     /**
      * html function
