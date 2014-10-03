@@ -186,13 +186,18 @@ var jSE = $.sheet.engine = {
             data:[0],
             legend:"",
             td:this.td,
-            chart:$(document.createElement('div'))
-                .addClass(jS.cl.chart)
-                .mousedown(function () {
-                    o.td.mousedown();
-                }),
+            chart:document.createElement('div'),
             gR:{}
         }, o);
+
+		o.chart.className = jS.cl.chart;
+		o.chart.onmousedown = function () {
+			$(o.td).mousedown();
+		};
+		o.chart.onmousemove = function () {
+			$(o.td).mousemove();
+			return false;
+		};
 
         jS.controls.chart[jS.i] = jS.obj.chart().add(o.chart);
 
@@ -206,9 +211,9 @@ var jSE = $.sheet.engine = {
         o.legend = (o.legend ? o.legend : o.data);
 
         jS.s.parent.one('sheetCalculation', function () {
-            var width = o.chart.width(),
-                height = o.chart.height(),
-                r = Raphael(o.chart[0]);
+            var width = o.chart.clientWidth,
+                height = o.chart.clientHeight,
+                r = Raphael(o.chart);
 
             if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
             switch (o.type) {
@@ -315,15 +320,9 @@ var jSE = $.sheet.engine = {
                     break;
             }
 
-            o.gR
-                .mousedown(function () {
-                    o.td.mousedown().mouseup();
-                });
-
-            o.chart.mousemove(function () {
-                o.td.mousemove();
-                return false;
-            });
+            o.gR.mousedown(function () {
+				$(o.td).mousedown().mouseup();
+			});
 
         });
 

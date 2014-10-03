@@ -68,9 +68,9 @@
         },
         setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
             var td = document.createElement('td'),
-				$td = $(td),
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),
-				cell;
+				cell,
+				html;
 
             if (jsonCell !== null) {
 
@@ -80,10 +80,21 @@
 					if (cell['formula']) {
 						td.setAttribute('data-formula', cell['formula'] || '');
 						if (cell.hasOwnProperty('result') && cell.result !== null) {
-							$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
+							html = cell.result.hasOwnProperty('html') ? cell.result.html : cell.result;
+							switch (typeof html) {
+								case 'object':
+									if (html.appendChild !== undefined) {
+										td.appendChild(html);
+										break;
+									}
+								case 'string':
+								default:
+									td.innerHTML = html;
+									break;
+							}
 						}
 					} else {
-						$td.html(cell['value']);
+						td.innerHTML = cell['value'];
 					}
 				} else {
 					cell = createCellFn(td);
@@ -92,7 +103,7 @@
 						cell.formula = jsonCell['formula'] || '';
 						td.setAttribute('data-formula', jsonCell['formula'] || '');
 					} else {
-						$td.html(jsonCell['value']);
+						td.innerHTML = jsonCell['value'];
 					}
 				}
 
@@ -110,7 +121,7 @@
 			}
 
 			td.jSCell = cell;
-			cell.td = $td;
+			cell.td = td;
             return cell;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
@@ -128,8 +139,7 @@
 			return cell;
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex, jsonCell) {
-			var fakeTd,
-				jitCell,
+			var jitCell,
 				value;
 
 			if (jsonCell === undefined) {
@@ -142,17 +152,10 @@
 				return jsonCell.getCell();
 			}
 
-			fakeTd = {
-				cellIndex: columnIndex,
-					parentNode:{
-						rowIndex: rowIndex
-				},
-				html: function() {}
-			};
 			value = jsonCell['value'];
 
 			jitCell = {
-				td: {0:fakeTd},
+				td: null,
 				html: [],
 				state: [],
 				calcCount: 0,

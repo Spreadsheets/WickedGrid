@@ -19,7 +19,9 @@ Sheet.Highlighter = (function(document, window, $) {
 
 	Constructor.prototype = {
 		set: function (obj) {
-			obj = obj || $([]);
+			if (obj.parentNode !== undefined) {
+				obj = [obj];
+			}
 
 			var i,
 				oldObjects = this.last;
