@@ -715,8 +715,8 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     TEXT:function (value, formatText) {
-		//for the time being
-		//TODO: fully implement
+        //for the time being
+        //TODO: fully implement
         return value;
     },
     /**
@@ -1371,16 +1371,16 @@ var jFN = $.sheet.fn = {
     DROPDOWN:function () {
         var cell = this,
             jS = this.jS,
-			td = this.td,
-            v,
-            html = (td.children ? td.children().detach() : ''),
-            loc,
+            td = this.td,
             $td = $(cell.td),
+            v,
+            html = (td !== null ? $td.children().detach() : null),
+            loc,
             select,
             id,
             result;
 
-        if (!html.length || cell.needsUpdated) {
+        if (html === null || cell.needsUpdated || !html.length) {
             v = arrHelpers.flatten(arguments);
             v = arrHelpers.unique(v);
             loc = jS.getTdLocation(cell.td);
@@ -1393,7 +1393,7 @@ var jFN = $.sheet.fn = {
             select.cell = this;
 
             select.onmouseup = function() {
-                jS.cellEdit($td);
+                jS.cellEdit(this.cell.td);
             };
             select.onchange = function () {
                 cell.value = this.value;
@@ -1422,7 +1422,7 @@ var jFN = $.sheet.fn = {
             select.value = cell.value || v[0];
             select.onchange();
         }
-        if (typeof cell.value != 'object') {
+        if (typeof cell.value !== 'object') {
             result = new String(cell.value);
         }
         result.html = select;
@@ -1436,11 +1436,10 @@ var jFN = $.sheet.fn = {
     RADIO:function () {
         var cell = this,
             jS = this.jS,
-			td = this.td,
+            td = this.td,
             v,
             html = (td.children ? td.children().detach() : ''),
             loc,
-            $td,
             inputs,
             $inputs,
             radio,
@@ -1527,7 +1526,7 @@ var jFN = $.sheet.fn = {
 
         var cell = this,
             jS = this.jS,
-			td = this.td,
+            td = this.td,
             html = (td.children ? td.children().detach() : ''),
             loc,
             checkbox,
@@ -1544,7 +1543,7 @@ var jFN = $.sheet.fn = {
             checkbox = document.createElement('input');
             checkbox.setAttribute('type', 'checkbox');
             checkbox.setAttribute('name', id);
-			checkbox.setAttribute('id', id);
+            checkbox.setAttribute('id', id);
             checkbox.className = id;
             checkbox.value = v;
             checkbox.onchange = function () {
@@ -1733,40 +1732,47 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
-		var jS = this.jS,
-			found = null,
-			result = {html: '#N/A', value:''},
-			range = tableArray[0],
-			cell,
-			loc;
 
-		indexNumber = indexNumber || 1;
+		if (value === undefined) return result;
+
+        var jS = this.jS,
+            found = null,
+            result = '',
+            range = tableArray[0],
+            cell,
+            loc;
+
+        indexNumber = indexNumber || 1;
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
-		if ((isNaN(value) && value != '#REF!') || value.length === 0) {
+        if (value !== undefined || ((isNaN(value) && value != '#REF!') || value.length === 0)) {
 
-			if (notExactMatch) {
-				found = arrHelpers.lSearch(range, value);
+            if (notExactMatch) {
+                found = arrHelpers.lSearch(range, value);
+            } else {
+                var i = range.indexOf(value);
+                if (i > -1) {
+                    found = range[i];
+                }
+            }
+        } else {
+            arrHelpers.getClosestNum(value, range, function(closest, i) {
+                if (notExactMatch) {
+                    found = closest;
+                } else if (closest == value) {
+                    found = closest;
+                }
+            });
+        }
+
+        if (found !== null && (cell = found.cell) !== undefined) {
+			if (cell.td !== undefined) {
+				loc = jS.getTdLocation(cell.td);
+				result = jS.updateCellValue(cell.sheet, loc.row, indexNumber);
 			} else {
-				var i = range.indexOf(value);
-				if (i > -1) {
-					found = range[i];
-				}
+				result = cell.value;
 			}
-		} else {
-			arrHelpers.getClosestNum(value, range, function(closest, i) {
-				if (notExactMatch) {
-					found = closest;
-				} else if (closest == value) {
-					found = closest;
-				}
-			});
-		}
-
-		if (found !== null && (cell = found.cell) !== undefined) {
-			loc = jS.getTdLocation(cell.td);
-			result = jS.updateCellValue(cell.sheet, loc.row, indexNumber);
-		}
+        }
 
         return result;
     },
@@ -1780,25 +1786,29 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
+
+		if (value === undefined) return result;
+
         var jS = this.jS,
-			found = null,
-            result = {html: '#N/A', value:''},
-			range = tableArray[0],
-			cell,
-			loc;
+            found = null,
+            result = '',
+            range = tableArray[0],
+            cell,
+            loc;
 
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
+
         if ((isNaN(value) && value != '#REF!') || value.length === 0) {
 
-			if (notExactMatch) {
-				found = arrHelpers.lSearch(range, value);
-			} else {
-				var i = range.indexOf(value);
-				if (i > -1) {
-					found = range[i];
-				}
-			}
+            if (notExactMatch) {
+                found = arrHelpers.lSearch(range, value);
+            } else {
+                var i = range.indexOf(value);
+                if (i > -1) {
+                    found = range[i];
+                }
+            }
         } else {
             arrHelpers.getClosestNum(value, range, function(closest, i) {
                 if (notExactMatch) {
@@ -1809,10 +1819,14 @@ var jFN = $.sheet.fn = {
             });
         }
 
-		if (found !== null && (cell = found.cell) !== undefined) {
-			loc = jS.getTdLocation(cell.td);
-			result = jS.updateCellValue(cell.sheet, indexNumber, loc.col);
-		}
+        if (found !== null && (cell = found.cell) !== undefined) {
+			if (cell.td !== undefined) {
+				loc = jS.getTdLocation(cell.td);
+				result = jS.updateCellValue(cell.sheet, indexNumber, loc.col);
+			} else {
+				result = cell.value;
+			}
+        }
 
         return result;
     },

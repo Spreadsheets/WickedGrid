@@ -724,7 +724,9 @@ Sheet.Highlighter = (function(document, window, $) {
 
 	Constructor.prototype = {
 		set: function (obj) {
-			obj = obj || $([]);
+			if (obj.parentNode !== undefined) {
+				obj = [obj];
+			}
 
 			var i,
 				oldObjects = this.last;
@@ -1181,9 +1183,9 @@ Sheet.StyleUpdater = (function(document) {
         },
         setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
             var td = document.createElement('td'),
-				$td = $(td),
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),
-				cell;
+				cell,
+				html;
 
             if (jsonCell !== null) {
 
@@ -1193,10 +1195,21 @@ Sheet.StyleUpdater = (function(document) {
 					if (cell['formula']) {
 						td.setAttribute('data-formula', cell['formula'] || '');
 						if (cell.hasOwnProperty('result') && cell.result !== null) {
-							$td.html(cell.result.hasOwnProperty('html') ? cell.result.html : cell.result);
+							html = cell.result.hasOwnProperty('html') ? cell.result.html : cell.result;
+							switch (typeof html) {
+								case 'object':
+									if (html.appendChild !== undefined) {
+										td.appendChild(html);
+										break;
+									}
+								case 'string':
+								default:
+									td.innerHTML = html;
+									break;
+							}
 						}
 					} else {
-						$td.html(cell['value']);
+						td.innerHTML = cell['value'];
 					}
 				} else {
 					cell = createCellFn(td);
@@ -1205,7 +1218,7 @@ Sheet.StyleUpdater = (function(document) {
 						cell.formula = jsonCell['formula'] || '';
 						td.setAttribute('data-formula', jsonCell['formula'] || '');
 					} else {
-						$td.html(jsonCell['value']);
+						td.innerHTML = jsonCell['value'];
 					}
 				}
 
@@ -1223,7 +1236,7 @@ Sheet.StyleUpdater = (function(document) {
 			}
 
 			td.jSCell = cell;
-			cell.td = $td;
+			cell.td = td;
             return cell;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
@@ -1241,8 +1254,7 @@ Sheet.StyleUpdater = (function(document) {
 			return cell;
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex, jsonCell) {
-			var fakeTd,
-				jitCell,
+			var jitCell,
 				value;
 
 			if (jsonCell === undefined) {
@@ -1255,17 +1267,10 @@ Sheet.StyleUpdater = (function(document) {
 				return jsonCell.getCell();
 			}
 
-			fakeTd = {
-				cellIndex: columnIndex,
-					parentNode:{
-						rowIndex: rowIndex
-				},
-				html: function() {}
-			};
 			value = jsonCell['value'];
 
 			jitCell = {
-				td: {0:fakeTd},
+				td: null,
 				html: [],
 				state: [],
 				calcCount: 0,
@@ -3431,7 +3436,7 @@ $.sheet = {
 						return jS.controls.bar.x.menu[jS.i] || $([]);
 					},
 					tdActive:function () {
-						return jS.cellLast.td || $([]);
+						return jS.cellLast.td || null;
 					},
 					tdMenu:function () {
 						return jS.controls.tdMenu[jS.i] || $([]);
@@ -3683,7 +3688,6 @@ $.sheet = {
 						tBody,
 						tr,
 						td,
-						$td,
 						tdsX,
 						tdsY;
 
@@ -3704,10 +3708,8 @@ $.sheet = {
 						return;
 					}
 
-					$td = $(td);
-
 					jSCell = row[colIndex] = td.jSCell = { //create cell
-						td:$td,
+						td:td,
 						dependencies: [],
 						formula:td.getAttribute('data-formula') || '',
 						cellType:td.getAttribute('data-celltype') || null,
@@ -3794,7 +3796,7 @@ $.sheet = {
 				},
 				createUnboundCell: function(sheetIndex, td) {
 					return td.jSCell = { //create cell
-						td: $(td),
+						td: td,
 						dependencies: [],
 						formula: '',
 						cellType: null,
@@ -4034,7 +4036,7 @@ $.sheet = {
 										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
 												return jS.createUnboundCell(jS.i, td);
 											}),
-											td = cell.td[0],
+											td = cell.td,
 											spreadsheetRow = spreadsheet[row];
 
 										spreadsheetRow[at] = cell;
@@ -4124,7 +4126,7 @@ $.sheet = {
 										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
 												return jS.createUnboundCell(jS.i, td);
 											}),
-											td = cell.td[0],
+											td = cell.td,
 											rowParent = tBody.children[row],
 											spreadsheetRow = spreadsheet[row];
 
@@ -5192,12 +5194,12 @@ $.sheet = {
 					inPlaceEdit:function (td, selected) {
 						td = td || jS.obj.tdActive();
 
-						if (!td.length) {
-							td = $(jS.rowTds(null, 1)[1]);
+						if (td === null) {
+							td = jS.rowTds(null, 1)[1];
 							jS.cellEdit(td);
 						}
 
-						if (!td.length) return;
+						if (td === null) return;
 
 						(jS.obj.inPlaceEdit().destroy || emptyFN)();
 
@@ -5207,16 +5209,16 @@ $.sheet = {
 							$textarea,
 							pane = jS.obj.pane();
 
-						if (!td[0].isHighlighted) return; //If the td is a dud, we do not want a textarea
+						if (!td.isHighlighted) return; //If the td is a dud, we do not want a textarea
 
 						textarea = document.createElement('textarea');
 						$textarea = $(textarea);
 						pane.inPlaceEdit = textarea;
 						textarea.i = jS.i;
 						textarea.className = jS.cl.inPlaceEdit + ' ' + jS.theme.inPlaceEdit;
-						textarea.td = td[0];
+						textarea.td = td;
 						textarea.goToTd = function() {
-							this.offset = td.position();
+							this.offset = $(td).position();
 							if (!this.offset.left && !this.offset.right) {
 								$(textarea).hide();
 							} else {
@@ -5372,7 +5374,7 @@ $.sheet = {
 										if ((col[j] + '').charAt(0) == '=') { //we need to know if it's a formula here
 											cell.formula = col[j].substring(1);
 											cell.value = '';
-											td.data('formula', col[j]);
+											td.setAttribute('data-formula', col[j]);
 										} else {
 											cell.formula = '';
 											cell.value = col[j];
@@ -5641,11 +5643,11 @@ $.sheet = {
 								thisRowHeight = 0,
 								td,
 								i;
-
+							//TODO: refactor to use scroll position
 							if (reverse) { //go up
 								for (i = jS.cellLast.row; i > 0 && prevRowsHeights < paneHeight; i--) {
 									td = jS.getTd(jS.i, i, 1);
-									if (!td.data('hidden') && td.is(':hidden')) td.show();
+									if (!td.getAttribute('data-hidden') && td.is(':hidden')) td.show();
 									prevRowsHeights += td.parent().height();
 								}
 							} else { //go down
@@ -5704,7 +5706,7 @@ $.sheet = {
 										if (e.ctrlKey) {
 											return jS.evt.formula.If(!jS.evt.pasteOverCells(e), e);
 										} else {
-											td.trigger('cellEdit');
+											$(td).trigger('cellEdit');
 											return true;
 										}
 										break;
@@ -5713,7 +5715,7 @@ $.sheet = {
 											jS.evt.document.redo(e);
 											return false;
 										} else {
-											td.trigger('cellEdit');
+											$(td).trigger('cellEdit');
 											return true;
 										}
 										break;
@@ -5722,7 +5724,7 @@ $.sheet = {
 											jS.evt.document.undo(e);
 											return false;
 										} else {
-											td.trigger('cellEdit');
+											$(td).trigger('cellEdit');
 											return true;
 										}
 										break;
@@ -5733,7 +5735,7 @@ $.sheet = {
 										if (e.ctrlKey) {
 											return jS.evt.formula.If(jS.evt.document.findCell(e), e);
 										} else {
-											td.trigger('cellEdit');
+											$(td).trigger('cellEdit');
 											return true;
 										}
 										break;
@@ -5746,7 +5748,7 @@ $.sheet = {
 										return true;
 										break;
 									default:
-										td.trigger('cellEdit');
+										$(td).trigger('cellEdit');
 										return true;
 										break;
 								}
@@ -5807,7 +5809,7 @@ $.sheet = {
 
 									//This should return either a val from textbox or formula, but if fails it tries once more from formula.
 									var v = formula.val(),
-										cell = td[0].jSCell;
+										cell = td.jSCell;
 
 									if (!cell.edited) {
 										cell.edited = true;
@@ -5816,11 +5818,11 @@ $.sheet = {
 
 									s.parent.one('sheetPreCalculation', function () {
 										if (v.charAt(0) == '=' && jS.formulaParser) {
-											td.data('formula', v);
+											td.setAttribute('data-formula', v);
 											cell.value = v;
 											cell.formula = v;
 										} else {
-											td.removeData('formula');
+											td.removeAttribute('data-formula');
 											cell.value = v;
 											cell.formula = '';
 										}
@@ -5853,7 +5855,7 @@ $.sheet = {
 							jS.calc();
 						}
 
-						jS.cellLast.td = $([]);
+						jS.cellLast.td = null;
 						jS.cellLast.row = 0;
 						jS.cellLast.col = 0;
 						jS.rowLast = 0;
@@ -6087,7 +6089,7 @@ $.sheet = {
 						if (e.shiftKey) {
 							jS.getTdRange(e, jS.obj.formula().val());
 						} else {
-							jS.cellEdit($(e.target), true);
+							jS.cellEdit(e.target, true);
 						}
 					},
 
@@ -6528,7 +6530,7 @@ $.sheet = {
 						table = actionUI.table,
 						tBody = table.tBody,
 						corner = table.corner,
-						target = Math.min(s.initCalcRows + scrolledArea.end.row, tBody.lastChild.rowIndex),
+						target = Math.min(s.initCalcRows + scrolledArea.end.row, scrolledArea.end.row + 20, tBody.lastChild.rowIndex),
 						tr = tBody.children[target],
 						th;
 
@@ -6593,7 +6595,6 @@ $.sheet = {
 						cell,
 						_td,
 						td,
-						$td,
 						loc;
 
 					if (firstLocRaw.row) {
@@ -6613,8 +6614,6 @@ $.sheet = {
 						if (td.getAttribute('rowSpan') || td.getAttribute('colSpan')) {
 							return false;
 						}
-
-						$td = $(td);
 
 						if (firstLocRaw.col < lastLocRaw.col) {
 							firstLoc.col = firstLocRaw.col;
@@ -6665,24 +6664,23 @@ $.sheet = {
 
 						jS.calcDependencies.call(td.jSCell);
 						jS.evt.cellEditDone();
-						jS.autoFillerGoToTd($td);
-						jS.cellSetActive($td, loc);
+						jS.autoFillerGoToTd(td);
+						jS.cellSetActive(td, loc);
 					}
 					return true;
 				},
 
 				/**
 				 * Unmerges cells together
-				 * @param {jQuery} [$td]
+				 * @param {jQuery} [td]
 				 * @memberOf jS
 				 */
-				unmerge:function ($td) {
-					$td = $td || jS.highlighted();
-					if (!$td) {
+				unmerge:function (td) {
+					td = td || jS.highlighted();
+					if (!td) {
 						return;
 					}
-					var td = $td[0],
-						loc = jS.getTdLocation(td),
+					var loc = jS.getTdLocation(td),
 						last = new Date(),
 						row = math.max(td.getAttribute('rowSpan') * 1, 1) - 1,
 						col = math.max(td.getAttribute('colSpan') * 1, 1) - 1,
@@ -6698,7 +6696,7 @@ $.sheet = {
 					do {
 						j = loc.col + col;
 						do {
-							_td = jS.getTd(jS.i, i, j)[0];
+							_td = jS.getTd(jS.i, i, j);
 							_td.style.display = '';
 							_td.removeAttribute('colSpan');
 							_td.removeAttribute('rowSpan');
@@ -6711,8 +6709,8 @@ $.sheet = {
 					} while (i-- > loc.row);
 
 					jS.evt.cellEditDone();
-					jS.autoFillerGoToTd($td);
-					jS.cellSetActive($td, loc);
+					jS.autoFillerGoToTd(td);
+					jS.cellSetActive(td, loc);
 					jS.highlighter.set($(tds));
 					return true;
 				},
@@ -6747,12 +6745,12 @@ $.sheet = {
 							row:0,
 							col:0
 						},
-						newV = v || activeTd[0].jSCell.value,
+						newV = v || activeTd.jSCell.value,
 						isNumber = false,
 						i = cells.length - 1,
 						fn = function() {};
 
-					v = v || activeTd[0].jSCell.value;
+					v = v || activeTd.jSCell.value;
 
 					if (i >= 0) {
 						if (v.charAt && v.charAt(0) == '=') {
@@ -6771,7 +6769,7 @@ $.sheet = {
 									s.parent.one('sheetPreCalculation', function () {
 										cells[i].formula = newV;
 										cells[i].value = '';
-										cells[i].td.data('formula', newV);
+										cells[i].td.setAttribute('data-formula', newV);
 									});
 
 									jS.calcDependencies.call(cells[i], last);
@@ -6796,7 +6794,7 @@ $.sheet = {
 								s.parent.one('sheetPreCalculation', function () {
 									cells[i].formula = '';
 									cells[i].value = newV + '';
-									cells[i].td.removeData('formula');
+									cells[i].td.removeAttribute('data-formula');
 								});
 
 								jS.calcDependencies.call(cells[i], last);
@@ -6906,7 +6904,7 @@ $.sheet = {
 						if (this.formula && typeof this.formula == 'string' && jS.isFormulaEditable(this.td)) {
 							this.formula = jS.reparseFormula(this.formula, offset, loc, isBefore, wasDeleted);
 
-							this.td.data('formula', '=' + this.formula);
+							this.td.setAttribute('data-formula', '=' + this.formula);
 						}
 
 						cellStack.push(function() {
@@ -7148,7 +7146,7 @@ $.sheet = {
 								cell = row[colIndex] || null;
 								if (cell) {
 									o.cell[arrayMethod](cell);
-									o.td[arrayMethod](cell.td[0]);
+									o.td[arrayMethod](cell.td);
 								}
 							}
 						} while (colIndex-- > grid.start.col);
@@ -7516,31 +7514,27 @@ $.sheet = {
 
 				/**
 				 * Starts td to be edited
-				 * @param {jQuery|HTMLElement} td
+				 * @param {HTMLElement} td
 				 * @param {Boolean} [isDrag] should be determined by if the user is dragging their mouse around setting cells
 				 * @param {Boolean} [doNotClearHighlighted]
 				 */
 				cellEdit:function (td, isDrag, doNotClearHighlighted) {
-					if (jS.cellLast.td.length < 1) {
-						//doNotClearHighlighted = false;
-					}
-
 					jS.autoFillerNotGroup = true; //make autoFiller directional again.
 					//This finished up the edit of the last cell
 					jS.evt.cellEditDone();
 
-					if (!td.length) return;
+					if (td === null) return;
 
 					var loc = jS.getTdLocation(td),
-						cell = td[0].jSCell,
+						cell = td.jSCell,
 						v;
 
-					if (!cell) return;
+					if (cell === null) return;
 					if (cell.uneditable) return;
 
 					jS.trigger('sheetCellEdit', [cell]);
 
-					if (!td.is(jS.cellLast.td)) {
+					if (td !== jS.cellLast.td) {
 						jS.followMe(td);
 					} else {
 						jS.autoFillerGoToTd(td);
@@ -7549,13 +7543,13 @@ $.sheet = {
 					//Show where we are to the user
 					jS.labelUpdate(loc);
 
-					if (cell.formula) {
+					if (cell.formula.length > 0) {
 						v = '=' + cell.formula;
 					} else {
 						v = cell.value;
 					}
 
-					var formula = jS.obj.formula()
+					jS.obj.formula()
 						.val(v)
 						.blur();
 
@@ -7564,7 +7558,7 @@ $.sheet = {
 
 				/**
 				 * sets cell active to sheet, and highlights it for the user, shouldn't be called directly, should use cellEdit
-				 * @param {jQuery|HTMLElement} td
+				 * @param {HTMLElement} td
 				 * @param {Object} loc {col, row}
 				 * @param {Boolean} [isDrag] should be determined by if the user is dragging their mouse around setting cells
 				 * @param {Boolean} [directional] makes highlighting directional, only left/right or only up/down
@@ -7587,11 +7581,11 @@ $.sheet = {
 								.setEnd(loc);
 						}
 
-						if (!td.length) return;
+						if (td === null) return;
 
 						jS.highlighter
-							.setBar('left', td[0].barLeft)
-							.setBar('top', td[0].barTop);
+							.setBar('left', td.barLeft)
+							.setBar('top', td.barTop);
 
 						var selectModel,
 							clearHighlightedModel;
@@ -7605,7 +7599,7 @@ $.sheet = {
 							case Sheet.openOfficeSelectModel:
 								selectModel = function (target) {
 									if (jS.isCell(target)) {
-										jS.cellEdit($(target));
+										jS.cellEdit(target);
 									}
 								};
 								clearHighlightedModel = function () {};
@@ -7723,7 +7717,7 @@ $.sheet = {
 				 * @type {Object}
 				 */
 				cellLast:{
-					td:$([]), //this is a dud td, so that we don't get errors
+					td:[], //this is a dud td, so that we don't get errors
 					row:0,
 					col:0,
 					isEdit:false
@@ -7930,7 +7924,7 @@ $.sheet = {
 									}
 								} else {
 									if (typeof cell.value === 'string') {
-										cell.td[0].innerHTML = cell.value;
+										cell.td.innerHTML = cell.value;
 										return cell.value;
 									}
 								}
@@ -7975,10 +7969,14 @@ $.sheet = {
 						cell.needsUpdated = true;
 
 						cell.calcCount++;
-						if (cell.formula) {
+						if (cell.formula.length > 0) {
 							try {
-								if (cell.formula.charAt(0) == '=') {
+								if (cell.formula.charAt(0) === '=') {
 									cell.formula = cell.formula.substring(1);
+								}
+
+								if (cell.formula.length < 1) {
+									return '';
 								}
 
 								var formulaParser;
@@ -8026,7 +8024,7 @@ $.sheet = {
 						}
 
 						if (s.loader !== null) {
-							td = cell.td[0];
+							td = cell.td;
 							if (sheetIndex === u) sheetIndex = cell.sheet;
 							if (rowIndex === u || colIndex === u) {
 								loc = jS.getTdLocation(td);
@@ -8126,23 +8124,45 @@ $.sheet = {
 					var encodedValue,
 						html,
 						result = this.result,
-						td = this.td;
+						td = this.td,
+						valType;
 
 					if (result !== u && result !== null) {
-						this.value = result.valueOf();
+						this.value = result;
 						html = result.html;
 					}
 
-					if (typeof this.value === 'string' && this.value.length > 0) {
+					valType = typeof this.value;
+
+					if (valType === 'string' || (valType === 'object' && this.value.toUpperCase !== u) && this.value.length > 0) {
 						encodedValue = s.encode(this.value);
 					}
 
-					if (td.html === u) {
+					if (td === null) {
 						return this.result;
 					}
 
-					td.html(html || encodedValue || this.value);
-					return td[0].innerHTML;
+					if (html !== u) {
+
+					} else if (encodedValue !== u) {
+						html = encodedValue;
+					} else if (this.value !== u) {
+						html = this.value;
+					}
+
+
+					switch (typeof html) {
+						case 'object':
+							if (html.appendChild !== u) {
+								td.appendChild(html);
+								break;
+							}
+						case 'string':
+						default:
+							td.innerHTML = html;
+					}
+
+					return td.innerHTML;
 				},
 
 				/**
@@ -8242,6 +8262,13 @@ $.sheet = {
 					 * @returns {*}
 					 */
 					performMath: function (mathType, num1, num2) {
+						if (num1 === u) {
+							num1 = 0;
+						}
+						if (num2 === u) {
+							num2 = 0;
+						}
+
 						var type1,
 							type2,
 							type1IsNumber = true,
@@ -8960,15 +8987,22 @@ $.sheet = {
 
 				/**
 				 * removes the currently selected row
-				 * @param {Number} row
+				 * @param {Number} rowIndex
 				 * @param {Boolean} skipCalc
 				 * @memberOf jS
 				 */
-				deleteRow:function (row, skipCalc) {
-					var i, start, end, qty, size = jS.sheetSize();
+				deleteRow:function (rowIndex, skipCalc) {
+					var i,
+						start,
+						end,
+						qty,
+						size = jS.sheetSize(),
+						row,
+						pane = jS.obj.pane(),
+						tBody = pane.table.tBody;
 
-					if (row) {
-						start = end = row;
+					if (rowIndex) {
+						start = end = rowIndex;
 					} else {
 						start = math.min(jS.highlighter.start.row, jS.highlighter.end.row);
 						end = math.max(jS.highlighter.start.row, jS.highlighter.end.row);
@@ -8984,7 +9018,8 @@ $.sheet = {
 
 					do {
 						//remove tr's first
-						jS.getTd(jS.i, i, 1).parent().remove();
+						row = jS.getTd(jS.i, i, 1).parentNode;
+						tBody.removeChild(row);
 					} while (start < i--);
 
 					//now remove bar
@@ -9143,40 +9178,41 @@ $.sheet = {
 
 				/**
 				 * scrolls the sheet to the selected cell
-				 * @param {jQuery|HTMLElement} [$td] default is tdActive
+				 * @param {HTMLElement} [td] default is tdActive
 				 * @param {boolean} [dontMoveAutoFiller] keeps autoFillerHandler in default position
 				 * @memberOf jS
 				 */
-				followMe:function ($td, dontMoveAutoFiller) {
-					$td = $td || jS.obj.tdActive();
-					if (!$td.length) return;
+				followMe:function (td, dontMoveAutoFiller) {
+					td = td || jS.obj.tdActive();
+					if (td === null) return;
 
 					var pane = jS.obj.pane(),
 						actionUI = pane.actionUI;
 
 					jS.setBusy(true);
 
-					actionUI.putTdInView($td[0]);
+					actionUI.putTdInView(td);
 
 					jS.setBusy(false);
 
 					if(!dontMoveAutoFiller){
-						jS.autoFillerGoToTd($td);
+						jS.autoFillerGoToTd(td);
 					}
 				},
 
 				/**
 				 * moves autoFiller to a selected cell if it is enabled in settings
-				 * @param {jQuery|HTMLElement} [$td] default is tdActive
+				 * @param {HTMLElement} [td] default is tdActive
 				 * @param {Number} [h] height of a td object
 				 * @param {Number} [w] width of a td object
 				 * @memberOf jS
 				 */
-				autoFillerGoToTd:function ($td, h, w) {
+				autoFillerGoToTd:function (td, h, w) {
 					if (!s.autoFiller) return;
 
-					$td = $td || jS.obj.tdActive();
-					var td = $td[0];
+					if (td === u) {
+						td = jS.obj.tdActive();
+					}
 
 					if (td && td.type == 'cell') { //ensure that it is a usable cell
 						h = h || td.clientHeight;
@@ -9186,12 +9222,12 @@ $.sheet = {
 							return;
 						}
 
-						var tdPos = $td.position();
+						var tdPos = $(td).position();
 
 						jS.obj.autoFiller()
 							.show()
-							.css('top', ((tdPos.top + (h || $td.height()) - 3) + 'px'))
-							.css('left', ((tdPos.left + (w || $td.width()) - 3) + 'px'));
+							.css('top', ((tdPos.top + (h || td.clientHeight) - 3) + 'px'))
+							.css('left', ((tdPos.left + (w || td.clientWidth) - 3) + 'px'));
 					}
 				},
 
@@ -9330,7 +9366,7 @@ $.sheet = {
 										jS.setDirty(false);
 										jS.setBusy(false);
 
-										while (stack.length) {
+										while (stack.length > 0) {
 											jS.calcVisibleInit(jS.i = stack.pop());
 										}
 
@@ -9628,7 +9664,7 @@ $.sheet = {
 									this.row = (before ? start.row : stop.row);
 									this.col = (before ? start.col : stop.col);
 									this.td = jS.getTd(jS.i, this.row, this.col);
-									if (!this.td.is(jS.cellLast.td)) {
+									if (this.td !== jS.cellLast.td) {
 										jS.cellEdit(this.td, false, true);
 									}
 									break;
@@ -9636,7 +9672,7 @@ $.sheet = {
 									this.row = (before ? stop.row : start.row);
 									this.col = (before ? stop.col : start.col);
 									this.td = jS.getTd(jS.i, this.row, this.col);
-									if (!this.td.is(jS.cellLast.td[0])) {
+									if (this.td !== jS.cellLast.td) {
 										jS.cellEdit(this.td, false, true);
 									}
 									break;
@@ -9680,7 +9716,7 @@ $.sheet = {
 							row = last;
 
 							do {
-								obj.push(jS.getTd(jS.i, row, 1)[0].parentNode);
+								obj.push(jS.getTd(jS.i, row, 1).parentNode);
 							} while(row-- > first);
 							break;
 						case 'corner': //all
@@ -9802,7 +9838,7 @@ $.sheet = {
 				 * @param {Number} tableIndex table index
 				 * @param {Number} rowIndex row index
 				 * @param {Number} colIndex column index
-				 * @returns {jQuery|HTMLElement}
+				 * @returns {HTMLElement}
 				 * @memberOf jS
 				 */
 				getTd:function (tableIndex, rowIndex, colIndex) {
@@ -9820,21 +9856,18 @@ $.sheet = {
 						td = document.createElement('td');
 					}
 
-					return $(td);
+					return td;
 				},
 
 				/**
 				 * Gets the td row and column index as an object {row, col}
-				 * @param {Object} td
+				 * @param {HTMLTableCellElement} td
 				 * @returns {Object}
 				 * @memberOf jS
 				 */
 				getTdLocation:function (td) {
 					var result = {col:0, row:0};
-					td = td || '';
-					if (!td && !td[0]) return result;
-
-					td = td[0] || td;
+					if (td === u || td === null) return result;
 
 					if (td.parentNode == u || td.parentNode.rowIndex < 0) {
 						return result;
@@ -10024,7 +10057,8 @@ $.sheet = {
 						jS.undo.draw(cells);
 					},
 					draw: function(clones) {
-						var i;
+						var i,
+							td;
 						for (i = 0; i < clones.length; i++) {
 							var clone = clones[i],
 								loc = jS.getTdLocation(clone.td),
@@ -10032,7 +10066,7 @@ $.sheet = {
 
 							cell.value = clone.value;
 							cell.formula = clone.formula;
-							cell.td = clone.td;
+							td = cell.td = clone.td;
 							cell.dependencies = clone.dependencies;
 							cell.needsUpdated = clone.needsUpdated;
 							cell.calcCount = clone.calcCount;
@@ -10042,8 +10076,8 @@ $.sheet = {
 							cell.state = clone.state;
 							cell.jS = clone.jS;
 							cell.calcDependenciesLast = clone.calcDependenciesLast;
-							cell.td.attr('style', clone.style);
-							cell.td.attr('class', clone.cl);
+							td.setAttribute('style', clone.style);
+							td.setAttribute('class', clone.cl);
 
 							jS.updateCellValue.call(cell);
 						}
@@ -10307,7 +10341,7 @@ $.sheet = {
 
 					while(i<length){
 						cell = selected[i];
-						td = cell.td[0];
+						td = cell.td;
 						if(!isNaN(cell.value)){
 							val = (new Number(cell.value.valueOf()));
 						}
@@ -10434,7 +10468,7 @@ $.sheet = {
 					while(i<length){
 						x = 0;
 						cell = selected[i];
-						td = cell.td[0];
+						td = cell.td;
 						if(!isNaN(cell.value)){
 							val = new Number(cell.value.valueOf());
 						}
@@ -11084,13 +11118,18 @@ var jSE = $.sheet.engine = {
             data:[0],
             legend:"",
             td:this.td,
-            chart:$(document.createElement('div'))
-                .addClass(jS.cl.chart)
-                .mousedown(function () {
-                    o.td.mousedown();
-                }),
+            chart:document.createElement('div'),
             gR:{}
         }, o);
+
+		o.chart.className = jS.cl.chart;
+		o.chart.onmousedown = function () {
+			$(o.td).mousedown();
+		};
+		o.chart.onmousemove = function () {
+			$(o.td).mousemove();
+			return false;
+		};
 
         jS.controls.chart[jS.i] = jS.obj.chart().add(o.chart);
 
@@ -11104,9 +11143,9 @@ var jSE = $.sheet.engine = {
         o.legend = (o.legend ? o.legend : o.data);
 
         jS.s.parent.one('sheetCalculation', function () {
-            var width = o.chart.width(),
-                height = o.chart.height(),
-                r = Raphael(o.chart[0]);
+            var width = o.chart.clientWidth,
+                height = o.chart.clientHeight,
+                r = Raphael(o.chart);
 
             if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
             switch (o.type) {
@@ -11213,15 +11252,9 @@ var jSE = $.sheet.engine = {
                     break;
             }
 
-            o.gR
-                .mousedown(function () {
-                    o.td.mousedown().mouseup();
-                });
-
-            o.chart.mousemove(function () {
-                o.td.mousemove();
-                return false;
-            });
+            o.gR.mousedown(function () {
+				$(o.td).mousedown().mouseup();
+			});
 
         });
 
@@ -11944,8 +11977,8 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     TEXT:function (value, formatText) {
-		//for the time being
-		//TODO: fully implement
+        //for the time being
+        //TODO: fully implement
         return value;
     },
     /**
@@ -12600,16 +12633,16 @@ var jFN = $.sheet.fn = {
     DROPDOWN:function () {
         var cell = this,
             jS = this.jS,
-			td = this.td,
-            v,
-            html = (td.children ? td.children().detach() : ''),
-            loc,
+            td = this.td,
             $td = $(cell.td),
+            v,
+            html = (td !== null ? $td.children().detach() : null),
+            loc,
             select,
             id,
             result;
 
-        if (!html.length || cell.needsUpdated) {
+        if (html === null || cell.needsUpdated || !html.length) {
             v = arrHelpers.flatten(arguments);
             v = arrHelpers.unique(v);
             loc = jS.getTdLocation(cell.td);
@@ -12622,7 +12655,7 @@ var jFN = $.sheet.fn = {
             select.cell = this;
 
             select.onmouseup = function() {
-                jS.cellEdit($td);
+                jS.cellEdit(this.cell.td);
             };
             select.onchange = function () {
                 cell.value = this.value;
@@ -12651,7 +12684,7 @@ var jFN = $.sheet.fn = {
             select.value = cell.value || v[0];
             select.onchange();
         }
-        if (typeof cell.value != 'object') {
+        if (typeof cell.value !== 'object') {
             result = new String(cell.value);
         }
         result.html = select;
@@ -12665,11 +12698,10 @@ var jFN = $.sheet.fn = {
     RADIO:function () {
         var cell = this,
             jS = this.jS,
-			td = this.td,
+            td = this.td,
             v,
             html = (td.children ? td.children().detach() : ''),
             loc,
-            $td,
             inputs,
             $inputs,
             radio,
@@ -12756,7 +12788,7 @@ var jFN = $.sheet.fn = {
 
         var cell = this,
             jS = this.jS,
-			td = this.td,
+            td = this.td,
             html = (td.children ? td.children().detach() : ''),
             loc,
             checkbox,
@@ -12773,7 +12805,7 @@ var jFN = $.sheet.fn = {
             checkbox = document.createElement('input');
             checkbox.setAttribute('type', 'checkbox');
             checkbox.setAttribute('name', id);
-			checkbox.setAttribute('id', id);
+            checkbox.setAttribute('id', id);
             checkbox.className = id;
             checkbox.value = v;
             checkbox.onchange = function () {
@@ -12962,40 +12994,47 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
-		var jS = this.jS,
-			found = null,
-			result = {html: '#N/A', value:''},
-			range = tableArray[0],
-			cell,
-			loc;
 
-		indexNumber = indexNumber || 1;
+		if (value === undefined) return result;
+
+        var jS = this.jS,
+            found = null,
+            result = '',
+            range = tableArray[0],
+            cell,
+            loc;
+
+        indexNumber = indexNumber || 1;
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
-		if ((isNaN(value) && value != '#REF!') || value.length === 0) {
+        if (value !== undefined || ((isNaN(value) && value != '#REF!') || value.length === 0)) {
 
-			if (notExactMatch) {
-				found = arrHelpers.lSearch(range, value);
+            if (notExactMatch) {
+                found = arrHelpers.lSearch(range, value);
+            } else {
+                var i = range.indexOf(value);
+                if (i > -1) {
+                    found = range[i];
+                }
+            }
+        } else {
+            arrHelpers.getClosestNum(value, range, function(closest, i) {
+                if (notExactMatch) {
+                    found = closest;
+                } else if (closest == value) {
+                    found = closest;
+                }
+            });
+        }
+
+        if (found !== null && (cell = found.cell) !== undefined) {
+			if (cell.td !== undefined) {
+				loc = jS.getTdLocation(cell.td);
+				result = jS.updateCellValue(cell.sheet, loc.row, indexNumber);
 			} else {
-				var i = range.indexOf(value);
-				if (i > -1) {
-					found = range[i];
-				}
+				result = cell.value;
 			}
-		} else {
-			arrHelpers.getClosestNum(value, range, function(closest, i) {
-				if (notExactMatch) {
-					found = closest;
-				} else if (closest == value) {
-					found = closest;
-				}
-			});
-		}
-
-		if (found !== null && (cell = found.cell) !== undefined) {
-			loc = jS.getTdLocation(cell.td);
-			result = jS.updateCellValue(cell.sheet, loc.row, indexNumber);
-		}
+        }
 
         return result;
     },
@@ -13009,25 +13048,29 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
+
+		if (value === undefined) return result;
+
         var jS = this.jS,
-			found = null,
-            result = {html: '#N/A', value:''},
-			range = tableArray[0],
-			cell,
-			loc;
+            found = null,
+            result = '',
+            range = tableArray[0],
+            cell,
+            loc;
 
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
+
         if ((isNaN(value) && value != '#REF!') || value.length === 0) {
 
-			if (notExactMatch) {
-				found = arrHelpers.lSearch(range, value);
-			} else {
-				var i = range.indexOf(value);
-				if (i > -1) {
-					found = range[i];
-				}
-			}
+            if (notExactMatch) {
+                found = arrHelpers.lSearch(range, value);
+            } else {
+                var i = range.indexOf(value);
+                if (i > -1) {
+                    found = range[i];
+                }
+            }
         } else {
             arrHelpers.getClosestNum(value, range, function(closest, i) {
                 if (notExactMatch) {
@@ -13038,10 +13081,14 @@ var jFN = $.sheet.fn = {
             });
         }
 
-		if (found !== null && (cell = found.cell) !== undefined) {
-			loc = jS.getTdLocation(cell.td);
-			result = jS.updateCellValue(cell.sheet, indexNumber, loc.col);
-		}
+        if (found !== null && (cell = found.cell) !== undefined) {
+			if (cell.td !== undefined) {
+				loc = jS.getTdLocation(cell.td);
+				result = jS.updateCellValue(cell.sheet, indexNumber, loc.col);
+			} else {
+				result = cell.value;
+			}
+        }
 
         return result;
     },
