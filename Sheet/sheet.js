@@ -4414,7 +4414,8 @@ $.sheet = {
 						corner = table.corner,
 						target = Math.min(s.initCalcRows + scrolledArea.end.row, scrolledArea.end.row + 20, tBody.lastChild.rowIndex),
 						tr = tBody.children[target],
-						th;
+						th,
+						text;
 
 					if (tr === u) {
 						return;
@@ -4422,8 +4423,9 @@ $.sheet = {
 
 					th = tr.children[0];
 
-					corner.col.style.width = s.colMargin + 'px';
-					corner.col.style.width = th.scrollWidth + 'px';
+					text = (th.innerText !== u ? th.innerText : th.textContent);
+
+					corner.col.style.width = (window.defaultCharSize.width * text.length) + 'px';
 				},
 
 				toggleHideRow: function(i) {
@@ -6603,7 +6605,7 @@ $.sheet = {
 
 										stack.push({
 											row: row,
-											cell: row[colIndex],
+											cell: row !== u ? row[colIndex] : u,
 											rowIndex: rowIndex,
 											colIndex: colIndex,
 											make: function() {
@@ -6686,7 +6688,7 @@ $.sheet = {
 							row = spreadsheet[rowIndex];
 							stack.push({
 								row: row,
-								cell: row[colIndex],
+								cell: row !== u ? row[colIndex] : u,
 								rowIndex: rowIndex,
 								colIndex: colIndex,
 								make: function() {
@@ -7130,7 +7132,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				setActiveSheet:function (i, spreadsheetUI) {
-					if (spreadsheetUI !== undefined) {
+					if (spreadsheetUI !== u) {
 						i = spreadsheetUI.i;
 					} else {
 						i = i || 0;
@@ -7308,7 +7310,7 @@ $.sheet = {
 									data = data || null;
 									table = table || document.createElement('table');
 									makeVisible = makeVisible !== undefined ? makeVisible : true;
-									i = i || jS.sheetCount;
+									i = i || jS.sheetCount - 1;
 
 									if (data !== null) {
 										loader.addSpreadsheet(data);
@@ -8564,9 +8566,14 @@ $.sheet = {
 		//got tired of ie crashing when console not available
 		if (!window.console) window.console = {log:function () {}};
 
-		if (!window.scrollBarSize) {
+		if (window.scrollBarSize === u) {
 			window.scrollBarSize = getScrollBarSize();
 		}
+
+		if (window.defaultCharSize === u) {
+			window.defaultCharSize = getAverageCharacterSize();
+		}
+
 
 		//ready the sheet's parser;
 		if (window.Formula) {

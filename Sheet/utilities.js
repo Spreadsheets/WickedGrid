@@ -517,6 +517,21 @@ var getScrollBarSize = function () {
 	};
 };
 
+var getAverageCharacterSize = function() {
+	var characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+		el = $(document.createElement('span'))
+			.html(characters)
+			.appendTo('body'),
+		size = {
+			width: el.width() / characters.length,
+			height: el.height()
+		};
+
+	el.remove();
+
+	return size;
+};
+
 var debugPositionBox = function (x, y, box, color, which) {
 	color = color || '#' + Math.floor(Math.random() * 16777215).toString(16);
 	if (box) {
