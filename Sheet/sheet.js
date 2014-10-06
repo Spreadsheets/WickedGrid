@@ -1147,6 +1147,7 @@ $.sheet = {
 			n = isNaN,
 			nAN = NaN,
 			thaw = window.thaw,
+			Formula = window.Formula,
 
 			/**
 			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index].
@@ -4527,7 +4528,7 @@ $.sheet = {
 									cell.calcLast = last;
 
 									_td.removeAttribute('data-formula');
-									_td.removeAttribute('data-celltype')
+									_td.removeAttribute('data-celltype');
 									_td.innerHTML = '';
 									_td.style.display = 'none';
 									_td.colSpan = colSpan - (_td.cellIndex - td.cellIndex);
@@ -4584,7 +4585,7 @@ $.sheet = {
 							_td.style.display = '';
 							_td.removeAttribute('colSpan');
 							_td.removeAttribute('rowSpan');
-							_td.jSCell.defer = null;
+							delete _td.jSCell.defer;
 
 							jS.calcDependencies.call(_td.jSCell, last);
 
@@ -5763,6 +5764,8 @@ $.sheet = {
 				 */
 				callStack:0,
 
+				spareFormulaParsers: {},
+
 				/**
 				 * Ignites calculation with cell, is recursively called if cell uses value from another cell, can be sent indexes, or be called via .call(cell)
 				 * @param {Number} [sheetIndex] sheet index within instance
@@ -5778,10 +5781,8 @@ $.sheet = {
 						fn,
 						cache,
 						foundCell,
-						td,
-						loc,
-						jsonCell,
-						errorResult = '';
+						errorResult = '',
+						formulaParser;
 
 					if (this === u || this === null || this.jS === u) {
 						foundCell = false;
@@ -5820,115 +5821,120 @@ $.sheet = {
 						cell = this;
 					}
 
+					//return cell doesn't exist
 					if (cell === undefined) {
-						//return cell doesn't exist
 						return '';
 					}
 
-					cell.oldValue = cell.value; //we detect the last value, so that we don't have to update all cell, thus saving resources
-
-					if (cell.result) { //unset the last result if it is set
-						delete cell.result;
-					}
-
-					switch (cell.state[cell.state.length - 1]) {
+					//detect state, if any
+					switch (cell.state[0]) {
 						case 'updating':
 							return s.error({error:jS.msg.loopDetected});
 						case 'updatingDependencies':
 							return (cell.valueOverride != u ? cell.valueOverride : cell.value);
 					}
 
-					if (cell.defer) {//merging creates a defer property, which points the cell to another location to get the other value
+					//merging creates a defer property, which points the cell to another location to get the other value
+					if (cell.defer !== u) {
 						return jS.updateCellValue.call(cell.defer);
 					}
 
-					cell.state.push('updating');
-					cell.fnCount = 0;
-					cell.result = null;
+					//we detect the last value, so that we don't have to update all cell, thus saving resources
+					if (cell.calcLast !== jS.calcLast || cell.calcDependenciesLast !== jS.calcDependenciesLast) {
 
-					if (cell.calcLast != jS.calcLast || cell.calcDependenciesLast != jS.calcDependenciesLast) {
-						cell.valueOverride = null;
+						//reset values
+						cell.oldValue = cell.value;
+						cell.state.unshift('updating');
+						cell.fnCount = 0;
+						delete cell.valueOverride;
 						cell.calcLast = jS.calcLast;
 						cell.calcDependenciesLast = jS.calcDependenciesLast;
 						cell.needsUpdated = true;
 
+						//increment times this cell has been calculated
 						cell.calcCount++;
 						if (cell.formula.length > 0) {
-							try {
-								if (cell.formula.charAt(0) === '=') {
-									cell.formula = cell.formula.substring(1);
-								}
-
-								if (cell.formula.length < 1) {
-									return '';
-								}
-
-								var formulaParser;
-								if (jS.callStack) { //we prevent parsers from overwriting each other
-									if (!cell.formulaParser) { //cut down on un-needed parser creation
-										cell.formulaParser = window.Formula(jS.cellHandler);
-									}
-									formulaParser = cell.formulaParser
-								} else {//use the sheet's parser if there aren't many calls in the callStack
-									formulaParser = jS.formulaParser;
-								}
-
-								jS.callStack++;
-								formulaParser.setObj(cell);
-								cell.result = formulaParser.parse(cell.formula);
-								cell.result.cell = cell;
-								if (cell.hasOwnProperty('loadedFrom')) {
-									s.loader.setCellAttribute(cell.loadedFrom, 'cache', cell.result);
-								}
-							} catch (e) {
-								cell.result = e.toString();
+							if (cell.formula.charAt(0) === '=') {
+								cell.formula = cell.formula.substring(1);
 							}
+
+							//we prevent parsers from overwriting each other
+							if (jS.callStack > 0) {
+								//cut down on un-needed parser creation
+								formulaParser = jS.spareFormulaParsers[jS.callStack];
+								if (formulaParser === u) {
+									formulaParser = jS.spareFormulaParsers[jS.callStack] = Formula(jS.cellHandler);
+								}
+							}
+
+							//use the sheet's parser if there aren't many calls in the callStack
+							else {
+								formulaParser = jS.formulaParser;
+							}
+
+							jS.callStack++;
+							formulaParser.setObj(cell);
+
+							try {
+								cell.value = formulaParser.parse(cell.formula);
+							} catch (e) {
+							//	cell.value = e.toString();
+							}
+
 							jS.callStack--;
 
-							if (cell.result && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
-								cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.result);
+							if (
+								s.cellTypeHandlers[cell.cellType] !== u
+								&& cell.value !== u
+								&& cell.value !== null
+								&& cell.cellType !== null
+							) {
+								cell.value = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
 							}
-							cache = jS.filterValue.call(cell);
-						} else if (cell.value && cell.cellType && s.cellTypeHandlers[cell.cellType]) {
-							cell.result = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
-							cache = jS.filterValue.call(cell);
+						} else if (
+							s.cellTypeHandlers[cell.cellType] !== u
+							&& cell.value !== u
+							&& cell.value !== null
+							&& cell.cellType !== null
+						) {
+							cell.value = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
 						} else {
 							if (typeof cell.value === 'string') {
 								fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
-								if (fn) {
+								if (fn !== u) {
 									cell.valueOverride = fn.call(cell, cell.value);
 								} else {
 									fn = jS.s.cellEndHandlers[cell.value.charAt(cell.value.length - 1)];
-									if (fn) {
+									if (fn !== u) {
 										cell.valueOverride = fn.call(cell, cell.value);
 									}
 								}
 							}
-							cache = jS.filterValue.call(cell);
 						}
+
+						cache = jS.filterValue.call(cell);
 
 						if (s.loader !== null) {
-							td = cell.td;
-							if (sheetIndex === u) sheetIndex = cell.sheet;
-							if (rowIndex === u || colIndex === u) {
-								loc = jS.getTdLocation(td);
-								rowIndex = loc.row;
-								colIndex = loc.col;
-							}
-
-							if ((jsonCell = s.loader.getCell(sheetIndex, rowIndex, colIndex)) !== null) {
-								jsonCell.formula = cell.formula;
-								jsonCell.cellType = cell.cellType;
-								jsonCell.value = cell.value + '';
-								jsonCell.cache = cache;
-								if (cell.uneditable === true) {
-									jsonCell.uneditable = true;
-								}
+							if (cell.hasOwnProperty('loadedFrom')) {
+								s.loader.setCellAttributes(cell.loadedFrom, {
+									'cache': cache,
+									'formula': cell.formula,
+									'value': cell.value + '',
+									'cellType': cell.cellType,
+									'uneditable': cell.uneditable
+								});
 							}
 						}
+
+						cell.needsUpdated = false;
+						cell.state.shift();
 					}
-					//setup value trace
-					if (cell.value === u) {
+
+					//setup cell trace from value
+					if (
+						cell.value === u
+						|| cell.value === null
+					) {
 						cell.value = new String('');
 					}
 
@@ -5943,9 +5949,7 @@ $.sheet = {
 						}
 					}
 
-					cell.needsUpdated = false;
-					cell.state.pop();
-					return (cell.valueOverride != u ? cell.valueOverride : cell.value);
+					return (cell.valueOverride !== u ? cell.valueOverride : cell.value);
 				},
 
 				/**
@@ -5953,8 +5957,6 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				updateCellDependencies:function () {
-					if ((this.state || (this.state = [])).length) return;
-
 					var dependencies,
 						dependantCell,
 						dependantCellLoc,
@@ -5962,10 +5964,8 @@ $.sheet = {
 						calcLast = this.calcLast,
 						calcDependenciesLast = this.calcDependenciesLast;
 
-					this.state.push('updatingDependencies');
-
 					//just in case it was never set
-					dependencies = this.dependencies || [];
+					dependencies = this.dependencies;
 
 					//reset
 					this.dependencies = [];
@@ -5975,28 +5975,28 @@ $.sheet = {
 
 					//iterate through them backwards
 					if (i > -1) {
+						this.state.unshift('updatingDependencies');
 						do {
 							dependantCell = dependencies[i];
-							if (dependantCell.jSCell !== undefined) dependantCell = dependantCell.jSCell;
-							dependantCellLoc = jS.getTdLocation(dependantCell.td);
-
-
-
-							dependantCell.calcDependenciesLast = 0;
-
-							jS.updateCellValue.call(dependantCell, dependantCell.sheet, dependantCellLoc.row, dependantCellLoc.col);
-							if (dependantCellLoc.row > 0 && dependantCellLoc.col > 0) {
-								jS.updateCellDependencies.call(dependantCell);
+							if (dependantCell.jSCell !== undefined) {
+								dependantCell = dependantCell.jSCell;
 							}
-						} while (i--);
+
+							if (dependantCell.td !== null) {
+								dependantCellLoc = jS.getTdLocation(dependantCell.td);
+								jS.updateCellValue.call(dependantCell, dependantCell.sheet, dependantCellLoc.row, dependantCellLoc.col);
+							} else {
+								jS.updateCellValue.call(dependantCell);
+							}
+							jS.updateCellDependencies.call(dependantCell);
+						} while (i-- > 0);
+						this.state.shift();
 					}
 
 					//if no calculation was performed, then the dependencies have not changed
 					if (this.dependencies.length === 0 && this.calcLast === calcLast && this.calcDependenciesLast === calcDependenciesLast) {
 						this.dependencies = dependencies;
 					}
-
-					this.state.pop();
 				},
 
 				/**
@@ -6005,42 +6005,46 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				filterValue:function () {
-					var encodedValue,
-						html,
-						result = this.result,
+					var value = this.value,
 						td = this.td,
-						valType;
+						encodedValue,
+						valType = typeof value,
+						html = value.html;
 
-					if (result !== u && result !== null) {
-						this.value = result;
-						html = result.html;
+					if (
+						valType === 'string'
+						|| (
+							value !== null
+							&& valType === 'object'
+							&& value.toUpperCase !== u
+						)
+						&& value.length > 0
+					) {
+						encodedValue = s.encode(value);
 					}
 
-					valType = typeof this.value;
-
-					if (valType === 'string' || (valType === 'object' && this.value.toUpperCase !== u) && this.value.length > 0) {
-						encodedValue = s.encode(this.value);
-					}
-
+					//if the td is from a loader, and the td has not yet been created, just return it's values
 					if (td === null) {
-						return this.result;
+						return value;
 					}
 
-					if (html !== u) {
-
-					} else if (encodedValue !== u) {
-						html = encodedValue;
-					} else if (this.value !== u) {
-						html = this.value;
+					if (html === u) {
+						if (encodedValue !== u) {
+							html = encodedValue;
+						} else {
+							html = value;
+						}
 					}
 
 					switch (typeof html) {
 						case 'object':
-							if (html.appendChild !== u) {
+							if (html === null) {
+								td.innerHTML = '';
+							} else if (html.appendChild !== u) {
 
 								//if html already belongs to another element, just return nothing for it's cache.
 								if (html.parentNode !== null) {
-									td.innerHTML = this.value.valueOf();
+									td.innerHTML = value.valueOf();
 									return '';
 								}
 
@@ -6154,10 +6158,17 @@ $.sheet = {
 					 * @returns {*}
 					 */
 					performMath: function (mathType, num1, num2) {
-						if (num1 === u) {
+						if (
+							num1 === u
+							|| num1 === null
+						) {
 							num1 = 0;
 						}
-						if (num2 === u) {
+
+						if (
+							num2 === u
+							|| num2 === null
+						) {
 							num2 = 0;
 						}
 
@@ -6290,9 +6301,6 @@ $.sheet = {
 
 						if (cell === u || cell === null) return null;
 
-
-						if (!cell.dependencies) cell.dependencies = [];
-
 						if ($.inArray(this, cell.dependencies) < 0) {
 							cell.dependencies.push(this);
 						}
@@ -6303,8 +6311,6 @@ $.sheet = {
 					},
 
 					createDependencyOnCell:function(cell) {
-						if (!cell.dependencies) cell.dependencies = [];
-
 						if ($.inArray(this, cell.dependencies) < 0) {
 							cell.dependencies.push(this);
 						}
@@ -6485,7 +6491,7 @@ $.sheet = {
 						return false;
 					} //readonly is no calc at all
 
-					jS.calcLast = new Date();
+					jS.calcDependenciesLast = jS.calcLast = new Date();
 
 					if (s.loader !== null) {
 						s.loader.cycleCells(sheetIndex, jS.updateCellValue);
@@ -8584,8 +8590,8 @@ $.sheet = {
 
 
 		//ready the sheet's parser;
-		if (window.Formula) {
-			jS.formulaParser = window.Formula(jS.cellHandler);
+		if (Formula !== u) {
+			jS.formulaParser = Formula(jS.cellHandler);
 		}
 
 		jS.theme = new Sheet.Theme(s.theme);

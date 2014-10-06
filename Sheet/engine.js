@@ -160,7 +160,12 @@ var jSE = $.sheet.engine = {
      */
     chart:function (o) {
         var jS = this.jS,
-            owner = this;
+	        chart = document.createElement('div'),
+	        td = this.td,
+	        gR,
+	        body = document.body;
+
+	    body.appendChild(chart);
 
         function sanitize(v, toNum) {
             if (!v) {
@@ -184,22 +189,19 @@ var jSE = $.sheet.engine = {
             y:{ legend:"", data:[0]},
             title:"",
             data:[0],
-            legend:"",
-            td:this.td,
-            chart:document.createElement('div'),
-            gR:{}
+            legend:""
         }, o);
 
-		o.chart.className = jS.cl.chart;
-		o.chart.onmousedown = function () {
-			$(o.td).mousedown();
+		chart.className = jS.cl.chart;
+		chart.onmousedown = function () {
+			$(td).mousedown();
 		};
-		o.chart.onmousemove = function () {
-			$(o.td).mousemove();
+		chart.onmousemove = function () {
+			$(td).mousemove();
 			return false;
 		};
 
-        jS.controls.chart[jS.i] = jS.obj.chart().add(o.chart);
+        jS.controls.chart[jS.i] = jS.obj.chart().add(chart);
 
         o.data = sanitize(o.data, true);
         o.x.data = sanitize(o.x.data, true);
@@ -210,122 +212,126 @@ var jSE = $.sheet.engine = {
 
         o.legend = (o.legend ? o.legend : o.data);
 
-        jS.s.parent.one('sheetCalculation', function () {
-            var width = o.chart.clientWidth,
-                height = o.chart.clientHeight,
-                r = Raphael(o.chart);
+        var width,
+            height,
+            r = Raphael(chart);
 
-            if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
-            switch (o.type) {
-                case "bar":
-                    o.gR = r.barchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
-                        .hover(function () {
-                            this.flag = r.popup(
-                                this.bar.x,
-                                this.bar.y,
-                                this.bar.value || "0"
-                            ).insertBefore(this);
-                        }, function () {
-                            this.flag.animate({
-                                    opacity:0
-                                }, 300,
+	    if (td.clientHeight > 0) {
+		    width = Math.max(td.clientWidth, 100);
+		    height = Math.max(td.clientHeight, 50);
+	    }
 
-                                function () {
-                                    this.remove();
-                                }
-                            );
-                        });
-                    break;
-                case "hbar":
-                    o.gR = r.hbarchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
-                        .hover(function () {
-                            this.flag = r.popup(this.bar.x, this.bar.y, this.bar.value || "0").insertBefore(this);
-                        }, function () {
-                            this.flag.animate({
-                                    opacity:0
-                                }, 300,
-                                function () {
-                                    this.remove();
-                                }
-                            );
-                        });
-                    break;
-                case "line":
-                    o.gR = r.linechart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, {
-                        nostroke:false,
-                        axis:"0 0 1 1",
-                        symbol:"circle",
-                        smooth:true
-                    })
-                        .hoverColumn(function () {
-                            this.tags = r.set();
-                            if (this.symbols.length) {
-                                for (var i = 0, ii = this.y.length; i < ii; i++) {
-                                    this.tags.push(
-                                        r
-                                            .tag(this.x, this.y[i], this.values[i], 160, 10)
-                                            .insertBefore(this)
-                                            .attr([
-                                                { fill:"#fff" },
-                                                { fill:this.symbols[i].attr("fill") }
-                                            ])
-                                    );
-                                }
+        if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
+        switch (o.type) {
+            case "bar":
+                gR = r.barchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
+                    .hover(function () {
+                        this.flag = r.popup(
+                            this.bar.x,
+                            this.bar.y,
+                            this.bar.value || "0"
+                        ).insertBefore(this);
+                    }, function () {
+                        this.flag.animate({
+                                opacity:0
+                            }, 300,
+
+                            function () {
+                                this.remove();
                             }
-                        }, function () {
-                            this.tags && this.tags.remove();
-                        });
-
-                    break;
-                case "pie":
-                    o.gR = r.piechart(width / 2, height / 2, (width < height ? width : height) / 2, o.data, {legend:o.legend})
-                        .hover(function () {
-                            this.sector.stop();
-                            this.sector.scale(1.1, 1.1, this.cx, this.cy);
-
-                            if (this.label) {
-                                this.label[0].stop();
-                                this.label[0].attr({ r:7.5 });
-                                this.label[1].attr({ "font-weight":800 });
+                        );
+                    });
+                break;
+            case "hbar":
+                gR = r.hbarchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
+                    .hover(function () {
+                        this.flag = r.popup(this.bar.x, this.bar.y, this.bar.value || "0").insertBefore(this);
+                    }, function () {
+                        this.flag.animate({
+                                opacity:0
+                            }, 300,
+                            function () {
+                                this.remove();
                             }
-                        }, function () {
-                            this.sector.animate({ transform:'s1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
-
-                            if (this.label) {
-                                this.label[0].animate({ r:5 }, 500, "bounce");
-                                this.label[1].attr({ "font-weight":400 });
+                        );
+                    });
+                break;
+            case "line":
+                gR = r.linechart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, {
+                    nostroke:false,
+                    axis:"0 0 1 1",
+                    symbol:"circle",
+                    smooth:true
+                })
+                    .hoverColumn(function () {
+                        this.tags = r.set();
+                        if (this.symbols.length) {
+                            for (var i = 0, ii = this.y.length; i < ii; i++) {
+                                this.tags.push(
+                                    r
+                                        .tag(this.x, this.y[i], this.values[i], 160, 10)
+                                        .insertBefore(this)
+                                        .attr([
+                                            { fill:"#fff" },
+                                            { fill:this.symbols[i].attr("fill") }
+                                        ])
+                                );
                             }
-                        });
-                    break;
-                case "dot":
-                    o.gR = r.dotchart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, o.data, {
-                        symbol:"o",
-                        max:10,
-                        heat:true,
-                        axis:"0 0 1 1",
-                        axisxstep:o.x.data.length - 1,
-                        axisystep:o.y.data.length - 1,
-                        axisxlabels:(o.x.legend ? o.x.legend : o.x.data),
-                        axisylabels:(o.y.legend ? o.y.legend : o.y.data),
-                        axisxtype:" ",
-                        axisytype:" "
-                    })
-                        .hover(function () {
-                            this.marker = this.marker || r.tag(this.x, this.y, this.value, 0, this.r + 2).insertBefore(this);
-                            this.marker.show();
-                        }, function () {
-                            this.marker && this.marker.hide();
-                        });
+                        }
+                    }, function () {
+                        this.tags && this.tags.remove();
+                    });
 
-                    break;
-            }
+                break;
+            case "pie":
+                gR = r.piechart(width / 2, height / 2, (width < height ? width : height) / 2, o.data, {legend:o.legend})
+                    .hover(function () {
+                        this.sector.stop();
+                        this.sector.scale(1.1, 1.1, this.cx, this.cy);
 
-            o.gR.mousedown(function () {
-				$(o.td).mousedown().mouseup();
-			});
+                        if (this.label) {
+                            this.label[0].stop();
+                            this.label[0].attr({ r:7.5 });
+                            this.label[1].attr({ "font-weight":800 });
+                        }
+                    }, function () {
+                        this.sector.animate({ transform:'s1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
 
-        });
+                        if (this.label) {
+                            this.label[0].animate({ r:5 }, 500, "bounce");
+                            this.label[1].attr({ "font-weight":400 });
+                        }
+                    });
+                break;
+            case "dot":
+                gR = r.dotchart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, o.data, {
+                    symbol:"o",
+                    max:10,
+                    heat:true,
+                    axis:"0 0 1 1",
+                    axisxstep:o.x.data.length - 1,
+                    axisystep:o.y.data.length - 1,
+                    axisxlabels:(o.x.legend ? o.x.legend : o.x.data),
+                    axisylabels:(o.y.legend ? o.y.legend : o.y.data),
+                    axisxtype:" ",
+                    axisytype:" "
+                })
+                    .hover(function () {
+                        this.marker = this.marker || r.tag(this.x, this.y, this.value, 0, this.r + 2).insertBefore(this);
+                        this.marker.show();
+                    }, function () {
+                        this.marker && this.marker.hide();
+                    });
 
-        return o.chart;
+                break;
+        }
+
+        gR.mousedown(function () {
+			$(td).mousedown().mouseup();
+		});
+
+	    body.removeChild(chart);
+
+        return chart;
     }
 };

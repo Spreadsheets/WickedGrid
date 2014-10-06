@@ -1271,7 +1271,7 @@ var jFN = $.sheet.fn = {
     EQUAL: function(left, right) {
         var result;
 
-        if (left.valueOf() == right.valueOf()) {
+        if (left === right) {
             result = new Boolean(true);
             result.html = 'TRUE';
         } else {
@@ -1372,26 +1372,29 @@ var jFN = $.sheet.fn = {
         var cell = this,
             jS = this.jS,
             td = this.td,
-            $td,
             v,
             html,
             loc,
             select,
             id,
-            result;
+            result,
+	        i = 0,
+	        max;
 
-	    if (td === null) {
-		    return cell.value;
+	    if (td !== null) {
+		    html = $(td).children().detach();
+		    loc = jS.getTdLocation(td);
 	    }
 
-	    $td = $(cell.td);
-	    html = $td.children().detach();
-
-        if (html === null || cell.needsUpdated || html.length < 1) {
+        if (html === undefined || cell.needsUpdated || html.length < 1) {
             v = arrHelpers.flatten(arguments);
             v = arrHelpers.unique(v);
-            loc = jS.getTdLocation(cell.td);
-            id = (this.id !== null ? this.id + '-dropdown' : "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I);
+
+	        if (this.id !== null) {
+		        id = this.id + '-dropdown';
+	        } else if (td !== null) {
+		        id = "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+	        }
 
             select = document.createElement('select');
             select.setAttribute('name', id);
@@ -1400,16 +1403,19 @@ var jFN = $.sheet.fn = {
             select.cell = this;
 
             select.onmouseup = function() {
-                jS.cellEdit(this.cell.td);
+	            if (this.cell.td !== null) {
+                    jS.cellEdit(this.cell.td);
+	            }
             };
             select.onchange = function () {
                 cell.value = this.value;
-                jS.calcDependencies.call(cell, cell.calcDependenciesLast);
+                jS.calcDependencies.call(cell);
             };
 
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
 
-            for (var i = 0; i < (v.length <= 50 ? v.length : 50); i++) {
+	        max = (v.length <= 50 ? v.length : 50);
+            for (; i < max; i++) {
                 if (v[i]) {
                     var opt = document.createElement('option');
                     opt.setAttribute('value', v[i]);
@@ -1422,12 +1428,11 @@ var jFN = $.sheet.fn = {
                 select.setAttribute('disabled', true);
             } else {
                 jS.s.parent.bind('sheetKill', function() {
-                    $td.text(cell.value = select.value);
+                    td.innerText = td.textContent = cell.value = select.value;
                 });
             }
 
             select.value = cell.value || v[0];
-            select.onchange();
         }
 
         if (typeof cell.value !== 'object') {
@@ -1448,7 +1453,6 @@ var jFN = $.sheet.fn = {
         var cell = this,
             jS = this.jS,
             td = this.td,
-	        $td,
             v,
             html,
             loc,
@@ -1456,29 +1460,31 @@ var jFN = $.sheet.fn = {
             $inputs,
             radio,
             id,
-            result;
+	        result;
 
-	    if (td === null) {
-		    return cell.value;
+	    if (td !== null) {
+		    html = $(td).children().detach();
+		    loc = jS.getTdLocation(td);
 	    }
 
-	    $td = $(cell.td);
-	    html = $td.children().detach();
-
-        if (html === null || html.length < 1 || cell.needsUpdated) {
+        if (html === undefined || html.length < 1 || cell.needsUpdated) {
             v = arrHelpers.flatten(arguments);
             v = arrHelpers.unique(v);
             loc = jS.getTdLocation(cell.td);
-            $td = $(cell.td);
             inputs = [];
-            id = (this.id !== null ? this.id + '-radio' : "radio" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I);
 
-            radio = document.createElement('span');
-            radio.className = 'jSRadio';
-            radio.onmousedown = function () {
+	        if (this.id !== null) {
+		        id = this.id + '-radio';
+	        } else if (td !== null) {
+		        id = "radio" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+	        }
+
+	        html = document.createElement('span');
+	        html.className = 'jSRadio';
+	        html.onmousedown = function () {
                 jS.cellEdit(td);
             };
-            radio.jSCell = cell;
+	        html.jSCell = cell;
 
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(radio);
 
@@ -1493,23 +1499,22 @@ var jFN = $.sheet.fn = {
                     input.value = v[i];
                     input.onchange = function() {
                         cell.value = jQuery(this).val();
-                        jS.calcDependencies.call(cell, cell.calcDependenciesLast);
+                        jS.calcDependencies.call(cell);
                     };
 
                     inputs.push(input);
 
                     if (v[i] == cell.value) {
                         input.setAttribute('checked', 'true');
-                        input.onchange();
                     }
                     label.textContent = label.innerText = v[i];
-                    radio.appendChild(input);
-                    radio.input = input;
+	                html.appendChild(input);
+	                html.input = input;
                     label.onclick = function () {
                         $(this).prev().click();
                     };
-                    radio.appendChild(label);
-                    radio.appendChild(document.createElement('br'));
+	                html.appendChild(label);
+	                html.appendChild(document.createElement('br'));
                 }
             }
 
@@ -1521,7 +1526,7 @@ var jFN = $.sheet.fn = {
             } else {
                 jS.s.parent.bind('sheetKill', function() {
                     cell.value = $inputs.filter(':checked').val();
-                    $td.text(cell.value);
+                    td.textContent = td.innerText = cell.value;
                 });
             }
         }
@@ -1532,7 +1537,7 @@ var jFN = $.sheet.fn = {
 		    result = cell.value;
 	    }
 
-        result.html = radio;
+        result.html = html;
 
         return result;
     },
@@ -1556,18 +1561,21 @@ var jFN = $.sheet.fn = {
             id,
             result;
 
-	    if (td === null) {
-		    return cell.value;
+	    if (td !== null) {
+		    html = $(td).children().detach();
+		    loc = jS.getTdLocation(td);
 	    }
 
 	    $td = $(cell.td);
 	    html = $td.children().detach();
 
-        if (html === null || html.length < 1 || cell.needsUpdated) {
-            loc = jS.getTdLocation(cell.td);
-            checkbox = $([]);
-            $td = $(cell.td);
-            id = (this.id !== null ? this.id + 'checkbox' : "checkbox" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I);
+        if (html === undefined || html.length < 1 || cell.needsUpdated) {
+	        if (this.id !== null) {
+		        id = this.id + '-checkbox';
+	        } else if (td !== null) {
+		        id = "checkbox" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+	        }
+
             checkbox = document.createElement('input');
             checkbox.setAttribute('type', 'checkbox');
             checkbox.setAttribute('name', id);
@@ -1580,7 +1588,7 @@ var jFN = $.sheet.fn = {
                 } else {
                     cell.value = '';
                 }
-                jS.calcDependencies.call(cell, cell.calcDependenciesLast);
+                jS.calcDependencies.call(cell);
             };
 
             if (!jS.s.editable) {
@@ -1588,7 +1596,7 @@ var jFN = $.sheet.fn = {
             } else {
                 jS.s.parent.bind('sheetKill', function() {
                     cell.value = (cell.value == 'true' || $(checkbox).is(':checked') ? v : '');
-                    $td.text(cell.value);
+                    td.innerText = td.textContent = cell.value;
                 });
             }
 
@@ -1606,21 +1614,21 @@ var jFN = $.sheet.fn = {
 
             jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 
-            if (v == cell.value) {
-                checkbox.setAttribute('checked', true);
-                checkbox.onchange();
+            if (v == cell.value || cell.value === 'true') {
+                checkbox.checked =  true;
             }
         }
 
+	    //when spreadsheet initiates, this will be the value, otherwise we are dependent on the checkbox being checked
 	    if (
-		    //when spreadsheet initiates, this will be the value
-		    cell.value == 'true'
-
-	        //otherwise we are dependent on the checkbox being checked
-	        || $(checkbox).is(':checked')
+		    cell.value === 'true'
+		    || $(checkbox).is(':checked')
 	    ) {
 		    result = new String(v);
-	    } else {
+	    }
+
+	    //if no value, than empty string
+	    else {
 		    result = new String('');
 	    }
 
@@ -1773,7 +1781,7 @@ var jFN = $.sheet.fn = {
      */
     HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
 
-		if (value === undefined) return result;
+		if (value === undefined) return null;
 
         var jS = this.jS,
             found = null,
@@ -1808,7 +1816,7 @@ var jFN = $.sheet.fn = {
         if (found !== null && (cell = found.cell) !== undefined) {
 			if (cell.td !== undefined) {
 				loc = jS.getTdLocation(cell.td);
-				result = jS.updateCellValue(cell.sheet, loc.row, indexNumber);
+				result = jS.updateCellValue.call(cell, cell.sheet, loc.row, indexNumber);
 			} else {
 				result = cell.value;
 			}
@@ -1827,7 +1835,7 @@ var jFN = $.sheet.fn = {
      */
     VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
 
-		if (value === undefined) return result;
+		if (value === undefined) return null;
 
         var jS = this.jS,
             found = null,
@@ -1862,7 +1870,7 @@ var jFN = $.sheet.fn = {
         if (found !== null && (cell = found.cell) !== undefined) {
 			if (cell.td !== undefined) {
 				loc = jS.getTdLocation(cell.td);
-				result = jS.updateCellValue(cell.sheet, indexNumber, loc.col);
+				result = jS.updateCellValue.call(cell, cell.sheet, indexNumber, loc.col);
 			} else {
 				result = cell.value;
 			}
@@ -1877,7 +1885,9 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     THISROWCELL:function (col) {
-        var jS = this.jS, loc = jS.getTdLocation(this.td);
+        var jS = this.jS,
+	        loc = jS.getTdLocation(this.td);
+
         if (isNaN(col)) {
             col = jSE.columnLabelIndex(col);
         }
@@ -1890,7 +1900,9 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     THISCOLCELL:function (row) {
-        var jS = this.jS, loc = jS.getTdLocation(this.td);
+        var jS = this.jS,
+	        loc = jS.getTdLocation(this.td);
+
         return jS.updateCellValue(this.sheet, row, loc.col);
     }
 };

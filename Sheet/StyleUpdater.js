@@ -35,7 +35,7 @@ Sheet.StyleUpdater = (function(document) {
 
 					do {
 						if (indexes[index] > min) {
-							style.push(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
+							style.unshift(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
 						}
 					} while (index--);
 
