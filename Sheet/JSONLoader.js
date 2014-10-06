@@ -79,8 +79,8 @@
 
 					if (cell['formula']) {
 						td.setAttribute('data-formula', cell['formula'] || '');
-						if (cell.hasOwnProperty('result') && cell.result !== null) {
-							html = cell.result.hasOwnProperty('html') ? cell.result.html : cell.result;
+						if (cell.hasOwnProperty('value') && cell.value !== null) {
+							html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
 							switch (typeof html) {
 								case 'object':
 									if (html.appendChild !== undefined) {
@@ -218,6 +218,14 @@
 		setCellAttribute: function(cell, attribute, value) {
 			cell[attribute] = value;
 		},
+	    setCellAttributes: function(cell, attributes) {
+		    var i;
+		    for (i in attributes) {
+			    if (attributes.hasOwnProperty(i)) {
+				    cell[i] = attributes[i];
+			    }
+		    }
+	    },
 		cycleCells: function(sheetIndex, fn) {
 			var json = this.json,
 				jsonSpreadsheet,

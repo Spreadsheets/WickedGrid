@@ -433,6 +433,13 @@
 	border: none ! important;
 }
 
+body > .jSChart {
+	opacity: 0.01;
+	position: absolute;
+	top: -9000px;
+	left: -9000px;
+}
+
 .jSParent .jSChart
 {
 	width: inherit;
