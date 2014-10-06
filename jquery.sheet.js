@@ -11913,7 +11913,9 @@ var jFN = $.sheet.fn = {
      */
     MID:function (v, start, end) {
         if (!v || !start || !end) {
-            return this.jS.s.error({error:'ERROR'});
+			var result = new Number(0);
+			result.html = 'ERROR';
+			return result;
         }
         return v.substring(start - 1, end + start - 1);
     },
@@ -11928,7 +11930,9 @@ var jFN = $.sheet.fn = {
      */
     REPLACE:function (oldText, start, numberOfChars, newText) {
         if (!oldText || !start || !numberOfChars || !newText) {
-            return this.jS.s.error({error:'ERROR'});
+			var result = new String('');
+			result.html = 'ERROR';
+			return result;
         }
         var result = oldText.split('');
         result.splice(start - 1, numberOfChars);
@@ -11978,7 +11982,9 @@ var jFN = $.sheet.fn = {
         var i = body.search(find);
 
         if (i < 0) {
-            return this.jS.s.error({error:'#VALUE!'});
+			var result = new String('');
+			result.html = '#VALUE!';
+			return result;
         }
 
         return start + (start ? 0 : 1) + i;
@@ -12040,7 +12046,9 @@ var jFN = $.sheet.fn = {
         if (jQuery.isNumeric(v)) {
             return v *= 1;
         } else {
-            return this.jS.s.error({error:"#VALUE!"})
+			var result = new String('');
+			result.html = '#VALUE!';
+			return result;
         }
     },
 
@@ -12415,7 +12423,9 @@ var jFN = $.sheet.fn = {
         endDate = dates.get(endDate);
 
         if (!startDate || !endDate) {
-            return this.jS.s.error({error:'#VALUE!'});
+			var result = new String('');
+			result.html = '#VALUE!';
+			return result;
         }
 
         basis = (basis ? basis : 0);
@@ -13116,7 +13126,7 @@ var jFN = $.sheet.fn = {
         }
 
         if (found !== null && (cell = found.cell) !== undefined) {
-			if (cell.td !== undefined) {
+			if (cell.td !== undefined && cell.td !== null) {
 				loc = jS.getTdLocation(cell.td);
 				result = jS.updateCellValue.call(cell, cell.sheet, loc.row, indexNumber);
 			} else {
@@ -13170,7 +13180,7 @@ var jFN = $.sheet.fn = {
         }
 
         if (found !== null && (cell = found.cell) !== undefined) {
-			if (cell.td !== undefined) {
+			if (cell.td !== undefined && cell.td !== null) {
 				loc = jS.getTdLocation(cell.td);
 				result = jS.updateCellValue.call(cell, cell.sheet, indexNumber, loc.col);
 			} else {
