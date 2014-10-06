@@ -5878,7 +5878,7 @@ $.sheet = {
 							try {
 								cell.value = formulaParser.parse(cell.formula);
 							} catch (e) {
-							//	cell.value = e.toString();
+								cell.value = e.toString();
 							}
 
 							jS.callStack--;
@@ -5899,16 +5899,21 @@ $.sheet = {
 						) {
 							cell.value = s.cellTypeHandlers[cell.cellType].call(cell, cell.value);
 						} else {
-							if (typeof cell.value === 'string') {
-								fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
-								if (fn !== u) {
-									cell.valueOverride = fn.call(cell, cell.value);
-								} else {
-									fn = jS.s.cellEndHandlers[cell.value.charAt(cell.value.length - 1)];
+							switch (typeof cell.value) {
+								case 'string':
+									fn = jS.s.cellStartingHandlers[cell.value.charAt(0)];
 									if (fn !== u) {
 										cell.valueOverride = fn.call(cell, cell.value);
+									} else {
+										fn = jS.s.cellEndHandlers[cell.value.charAt(cell.value.length - 1)];
+										if (fn !== u) {
+											cell.valueOverride = fn.call(cell, cell.value);
+										}
 									}
-								}
+									break;
+								case 'undefined':
+									cell.value = '';
+									break;
 							}
 						}
 

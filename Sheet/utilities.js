@@ -61,17 +61,10 @@ var arrHelpers = window.arrHelpers = {
         return arr;
     },
     unique:function (arr) {
-        var a = [],
-            l = arr.length;
-        for (var i = 0; i < l; i++) {
-            for (var j = i + 1; j < l; j++) {
-                // If this[i] is found later in the array
-                if (arr[i] === arr[j])
-                    j = ++i;
-            }
-            a.push(arr[i]);
-        }
-        return a;
+		var o = {}, i, l = arr.length, r = [];
+		for(i=0; i<l;i+=1) o[arr[i]] = arr[i];
+		for(i in o) r.push(o[i]);
+		return r;
     },
     flatten:function (arr) {
         var flat = [];
