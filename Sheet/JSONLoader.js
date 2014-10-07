@@ -107,6 +107,10 @@
 					}
 				}
 
+				if (cell.loadedFrom === undefined) {
+					cell.loadedFrom = jsonCell;
+				}
+
 				td.className = jsonCell['class'] || '';
 				td.setAttribute('style', jsonCell['style'] || '');
 

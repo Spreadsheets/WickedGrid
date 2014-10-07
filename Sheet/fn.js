@@ -1384,7 +1384,6 @@ var jFN = $.sheet.fn = {
             td = this.td,
             v,
             html,
-            loc,
             select,
             id,
             result,
@@ -1393,7 +1392,6 @@ var jFN = $.sheet.fn = {
 
 	    if (td !== null) {
 		    html = $(td).children().detach();
-		    loc = jS.getTdLocation(td);
 	    }
 
         if (html === undefined || cell.needsUpdated || html.length < 1) {
@@ -1403,7 +1401,7 @@ var jFN = $.sheet.fn = {
 	        if (this.id !== null) {
 		        id = this.id + '-dropdown';
 	        } else if (td !== null) {
-		        id = "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+		        id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
 	        }
 
             select = document.createElement('select');
@@ -1465,7 +1463,6 @@ var jFN = $.sheet.fn = {
             td = this.td,
             v,
             html,
-            loc,
             inputs,
             $inputs,
             radio,
@@ -1474,7 +1471,6 @@ var jFN = $.sheet.fn = {
 
 	    if (td !== null) {
 		    html = $(td).children().detach();
-		    loc = jS.getTdLocation(td);
 	    }
 
         if (html === undefined || html.length < 1 || cell.needsUpdated) {
@@ -1485,7 +1481,7 @@ var jFN = $.sheet.fn = {
 	        if (this.id !== null) {
 		        id = this.id + '-radio';
 	        } else if (td !== null) {
-		        id = "radio" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+		        id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
 	        }
 
 	        html = document.createElement('span');
@@ -1566,21 +1562,19 @@ var jFN = $.sheet.fn = {
             td = this.td,
             html,
 			label,
-            loc,
             checkbox,
             id,
             result;
 
 	    if (td !== null) {
 		    html = $(td).children().detach();
-		    loc = jS.getTdLocation(td);
 	    }
 
         if (html === undefined || html.length < 1 || cell.needsUpdated) {
 	        if (this.id !== null) {
 		        id = this.id + '-checkbox';
 	        } else if (td !== null) {
-		        id = "checkbox" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+		        id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
 	        }
 
             checkbox = document.createElement('input');
@@ -1795,11 +1789,9 @@ var jFN = $.sheet.fn = {
 		if (value === undefined) return null;
 
         var jS = this.jS,
-            found = null,
+            found,
             result = '',
-            range = tableArray[0],
-            cell,
-            loc;
+            range = tableArray[0];
 
         indexNumber = indexNumber || 1;
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
@@ -1824,13 +1816,8 @@ var jFN = $.sheet.fn = {
             });
         }
 
-        if (found !== null && (cell = found.cell) !== undefined) {
-			if (cell.td !== undefined && cell.td !== null) {
-				loc = jS.getTdLocation(cell.td);
-				result = jS.updateCellValue.call(cell, cell.sheet, loc.row, indexNumber);
-			} else {
-				result = cell.value;
-			}
+        if (found !== undefined) {
+			result = found.value;
         }
 
         return result;
@@ -1849,11 +1836,9 @@ var jFN = $.sheet.fn = {
 		if (value === undefined) return null;
 
         var jS = this.jS,
-            found = null,
+            found,
             result = '',
-            range = tableArray[0],
-            cell,
-            loc;
+            range = tableArray[0];
 
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
@@ -1878,13 +1863,8 @@ var jFN = $.sheet.fn = {
             });
         }
 
-        if (found !== null && (cell = found.cell) !== undefined) {
-			if (cell.td !== undefined && cell.td !== null) {
-				loc = jS.getTdLocation(cell.td);
-				result = jS.updateCellValue.call(cell, cell.sheet, indexNumber, loc.col);
-			} else {
-				result = cell.value;
-			}
+        if (found !== undefined) {
+			result = found.value;
         }
 
         return result;
@@ -1896,13 +1876,12 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     THISROWCELL:function (col) {
-        var jS = this.jS,
-	        loc = jS.getTdLocation(this.td);
+        var jS = this.jS;
 
         if (isNaN(col)) {
             col = jSE.columnLabelIndex(col);
         }
-        return jS.updateCellValue(this.sheet, loc.row, col);
+        return jS.updateCellValue(this.sheetIndex, this.rowIndex, col);
     },
     /**
      * cell function
@@ -1911,9 +1890,8 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     THISCOLCELL:function (row) {
-        var jS = this.jS,
-	        loc = jS.getTdLocation(this.td);
+        var jS = this.jS;
 
-        return jS.updateCellValue(this.sheet, row, loc.col);
+        return jS.updateCellValue(this.sheetIndex, row, this.colIndex);
     }
 };
