@@ -122,6 +122,9 @@
 
 			td.jSCell = cell;
 			cell.td = td;
+			cell.sheetIndex = sheetIndex;
+			cell.rowIndex = rowIndex;
+			cell.columnIndex = columnIndex;
             return cell;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
@@ -166,7 +169,9 @@
 				value: (value !== undefined && value !== null ? new String(value) : new String()),
 				uneditable: jsonCell['uneditable'],
 				type: 'cell',
-				sheet: sheetIndex,
+				sheetIndex: sheetIndex,
+				rowIndex: rowIndex,
+				colIndex: columnIndex,
 				dependencies: [],
 				id: null,
 				loadedFrom: jsonCell

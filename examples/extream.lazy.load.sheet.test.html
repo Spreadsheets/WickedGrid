@@ -39,6 +39,7 @@
 					i++;
 				}
 
+				var t1 = new Date();
 				$('#sheet-json')
 					.height(400)
 					.width(400)
@@ -68,7 +69,12 @@
 							console.log(edited);
 						}
 					});
+
 				//$.sheet.instance[0].calcAll();
+				var t2 = new Date();
+				var difference = (t2 - t1) / 1000;
+
+				$('body').append("<span>You waited: " + difference + " seconds</span>");
 			});
 		});
 	</script>
