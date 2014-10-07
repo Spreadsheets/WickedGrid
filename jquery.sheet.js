@@ -1237,6 +1237,9 @@ Sheet.StyleUpdater = (function(document) {
 
 			td.jSCell = cell;
 			cell.td = td;
+			cell.sheetIndex = sheetIndex;
+			cell.rowIndex = rowIndex;
+			cell.columnIndex = columnIndex;
             return cell;
         },
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
@@ -1281,7 +1284,9 @@ Sheet.StyleUpdater = (function(document) {
 				value: (value !== undefined && value !== null ? new String(value) : new String()),
 				uneditable: jsonCell['uneditable'],
 				type: 'cell',
-				sheet: sheetIndex,
+				sheetIndex: sheetIndex,
+				rowIndex: rowIndex,
+				colIndex: columnIndex,
 				dependencies: [],
 				id: null,
 				loadedFrom: jsonCell
@@ -3726,7 +3731,7 @@ $.sheet = {
 						calcCount:calcCount || 0,
 						calcLast:calcLast || -1,
 						calcDependenciesLast:calcDependenciesLast || -1,
-						sheet:sheetIndex,
+						sheetIndex:sheetIndex,
 						type: 'cell',
 						jS: jS,
 						state: [],
@@ -3813,7 +3818,7 @@ $.sheet = {
 						calcCount: 0,
 						calcLast: -1,
 						calcDependenciesLast: -1,
-						sheet: sheetIndex,
+						sheetIndex: sheetIndex,
 						type: 'cell',
 						jS: jS,
 						state: [],
@@ -5370,7 +5375,7 @@ $.sheet = {
 						var col = row[i];
 						for (var j = 0; j < col.length; j++) {
 							newValCount++;
-							var td = jS.getTd(jS.i, i + loc.row, j + loc.col);
+							var td = jS.getTd(-1, i + loc.row, j + loc.col);
 
 							td.row = loc.row;
 							td.col = loc.col;
@@ -5655,13 +5660,13 @@ $.sheet = {
 							//TODO: refactor to use scroll position
 							if (reverse) { //go up
 								for (i = jS.cellLast.row; i > 0 && prevRowsHeights < paneHeight; i--) {
-									td = jS.getTd(jS.i, i, 1);
+									td = jS.getTd(-1, i, 1);
 									if (!td.getAttribute('data-hidden') && td.is(':hidden')) td.show();
 									prevRowsHeights += td.parent().height();
 								}
 							} else { //go down
 								for (i = jS.cellLast.row; i < size.rows && prevRowsHeights < paneHeight; i++) {
-									td = jS.getTd(jS.i, i, 1);
+									td = jS.getTd(-1, i, 1);
 									prevRowsHeights += td.parent().height();
 								}
 							}
@@ -6040,7 +6045,7 @@ $.sheet = {
 						//to get the td could possibly make keystrokes slow, we prevent it here so the user doesn't even know we are listening ;)
 						if (!jS.cellLast.isEdit || overrideIsEdit) {
 							//get the td that we want to go to
-							var td = jS.getTd(jS.i, loc.row, loc.col);
+							var td = jS.getTd(-1, loc.row, loc.col);
 
 							//if the td exists, lets go to it
 							if (td) {
@@ -6707,7 +6712,7 @@ $.sheet = {
 					do {
 						j = loc.col + col;
 						do {
-							_td = jS.getTd(jS.i, i, j);
+							_td = jS.getTd(-1, i, j);
 							_td.style.display = '';
 							_td.removeAttribute('colSpan');
 							_td.removeAttribute('rowSpan');
@@ -7540,7 +7545,7 @@ $.sheet = {
 						cell = td.jSCell,
 						v;
 
-					if (cell === null) return;
+					if (cell === u || cell === null) return;
 					if (cell.uneditable) return;
 
 					jS.trigger('sheetCellEdit', [cell]);
@@ -7976,6 +7981,8 @@ $.sheet = {
 						cell.calcLast = jS.calcLast;
 						cell.calcDependenciesLast = jS.calcDependenciesLast;
 						cell.needsUpdated = true;
+						cell.rowIndex = rowIndex;
+						cell.colIndex = colIndex;
 
 						//increment times this cell has been calculated
 						cell.calcCount++;
@@ -8090,7 +8097,6 @@ $.sheet = {
 				updateCellDependencies:function () {
 					var dependencies,
 						dependantCell,
-						dependantCellLoc,
 						i,
 						calcLast = this.calcLast,
 						calcDependenciesLast = this.calcDependenciesLast;
@@ -8113,12 +8119,7 @@ $.sheet = {
 								dependantCell = dependantCell.jSCell;
 							}
 
-							if (dependantCell.td !== null) {
-								dependantCellLoc = jS.getTdLocation(dependantCell.td);
-								jS.updateCellValue.call(dependantCell, dependantCell.sheet, dependantCellLoc.row, dependantCellLoc.col);
-							} else {
-								jS.updateCellValue.call(dependantCell);
-							}
+							jS.updateCellValue.call(dependantCell, dependantCell.sheetIndex, dependantCell.rowIndex, dependantCell.colIndex);
 							jS.updateCellDependencies.call(dependantCell);
 						} while (i-- > 0);
 						this.state.shift();
@@ -8399,11 +8400,11 @@ $.sheet = {
 					cellValue:function (cellRef) {
 						var loc = jSE.parseLocation(cellRef.colString, cellRef.rowString), cell;
 
-						cell = jS.cellHandler.createDependencyOnLocation.call(this, this.sheet, loc.row, loc.col);
+						cell = jS.cellHandler.createDependencyOnLocation.call(this, this.sheetIndex, loc.row, loc.col);
 
 						if (cell !== null) {
 
-							jS.updateCellValue.call(cell, this.sheet, loc.row, loc.col);
+							jS.updateCellValue.call(cell, this.sheetIndex, loc.row, loc.col);
 							return (cell.valueOverride != u ? cell.valueOverride : cell.value);
 						} else {
 							return '';
@@ -8463,7 +8464,7 @@ $.sheet = {
 							rowIndexEnd = math.min(_start.row, _end.row),
 							colIndexStart = math.max(_start.col, _end.col),
 							colIndexEnd = math.min(_start.col, _end.col),
-							sheet = jS.spreadsheets[this.sheet],
+							sheet = jS.spreadsheets[this.sheetIndex],
 							createDependencyOnLocation = jS.cellHandler.createDependencyOnLocation,
 							createDependencyOnCell = jS.cellHandler.createDependencyOnCell,
 							updateCellValue = jS.updateCellValue,
@@ -8473,7 +8474,7 @@ $.sheet = {
 							row;
 
 						if (sheet === u) {
-							jS.spreadsheets[this.sheet] = sheet = {};
+							jS.spreadsheets[this.sheetIndex] = sheet = {};
 						}
 
 						if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
@@ -8482,12 +8483,12 @@ $.sheet = {
 								row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
 								do {
 									if (row === null || (cell = row[colIndex]) === u) {
-										cell = createDependencyOnLocation.call(this, this.sheet, rowIndex, colIndex);
+										cell = createDependencyOnLocation.call(this, this.sheetIndex, rowIndex, colIndex);
 									} else {
 										createDependencyOnCell.call(this, cell);
 									}
 
-									result.unshift(updateCellValue.call(cell, this.sheet, rowIndex, colIndex));
+									result.unshift(updateCellValue.call(cell, this.sheetIndex, rowIndex, colIndex));
 								} while(colIndex-- > colIndexEnd);
 							} while (rowIndex-- > rowIndexEnd);
 
@@ -9047,7 +9048,7 @@ $.sheet = {
 
 					do {
 						//remove tr's first
-						row = jS.getTd(jS.i, i, 1).parentNode;
+						row = jS.getTd(-1, i, 1).parentNode;
 						tBody.removeChild(row);
 					} while (start < i--);
 
@@ -9500,7 +9501,7 @@ $.sheet = {
 									}
 									jS.i = 0;
 
-									firstSpreadsheetUI.loaded()
+									firstSpreadsheetUI.loaded();
 								}
 							}
 						};
@@ -9692,7 +9693,7 @@ $.sheet = {
 								case Sheet.openOfficeSelectModel: //follow cursor behavior
 									this.row = (before ? start.row : stop.row);
 									this.col = (before ? start.col : stop.col);
-									this.td = jS.getTd(jS.i, this.row, this.col);
+									this.td = jS.getTd(-1, this.row, this.col);
 									if (this.td !== jS.cellLast.td) {
 										jS.cellEdit(this.td, false, true);
 									}
@@ -9700,7 +9701,7 @@ $.sheet = {
 								default: //stay at initial cell
 									this.row = (before ? stop.row : start.row);
 									this.col = (before ? stop.col : start.col);
-									this.td = jS.getTd(jS.i, this.row, this.col);
+									this.td = jS.getTd(-1, this.row, this.col);
 									if (this.td !== jS.cellLast.td) {
 										jS.cellEdit(this.td, false, true);
 									}
@@ -9745,7 +9746,7 @@ $.sheet = {
 							row = last;
 
 							do {
-								obj.push(jS.getTd(jS.i, row, 1).parentNode);
+								obj.push(jS.getTd(-1, row, 1).parentNode);
 							} while(row-- > first);
 							break;
 						case 'corner': //all
@@ -9871,7 +9872,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				getTd:function (tableIndex, rowIndex, colIndex) {
-					var table = jS.obj.tables()[tableIndex],
+					var table = (tableIndex > -1 ? jS.obj.tables()[tableIndex] : jS.obj.table()[0]),
 						tBody,
 						row,
 						td;
@@ -10091,7 +10092,7 @@ $.sheet = {
 						for (i = 0; i < clones.length; i++) {
 							var clone = clones[i],
 								loc = jS.getTdLocation(clone.td),
-								cell = jS.spreadsheets[clone.sheet][loc.row][loc.col];
+								cell = jS.spreadsheets[clone.sheetIndex][loc.row][loc.col];
 
 							cell.value = clone.value;
 							cell.formula = clone.formula;
@@ -10099,7 +10100,9 @@ $.sheet = {
 							cell.dependencies = clone.dependencies;
 							cell.needsUpdated = clone.needsUpdated;
 							cell.calcCount = clone.calcCount;
-							cell.sheet = clone.sheet;
+							cell.sheetIndex = clone.sheetIndex;
+							cell.rowIndex = loc.row;
+							cell.colIndex = loc.col;
 							cell.calcLast = clone.calcLast;
 							cell.html = clone.html;
 							cell.state = clone.state;
@@ -12782,7 +12785,6 @@ var jFN = $.sheet.fn = {
         if (html === undefined || html.length < 1 || cell.needsUpdated) {
             v = arrHelpers.flatten(arguments);
             v = arrHelpers.unique(v);
-            loc = jS.getTdLocation(cell.td);
             inputs = [];
 
 	        if (this.id !== null) {
@@ -12794,11 +12796,13 @@ var jFN = $.sheet.fn = {
 	        html = document.createElement('span');
 	        html.className = 'jSRadio';
 	        html.onmousedown = function () {
-                jS.cellEdit(td);
+				if (this.cell.td !== null) {
+					jS.cellEdit(this.cell.td);
+				}
             };
-	        html.jSCell = cell;
+	        html.cell = cell;
 
-            jS.controls.inputs[jS.i] = jS.obj.inputs().add(radio);
+            jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 
             for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
                 if (v[i]) {
@@ -12866,10 +12870,9 @@ var jFN = $.sheet.fn = {
             jS = this.jS,
             td = this.td,
             html,
+			label,
             loc,
             checkbox,
-            $td,
-            label,
             id,
             result;
 
@@ -12877,9 +12880,6 @@ var jFN = $.sheet.fn = {
 		    html = $(td).children().detach();
 		    loc = jS.getTdLocation(td);
 	    }
-
-	    $td = $(cell.td);
-	    html = $td.children().detach();
 
         if (html === undefined || html.length < 1 || cell.needsUpdated) {
 	        if (this.id !== null) {
@@ -12908,7 +12908,9 @@ var jFN = $.sheet.fn = {
             } else {
                 jS.s.parent.bind('sheetKill', function() {
                     cell.value = (cell.value == 'true' || $(checkbox).is(':checked') ? v : '');
-                    td.innerText = td.textContent = cell.value;
+					if (cell.td !== null) {
+						cell.td.innerText = cell.td.textContent = cell.cell.value;
+					}
                 });
             }
 
@@ -12920,7 +12922,9 @@ var jFN = $.sheet.fn = {
             html.appendChild(label);
             html.appendChild(document.createElement('br'));
             html.onmousedown = function () {
-                jS.cellEdit(td);
+				if (this.cell.td !== null) {
+					jS.cellEdit(td);
+				}
             };
             html.cell = cell;
 

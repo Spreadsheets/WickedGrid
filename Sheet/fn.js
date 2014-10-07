@@ -1480,7 +1480,6 @@ var jFN = $.sheet.fn = {
         if (html === undefined || html.length < 1 || cell.needsUpdated) {
             v = arrHelpers.flatten(arguments);
             v = arrHelpers.unique(v);
-            loc = jS.getTdLocation(cell.td);
             inputs = [];
 
 	        if (this.id !== null) {
@@ -1492,11 +1491,13 @@ var jFN = $.sheet.fn = {
 	        html = document.createElement('span');
 	        html.className = 'jSRadio';
 	        html.onmousedown = function () {
-                jS.cellEdit(td);
+				if (this.cell.td !== null) {
+					jS.cellEdit(this.cell.td);
+				}
             };
-	        html.jSCell = cell;
+	        html.cell = cell;
 
-            jS.controls.inputs[jS.i] = jS.obj.inputs().add(radio);
+            jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 
             for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
                 if (v[i]) {
@@ -1564,10 +1565,9 @@ var jFN = $.sheet.fn = {
             jS = this.jS,
             td = this.td,
             html,
+			label,
             loc,
             checkbox,
-            $td,
-            label,
             id,
             result;
 
@@ -1575,9 +1575,6 @@ var jFN = $.sheet.fn = {
 		    html = $(td).children().detach();
 		    loc = jS.getTdLocation(td);
 	    }
-
-	    $td = $(cell.td);
-	    html = $td.children().detach();
 
         if (html === undefined || html.length < 1 || cell.needsUpdated) {
 	        if (this.id !== null) {
@@ -1606,7 +1603,9 @@ var jFN = $.sheet.fn = {
             } else {
                 jS.s.parent.bind('sheetKill', function() {
                     cell.value = (cell.value == 'true' || $(checkbox).is(':checked') ? v : '');
-                    td.innerText = td.textContent = cell.value;
+					if (cell.td !== null) {
+						cell.td.innerText = cell.td.textContent = cell.cell.value;
+					}
                 });
             }
 
@@ -1618,7 +1617,9 @@ var jFN = $.sheet.fn = {
             html.appendChild(label);
             html.appendChild(document.createElement('br'));
             html.onmousedown = function () {
-                jS.cellEdit(td);
+				if (this.cell.td !== null) {
+					jS.cellEdit(td);
+				}
             };
             html.cell = cell;
 
