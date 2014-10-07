@@ -1222,6 +1222,10 @@ Sheet.StyleUpdater = (function(document) {
 					}
 				}
 
+				if (cell.loadedFrom === undefined) {
+					cell.loadedFrom = jsonCell;
+				}
+
 				td.className = jsonCell['class'] || '';
 				td.setAttribute('style', jsonCell['style'] || '');
 
@@ -3705,19 +3709,19 @@ $.sheet = {
 						tdsX,
 						tdsY;
 
-					if (!(sheet = jS.spreadsheets[sheetIndex])) { //check if spreadsheet exists, if not, create it as an array
+					if ((sheet = jS.spreadsheets[sheetIndex]) === u) { //check if spreadsheet exists, if not, create it as an array
 						sheet = jS.spreadsheets[sheetIndex] = [];
 					}
 
-					if (!(row = sheet[rowIndex])) { //check if row exists, if not, create it
+					if ((row = sheet[rowIndex]) === u) { //check if row exists, if not, create it
 						row = sheet[rowIndex] = [];
 					}
 
 					if (
-						!(table = jS.controls.tables[sheetIndex])
-						|| !(tBody = table.tBody)
-						|| !(tr = tBody.children[rowIndex])
-						|| !(td = tr.children[colIndex])
+						(table = jS.controls.tables[sheetIndex]) === u
+						|| (tBody = table.tBody) === u
+						|| (tr = tBody.children[rowIndex]) === u
+						|| (td = tr.children[colIndex]) === u
 					) {
 						return;
 					}
@@ -3740,14 +3744,14 @@ $.sheet = {
 						id: td.getAttribute('id') || null
 					};
 
-					if (jSCell.formula && jSCell.formula.charAt(0) == '=') {
+					if (jSCell.formula.length > 0 && jSCell.formula.charAt(0) == '=') {
 						jSCell.formula = jSCell.formula.substring(1);
 					}
 
 
 					//attach cells to col
 					colGroup = table.colGroup;
-					while (!(col = colGroup.children[colIndex])) {
+					if ((col = colGroup.children[colIndex]) === u) {
 						//if a col doesn't exist, it adds it here
 						col = document.createElement('col');
 						col.setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
@@ -3757,17 +3761,17 @@ $.sheet = {
 					jS.shortenCellLookupTime(colIndex, jSCell, td, col, tr, tBody, table);
 
 					//now create row
-					if (!(tdsY = jS.controls.bar.y.th[sheetIndex])) {
+					if ((tdsY = jS.controls.bar.y.th[sheetIndex]) === u) {
 						tdsY = jS.controls.bar.y.th[sheetIndex] = [];
 					}
-					if (!tdsY[rowIndex]) {
+					if (tdsY[rowIndex] === u) {
 						tdsY[rowIndex] = $(tr.children[0]);
 					}
 
-					if (!(tdsX = jS.controls.bar.x.th[sheetIndex])) {
+					if ((tdsX = jS.controls.bar.x.th[sheetIndex]) === u) {
 						tdsX = jS.controls.bar.x.th[sheetIndex] = [];
 					}
-					if (!tdsX[colIndex]) {
+					if (tdsX[colIndex] !== u) {
 						tdsX[colIndex] = $(tBody.children[0].children[colIndex]);
 					}
 
@@ -3776,11 +3780,11 @@ $.sheet = {
 				},
 				shortenCellLookupTime: function(colIndex, jSCell, td, col, tr, tBody, table) {
 					var jSCells;
-					if (!(jSCells = col.jSCells)) jSCells = col.jSCells = [];
+					if ((jSCells = col.jSCells) === u) jSCells = col.jSCells = [];
 					jSCells.unshift(jSCell);
 
 					//attach td to col
-					if (!col.tds) col.tds = [];
+					if (col.tds === u) col.tds = [];
 					col.tds.unshift(td);
 
 					//attach col to td
@@ -3790,15 +3794,15 @@ $.sheet = {
 					td.barTop = td.barTop || tBody.children[0].children[colIndex];
 
 					//attach cells to tr
-					if (!tr.jSCells) tr.jSCells = [];
+					if (tr.jSCells === u) tr.jSCells = [];
 					tr.jSCells.unshift(jSCell);
 
 					//attach td's to tr
-					if (!tr.tds) tr.tds = [];
+					if (tr.tds === u) tr.tds = [];
 					tr.tds.unshift(td);
 
 					//attach cells to table
-					if (!table.jSCells) table.jSCells = [];
+					if (table.jSCells === u) table.jSCells = [];
 					table.jSCells.unshift(jSCell);
 
 					//attach td's to table
@@ -12689,7 +12693,6 @@ var jFN = $.sheet.fn = {
             td = this.td,
             v,
             html,
-            loc,
             select,
             id,
             result,
@@ -12698,7 +12701,6 @@ var jFN = $.sheet.fn = {
 
 	    if (td !== null) {
 		    html = $(td).children().detach();
-		    loc = jS.getTdLocation(td);
 	    }
 
         if (html === undefined || cell.needsUpdated || html.length < 1) {
@@ -12708,7 +12710,7 @@ var jFN = $.sheet.fn = {
 	        if (this.id !== null) {
 		        id = this.id + '-dropdown';
 	        } else if (td !== null) {
-		        id = "dropdown" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+		        id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
 	        }
 
             select = document.createElement('select');
@@ -12770,7 +12772,6 @@ var jFN = $.sheet.fn = {
             td = this.td,
             v,
             html,
-            loc,
             inputs,
             $inputs,
             radio,
@@ -12779,7 +12780,6 @@ var jFN = $.sheet.fn = {
 
 	    if (td !== null) {
 		    html = $(td).children().detach();
-		    loc = jS.getTdLocation(td);
 	    }
 
         if (html === undefined || html.length < 1 || cell.needsUpdated) {
@@ -12790,7 +12790,7 @@ var jFN = $.sheet.fn = {
 	        if (this.id !== null) {
 		        id = this.id + '-radio';
 	        } else if (td !== null) {
-		        id = "radio" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+		        id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
 	        }
 
 	        html = document.createElement('span');
@@ -12871,21 +12871,19 @@ var jFN = $.sheet.fn = {
             td = this.td,
             html,
 			label,
-            loc,
             checkbox,
             id,
             result;
 
 	    if (td !== null) {
 		    html = $(td).children().detach();
-		    loc = jS.getTdLocation(td);
 	    }
 
         if (html === undefined || html.length < 1 || cell.needsUpdated) {
 	        if (this.id !== null) {
 		        id = this.id + '-checkbox';
 	        } else if (td !== null) {
-		        id = "checkbox" + this.sheet + "_" + loc.row + "_" + loc.col + '_' + jS.I;
+		        id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
 	        }
 
             checkbox = document.createElement('input');
@@ -13100,11 +13098,9 @@ var jFN = $.sheet.fn = {
 		if (value === undefined) return null;
 
         var jS = this.jS,
-            found = null,
+            found,
             result = '',
-            range = tableArray[0],
-            cell,
-            loc;
+            range = tableArray[0];
 
         indexNumber = indexNumber || 1;
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
@@ -13129,13 +13125,8 @@ var jFN = $.sheet.fn = {
             });
         }
 
-        if (found !== null && (cell = found.cell) !== undefined) {
-			if (cell.td !== undefined && cell.td !== null) {
-				loc = jS.getTdLocation(cell.td);
-				result = jS.updateCellValue.call(cell, cell.sheet, loc.row, indexNumber);
-			} else {
-				result = cell.value;
-			}
+        if (found !== undefined) {
+			result = found.value;
         }
 
         return result;
@@ -13154,11 +13145,9 @@ var jFN = $.sheet.fn = {
 		if (value === undefined) return null;
 
         var jS = this.jS,
-            found = null,
+            found,
             result = '',
-            range = tableArray[0],
-            cell,
-            loc;
+            range = tableArray[0];
 
         notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
@@ -13183,13 +13172,8 @@ var jFN = $.sheet.fn = {
             });
         }
 
-        if (found !== null && (cell = found.cell) !== undefined) {
-			if (cell.td !== undefined && cell.td !== null) {
-				loc = jS.getTdLocation(cell.td);
-				result = jS.updateCellValue.call(cell, cell.sheet, indexNumber, loc.col);
-			} else {
-				result = cell.value;
-			}
+        if (found !== undefined) {
+			result = found.value;
         }
 
         return result;
@@ -13201,13 +13185,12 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     THISROWCELL:function (col) {
-        var jS = this.jS,
-	        loc = jS.getTdLocation(this.td);
+        var jS = this.jS;
 
         if (isNaN(col)) {
             col = jSE.columnLabelIndex(col);
         }
-        return jS.updateCellValue(this.sheet, loc.row, col);
+        return jS.updateCellValue(this.sheetIndex, this.rowIndex, col);
     },
     /**
      * cell function
@@ -13216,10 +13199,9 @@ var jFN = $.sheet.fn = {
      * @memberOf jFN
      */
     THISCOLCELL:function (row) {
-        var jS = this.jS,
-	        loc = jS.getTdLocation(this.td);
+        var jS = this.jS;
 
-        return jS.updateCellValue(this.sheet, row, loc.col);
+        return jS.updateCellValue(this.sheetIndex, row, this.colIndex);
     }
 };var key = { /* key objects, makes it easier to develop */
     BACKSPACE: 			8,

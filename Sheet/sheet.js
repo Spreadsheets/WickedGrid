@@ -1574,19 +1574,19 @@ $.sheet = {
 						tdsX,
 						tdsY;
 
-					if (!(sheet = jS.spreadsheets[sheetIndex])) { //check if spreadsheet exists, if not, create it as an array
+					if ((sheet = jS.spreadsheets[sheetIndex]) === u) { //check if spreadsheet exists, if not, create it as an array
 						sheet = jS.spreadsheets[sheetIndex] = [];
 					}
 
-					if (!(row = sheet[rowIndex])) { //check if row exists, if not, create it
+					if ((row = sheet[rowIndex]) === u) { //check if row exists, if not, create it
 						row = sheet[rowIndex] = [];
 					}
 
 					if (
-						!(table = jS.controls.tables[sheetIndex])
-						|| !(tBody = table.tBody)
-						|| !(tr = tBody.children[rowIndex])
-						|| !(td = tr.children[colIndex])
+						(table = jS.controls.tables[sheetIndex]) === u
+						|| (tBody = table.tBody) === u
+						|| (tr = tBody.children[rowIndex]) === u
+						|| (td = tr.children[colIndex]) === u
 					) {
 						return;
 					}
@@ -1609,14 +1609,14 @@ $.sheet = {
 						id: td.getAttribute('id') || null
 					};
 
-					if (jSCell.formula && jSCell.formula.charAt(0) == '=') {
+					if (jSCell.formula.length > 0 && jSCell.formula.charAt(0) == '=') {
 						jSCell.formula = jSCell.formula.substring(1);
 					}
 
 
 					//attach cells to col
 					colGroup = table.colGroup;
-					while (!(col = colGroup.children[colIndex])) {
+					if ((col = colGroup.children[colIndex]) === u) {
 						//if a col doesn't exist, it adds it here
 						col = document.createElement('col');
 						col.setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
@@ -1626,17 +1626,17 @@ $.sheet = {
 					jS.shortenCellLookupTime(colIndex, jSCell, td, col, tr, tBody, table);
 
 					//now create row
-					if (!(tdsY = jS.controls.bar.y.th[sheetIndex])) {
+					if ((tdsY = jS.controls.bar.y.th[sheetIndex]) === u) {
 						tdsY = jS.controls.bar.y.th[sheetIndex] = [];
 					}
-					if (!tdsY[rowIndex]) {
+					if (tdsY[rowIndex] === u) {
 						tdsY[rowIndex] = $(tr.children[0]);
 					}
 
-					if (!(tdsX = jS.controls.bar.x.th[sheetIndex])) {
+					if ((tdsX = jS.controls.bar.x.th[sheetIndex]) === u) {
 						tdsX = jS.controls.bar.x.th[sheetIndex] = [];
 					}
-					if (!tdsX[colIndex]) {
+					if (tdsX[colIndex] !== u) {
 						tdsX[colIndex] = $(tBody.children[0].children[colIndex]);
 					}
 
@@ -1645,11 +1645,11 @@ $.sheet = {
 				},
 				shortenCellLookupTime: function(colIndex, jSCell, td, col, tr, tBody, table) {
 					var jSCells;
-					if (!(jSCells = col.jSCells)) jSCells = col.jSCells = [];
+					if ((jSCells = col.jSCells) === u) jSCells = col.jSCells = [];
 					jSCells.unshift(jSCell);
 
 					//attach td to col
-					if (!col.tds) col.tds = [];
+					if (col.tds === u) col.tds = [];
 					col.tds.unshift(td);
 
 					//attach col to td
@@ -1659,15 +1659,15 @@ $.sheet = {
 					td.barTop = td.barTop || tBody.children[0].children[colIndex];
 
 					//attach cells to tr
-					if (!tr.jSCells) tr.jSCells = [];
+					if (tr.jSCells === u) tr.jSCells = [];
 					tr.jSCells.unshift(jSCell);
 
 					//attach td's to tr
-					if (!tr.tds) tr.tds = [];
+					if (tr.tds === u) tr.tds = [];
 					tr.tds.unshift(td);
 
 					//attach cells to table
-					if (!table.jSCells) table.jSCells = [];
+					if (table.jSCells === u) table.jSCells = [];
 					table.jSCells.unshift(jSCell);
 
 					//attach td's to table
