@@ -21,9 +21,9 @@
  */
 var jQuery = window.jQuery || {};
 var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, RegExp, Error) {
-    "use strict";
+	"use strict";
 
-    CODE_HERE
+	CODE_HERE
 
-    return Sheet;
+	return Sheet;
 })(jQuery, document, window, Date, String, Number, Boolean, Math, RegExp, Error);
