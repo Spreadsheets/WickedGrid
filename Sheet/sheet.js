@@ -2242,7 +2242,7 @@ $.sheet = {
 									var target = jS.nearest($handle, tds);
 
 									jS.obj.barHelper().remove();
-									scrolledArea.end.col = actionUI.frozenAt.col = jS.getTdLocation(target).col - 1;
+									scrolledArea.end.col = actionUI.frozenAt.col = jS.getTdLocation(target[0]).col - 1;
 									jS.autoFillerHide();
 									actionUI.scrollStart('x', jS.sheetSize(pane.table));
 								},
@@ -2315,7 +2315,7 @@ $.sheet = {
 									jS.setDirty(true);
 									var target = jS.nearest($handle, trs);
 									jS.obj.barHelper().remove();
-									scrolledArea.end.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
+									scrolledArea.end.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)[0]).row - 1, 0);
 									jS.autoFillerHide();
 									pane.actionUI.scrollStart('y', jS.sheetSize(pane.table));
 								},

@@ -132,11 +132,25 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
                     if (style === undefined) {
                         var col = that.frozenAt.col;
+						 if (this.nthCss === null) {
+							 style =
+								 //hide all previous td/th/col elements
+								 cssId + ' tr *:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+								 cssId + ' col:nth-child(-n+' + indexes[0] + ') {display: none;}' +
 
-                        style =
-                            this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
-                            this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1) +
-                            cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}';
+								 //but show those that are frozen
+								 cssId + ' tr *:nth-child(-n+' + that.frozenAt.col + 1 + ') {display: table-cell;}' +
+								 cssId + ' col:nth-child(-n+' + that.frozenAt.col + 1 + ') {display: table-column;}' +
+
+								 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
+								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}' +
+								 cssId + ' col:nth-child(' + (indexes[0] + 20) + ') ~ col {display: none;}';
+						 } else {
+							 style =
+								 this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
+								 this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1) +
+								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}';
+						 }
                     }
 
                     this.setStyle(style);
@@ -158,9 +172,23 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
                     if (style === undefined) {
                         var row = that.frozenAt.row;
-                        style =
-                            this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1) +
-                            cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ * {display: none;}';
+						if (this.nthCss === null){
+							style =
+								//hide all previous tr elements
+								cssId + ' tr:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+
+								//but show those that are frozen
+								cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
+
+								//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
+								cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ tr {display: none;}';
+						}
+
+						else {
+							style =
+								this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1) +
+								cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ * {display: none;}';
+						}
                     }
 
                     this.setStyle(style);
@@ -1016,25 +1044,6 @@ Sheet.StyleUpdater = (function(document) {
 					do {
 						if (indexes[index] > min) {
 							style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
-						}
-					} while (index--);
-
-					if (style.length) {
-						return style.join(',') + css;
-					}
-
-					return '';
-				};
-			} else {
-				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-					var style = [],
-						index = indexes.length;
-
-					css = css || '{display: none;}';
-
-					do {
-						if (indexes[index] > min) {
-							style.unshift(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
 						}
 					} while (index--);
 
@@ -4377,7 +4386,7 @@ $.sheet = {
 									var target = jS.nearest($handle, tds);
 
 									jS.obj.barHelper().remove();
-									scrolledArea.end.col = actionUI.frozenAt.col = jS.getTdLocation(target).col - 1;
+									scrolledArea.end.col = actionUI.frozenAt.col = jS.getTdLocation(target[0]).col - 1;
 									jS.autoFillerHide();
 									actionUI.scrollStart('x', jS.sheetSize(pane.table));
 								},
@@ -4450,7 +4459,7 @@ $.sheet = {
 									jS.setDirty(true);
 									var target = jS.nearest($handle, trs);
 									jS.obj.barHelper().remove();
-									scrolledArea.end.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)).row - 1, 0);
+									scrolledArea.end.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)[0]).row - 1, 0);
 									jS.autoFillerHide();
 									pane.actionUI.scrollStart('y', jS.sheetSize(pane.table));
 								},
