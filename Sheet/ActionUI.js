@@ -56,11 +56,25 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
                     if (style === undefined) {
                         var col = that.frozenAt.col;
+						 if (this.nthCss === null) {
+							 style =
+								 //hide all previous td/th/col elements
+								 cssId + ' tr *:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+								 cssId + ' col:nth-child(-n+' + indexes[0] + ') {display: none;}' +
 
-                        style =
-                            this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
-                            this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1) +
-                            cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}';
+								 //but show those that are frozen
+								 cssId + ' tr *:nth-child(-n+' + that.frozenAt.col + 1 + ') {display: table-cell;}' +
+								 cssId + ' col:nth-child(-n+' + that.frozenAt.col + 1 + ') {display: table-column;}' +
+
+								 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
+								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}' +
+								 cssId + ' col:nth-child(' + (indexes[0] + 20) + ') ~ col {display: none;}';
+						 } else {
+							 style =
+								 this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
+								 this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1) +
+								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}';
+						 }
                     }
 
                     this.setStyle(style);
@@ -82,9 +96,23 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
                     if (style === undefined) {
                         var row = that.frozenAt.row;
-                        style =
-                            this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1) +
-                            cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ * {display: none;}';
+						if (this.nthCss === null){
+							style =
+								//hide all previous tr elements
+								cssId + ' tr:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+
+								//but show those that are frozen
+								cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
+
+								//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
+								cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ tr {display: none;}';
+						}
+
+						else {
+							style =
+								this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1) +
+								cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ * {display: none;}';
+						}
                     }
 
                     this.setStyle(style);

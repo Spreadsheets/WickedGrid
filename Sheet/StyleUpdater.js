@@ -26,25 +26,6 @@ Sheet.StyleUpdater = (function(document) {
 
 					return '';
 				};
-			} else {
-				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-					var style = [],
-						index = indexes.length;
-
-					css = css || '{display: none;}';
-
-					do {
-						if (indexes[index] > min) {
-							style.unshift(parentSelectorString + ' ' + elementName + ':nth-child(' + indexes[index] + ')');
-						}
-					} while (index--);
-
-					if (style.length) {
-						return style.join(',') + css;
-					}
-
-					return '';
-				};
 			}
 		}
 	}
