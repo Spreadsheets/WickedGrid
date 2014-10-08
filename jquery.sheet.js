@@ -21,9 +21,9 @@
  */
 var jQuery = window.jQuery || {};
 var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, RegExp, Error) {
-    "use strict";
+	"use strict";
 
-    var Sheet = {
+	var Sheet = {
 	defaultTheme: 0,
 	themeRollerTheme: 0,
 	bootstrapTheme: 1,
@@ -79,59 +79,59 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-    var Constructor = function(enclosure, pane, table, cl, frozenAt, max) {
-        this.enclosure = enclosure;
-        this.pane = pane;
-        this.table = table;
-        this.max = max;
-        this.xIndex = 0;
-        this.yIndex = 0;
+	var Constructor = function(enclosure, pane, table, cl, frozenAt, max) {
+		this.enclosure = enclosure;
+		this.pane = pane;
+		this.table = table;
+		this.max = max;
+		this.xIndex = 0;
+		this.yIndex = 0;
 
-        this.scrollAxis = {
-            x:{},
-            y:{}
-        };
+		this.scrollAxis = {
+			x:{},
+			y:{}
+		};
 
-        this.scrollSize = {};
+		this.scrollSize = {};
 
-        this.hiddenColumns = [];
-        this.hiddenRows = [];
+		this.hiddenColumns = [];
+		this.hiddenRows = [];
 
-        if (!(this.frozenAt = frozenAt)) {
-            this.frozenAt = {row:0, col:0};
-        }
+		if (!(this.frozenAt = frozenAt)) {
+			this.frozenAt = {row:0, col:0};
+		}
 
-        this.frozenAt.row = Math.max(this.frozenAt.row, 0);
-        this.frozenAt.col = Math.max(this.frozenAt.col, 0);
+		this.frozenAt.row = Math.max(this.frozenAt.row, 0);
+		this.frozenAt.col = Math.max(this.frozenAt.col, 0);
 
-        /**
-         * Where the current sheet is scrolled to
-         * @returns {Object}
-         */
-        this.scrolledArea = {
-            start: {
-                row: Math.max(this.frozenAt.row, 1),
-                col: Math.max(this.frozenAt.col, 1)
-            },
-            end: {
-                row: Math.max(this.frozenAt.row, 1),
-                col: Math.max(this.frozenAt.col, 1)
-            }
-        };
+		/**
+		 * Where the current sheet is scrolled to
+		 * @returns {Object}
+		 */
+		this.scrolledArea = {
+			start: {
+				row: Math.max(this.frozenAt.row, 1),
+				col: Math.max(this.frozenAt.col, 1)
+			},
+			end: {
+				row: Math.max(this.frozenAt.row, 1),
+				col: Math.max(this.frozenAt.col, 1)
+			}
+		};
 
-        var that = this,
-            cssId = '#' + table.getAttribute('id'),
-            scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
-            scrollInner = pane.scrollInner = document.createElement('div'),
-            scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(indexes, style) {
-                indexes = indexes || [];
+		var that = this,
+			cssId = '#' + table.getAttribute('id'),
+			scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
+			scrollInner = pane.scrollInner = document.createElement('div'),
+			scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(indexes, style) {
+				indexes = indexes || [];
 
-                if (indexes.length !== that.xIndex || style) {
-                    that.xIndex = indexes.length || that.xIndex;
+				if (indexes.length !== that.xIndex || style) {
+					that.xIndex = indexes.length || that.xIndex;
 
 
-                    if (style === undefined) {
-                        var col = that.frozenAt.col;
+					if (style === undefined) {
+						var col = that.frozenAt.col;
 						 if (this.nthCss === null) {
 							 style =
 								 //hide all previous td/th/col elements
@@ -151,27 +151,27 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 								 this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1) +
 								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}';
 						 }
-                    }
+					}
 
-                    this.setStyle(style);
+					this.setStyle(style);
 
-                    if (indexes.length) {
-                        that.scrolledArea.start.col = Math.max(indexes.pop() || 1, 1);
-                        that.scrolledArea.end.col = Math.max(indexes.shift() || 1, 1);
-                    }
+					if (indexes.length) {
+						that.scrolledArea.start.col = Math.max(indexes.pop() || 1, 1);
+						that.scrolledArea.end.col = Math.max(indexes.shift() || 1, 1);
+					}
 
-                    return true;
-                }
-                return false;
-            }, max),
-            scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(indexes, style){
-                indexes = indexes || [];
+					return true;
+				}
+				return false;
+			}, max),
+			scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(indexes, style){
+				indexes = indexes || [];
 
-                if (indexes.length !== that.yIndex || style) {
-                    that.yIndex = indexes.length || that.yIndex;
+				if (indexes.length !== that.yIndex || style) {
+					that.yIndex = indexes.length || that.yIndex;
 
-                    if (style === undefined) {
-                        var row = that.frozenAt.row;
+					if (style === undefined) {
+						var row = that.frozenAt.row;
 						if (this.nthCss === null){
 							style =
 								//hide all previous tr elements
@@ -189,397 +189,397 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 								this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1) +
 								cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ * {display: none;}';
 						}
-                    }
-
-                    this.setStyle(style);
-
-                    if (indexes.length) {
-                        that.scrolledArea.start.row = Math.max(indexes.pop() || 1, 1);
-                        that.scrolledArea.end.row = Math.max(indexes.shift() || 1, 1);
-                    }
-
-                    return true;
-                }
-                return false;
-            });
-
-        scrollOuter.setAttribute('class', cl);
-        scrollOuter.appendChild(scrollInner);
-
-        $(scrollOuter)
-            .disableSelectionSpecial();
-
-        pane.appendChild(scrollStyleX.styleElement);
-        pane.appendChild(scrollStyleY.styleElement);
-
-        var xStyle,
-            yStyle,
-            tableWidth,
-            tableHeight,
-            enclosureWidth,
-            enclosureHeight,
-            firstRow = table.tBody.children[0];
-
-        pane.resizeScroll = function (justTouch) {
-            if (justTouch) {
-                xStyle = scrollStyleX.getStyle();
-                yStyle = scrollStyleY.getStyle();
-            } else {
-                xStyle = (table.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.getStyle());
-                yStyle = (table.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.getStyle());
-            }
-
-            scrollStyleX.update(null, ' ');
-            scrollStyleY.update(null, ' ');
-
-            if (firstRow === undefined) {
-                firstRow = table.tBody.children[0];
-            }
-
-            tableWidth = (firstRow.clientWidth || table.clientWidth) + 'px';
-            tableHeight = table.clientHeight + 'px';
-            enclosureWidth = enclosure.clientWidth + 'px';
-            enclosureHeight = enclosure.clientHeight + 'px';
-
-            scrollInner.style.width = tableWidth;
-            scrollInner.style.height = tableHeight;
-
-            scrollOuter.style.width = enclosureWidth;
-            scrollOuter.style.height = enclosureHeight;
-
-            that.scrollStart('x');
-            that.scrollStart('y');
-
-            scrollStyleX.update(null, xStyle);
-            scrollStyleY.update(null, yStyle);
-
-            if (pane.inPlaceEdit) {
-                pane.inPlaceEdit.goToTd();
-            }
-        };
-
-        new MouseWheel(pane, scrollOuter);
-    };
-
-    Constructor.prototype = {
-        /**
-         * scrolls the sheet to the selected cell
-         * @param {HTMLElement} td
-         */
-        putTdInView:function (td) {
-            var i = 0,
-                x = 0,
-                y = 0,
-                direction,
-                scrolledTo;
-
-            this.xIndex = 0;
-            this.yIndex = 0;
-
-            while ((direction = this.directionToSeeTd(td)) !== null) {
-                scrolledTo = this.scrolledArea.end;
-
-                if (direction.left) {
-                    x--;
-                    this.scrollTo({
-                        axis:'x',
-                        value:scrolledTo.col - 1
-                    });
-                } else if (direction.right) {
-                    x++;
-                    this.scrollTo({
-                        axis:'x',
-                        value:scrolledTo.col + 1
-                    });
-                }
-
-                if (direction.up) {
-                    y--;
-                    this.scrollTo({
-                        axis:'y',
-                        value:scrolledTo.row - 1
-                    });
-                } else if (direction.down) {
-                    y++;
-                    this.scrollTo({
-                        axis:'y',
-                        value:scrolledTo.row + 1
-                    });
-                }
-
-                i++;
-                if (i < 25) {
-                    break;
-                }
-
-                this.scrollStop();
-            }
-        },
-
-        /**
-         * detects if a td is not visible
-         * @param {HTMLElement} td
-         * @returns {Boolean|Object}
-         */
-        directionToSeeTd:function(td) {
-            var pane = this.pane,
-                visibleFold = {
-                    top:0,
-                    bottom:pane.clientHeight,
-                    left:0,
-                    right:pane.clientWidth
-                },
-
-                tdWidth = td.clientWidth,
-                tdHeight = td.clientHeight,
-                tdLocation = {
-                    top:td.offsetTop,
-                    bottom:td.offsetTop + tdHeight,
-                    left:td.offsetLeft,
-                    right:td.offsetLeft + tdWidth
-                },
-                tdParent = td.parentNode,
-                scrollTo = this.scrolledArea.end;
-
-            if (!td.col) {
-                return null;
-            }
-
-            var xHidden = td.barTop.cellIndex < scrollTo.col,
-                yHidden = tdParent.rowIndex < scrollTo.row,
-                hidden = {
-                    up:yHidden,
-                    down:tdLocation.bottom > visibleFold.bottom && tdHeight <= pane.clientHeight,
-                    left:xHidden,
-                    right:tdLocation.right > visibleFold.right && tdWidth <= pane.clientWidth
-                };
-
-            if (
-                hidden.up
-                || hidden.down
-                || hidden.left
-                || hidden.right
-            ) {
-                return hidden;
-            }
-
-            return null;
-        },
-
-
-
-        /**
-         * Causes the pane to redraw, really just for fixing issues in Chrome
-         */
-        redraw: function() {
-            var style = this.pane.style;
-
-            style.opacity = 0.9999;
-
-            setTimeout(function() {
-                style.opacity = 1;
-            },0);
-        },
-
-
-        hide:function (hiddenRows, hiddenColumns, rows, columns) {
-            var that = this,
-                cssId = '#' + this.table.getAttribute('id'),
-                toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
-                    var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
-                        this.nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
-
-                    this.setStyle(style);
-                }),
-                toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
-                    var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
-
-                    this.setStyle(style);
-                }),
-                i,
-                j,
-                pane = this.pane;
-
-            pane.appendChild(toggleHideStyleX.styleElement);
-            pane.appendChild(toggleHideStyleY.styleElement);
-
-            this.hiddenRows = [];
-            this.hiddenColumns = [];
-
-            if (hiddenRows) {
-                i = hiddenRows.length - 1;
-                if (i > -1) {
-                    do {
-                        j = hiddenRows[i];
-                        this.toggleHideRow(rows[j], j);
-                    } while (i--);
-                }
-            }
-
-            if (hiddenColumns) {
-                i = hiddenColumns.length - 1;
-                if (i > -1) {
-                    do {
-                        j = hiddenColumns[i];
-                        this.toggleHideColumn(columns[j], j);
-                    } while (i--);
-                }
-            }
-        },
-        remove: function() {
-
-        },
-
-        /**
-         * prepare everything needed for a scroll, needs activated every time spreadsheet changes in size
-         * @param {String} axisName x or y
-         */
-        scrollStart:function (axisName) {
-            var pane = this.pane,
-                outer = pane.scrollOuter,
-                axis = this.scrollAxis[axisName],
-                size = this.scrollSize = pane.size();
-
-            axis.v = [];
-            axis.name = axisName;
-
-            switch (axisName || 'x') {
-                case 'x':
-                    axis.value = 0;
-                    axis.max = size.cols;
-                    axis.min = 0;
-                    axis.size = size.cols;
-                    pane.scrollStyleX.update();
-                    axis.scrollStyle = pane.scrollStyleX;
-                    axis.area = outer.scrollWidth - outer.clientWidth;
-                    axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
-                    axis.scrollUpdate = function () {
-                        outer.scrollLeft = (axis.value) * (axis.area / axis.size);
-                    };
-                    axis.gridSize = 100 / axis.size;
-                    break;
-                case 'y':
-                    axis.value = 0;
-                    axis.max = size.rows;
-                    axis.min = 0;
-                    axis.size = size.rows;
-                    pane.scrollStyleY.update();
-                    axis.scrollStyle = pane.scrollStyleY;
-                    axis.area = outer.scrollHeight - outer.clientHeight;
-                    axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
-                    axis.scrollUpdate = function () {
-                        outer.scrollTop = (axis.value) * (axis.area / axis.size);
-                    };
-                    axis.gridSize = 100 / axis.size;
-                    break;
-            }
-
-            var i = axis.max;
-
-            do {
-                var position = new Number(axis.gridSize * i);
-                position.index = i + 1;
-                axis.v.unshift(position);
-            } while(i--);
-        },
-
-        /**
-         * Scrolls to a position within the spreadsheet
-         * @param {Object} pos {axis, value, pixel} if value not set, pixel is used
-         */
-        scrollTo:function (pos) {
-            pos = pos || {};
-            pos.axis = pos.axis || 'x';
-            pos.value = pos.value || 0;
-            pos.pixel = pos.pixel || 0;
-
-            if (!this.scrollAxis) {
-                this.scrollStart(pos.axis);
-            }
-            var me = this.scrollAxis[pos.axis];
-
-            if (!pos.value) {
-                pos.value = arrHelpers.closest(me.v, Math.abs(pos.pixel / me.area) * 100, me.min).index;
-            }
-
-            pos.max = pos.max || me.max;
-
-            var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
-                indexes = [];
-
-            if (i >= 0) {
-                do {
-                    indexes.push(i + me.min);
-                } while(i-- > 0);
-            }
-
-            me.value = pos.value;
-
-            if (indexes.length) {
-                if (me.scrollStyle) {
-                    return me.scrollStyle.update(indexes);
-                }
-            } else {
-                if (me.scrollStyle) {
-                    return me.scrollStyle.update();
-                }
-            }
-
-            return false;
-        },
-
-        /**
-         * Called after scroll is done
-         */
-        scrollStop:function () {
-            if (this.scrollAxis.x.scrollUpdate) {
-                this.scrollAxis.x.scrollUpdate();
-            }
-            if (this.scrollAxis.y.scrollUpdate) {
-                this.scrollAxis.y.scrollUpdate();
-            }
-        },
-
-
-        toggleHideRow:function (row, i) {
-            var $row = $(row);
-            i = Math.max(i + 1, 1);
-
-
-            if ($row.length && $.inArray(i, this.hiddenRows) < 0) {
-                this.hiddenRows.push(i);
-            } else {
-                this.hiddenRows.splice(this.hiddenRows.indexOf(i), 1);
-            }
-
-            this.toggleHideStyleY.update();
-        },
-        rowShowAll:function () {
-            $.each(this.hiddenRows || [], function (j) {
-                $(this).removeData('hidden');
-            });
-            this.toggleHideStyleY.setStyle('');
-            this.hiddenRows = [];
-        },
-        toggleHideColumn:function (col, i) {
-            var $col = $(col);
-            i = Math.max(i + 1, 1);
-
-            if ($col.length && $.inArray(i, this.hiddenColumns) < 0) {
-                this.hiddenColumns.push(i);
-            } else {
-                this.hiddenColumns.splice(this.hiddenColumns.indexOf(i), 1);
-            }
-
-            this.toggleHideStyleX.update();
-        },
-        columnShowAll:function () {
-            this.toggleHideStyleX.setStyle('');
-            this.hiddenColumns = [];
-        }
-    };
-
-    return Constructor;
+					}
+
+					this.setStyle(style);
+
+					if (indexes.length) {
+						that.scrolledArea.start.row = Math.max(indexes.pop() || 1, 1);
+						that.scrolledArea.end.row = Math.max(indexes.shift() || 1, 1);
+					}
+
+					return true;
+				}
+				return false;
+			});
+
+		scrollOuter.setAttribute('class', cl);
+		scrollOuter.appendChild(scrollInner);
+
+		$(scrollOuter)
+			.disableSelectionSpecial();
+
+		pane.appendChild(scrollStyleX.styleElement);
+		pane.appendChild(scrollStyleY.styleElement);
+
+		var xStyle,
+			yStyle,
+			tableWidth,
+			tableHeight,
+			enclosureWidth,
+			enclosureHeight,
+			firstRow = table.tBody.children[0];
+
+		pane.resizeScroll = function (justTouch) {
+			if (justTouch) {
+				xStyle = scrollStyleX.getStyle();
+				yStyle = scrollStyleY.getStyle();
+			} else {
+				xStyle = (table.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.getStyle());
+				yStyle = (table.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.getStyle());
+			}
+
+			scrollStyleX.update(null, ' ');
+			scrollStyleY.update(null, ' ');
+
+			if (firstRow === undefined) {
+				firstRow = table.tBody.children[0];
+			}
+
+			tableWidth = (firstRow.clientWidth || table.clientWidth) + 'px';
+			tableHeight = table.clientHeight + 'px';
+			enclosureWidth = enclosure.clientWidth + 'px';
+			enclosureHeight = enclosure.clientHeight + 'px';
+
+			scrollInner.style.width = tableWidth;
+			scrollInner.style.height = tableHeight;
+
+			scrollOuter.style.width = enclosureWidth;
+			scrollOuter.style.height = enclosureHeight;
+
+			that.scrollStart('x');
+			that.scrollStart('y');
+
+			scrollStyleX.update(null, xStyle);
+			scrollStyleY.update(null, yStyle);
+
+			if (pane.inPlaceEdit) {
+				pane.inPlaceEdit.goToTd();
+			}
+		};
+
+		new MouseWheel(pane, scrollOuter);
+	};
+
+	Constructor.prototype = {
+		/**
+		 * scrolls the sheet to the selected cell
+		 * @param {HTMLElement} td
+		 */
+		putTdInView:function (td) {
+			var i = 0,
+				x = 0,
+				y = 0,
+				direction,
+				scrolledTo;
+
+			this.xIndex = 0;
+			this.yIndex = 0;
+
+			while ((direction = this.directionToSeeTd(td)) !== null) {
+				scrolledTo = this.scrolledArea.end;
+
+				if (direction.left) {
+					x--;
+					this.scrollTo({
+						axis:'x',
+						value:scrolledTo.col - 1
+					});
+				} else if (direction.right) {
+					x++;
+					this.scrollTo({
+						axis:'x',
+						value:scrolledTo.col + 1
+					});
+				}
+
+				if (direction.up) {
+					y--;
+					this.scrollTo({
+						axis:'y',
+						value:scrolledTo.row - 1
+					});
+				} else if (direction.down) {
+					y++;
+					this.scrollTo({
+						axis:'y',
+						value:scrolledTo.row + 1
+					});
+				}
+
+				i++;
+				if (i < 25) {
+					break;
+				}
+
+				this.scrollStop();
+			}
+		},
+
+		/**
+		 * detects if a td is not visible
+		 * @param {HTMLElement} td
+		 * @returns {Boolean|Object}
+		 */
+		directionToSeeTd:function(td) {
+			var pane = this.pane,
+				visibleFold = {
+					top:0,
+					bottom:pane.clientHeight,
+					left:0,
+					right:pane.clientWidth
+				},
+
+				tdWidth = td.clientWidth,
+				tdHeight = td.clientHeight,
+				tdLocation = {
+					top:td.offsetTop,
+					bottom:td.offsetTop + tdHeight,
+					left:td.offsetLeft,
+					right:td.offsetLeft + tdWidth
+				},
+				tdParent = td.parentNode,
+				scrollTo = this.scrolledArea.end;
+
+			if (!td.col) {
+				return null;
+			}
+
+			var xHidden = td.barTop.cellIndex < scrollTo.col,
+				yHidden = tdParent.rowIndex < scrollTo.row,
+				hidden = {
+					up:yHidden,
+					down:tdLocation.bottom > visibleFold.bottom && tdHeight <= pane.clientHeight,
+					left:xHidden,
+					right:tdLocation.right > visibleFold.right && tdWidth <= pane.clientWidth
+				};
+
+			if (
+				hidden.up
+				|| hidden.down
+				|| hidden.left
+				|| hidden.right
+			) {
+				return hidden;
+			}
+
+			return null;
+		},
+
+
+
+		/**
+		 * Causes the pane to redraw, really just for fixing issues in Chrome
+		 */
+		redraw: function() {
+			var style = this.pane.style;
+
+			style.opacity = 0.9999;
+
+			setTimeout(function() {
+				style.opacity = 1;
+			},0);
+		},
+
+
+		hide:function (hiddenRows, hiddenColumns, rows, columns) {
+			var that = this,
+				cssId = '#' + this.table.getAttribute('id'),
+				toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
+					var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
+						this.nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
+
+					this.setStyle(style);
+				}),
+				toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
+					var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
+
+					this.setStyle(style);
+				}),
+				i,
+				j,
+				pane = this.pane;
+
+			pane.appendChild(toggleHideStyleX.styleElement);
+			pane.appendChild(toggleHideStyleY.styleElement);
+
+			this.hiddenRows = [];
+			this.hiddenColumns = [];
+
+			if (hiddenRows) {
+				i = hiddenRows.length - 1;
+				if (i > -1) {
+					do {
+						j = hiddenRows[i];
+						this.toggleHideRow(rows[j], j);
+					} while (i--);
+				}
+			}
+
+			if (hiddenColumns) {
+				i = hiddenColumns.length - 1;
+				if (i > -1) {
+					do {
+						j = hiddenColumns[i];
+						this.toggleHideColumn(columns[j], j);
+					} while (i--);
+				}
+			}
+		},
+		remove: function() {
+
+		},
+
+		/**
+		 * prepare everything needed for a scroll, needs activated every time spreadsheet changes in size
+		 * @param {String} axisName x or y
+		 */
+		scrollStart:function (axisName) {
+			var pane = this.pane,
+				outer = pane.scrollOuter,
+				axis = this.scrollAxis[axisName],
+				size = this.scrollSize = pane.size();
+
+			axis.v = [];
+			axis.name = axisName;
+
+			switch (axisName || 'x') {
+				case 'x':
+					axis.value = 0;
+					axis.max = size.cols;
+					axis.min = 0;
+					axis.size = size.cols;
+					pane.scrollStyleX.update();
+					axis.scrollStyle = pane.scrollStyleX;
+					axis.area = outer.scrollWidth - outer.clientWidth;
+					axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
+					axis.scrollUpdate = function () {
+						outer.scrollLeft = (axis.value) * (axis.area / axis.size);
+					};
+					axis.gridSize = 100 / axis.size;
+					break;
+				case 'y':
+					axis.value = 0;
+					axis.max = size.rows;
+					axis.min = 0;
+					axis.size = size.rows;
+					pane.scrollStyleY.update();
+					axis.scrollStyle = pane.scrollStyleY;
+					axis.area = outer.scrollHeight - outer.clientHeight;
+					axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
+					axis.scrollUpdate = function () {
+						outer.scrollTop = (axis.value) * (axis.area / axis.size);
+					};
+					axis.gridSize = 100 / axis.size;
+					break;
+			}
+
+			var i = axis.max;
+
+			do {
+				var position = new Number(axis.gridSize * i);
+				position.index = i + 1;
+				axis.v.unshift(position);
+			} while(i--);
+		},
+
+		/**
+		 * Scrolls to a position within the spreadsheet
+		 * @param {Object} pos {axis, value, pixel} if value not set, pixel is used
+		 */
+		scrollTo:function (pos) {
+			pos = pos || {};
+			pos.axis = pos.axis || 'x';
+			pos.value = pos.value || 0;
+			pos.pixel = pos.pixel || 0;
+
+			if (!this.scrollAxis) {
+				this.scrollStart(pos.axis);
+			}
+			var me = this.scrollAxis[pos.axis];
+
+			if (!pos.value) {
+				pos.value = arrHelpers.closest(me.v, Math.abs(pos.pixel / me.area) * 100, me.min).index;
+			}
+
+			pos.max = pos.max || me.max;
+
+			var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
+				indexes = [];
+
+			if (i >= 0) {
+				do {
+					indexes.push(i + me.min);
+				} while(i-- > 0);
+			}
+
+			me.value = pos.value;
+
+			if (indexes.length) {
+				if (me.scrollStyle) {
+					return me.scrollStyle.update(indexes);
+				}
+			} else {
+				if (me.scrollStyle) {
+					return me.scrollStyle.update();
+				}
+			}
+
+			return false;
+		},
+
+		/**
+		 * Called after scroll is done
+		 */
+		scrollStop:function () {
+			if (this.scrollAxis.x.scrollUpdate) {
+				this.scrollAxis.x.scrollUpdate();
+			}
+			if (this.scrollAxis.y.scrollUpdate) {
+				this.scrollAxis.y.scrollUpdate();
+			}
+		},
+
+
+		toggleHideRow:function (row, i) {
+			var $row = $(row);
+			i = Math.max(i + 1, 1);
+
+
+			if ($row.length && $.inArray(i, this.hiddenRows) < 0) {
+				this.hiddenRows.push(i);
+			} else {
+				this.hiddenRows.splice(this.hiddenRows.indexOf(i), 1);
+			}
+
+			this.toggleHideStyleY.update();
+		},
+		rowShowAll:function () {
+			$.each(this.hiddenRows || [], function (j) {
+				$(this).removeData('hidden');
+			});
+			this.toggleHideStyleY.setStyle('');
+			this.hiddenRows = [];
+		},
+		toggleHideColumn:function (col, i) {
+			var $col = $(col);
+			i = Math.max(i + 1, 1);
+
+			if ($col.length && $.inArray(i, this.hiddenColumns) < 0) {
+				this.hiddenColumns.push(i);
+			} else {
+				this.hiddenColumns.splice(this.hiddenColumns.indexOf(i), 1);
+			}
+
+			this.toggleHideStyleX.update();
+		},
+		columnShowAll:function () {
+			this.toggleHideStyleX.setStyle('');
+			this.hiddenColumns = [];
+		}
+	};
+
+	return Constructor;
 })(document, window, Math, Number, $);Sheet.SpreadsheetUI = (function() {
 	var stack = [];
 
@@ -895,142 +895,142 @@ Sheet.Highlighter = (function(document, window, $) {
 
 })(document, window, jQuery);
 ;Sheet.ColumnAdder = (function() {
-    function Constructor() {
-        this.qty = -1;
+	function Constructor() {
+		this.qty = -1;
 
-        this.addedFinishedFn = null;
-        this.createBarFn = null;
-        this.createCellFn = null;
-    }
+		this.addedFinishedFn = null;
+		this.createBarFn = null;
+		this.createCellFn = null;
+	}
 
-    Constructor.prototype = {
-        setQty: function(qty, sheetSize) {
-            var max = $.sheet.max;
+	Constructor.prototype = {
+		setQty: function(qty, sheetSize) {
+			var max = $.sheet.max;
 
-            if (max) {
-                //if current size is less than max, but the qty needed is more than the max
-                if (max > sheetSize.cols && max <= sheetSize.cols + qty) {
-                    this.qty = max - sheetSize.cols;
-                }
+			if (max) {
+				//if current size is less than max, but the qty needed is more than the max
+				if (max > sheetSize.cols && max <= sheetSize.cols + qty) {
+					this.qty = max - sheetSize.cols;
+				}
 
-                //if current size is more than max
-                else if (max && max <= sheetSize.cols + qty) {
-                    return false;
-                }
-            } else {
-                this.qty = qty;
-            }
+				//if current size is more than max
+				else if (max && max <= sheetSize.cols + qty) {
+					return false;
+				}
+			} else {
+				this.qty = qty;
+			}
 
-            return true;
-        },
+			return true;
+		},
 		setAddedFinishedFn: function(fn) {
-            this.addedFinishedFn = fn;
-        },
-        setCreateBarFn: function(fn) {
-            this.createBarFn = fn;
-        },
-        setCreateCellFn: function(fn) {
-            this.createCellFn = fn;
-        },
-        createCells:function (i, size, isBefore) {
-            var offset = (isBefore ? 0 : 1),
-                rowMax = size.rows || 1,
-                colMax = i + this.qty,
-                row,
-                col = i,
-                bar;
+			this.addedFinishedFn = fn;
+		},
+		setCreateBarFn: function(fn) {
+			this.createBarFn = fn;
+		},
+		setCreateCellFn: function(fn) {
+			this.createCellFn = fn;
+		},
+		createCells:function (i, size, isBefore) {
+			var offset = (isBefore ? 0 : 1),
+				rowMax = size.rows || 1,
+				colMax = i + this.qty,
+				row,
+				col = i,
+				bar;
 
-            for (; col < colMax; col++) {
+			for (; col < colMax; col++) {
 
-                bar = this.createBarFn(col + offset);
+				bar = this.createBarFn(col + offset);
 
-                for (row = 1; row <= rowMax; row++) {
-                    this.createCellFn(row, col + offset, bar);
-                }
-            }
+				for (row = 1; row <= rowMax; row++) {
+					this.createCellFn(row, col + offset, bar);
+				}
+			}
 
-            if (this.addedFinishedFn !== null) {
-                this.addedFinishedFn({
-                    row: 0,
-                    col: this.qty
-                });
-            }
-        }
-    };
+			if (this.addedFinishedFn !== null) {
+				this.addedFinishedFn({
+					row: 0,
+					col: this.qty
+				});
+			}
+		}
+	};
 
-    return Constructor;
+	return Constructor;
 })();
 ;Sheet.RowAdder = (function() {
-    function Constructor() {
-        this.qty = -1;
+	function Constructor() {
+		this.qty = -1;
 
-        this.addedFinishedFn = null;
-        this.createBar = null;
-        this.createCell = null;
-    }
+		this.addedFinishedFn = null;
+		this.createBar = null;
+		this.createCell = null;
+	}
 
-    Constructor.prototype = {
-        setQty: function(qty, sheetSize, minSize) {
-            var max = $.sheet.max;
+	Constructor.prototype = {
+		setQty: function(qty, sheetSize, minSize) {
+			var max = $.sheet.max;
 
-            if (max) {
-                //if current size is less than max, but the qty needed is more than the max
-                if (max > sheetSize.rows && max <= sheetSize.rows + qty) {
-                    this.qty = max - sheetSize.rows;
-                }
+			if (max) {
+				//if current size is less than max, but the qty needed is more than the max
+				if (max > sheetSize.rows && max <= sheetSize.rows + qty) {
+					this.qty = max - sheetSize.rows;
+				}
 
-                //if current size is more than max
-                else if (max && max <= sheetSize.rows + qty) {
-                    return false;
-                }
-            } else {
-                this.qty = qty;
-            }
+				//if current size is more than max
+				else if (max && max <= sheetSize.rows + qty) {
+					return false;
+				}
+			} else {
+				this.qty = qty;
+			}
 
-            return true;
-        },
-        setAddedFinishedFn: function(fn) {
-            this.addedFinishedFn = fn;
-        },
-        setCreateBarFn: function(fn) {
-            this.createBar = fn;
-        },
-        setCreateCellFn: function(fn) {
-            this.createCell = fn;
-        },
-        createCells:function (i, size, isBefore) {
-            var offset = (isBefore ? 0 : 1),
-                rowMax = i + this.qty,
-                colMax = size.cols || 1,
-                rowParent,
-                row = i,
-                col;
+			return true;
+		},
+		setAddedFinishedFn: function(fn) {
+			this.addedFinishedFn = fn;
+		},
+		setCreateBarFn: function(fn) {
+			this.createBar = fn;
+		},
+		setCreateCellFn: function(fn) {
+			this.createCell = fn;
+		},
+		createCells:function (i, size, isBefore) {
+			var offset = (isBefore ? 0 : 1),
+				rowMax = i + this.qty,
+				colMax = size.cols || 1,
+				rowParent,
+				row = i,
+				col;
 
-            for (; row < rowMax; row++) {
-                //create a new row
-                rowParent = this.createBar(row + offset);
+			for (; row < rowMax; row++) {
+				//create a new row
+				rowParent = this.createBar(row + offset);
 
-                for (col = 1; col <= colMax; col++) {
-                    this.createCell(row + offset, col, rowParent);
-                }
-            }
+				for (col = 1; col <= colMax; col++) {
+					this.createCell(row + offset, col, rowParent);
+				}
+			}
 
-            if (this.addedFinishedFn !== null) {
-                this.addedFinishedFn({
-                    row: this.qty,
-                    col: 0
-                });
-            }
-        }
-    };
+			if (this.addedFinishedFn !== null) {
+				this.addedFinishedFn({
+					row: this.qty,
+					col: 0
+				});
+			}
+		}
+	};
 
-    return Constructor;
+	return Constructor;
 })();
 Sheet.StyleUpdater = (function(document) {
-    function Constructor(updateFn, max) {
-        var el = this.styleElement = document.createElement('style');
-        el.styleUpdater = this;
-        this.update = updateFn;
+	function Constructor(updateFn, max) {
+		var el = this.styleElement = document.createElement('style');
+		el.styleUpdater = this;
+		this.update = updateFn;
 
 		if (Sheet.StyleUpdater.prototype.nthCss === null) {
 			if (max) {//this is where we check IE8 compatibility
@@ -1057,40 +1057,40 @@ Sheet.StyleUpdater = (function(document) {
 		}
 	}
 
-    //ie
-    if (document.createElement('style').styleSheet) {
-        Constructor.prototype = {
-            setStyle: function (css) {
-                var el = this.styleElement,
-                    ss = el.styleSheet;
+	//ie
+	if (document.createElement('style').styleSheet) {
+		Constructor.prototype = {
+			setStyle: function (css) {
+				var el = this.styleElement,
+					ss = el.styleSheet;
 
-                ss.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
-                if (!ss.disabled) {
-                    ss.cssText = css;
-                }
-            },
-            getStyle: function() {
-                var el = this.styleElement,
-                    ss = el.styleSheet;
+				ss.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
+				if (!ss.disabled) {
+					ss.cssText = css;
+				}
+			},
+			getStyle: function() {
+				var el = this.styleElement,
+					ss = el.styleSheet;
 
-                ss.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
-                if (!ss.disabled) {
-                    return ss.cssText;
-                }
-                return '';
-            }
-        };
-    } else {
-        //standard
-        Constructor.prototype = {
-            setStyle: function (css) {
-                this.styleElement.innerHTML = css;
-            },
-            getStyle: function() {
-                return this.styleElement.innerHTML;
-            }
-        };
-    }
+				ss.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
+				if (!ss.disabled) {
+					return ss.cssText;
+				}
+				return '';
+			}
+		};
+	} else {
+		//standard
+		Constructor.prototype = {
+			setStyle: function (css) {
+				this.styleElement.innerHTML = css;
+			},
+			getStyle: function() {
+				return this.styleElement.innerHTML;
+			}
+		};
+	}
 
 	/**
 	 * Creates css for an iterated element
@@ -1121,7 +1121,7 @@ Sheet.StyleUpdater = (function(document) {
 		return result;
 	};
 
-    return Constructor;
+	return Constructor;
 })(document);/**
  * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
  * @author RobertLeePlummerJr@gmail.com
@@ -1134,8 +1134,8 @@ Sheet.StyleUpdater = (function(document) {
  */
 
 ;Sheet.JSONLoader = (function($, document, String) {
-    "use strict";
-    function Constructor(json) {
+	"use strict";
+	function Constructor(json) {
 		if (json !== undefined) {
 			this.json = json;
 			this.count = json.length;
@@ -1143,60 +1143,60 @@ Sheet.StyleUpdater = (function(document) {
 			this.json = [];
 			this.count = 0;
 		}
-    }
+	}
 
-    Constructor.prototype = {
-        size: function(spreadsheetIndex) {
-            var size = {
-                    cols: 0,
-                    rows: 0
-                },
-                json = this.json,
-                jsonSpreadsheet,
-                rows,
-                firstRow,
-                firstRowColumns;
+	Constructor.prototype = {
+		size: function(spreadsheetIndex) {
+			var size = {
+					cols: 0,
+					rows: 0
+				},
+				json = this.json,
+				jsonSpreadsheet,
+				rows,
+				firstRow,
+				firstRowColumns;
 
-            if ((jsonSpreadsheet = json[spreadsheetIndex]) === undefined) return size;
-            if ((rows = jsonSpreadsheet.rows) === undefined) return size;
-            if ((firstRow = rows[0]) === undefined) return size;
-            if ((firstRowColumns = firstRow.columns) === undefined) return size;
+			if ((jsonSpreadsheet = json[spreadsheetIndex]) === undefined) return size;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return size;
+			if ((firstRow = rows[0]) === undefined) return size;
+			if ((firstRowColumns = firstRow.columns) === undefined) return size;
 
-            return {
-                rows: rows.length,
-                cols: firstRowColumns.length
-            };
-        },
-        setWidth: function(sheetIndex, columnIndex, colElement) {
-            var json = this.json,
-                jsonSpreadsheet = json[sheetIndex],
-                metadata = jsonSpreadsheet.metadata || {},
-                widths = metadata.widths || [],
-                width = widths[columnIndex];
+			return {
+				rows: rows.length,
+				cols: firstRowColumns.length
+			};
+		},
+		setWidth: function(sheetIndex, columnIndex, colElement) {
+			var json = this.json,
+				jsonSpreadsheet = json[sheetIndex],
+				metadata = jsonSpreadsheet.metadata || {},
+				widths = metadata.widths || [],
+				width = widths[columnIndex];
 
-            colElement.style.width = width + 'px';
-        },
-        setRowHeight: function(sheetIndex, rowIndex, barTd) {
-            var json = this.json,
-                jsonSpreadsheet,
-                rows,
-                row,
-                height;
+			colElement.style.width = width + 'px';
+		},
+		setRowHeight: function(sheetIndex, rowIndex, barTd) {
+			var json = this.json,
+				jsonSpreadsheet,
+				rows,
+				row,
+				height;
 
-            if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
-            if ((rows = jsonSpreadsheet.rows) === undefined) return;
-            if ((row = rows[rowIndex]) === undefined) return;
-            if ((height = row.height) === undefined) return;
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return;
+			if ((row = rows[rowIndex]) === undefined) return;
+			if ((height = row.height) === undefined) return;
 
-            barTd.style.height = height + 'px';
-        },
-        setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
-            var td = document.createElement('td'),
+			barTd.style.height = height + 'px';
+		},
+		setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
+			var td = document.createElement('td'),
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),
 				cell,
 				html;
 
-            if (jsonCell !== null) {
+			if (jsonCell !== null) {
 
 				if (jsonCell.getCell !== undefined) {
 					cell = jsonCell.getCell();
@@ -1253,8 +1253,8 @@ Sheet.StyleUpdater = (function(document) {
 			cell.sheetIndex = sheetIndex;
 			cell.rowIndex = rowIndex;
 			cell.columnIndex = columnIndex;
-            return cell;
-        },
+			return cell;
+		},
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			var json = this.json,
 				jsonSpreadsheet,
@@ -1337,28 +1337,28 @@ Sheet.StyleUpdater = (function(document) {
 
 			return -1;
 		},
-	    addSpreadsheet: function(jsonSpreadsheet, atIndex) {
-		    if (atIndex === undefined) {
-		        this.json.push(jsonSpreadsheet);
-		    } else {
-			    this.json.splice(atIndex, 0, jsonSpreadsheet);
-		    }
-		    this.count = this.json.length;
-	    },
+		addSpreadsheet: function(jsonSpreadsheet, atIndex) {
+			if (atIndex === undefined) {
+				this.json.push(jsonSpreadsheet);
+			} else {
+				this.json.splice(atIndex, 0, jsonSpreadsheet);
+			}
+			this.count = this.json.length;
+		},
 		getCellAttribute: function(cell, attribute) {
 			return cell[attribute];
 		},
 		setCellAttribute: function(cell, attribute, value) {
 			cell[attribute] = value;
 		},
-	    setCellAttributes: function(cell, attributes) {
-		    var i;
-		    for (i in attributes) {
-			    if (attributes.hasOwnProperty(i)) {
-				    cell[i] = attributes[i];
-			    }
-		    }
-	    },
+		setCellAttributes: function(cell, attributes) {
+			var i;
+			for (i in attributes) {
+				if (attributes.hasOwnProperty(i)) {
+					cell[i] = attributes[i];
+				}
+			}
+		},
 		cycleCells: function(sheetIndex, fn) {
 			var json = this.json,
 				jsonSpreadsheet,
@@ -1401,67 +1401,67 @@ Sheet.StyleUpdater = (function(document) {
 			}
 			while (sheetIndex-- > 0);
 		},
-        /**
-         * Create a table from json
-         * @param {Array} json array of spreadsheets - schema:<pre>
-         * [{ // sheet 1, can repeat
+		/**
+		 * Create a table from json
+		 * @param {Array} json array of spreadsheets - schema:<pre>
+		 * [{ // sheet 1, can repeat
 			 *  "title": "Title of spreadsheet",
 			 *  "metadata": {
-			 *      "widths": [
-			 *          120, //widths for each column, required
-			 *          80
-			 *      ]
+			 *	  "widths": [
+			 *		  120, //widths for each column, required
+			 *		  80
+			 *	  ]
 			 *  },
 			 *  "rows": [
-			 *      { // row 1, repeats for each column of the spreadsheet
-			 *          "height": 18, //optional
-			 *          "columns": [
-			 *              { //column A
-			 *                  "cellType": "", //optional
-			 *                  "class": "css classes", //optional
-			 *                  "formula": "=cell formula", //optional
-			 *                  "value": "value", //optional
-			 *                  "style": "css cell style", //optional
-			 *                  "uneditable": true, //optional
-			 *                  "cache": "" //optional
-			 *              },
-			 *              {} //column B
-			 *          ]
-			 *      },
-			 *      { // row 2
-			 *          "height": 18, //optional
-			 *          "columns": [
-			 *              { // column A
-			 *                  "cellType": "", //optional
-			 *                  "class": "css classes", //optional
-			 *                  "formula": "=cell formula", //optional
-			 *                  "value": "value", //optional
-			 *                  "style": "css cell style" //optional
-			 *                  "uneditable": true, //optional
-			 *                  "cache": "" //optional
-			 *              },
-			 *              {} // column B
-			 *          ]
-			 *      }
+			 *	  { // row 1, repeats for each column of the spreadsheet
+			 *		  "height": 18, //optional
+			 *		  "columns": [
+			 *			  { //column A
+			 *				  "cellType": "", //optional
+			 *				  "class": "css classes", //optional
+			 *				  "formula": "=cell formula", //optional
+			 *				  "value": "value", //optional
+			 *				  "style": "css cell style", //optional
+			 *				  "uneditable": true, //optional
+			 *				  "cache": "" //optional
+			 *			  },
+			 *			  {} //column B
+			 *		  ]
+			 *	  },
+			 *	  { // row 2
+			 *		  "height": 18, //optional
+			 *		  "columns": [
+			 *			  { // column A
+			 *				  "cellType": "", //optional
+			 *				  "class": "css classes", //optional
+			 *				  "formula": "=cell formula", //optional
+			 *				  "value": "value", //optional
+			 *				  "style": "css cell style" //optional
+			 *				  "uneditable": true, //optional
+			 *				  "cache": "" //optional
+			 *			  },
+			 *			  {} // column B
+			 *		  ]
+			 *	  }
 			 *  ]
 			 * }]</pre>
-         * @returns {*|jQuery|HTMLElement} a simple html table
-         * @memberOf Sheet.JSONLoader
-         */
-        toTables: function() {
+		 * @returns {*|jQuery|HTMLElement} a simple html table
+		 * @memberOf Sheet.JSONLoader
+		 */
+		toTables: function() {
 
-            var json = this.json,
-                tables = $([]),
-                spreadsheet,
-                rows,
-                row,
-                columns,
-                column,
-                metadata,
-                widths,
-                width,
-                frozenAt,
-                height,
+			var json = this.json,
+				tables = $([]),
+				spreadsheet,
+				rows,
+				row,
+				columns,
+				column,
+				metadata,
+				widths,
+				width,
+				frozenAt,
+				height,
 				table,
 				colgroup,
 				col,
@@ -1472,223 +1472,223 @@ Sheet.StyleUpdater = (function(document) {
 				k;
 
 
-            for (i = 0; i < json.length; i++) {
-                spreadsheet = json[i];
-                table = $(document.createElement('table'));
-                if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');
+			for (i = 0; i < json.length; i++) {
+				spreadsheet = json[i];
+				table = $(document.createElement('table'));
+				if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');
 
-                tables = tables.add(table);
+				tables = tables.add(table);
 
-                rows = spreadsheet['rows'];
-                for (j = 0; j < rows.length; j++) {
-                    row = rows[j];
-                    if (height = (row['height'] + '').replace('px','')) {
-                        tr = $(document.createElement('tr'))
-                            .attr('height', height)
-                            .css('height', height + 'px')
-                            .appendTo(table);
-                    }
-                    columns = row['columns'];
-                    for (k = 0; k < columns.length; k++) {
-                        column = columns[k];
-                        td = $(document.createElement('td'))
-                            .appendTo(tr);
+				rows = spreadsheet['rows'];
+				for (j = 0; j < rows.length; j++) {
+					row = rows[j];
+					if (height = (row['height'] + '').replace('px','')) {
+						tr = $(document.createElement('tr'))
+							.attr('height', height)
+							.css('height', height + 'px')
+							.appendTo(table);
+					}
+					columns = row['columns'];
+					for (k = 0; k < columns.length; k++) {
+						column = columns[k];
+						td = $(document.createElement('td'))
+							.appendTo(tr);
 
-                        if (column['class']) td.attr('class', column['class'] || '');
-                        if (column['style']) td.attr('style', column['style'] || '');
-                        if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
-                        if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
-                        if (column['value']) td.html(column['value'] || '');
-                        if (column['uneditable']) td.html(column['uneditable'] || '');
-                        if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
-                        if (column['colspan']) td.attr('colspan', column['colspan'] || '');
+						if (column['class']) td.attr('class', column['class'] || '');
+						if (column['style']) td.attr('style', column['style'] || '');
+						if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
+						if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
+						if (column['value']) td.html(column['value'] || '');
+						if (column['uneditable']) td.html(column['uneditable'] || '');
+						if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
+						if (column['colspan']) td.attr('colspan', column['colspan'] || '');
 						if (column['id']) td.attr('id', column['id'] || '');
 						if (column['cache']) td.html(column['cache']);
-                    }
-                }
+					}
+				}
 
-                if (metadata = spreadsheet['metadata']) {
-                    if (widths = metadata['widths']) {
-                        colgroup = $(document.createElement('colgroup'))
-                            .prependTo(table);
-                        for(k = 0; k < widths.length; k++) {
-                            width = (widths[k] + '').replace('px', '');
-                            col = $(document.createElement('col'))
-                                .attr('width', width)
-                                .css('width', width + 'px')
-                                .appendTo(colgroup);
-                        }
-                    }
-                    if (frozenAt = metadata['frozenAt']) {
-                        if (frozenAt['row']) {
-                            table.attr('data-frozenatrow', frozenAt['row']);
-                        }
-                        if (frozenAt['col']) {
-                            table.attr('data-frozenatcol', frozenAt['col']);
-                        }
-                    }
-                }
-            }
+				if (metadata = spreadsheet['metadata']) {
+					if (widths = metadata['widths']) {
+						colgroup = $(document.createElement('colgroup'))
+							.prependTo(table);
+						for(k = 0; k < widths.length; k++) {
+							width = (widths[k] + '').replace('px', '');
+							col = $(document.createElement('col'))
+								.attr('width', width)
+								.css('width', width + 'px')
+								.appendTo(colgroup);
+						}
+					}
+					if (frozenAt = metadata['frozenAt']) {
+						if (frozenAt['row']) {
+							table.attr('data-frozenatrow', frozenAt['row']);
+						}
+						if (frozenAt['col']) {
+							table.attr('data-frozenatcol', frozenAt['col']);
+						}
+					}
+				}
+			}
 
-            return tables;
-        },
+			return tables;
+		},
 
-        /**
-         * Create json from jQuery.sheet Sheet instance
-         * @param {Object} jS required, the jQuery.sheet instance
-         * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
-         * @returns {Array}  - schema:<pre>
-         * [{ // sheet 1, can repeat
-                 *  "title": "Title of spreadsheet",
-                 *  "metadata": {
-                 *      "widths": [
-                 *          "120px", //widths for each column, required
-                 *          "80px"
-                 *      ],
-                 *      "frozenAt": {row: 0, col: 0}
-                 *  },
-                 *  "rows": [
-                 *      { // row 1, repeats for each column of the spreadsheet
-                 *          "height": "18px", //optional
-                 *          "columns": [
-                 *              { //column A
-                 *                  "cellType": "", //optional
-                 *                  "class": "css classes", //optional
-                 *                  "formula": "=cell formula", //optional
-                 *                  "value": "value", //optional
-                 *                  "style": "css cell style", //optional
-                 *                  "uneditable": false,  //optional
-                 *                  "cache": "",  //optional
-                 *                  "id": "" //optional
-                 *              },
-                 *              {} //column B
-                 *          ]
-                 *      },
-                 *      { // row 2
-                 *          "height": "18px", //optional
-                 *          "columns": [
-                 *              { // column A
-                 *                  "cellType": "", //optional
-                 *                  "class": "css classes", //optional
-                 *                  "formula": "=cell formula", //optional
-                 *                  "value": "value", //optional
-                 *                  "style": "css cell style", //optional
-                 *                  "uneditable": true, //optional
-                 *                  "cache": "", //optional
-                 *                  "id": "" //optional
-                 *              },
-                 *              {} // column B
-                 *          ]
-                 *      }
-                 *  ]
-                 * }]</pre>
-         * @memberOf Sheet.JSONLoader
-         */
-        fromSheet: function(jS, doNotTrim) {
-            doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
+		/**
+		 * Create json from jQuery.sheet Sheet instance
+		 * @param {Object} jS required, the jQuery.sheet instance
+		 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
+		 * @returns {Array}  - schema:<pre>
+		 * [{ // sheet 1, can repeat
+				 *  "title": "Title of spreadsheet",
+				 *  "metadata": {
+				 *	  "widths": [
+				 *		  "120px", //widths for each column, required
+				 *		  "80px"
+				 *	  ],
+				 *	  "frozenAt": {row: 0, col: 0}
+				 *  },
+				 *  "rows": [
+				 *	  { // row 1, repeats for each column of the spreadsheet
+				 *		  "height": "18px", //optional
+				 *		  "columns": [
+				 *			  { //column A
+				 *				  "cellType": "", //optional
+				 *				  "class": "css classes", //optional
+				 *				  "formula": "=cell formula", //optional
+				 *				  "value": "value", //optional
+				 *				  "style": "css cell style", //optional
+				 *				  "uneditable": false,  //optional
+				 *				  "cache": "",  //optional
+				 *				  "id": "" //optional
+				 *			  },
+				 *			  {} //column B
+				 *		  ]
+				 *	  },
+				 *	  { // row 2
+				 *		  "height": "18px", //optional
+				 *		  "columns": [
+				 *			  { // column A
+				 *				  "cellType": "", //optional
+				 *				  "class": "css classes", //optional
+				 *				  "formula": "=cell formula", //optional
+				 *				  "value": "value", //optional
+				 *				  "style": "css cell style", //optional
+				 *				  "uneditable": true, //optional
+				 *				  "cache": "", //optional
+				 *				  "id": "" //optional
+				 *			  },
+				 *			  {} // column B
+				 *		  ]
+				 *	  }
+				 *  ]
+				 * }]</pre>
+		 * @memberOf Sheet.JSONLoader
+		 */
+		fromSheet: function(jS, doNotTrim) {
+			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
 
-            var output = [],
-                i = 1 * jS.i,
-                sheet = jS.spreadsheets.length - 1,
-                jsonSpreadsheet,
-                spreadsheet,
-                row,
-                column,
-                parentAttr,
-                jsonRow,
-                jsonColumn,
-                cell,
-                attr,
-                cl,
-                parent,
-                rowHasValues,
-                parentEle,
-                parentHeight;
+			var output = [],
+				i = 1 * jS.i,
+				sheet = jS.spreadsheets.length - 1,
+				jsonSpreadsheet,
+				spreadsheet,
+				row,
+				column,
+				parentAttr,
+				jsonRow,
+				jsonColumn,
+				cell,
+				attr,
+				cl,
+				parent,
+				rowHasValues,
+				parentEle,
+				parentHeight;
 
-            if (sheet < 0) return output;
+			if (sheet < 0) return output;
 
-            do {
-                rowHasValues = false;
-                jS.i = sheet;
-                jS.evt.cellEditDone();
-                jsonSpreadsheet = {
-                    "title": (jS.obj.table().attr('title') || ''),
-                    "rows": [],
-                    "metadata": {
-                        "widths": [],
-                        "frozenAt": $.extend({}, jS.obj.pane().actionUI.frozenAt)
-                    }
-                };
+			do {
+				rowHasValues = false;
+				jS.i = sheet;
+				jS.evt.cellEditDone();
+				jsonSpreadsheet = {
+					"title": (jS.obj.table().attr('title') || ''),
+					"rows": [],
+					"metadata": {
+						"widths": [],
+						"frozenAt": $.extend({}, jS.obj.pane().actionUI.frozenAt)
+					}
+				};
 
-                output.unshift(jsonSpreadsheet);
+				output.unshift(jsonSpreadsheet);
 
-                spreadsheet = jS.spreadsheets[sheet];
-                row = spreadsheet.length - 1;
-                do {
-                    parentEle = spreadsheet[row][1].td[0].parentNode;
-                    parentHeight = parentEle.style['height'];
-                    jsonRow = {
-                        "columns": [],
-                        "height": (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin)
-                    };
+				spreadsheet = jS.spreadsheets[sheet];
+				row = spreadsheet.length - 1;
+				do {
+					parentEle = spreadsheet[row][1].td[0].parentNode;
+					parentHeight = parentEle.style['height'];
+					jsonRow = {
+						"columns": [],
+						"height": (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin)
+					};
 
-                    column = spreadsheet[row].length - 1;
-                    do {
-                        cell = spreadsheet[row][column];
-                        jsonColumn = {};
-                        attr = cell.td[0].attributes;
+					column = spreadsheet[row].length - 1;
+					do {
+						cell = spreadsheet[row][column];
+						jsonColumn = {};
+						attr = cell.td[0].attributes;
 
-                        if (doNotTrim || rowHasValues || attr['class'] || cell['formula'] || cell['value'] || attr['style']) {
-                            rowHasValues = true;
+						if (doNotTrim || rowHasValues || attr['class'] || cell['formula'] || cell['value'] || attr['style']) {
+							rowHasValues = true;
 
-                            cl = (attr['class'] ? $.trim(
-                                (attr['class'].value || '')
-                                    .replace(jS.cl.uiCellActive , '')
-                                    .replace(jS.cl.uiCellHighlighted, '')
-                            ) : '');
+							cl = (attr['class'] ? $.trim(
+								(attr['class'].value || '')
+									.replace(jS.cl.uiCellActive , '')
+									.replace(jS.cl.uiCellHighlighted, '')
+							) : '');
 
-                            parent = cell.td[0].parentNode;
+							parent = cell.td[0].parentNode;
 
-                            jsonRow.columns.unshift(jsonColumn);
+							jsonRow.columns.unshift(jsonColumn);
 
-                            if (!jsonRow["height"]) {
-                                jsonRow["height"] = (parent.style['height'] ? parent.style['height'].replace('px' , '') : jS.s.colMargin);
-                            }
+							if (!jsonRow["height"]) {
+								jsonRow["height"] = (parent.style['height'] ? parent.style['height'].replace('px' , '') : jS.s.colMargin);
+							}
 
-                            if (cell['formula']) jsonColumn['formula'] = cell['formula'];
-                            if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
-                            if (cell['value']) jsonColumn['value'] = cell['value'];
+							if (cell['formula']) jsonColumn['formula'] = cell['formula'];
+							if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
+							if (cell['value']) jsonColumn['value'] = cell['value'];
 							if (cell['uneditable']) jsonColumn['uneditable'] = cell['uneditable'];
 							if (cell['cache']) jsonColumn['cache'] = cell['cache'];
 							if (cell['id']) jsonColumn['id'] = cell['id'];
-                            if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
+							if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
 
 
-                            if (cl.length) {
-                                jsonColumn['class'] = cl;
-                            }
-                            if (attr['rowspan']) jsonColumn['rowspan'] = attr['rowspan'].value;
-                            if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
+							if (cl.length) {
+								jsonColumn['class'] = cl;
+							}
+							if (attr['rowspan']) jsonColumn['rowspan'] = attr['rowspan'].value;
+							if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
 
 							if (row * 1 == 1) {
 								jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
 							}
-                        }
-                    } while (column-- > 1);
+						}
+					} while (column-- > 1);
 
-                    if (rowHasValues) {
-                        jsonSpreadsheet.rows.unshift(jsonRow);
-                    }
+					if (rowHasValues) {
+						jsonSpreadsheet.rows.unshift(jsonRow);
+					}
 
-                } while (row-- > 1);
-            } while (sheet--);
-            jS.i = i;
+				} while (row-- > 1);
+			} while (sheet--);
+			jS.i = i;
 
-            return this.json = output;
-        }
-    };
+			return this.json = output;
+		}
+	};
 
-    return Constructor;
+	return Constructor;
 })(jQuery, document, String);/**
  * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
  * @author RobertLeePlummerJr@gmail.com
@@ -1701,53 +1701,53 @@ Sheet.StyleUpdater = (function(document) {
  */
 
 ;Sheet.XMLLoader = (function($, document) {
-    "use strict";
+	"use strict";
 
-    /**
-     *
-     * @param {String|jQuery|HTMLElement} xml - schema:<textarea disabled=disabled>
-     * <spreadsheets>
-     *     <spreadsheet title="spreadsheet title">
-     *         <metadata>
-     *             <widths>
-     *                 <width>120</width>
-     *                 <width>80</width>
-     *             </widths>
-     *             <frozenAt>
-     *                 <row>0</row>
-     *                 <col>0</col>
-     *             </frozenAt>
-     *         </metadata>
-     *         <rows>
-     *             <row height=15>
-     *                  <columns>
-     *                      <column>
-     *                          <cellType></cellType>
-     *                          <formula>=cell formula</formula>
-     *                          <value>cell value</value>
-     *                          <style>cells style</style>
-     *                          <class>cells class</class>
-     *                      </column>
-     *                      <column></column>
-     *                  </columns>
-     *              </row>
-     *             <row height=15>
-     *                  <columns>
-     *                      <column>
-     *                          <cellType></cellType>
-     *                          <formula>=cell formula</formula>
-     *                          <value>cell value</value>
-     *                          <style>cells style</style>
-     *                          <class>cells class</class>
-     *                      </column>
-     *                      <column></column>
-     *                  </columns>
-     *              </row>
-     *         </rows>
-     *     </spreadsheet>
-     * </spreadsheets></textarea>
-     */
-    function Constructor(xml) {
+	/**
+	 *
+	 * @param {String|jQuery|HTMLElement} xml - schema:<textarea disabled=disabled>
+	 * <spreadsheets>
+	 *	 <spreadsheet title="spreadsheet title">
+	 *		 <metadata>
+	 *			 <widths>
+	 *				 <width>120</width>
+	 *				 <width>80</width>
+	 *			 </widths>
+	 *			 <frozenAt>
+	 *				 <row>0</row>
+	 *				 <col>0</col>
+	 *			 </frozenAt>
+	 *		 </metadata>
+	 *		 <rows>
+	 *			 <row height=15>
+	 *				  <columns>
+	 *					  <column>
+	 *						  <cellType></cellType>
+	 *						  <formula>=cell formula</formula>
+	 *						  <value>cell value</value>
+	 *						  <style>cells style</style>
+	 *						  <class>cells class</class>
+	 *					  </column>
+	 *					  <column></column>
+	 *				  </columns>
+	 *			  </row>
+	 *			 <row height=15>
+	 *				  <columns>
+	 *					  <column>
+	 *						  <cellType></cellType>
+	 *						  <formula>=cell formula</formula>
+	 *						  <value>cell value</value>
+	 *						  <style>cells style</style>
+	 *						  <class>cells class</class>
+	 *					  </column>
+	 *					  <column></column>
+	 *				  </columns>
+	 *			  </row>
+	 *		 </rows>
+	 *	 </spreadsheet>
+	 * </spreadsheets></textarea>
+	 */
+	function Constructor(xml) {
 		if (xml !== undefined) {
 			this.xml = $.parseXML(xml);
 			this.spreadsheets = this.xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet');
@@ -1757,56 +1757,56 @@ Sheet.StyleUpdater = (function(document) {
 			this.spreadsheets = null;
 			this.count = 0;
 		}
-    }
+	}
 
-    Constructor.prototype = {
-	    size: function(spreadsheetIndex) {
-		    var xmlSpreadsheet = this.xml[spreadsheetIndex],
-			    rows = xmlSpreadsheet.rows,
-			    firstRow = rows[0],
-			    firstRowColumns = firstRow.columns;
+	Constructor.prototype = {
+		size: function(spreadsheetIndex) {
+			var xmlSpreadsheet = this.xml[spreadsheetIndex],
+				rows = xmlSpreadsheet.rows,
+				firstRow = rows[0],
+				firstRowColumns = firstRow.columns;
 
-		    return {
-			    rows: rows.length,
-			    cols: firstRowColumns.length
-		    };
-	    },
-	    setWidth: function(sheetIndex, columnIndex, colElement) {
-		    var spreadsheets = this.spreadsheets,
-			    xmlSpreadsheet = spreadsheets[sheetIndex],
-			    metadata = xmlSpreadsheet.getElementsByTagName('metadata')[0] || {},
-			    widths = metadata.getElementsByTagName('width') || [],
-			    widthElement = widths[columnIndex],
-			    width = (widthElement.textContent || widthElement.text);
+			return {
+				rows: rows.length,
+				cols: firstRowColumns.length
+			};
+		},
+		setWidth: function(sheetIndex, columnIndex, colElement) {
+			var spreadsheets = this.spreadsheets,
+				xmlSpreadsheet = spreadsheets[sheetIndex],
+				metadata = xmlSpreadsheet.getElementsByTagName('metadata')[0] || {},
+				widths = metadata.getElementsByTagName('width') || [],
+				widthElement = widths[columnIndex],
+				width = (widthElement.textContent || widthElement.text);
 
-		    colElement.style.width = width + 'px';
-	    },
-	    setRowHeight: function(sheetIndex, rowIndex, barTd) {
-		    var spreadsheets = this.spreadsheets,
-			    xmlSpreadsheet,
-			    rows,
-			    row,
-			    height;
+			colElement.style.width = width + 'px';
+		},
+		setRowHeight: function(sheetIndex, rowIndex, barTd) {
+			var spreadsheets = this.spreadsheets,
+				xmlSpreadsheet,
+				rows,
+				row,
+				height;
 
-            if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return;
-            if ((rows = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')) === undefined) return;
-            if ((row = rows[rowIndex]) === undefined) return;
-            if ((height = row.attributes['height'].nodeValue) === undefined) return;
+			if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return;
+			if ((rows = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')) === undefined) return;
+			if ((row = rows[rowIndex]) === undefined) return;
+			if ((height = row.attributes['height'].nodeValue) === undefined) return;
 
-		    barTd.style.height = height + 'px';
-	    },
-	    setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
-		    var spreadsheets = this.spreadsheets,
-			    xmlSpreadsheet,
-			    row,
-			    cell,
+			barTd.style.height = height + 'px';
+		},
+		setupCell: function(sheetIndex, rowIndex, columnIndex, blankCell, blankTd) {
+			var spreadsheets = this.spreadsheets,
+				xmlSpreadsheet,
+				row,
+				cell,
 				jitCell;
 
-		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return false;
-		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return false;
-		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return false;
+			if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return false;
+			if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return false;
+			if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return false;
 
-		    blankCell.cellType = cell.attributes['cellType'].nodeValue || '';
+			blankCell.cellType = cell.attributes['cellType'].nodeValue || '';
 
 			if ((jitCell = cell.jitCell) !== undefined) {
 				blankCell.html = jitCell.html;
@@ -1820,328 +1820,328 @@ Sheet.StyleUpdater = (function(document) {
 				blankCell.dependencies = jitCell.dependencies;
 			}
 
-		    if (cell.attributes['formula']) {
-			    blankCell.formula = cell.attributes['formula'].nodeValue || '';
-			    blankTd.setAttribute('data-formula', cell.attributes['formula'].nodeValue || '');
-		    } else {
-			    blankTd.innerHTML = blankCell.value = cell.attributes['value'].nodeValue || '';
-		    }
+			if (cell.attributes['formula']) {
+				blankCell.formula = cell.attributes['formula'].nodeValue || '';
+				blankTd.setAttribute('data-formula', cell.attributes['formula'].nodeValue || '');
+			} else {
+				blankTd.innerHTML = blankCell.value = cell.attributes['value'].nodeValue || '';
+			}
 
-		    blankTd.className = cell.attributes['class'].nodeValue || '';
-		    blankTd.setAttribute('style', cell.attributes['style'].nodeValue || '');
+			blankTd.className = cell.attributes['class'].nodeValue || '';
+			blankTd.setAttribute('style', cell.attributes['style'].nodeValue || '');
 
-		    if (cell.attributes['rowspan']) blankTd.setAttribute('rowspan', cell.attributes['rowspan'].nodeValue || '');
-		    if (cell.attributes['colspan']) blankTd.setAttribute('colspan', cell.attributes['colspan'].nodeValue || '');
+			if (cell.attributes['rowspan']) blankTd.setAttribute('rowspan', cell.attributes['rowspan'].nodeValue || '');
+			if (cell.attributes['colspan']) blankTd.setAttribute('colspan', cell.attributes['colspan'].nodeValue || '');
 
-            return true;
-	    },
+			return true;
+		},
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			//TODO
 			return null;
 		},
-	    jitCell: function(sheetIndex, rowIndex, columnIndex) {
-		    var spreadsheets = this.spreadsheets,
-			    xmlSpreadsheet,
-			    row,
-			    cell;
+		jitCell: function(sheetIndex, rowIndex, columnIndex) {
+			var spreadsheets = this.spreadsheets,
+				xmlSpreadsheet,
+				row,
+				cell;
 
-		    if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return false;
-		    if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return false;
-		    if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return false;
+			if ((xmlSpreadsheet = spreadsheets[sheetIndex]) === undefined) return false;
+			if ((row = xmlSpreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row')[rowIndex - 1]) === undefined) return false;
+			if ((cell = row.getElementsByTagName('columns')[0].getElementsByTagName('column')[columnIndex - 1]) === undefined) return false;
 
-		    return {
-			    td: {
-				    cellIndex: columnIndex,
-				    parentNode:{
-					    rowIndex: rowIndex
-				    },
-				    html: function() {}
-			    },
-			    html: [],
-			    state: [],
-			    calcLast: -1,
-			    calcDependenciesLast: -1,
-			    cellType: cell.attributes['cellType'].nodeValue || '',
-			    formula: cell.attributes['formula'].nodeValue || '',
-			    value: cell.attributes['value'].nodeValue || '',
+			return {
+				td: {
+					cellIndex: columnIndex,
+					parentNode:{
+						rowIndex: rowIndex
+					},
+					html: function() {}
+				},
+				html: [],
+				state: [],
+				calcLast: -1,
+				calcDependenciesLast: -1,
+				cellType: cell.attributes['cellType'].nodeValue || '',
+				formula: cell.attributes['formula'].nodeValue || '',
+				value: cell.attributes['value'].nodeValue || '',
 				type: 'cell',
 				sheet: sheetIndex,
 				id: null
-		    }
-	    },
-	    title: function(sheetIndex) {
-		    var spreadsheets = this.spreadsheets,
-			    spreadsheet;
+			}
+		},
+		title: function(sheetIndex) {
+			var spreadsheets = this.spreadsheets,
+				spreadsheet;
 
-		    if ((spreadsheet = spreadsheets[sheetIndex]) === undefined) return '';
+			if ((spreadsheet = spreadsheets[sheetIndex]) === undefined) return '';
 
-		    return (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '');
-	    },
+			return (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '');
+		},
 		getSpreadsheetIndexByTitle: function(title) {
 			//TODO
 		},
-	    addSpreadsheet: function(xmlSpreadsheet, atIndex) {
-		    //TODO
-		    if (atIndex === undefined) {
-			    this.spreadsheets.append.push(jsonSpreadsheet);
-		    } else {
-			    this.json.splice(atIndex, 0, jsonSpreadsheet);
-		    }
-		    this.count = this.json.length;
-	    },
+		addSpreadsheet: function(xmlSpreadsheet, atIndex) {
+			//TODO
+			if (atIndex === undefined) {
+				this.spreadsheets.append.push(jsonSpreadsheet);
+			} else {
+				this.json.splice(atIndex, 0, jsonSpreadsheet);
+			}
+			this.count = this.json.length;
+		},
 		setCellAttribute: function(cell, attribute, value) {
 			//TODO
 		},
-        /**
-         * @returns {*|jQuery|HTMLElement} a simple html table
-         * @memberOf Sheet.XMLLoader
-         */
-        toTables: function() {
-            var xml = this.xml,
-                tables = $([]),
-                spreadsheets = xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet'),
-                spreadsheet,
-                rows,
-                row,
-                columns,
-                column,
-                attr,
-                metadata,
-                frozenat,
-                frozenatrow,
-                frozenatcol,
-                widths,
-                width,
-                height;
+		/**
+		 * @returns {*|jQuery|HTMLElement} a simple html table
+		 * @memberOf Sheet.XMLLoader
+		 */
+		toTables: function() {
+			var xml = this.xml,
+				tables = $([]),
+				spreadsheets = xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet'),
+				spreadsheet,
+				rows,
+				row,
+				columns,
+				column,
+				attr,
+				metadata,
+				frozenat,
+				frozenatrow,
+				frozenatcol,
+				widths,
+				width,
+				height;
 
-            for (var i = 0; i < spreadsheets.length; i++) {
-                spreadsheet = spreadsheets[i];
-                var table = $(document.createElement('table')).attr('title', (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '')),
-                    colgroup = $(document.createElement('colgroup')).appendTo(table),
-                    tbody = $(document.createElement('tbody')).appendTo(table);
+			for (var i = 0; i < spreadsheets.length; i++) {
+				spreadsheet = spreadsheets[i];
+				var table = $(document.createElement('table')).attr('title', (spreadsheet.attributes['title'] ? spreadsheet.attributes['title'].nodeValue : '')),
+					colgroup = $(document.createElement('colgroup')).appendTo(table),
+					tbody = $(document.createElement('tbody')).appendTo(table);
 
-                tables = tables.add(table);
+				tables = tables.add(table);
 
-                rows = spreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row');
-                metadata = spreadsheet.getElementsByTagName('metadata')[0];
+				rows = spreadsheet.getElementsByTagName('rows')[0].getElementsByTagName('row');
+				metadata = spreadsheet.getElementsByTagName('metadata')[0];
 
-                for (var l = 0; l < rows.length; l++) {//row
-                    row = rows[l];
-                    var tr = $(document.createElement('tr')).appendTo(tbody);
+				for (var l = 0; l < rows.length; l++) {//row
+					row = rows[l];
+					var tr = $(document.createElement('tr')).appendTo(tbody);
 
-                    if (height = row.attributes['height']) {
-                        height = (height.nodeValue || '').replace('px','');
-                        tr
-                            .css('height', height)
-                            .attr('height', height + 'px');
-                    }
+					if (height = row.attributes['height']) {
+						height = (height.nodeValue || '').replace('px','');
+						tr
+							.css('height', height)
+							.attr('height', height + 'px');
+					}
 
-                    columns = row.getElementsByTagName('columns')[0].getElementsByTagName('column');
-                    for (var m = 0; m < columns.length; m++) {
-                        column = columns[m];
-                        var td = $(document.createElement('td')).appendTo(tr),
-                            formula = column.getElementsByTagName('formula')[0],
-                            cellType = column.getElementsByTagName('cellType')[0],
-                            value = column.getElementsByTagName('value')[0],
-                            style = column.getElementsByTagName('style')[0],
-                            cl = column.getElementsByTagName('class')[0],
-                            rowspan = column.getElementsByTagName('rowspan')[0],
-                            colspan = column.getElementsByTagName('colspan')[0],
+					columns = row.getElementsByTagName('columns')[0].getElementsByTagName('column');
+					for (var m = 0; m < columns.length; m++) {
+						column = columns[m];
+						var td = $(document.createElement('td')).appendTo(tr),
+							formula = column.getElementsByTagName('formula')[0],
+							cellType = column.getElementsByTagName('cellType')[0],
+							value = column.getElementsByTagName('value')[0],
+							style = column.getElementsByTagName('style')[0],
+							cl = column.getElementsByTagName('class')[0],
+							rowspan = column.getElementsByTagName('rowspan')[0],
+							colspan = column.getElementsByTagName('colspan')[0],
 							id = column.getElementsByTagName('id')[0];
 
-                        if (formula) td.attr('data-formula', '=' + (formula.textContent || formula.text));
-                        if (cellType) td.attr('data-celltype', cellType.textContent || cellType.text);
-                        if (value) td.html(value.textContent || value.text);
-                        if (style) td.attr('style', style.textContent || style.text);
-                        if (cl) td.attr('class', cl.textContent || cl.text);
-                        if (rowspan) td.attr('rowspan', rowspan.textContent || rowspan.text);
-                        if (colspan) td.attr('colspan', colspan.textContent || colspan.text);
+						if (formula) td.attr('data-formula', '=' + (formula.textContent || formula.text));
+						if (cellType) td.attr('data-celltype', cellType.textContent || cellType.text);
+						if (value) td.html(value.textContent || value.text);
+						if (style) td.attr('style', style.textContent || style.text);
+						if (cl) td.attr('class', cl.textContent || cl.text);
+						if (rowspan) td.attr('rowspan', rowspan.textContent || rowspan.text);
+						if (colspan) td.attr('colspan', colspan.textContent || colspan.text);
 						if (id) td.attr('id', id.textContent || id.text);
-                    }
-                }
+					}
+				}
 
-                widths = metadata.getElementsByTagName('width');
-                for (var l = 0; l < widths.length; l++) {
-                    width = (widths[l].textContent || widths[l].text).replace('px', '');
-                    $(document.createElement('col'))
-                        .attr('width', width)
-                        .css('width', width + 'px')
-                        .appendTo(colgroup);
-                }
+				widths = metadata.getElementsByTagName('width');
+				for (var l = 0; l < widths.length; l++) {
+					width = (widths[l].textContent || widths[l].text).replace('px', '');
+					$(document.createElement('col'))
+						.attr('width', width)
+						.css('width', width + 'px')
+						.appendTo(colgroup);
+				}
 
-                frozenat = metadata.getElementsByTagName('frozenAt')[0];
-                if (frozenat) {
-                    frozenatcol = frozenat.getElementsByTagName('col')[0];
-                    frozenatrow = frozenat.getElementsByTagName('row')[0];
+				frozenat = metadata.getElementsByTagName('frozenAt')[0];
+				if (frozenat) {
+					frozenatcol = frozenat.getElementsByTagName('col')[0];
+					frozenatrow = frozenat.getElementsByTagName('row')[0];
 
-                    if (frozenatcol) table.attr('data-frozenatcol', (frozenatcol.textContent || frozenatcol.text) * 1);
-                    if (frozenatrow) table.attr('data-frozenatrow', (frozenatrow.textContent || frozenatrow.text) * 1);
-                }
-            }
-            return tables;
-        },
+					if (frozenatcol) table.attr('data-frozenatcol', (frozenatcol.textContent || frozenatcol.text) * 1);
+					if (frozenatrow) table.attr('data-frozenatrow', (frozenatrow.textContent || frozenatrow.text) * 1);
+				}
+			}
+			return tables;
+		},
 
-        /**
-         * Create xml from jQuery.sheet Sheet instance
-         * @param {Object} jS the jQuery.sheet instance
-         * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
+		/**
+		 * Create xml from jQuery.sheet Sheet instance
+		 * @param {Object} jS the jQuery.sheet instance
+		 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
 		 * @param {Boolean} [doNotParse] skips turning the created xml string back into xml
-         * @returns {String} - schema:<textarea disabled=disabled>
-         * <spreadsheets>
-         *     <spreadsheet title="spreadsheet title">
-         *         <metadata>
-         *             <widths>
-         *                 <width>120px</width>
-         *                 <width>80px</width>
-         *             </widths>
-         *         </metadata>
-         *         <rows>
-         *             <row height="15px">
-         *                  <columns>
-         *                      <column>
-         *                          <cellType></cellType>
-         *                          <formula>=cell formula</formula>
-         *                          <value>cell value</value>
-         *                          <style>cells style</style>
-         *                          <class>cells class</class>
-         *                      </column>
-         *                      <column></column>
-         *                  </columns>
-         *              </row>
-         *             <row height="15px">
-         *                  <columns>
-         *                      <column>
-         *                          <cellType></cellType>
-         *                          <formula>=cell formula</formula>
-         *                          <value>cell value</value>
-         *                          <style>cells style</style>
-         *                          <class>cells class</class>
-         *                      </column>
-         *                      <column></column>
-         *                  </columns>
-         *              </row>
-         *         </rows>
-         *     </spreadsheet>
-         * </spreadsheets></textarea>
+		 * @returns {String} - schema:<textarea disabled=disabled>
+		 * <spreadsheets>
+		 *	 <spreadsheet title="spreadsheet title">
+		 *		 <metadata>
+		 *			 <widths>
+		 *				 <width>120px</width>
+		 *				 <width>80px</width>
+		 *			 </widths>
+		 *		 </metadata>
+		 *		 <rows>
+		 *			 <row height="15px">
+		 *				  <columns>
+		 *					  <column>
+		 *						  <cellType></cellType>
+		 *						  <formula>=cell formula</formula>
+		 *						  <value>cell value</value>
+		 *						  <style>cells style</style>
+		 *						  <class>cells class</class>
+		 *					  </column>
+		 *					  <column></column>
+		 *				  </columns>
+		 *			  </row>
+		 *			 <row height="15px">
+		 *				  <columns>
+		 *					  <column>
+		 *						  <cellType></cellType>
+		 *						  <formula>=cell formula</formula>
+		 *						  <value>cell value</value>
+		 *						  <style>cells style</style>
+		 *						  <class>cells class</class>
+		 *					  </column>
+		 *					  <column></column>
+		 *				  </columns>
+		 *			  </row>
+		 *		 </rows>
+		 *	 </spreadsheet>
+		 * </spreadsheets></textarea>
 		 * @memberOf Sheet.XMLLoader
-         */
-        fromSheet: function(jS, doNotTrim, doNotParse) {
-            doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
-            var output = '',
-                i = 1 * jS.i,
-                sheet = jS.spreadsheets.length - 1,
-                xmlSpreadsheet,
-                spreadsheet,
-                row,
-                column,
-                parentAttr,
-                xmlRow,
-                xmlColumn,
-                xmlColumns,
-                cell,
-                attr,
-                cl,
-                parent,
-                frozenAt,
-                rowHasValues,
-                widths,
-                parentEle,
-                parentHeight;
+		 */
+		fromSheet: function(jS, doNotTrim, doNotParse) {
+			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
+			var output = '',
+				i = 1 * jS.i,
+				sheet = jS.spreadsheets.length - 1,
+				xmlSpreadsheet,
+				spreadsheet,
+				row,
+				column,
+				parentAttr,
+				xmlRow,
+				xmlColumn,
+				xmlColumns,
+				cell,
+				attr,
+				cl,
+				parent,
+				frozenAt,
+				rowHasValues,
+				widths,
+				parentEle,
+				parentHeight;
 
-            if (sheet < 0) return output;
+			if (sheet < 0) return output;
 
-            do {
-                rowHasValues = false;
-                jS.i = sheet;
-                jS.evt.cellEditDone();
-                frozenAt = $.extend({}, jS.obj.pane().actionUI.frozenAt);
-                widths = [];
+			do {
+				rowHasValues = false;
+				jS.i = sheet;
+				jS.evt.cellEditDone();
+				frozenAt = $.extend({}, jS.obj.pane().actionUI.frozenAt);
+				widths = [];
 
-                spreadsheet = jS.spreadsheets[sheet];
-                row = spreadsheet.length - 1;
-                xmlRow = '';
-                do {
-                    xmlColumns = '';
-                    column = spreadsheet[row].length - 1;
-                    do {
-                        xmlColumn = '';
-                        cell = spreadsheet[row][column];
-                        attr = cell.td[0].attributes;
-                        cl = (attr['class'] ? $.trim(
-                            (attr['class'].value || '')
-                                .replace(jS.cl.uiCellActive, '')
-                                .replace(jS.cl.uiCellHighlighted, '')
-                        ) : '');
+				spreadsheet = jS.spreadsheets[sheet];
+				row = spreadsheet.length - 1;
+				xmlRow = '';
+				do {
+					xmlColumns = '';
+					column = spreadsheet[row].length - 1;
+					do {
+						xmlColumn = '';
+						cell = spreadsheet[row][column];
+						attr = cell.td[0].attributes;
+						cl = (attr['class'] ? $.trim(
+							(attr['class'].value || '')
+								.replace(jS.cl.uiCellActive, '')
+								.replace(jS.cl.uiCellHighlighted, '')
+						) : '');
 
-                        if (doNotTrim || rowHasValues || cl || cell.formula || cell.value || attr['style']) {
-                            rowHasValues = true;
+						if (doNotTrim || rowHasValues || cl || cell.formula || cell.value || attr['style']) {
+							rowHasValues = true;
 
-                            xmlColumn += '<column>';
+							xmlColumn += '<column>';
 
-                            if (cell.formula) xmlColumn += '<formula>' + cell.formula + '</formula>';
-                            if (cell.cellType) xmlColumn += '<cellType>' + cell.cellType + '</cellType>';
-                            if (cell.value) xmlColumn += '<value>' + cell.value + '</value>';
-                            if (attr['style']) xmlColumn += '<style>' + attr['style'].value + '</style>';
-                            if (cl) xmlColumn += '<class>' + cl + '</class>';
-                            if (attr['rowspan']) xmlColumn += '<rowspan>' + attr['rowspan'].value + '</rowspan>';
-                            if (attr['colspan']) xmlColumn += '<colspan>' + attr['colspan'].value + '</colspan>';
-                            if (attr['id']) xmlColumn += '<id>' + attr['id'].value + '</id>';
+							if (cell.formula) xmlColumn += '<formula>' + cell.formula + '</formula>';
+							if (cell.cellType) xmlColumn += '<cellType>' + cell.cellType + '</cellType>';
+							if (cell.value) xmlColumn += '<value>' + cell.value + '</value>';
+							if (attr['style']) xmlColumn += '<style>' + attr['style'].value + '</style>';
+							if (cl) xmlColumn += '<class>' + cl + '</class>';
+							if (attr['rowspan']) xmlColumn += '<rowspan>' + attr['rowspan'].value + '</rowspan>';
+							if (attr['colspan']) xmlColumn += '<colspan>' + attr['colspan'].value + '</colspan>';
+							if (attr['id']) xmlColumn += '<id>' + attr['id'].value + '</id>';
 
-                            xmlColumn += '</column>';
+							xmlColumn += '</column>';
 
-                            xmlColumns = xmlColumn + xmlColumns;
+							xmlColumns = xmlColumn + xmlColumns;
 
 							if (row * 1 == 1) {
 								widths[column] = '<width>' + $(jS.col(null, column)).css('width').replace('px', '') + '</width>';
 							}
-                        }
+						}
 
-                    } while (column -- > 1);
+					} while (column -- > 1);
 
-                    if (xmlColumns) {
-                        parentEle = spreadsheet[row][1].td[0].parentNode;
-                        parentHeight = parentEle.style['height'];
-                        xmlRow = '<row height="' + (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin) + '">' +
-                            '<columns>' +
-                            xmlColumns +
-                            '</columns>' +
-                            '</row>' + xmlRow;
-                    }
+					if (xmlColumns) {
+						parentEle = spreadsheet[row][1].td[0].parentNode;
+						parentHeight = parentEle.style['height'];
+						xmlRow = '<row height="' + (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin) + '">' +
+							'<columns>' +
+							xmlColumns +
+							'</columns>' +
+							'</row>' + xmlRow;
+					}
 
-                } while (row-- > 1);
-                xmlSpreadsheet = '<spreadsheet title="' + (jS.obj.table().attr('title') || '') + '">' +
-                    '<rows>' +
-                    xmlRow +
-                    '</rows>' +
-                    '<metadata>' +
-                    (
-                        frozenAt.row || frozenAt.col ?
-                            '<frozenAt>' +
-                                (frozenAt.row ? '<row>' + frozenAt.row + '</row>' : '') +
-                                (frozenAt.col ? '<col>' + frozenAt.col + '</col>' : '') +
-                                '</frozenAt>' :
-                            ''
-                        ) +
-                    '<widths>' + widths.join('') + '</widths>' +
-                    '</metadata>' +
-                    '</spreadsheet>';
+				} while (row-- > 1);
+				xmlSpreadsheet = '<spreadsheet title="' + (jS.obj.table().attr('title') || '') + '">' +
+					'<rows>' +
+					xmlRow +
+					'</rows>' +
+					'<metadata>' +
+					(
+						frozenAt.row || frozenAt.col ?
+							'<frozenAt>' +
+								(frozenAt.row ? '<row>' + frozenAt.row + '</row>' : '') +
+								(frozenAt.col ? '<col>' + frozenAt.col + '</col>' : '') +
+								'</frozenAt>' :
+							''
+						) +
+					'<widths>' + widths.join('') + '</widths>' +
+					'</metadata>' +
+					'</spreadsheet>';
 
-                output = xmlSpreadsheet + output;
-            } while (sheet--);
+				output = xmlSpreadsheet + output;
+			} while (sheet--);
 
-            jS.i = i;
+			jS.i = i;
 
-            output = '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">' + output + '</spreadsheets>';
+			output = '<?xml version="1.0" encoding="UTF-8"?><spreadsheets xmlns="http://www.w3.org/1999/xhtml">' + output + '</spreadsheets>';
 
 			if (doNotParse !== true) {
 				this.xml = $.parseXML(output);
 			}
 
 			return output;
-        }
-    };
+		}
+	};
 
-    return Constructor;
+	return Constructor;
 })(jQuery, document);/**
  * @namespace
  * @type {Object}
@@ -10987,192 +10987,192 @@ $.sheet = {
  * @alias jQuery.sheet.engine
  */
 var jSE = $.sheet.engine = {
-    /**
-     * Calculate a spreadsheet
-     * @param {Number} sheet
-     * @param {Array} spreadsheet [row][cell], [1][1] = SHEET1!A1
-     * @param {Function} ignite function to run on every cell
-     * @memberOf jSE
-     */
-    calc:function (sheet, spreadsheet, ignite) {
-        spreadsheet = spreadsheet || [];
+	/**
+	 * Calculate a spreadsheet
+	 * @param {Number} sheet
+	 * @param {Array} spreadsheet [row][cell], [1][1] = SHEET1!A1
+	 * @param {Function} ignite function to run on every cell
+	 * @memberOf jSE
+	 */
+	calc:function (sheet, spreadsheet, ignite) {
+		spreadsheet = spreadsheet || [];
 
-        var rowIndex = spreadsheet.length - 1,
+		var rowIndex = spreadsheet.length - 1,
 			row,
 			colIndex,
 			cell;
 
 		if (rowIndex > 0) {
-            do {
-                if (rowIndex > 0 && spreadsheet[rowIndex]) {
-                    row = spreadsheet[rowIndex];
+			do {
+				if (rowIndex > 0 && spreadsheet[rowIndex]) {
+					row = spreadsheet[rowIndex];
 					colIndex = row.length - 1;
-                    if (colIndex > 0) {
-                        do {
+					if (colIndex > 0) {
+						do {
 							cell = row[colIndex];
-                            ignite.call(cell, sheet, rowIndex, colIndex);
-                        } while (colIndex-- > 1);
-                    }
-                }
-            } while(rowIndex-- > 1);
-        }
-    },
+							ignite.call(cell, sheet, rowIndex, colIndex);
+						} while (colIndex-- > 1);
+					}
+				}
+			} while(rowIndex-- > 1);
+		}
+	},
 
-    /**
-     * Parse a cell name to it's location
-     * @param {String} columnStr "A"
+	/**
+	 * Parse a cell name to it's location
+	 * @param {String} columnStr "A"
 	 * @param {String|Number} rowString "1"
-     * @returns {Object} {row: 1, col: 1}
-     * @memberOf jQuery.sheet.engine
-     */
-    parseLocation:function (columnStr, rowString) {
-        return {
-            row: parseInt(rowString),
-            col: jSE.columnLabelIndex(columnStr)
-        };
-    },
+	 * @returns {Object} {row: 1, col: 1}
+	 * @memberOf jQuery.sheet.engine
+	 */
+	parseLocation:function (columnStr, rowString) {
+		return {
+			row: parseInt(rowString),
+			col: jSE.columnLabelIndex(columnStr)
+		};
+	},
 
-    /**
-     * Parse a sheet name to it's index
-     * @param {String} locStr SHEET1 = 0
-     * @returns {Number}
-     * @memberOf jQuery.sheet.engine
-     */
-    parseSheetLocation:function (locStr) {
+	/**
+	 * Parse a sheet name to it's index
+	 * @param {String} locStr SHEET1 = 0
+	 * @returns {Number}
+	 * @memberOf jQuery.sheet.engine
+	 */
+	parseSheetLocation:function (locStr) {
 		var sheetIndex = ((locStr + '').replace('SHEET', '') * 1) - 1;
-        return isNaN(sheetIndex) ? -1 : sheetIndex ;
-    },
+		return isNaN(sheetIndex) ? -1 : sheetIndex ;
+	},
 
-    /**
-     *
-     * @param {Number} col 1 = A
-     * @param {Number} row 1 = 1
-     * @returns {String}
-     * @memberOf jQuery.sheet.engine
-     */
-    parseCellName:function (col, row) {
-        return jSE.columnLabelString(col) + (row || '');
-    },
+	/**
+	 *
+	 * @param {Number} col 1 = A
+	 * @param {Number} row 1 = 1
+	 * @returns {String}
+	 * @memberOf jQuery.sheet.engine
+	 */
+	parseCellName:function (col, row) {
+		return jSE.columnLabelString(col) + (row || '');
+	},
 
-    /**
-     * Available labels, used for their index
-     * @memberOf jQuery.sheet.engine
-     */
-    alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
-    /**
-     * Available labels, used for their index
-     * @memberOf jQuery.sheet.engine
-     */
-    columnLabels: {},
-    /**
-     * Get index of a column label
-     * @param {String} str A to 1, B to 2, Z to 26, AA to 27
-     * @returns {Number}
-     * @memberOf jQuery.sheet.engine
-     */
-    columnLabelIndex:function (str) {
-        return this.columnLabels[str.toUpperCase()];
-    },
+	/**
+	 * Available labels, used for their index
+	 * @memberOf jQuery.sheet.engine
+	 */
+	alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+	/**
+	 * Available labels, used for their index
+	 * @memberOf jQuery.sheet.engine
+	 */
+	columnLabels: {},
+	/**
+	 * Get index of a column label
+	 * @param {String} str A to 1, B to 2, Z to 26, AA to 27
+	 * @returns {Number}
+	 * @memberOf jQuery.sheet.engine
+	 */
+	columnLabelIndex:function (str) {
+		return this.columnLabels[str.toUpperCase()];
+	},
 
-    /**
-     * Available indexes, used for their labels
-     * @memberOf jQuery.sheet.engine
-     */
-    columnIndexes:[],
+	/**
+	 * Available indexes, used for their labels
+	 * @memberOf jQuery.sheet.engine
+	 */
+	columnIndexes:[],
 
-    /**
-     * Get label of a column index
-     * @param {Number} index 1 = A, 2 = B, 26 = Z, 27 = AA
-     * @returns {String}
-     * @memberOf jQuery.sheet.engine
-     */
-    columnLabelString:function (index) {
-        if (!this.columnIndexes.length) { //cache the indexes to save on processing
-            var s = '', i, j, k, l;
-            i = j = k = -1;
-            for (l = 1; l < 16385; ++l) {
-                s = '';
-                ++k;
-                if (k == 26) {
-                    k = 0;
-                    ++j;
-                    if (j == 26) {
-                        j = 0;
-                        ++i;
-                    }
-                }
-                if (i >= 0) s += this.alphabet[i];
-                if (j >= 0) s += this.alphabet[j];
-                if (k >= 0) s += this.alphabet[k];
-                this.columnIndexes[l] = s;
-                this.columnLabels[s] = l;
-            }
-        }
-        return this.columnIndexes[index] || '';
-    },
+	/**
+	 * Get label of a column index
+	 * @param {Number} index 1 = A, 2 = B, 26 = Z, 27 = AA
+	 * @returns {String}
+	 * @memberOf jQuery.sheet.engine
+	 */
+	columnLabelString:function (index) {
+		if (!this.columnIndexes.length) { //cache the indexes to save on processing
+			var s = '', i, j, k, l;
+			i = j = k = -1;
+			for (l = 1; l < 16385; ++l) {
+				s = '';
+				++k;
+				if (k == 26) {
+					k = 0;
+					++j;
+					if (j == 26) {
+						j = 0;
+						++i;
+					}
+				}
+				if (i >= 0) s += this.alphabet[i];
+				if (j >= 0) s += this.alphabet[j];
+				if (k >= 0) s += this.alphabet[k];
+				this.columnIndexes[l] = s;
+				this.columnLabels[s] = l;
+			}
+		}
+		return this.columnIndexes[index] || '';
+	},
 
-    /**
-     * Regular expressions cache
-     * @memberOf jQuery.sheet.engine
-     */
-    regEx: {
-        n: 			    /[\$,\s]/g,
-        cell: 			/\$?([a-zA-Z]+|[#]REF[!])\$?([0-9]+|[#]REF[!])/gi, //a1
-        range: 			/\$?([a-zA-Z]+)\$?([0-9]+):\$?([a-zA-Z]+)\$?([0-9]+)/gi, //a1:a4
-        remoteCell:		/\$?(SHEET+)\$?([0-9]+)[:!]\$?([a-zA-Z]+)\$?([0-9]+)/gi, //sheet1:a1
-        remoteCellRange:/\$?(SHEET+)\$?([0-9]+)[:!]\$?([a-zA-Z]+)\$?([0-9]+):\$?([a-zA-Z]+)\$?([0-9]+)/gi, //sheet1:a1:b4
-        sheet:			/SHEET/i,
-        amp: 			/&/g,
-        gt: 			/</g,
-        lt: 			/>/g,
-        nbsp: 			/&nbsp;/g
-    },
+	/**
+	 * Regular expressions cache
+	 * @memberOf jQuery.sheet.engine
+	 */
+	regEx: {
+		n: 				/[\$,\s]/g,
+		cell: 			/\$?([a-zA-Z]+|[#]REF[!])\$?([0-9]+|[#]REF[!])/gi, //a1
+		range: 			/\$?([a-zA-Z]+)\$?([0-9]+):\$?([a-zA-Z]+)\$?([0-9]+)/gi, //a1:a4
+		remoteCell:		/\$?(SHEET+)\$?([0-9]+)[:!]\$?([a-zA-Z]+)\$?([0-9]+)/gi, //sheet1:a1
+		remoteCellRange:/\$?(SHEET+)\$?([0-9]+)[:!]\$?([a-zA-Z]+)\$?([0-9]+):\$?([a-zA-Z]+)\$?([0-9]+)/gi, //sheet1:a1:b4
+		sheet:			/SHEET/i,
+		amp: 			/&/g,
+		gt: 			/</g,
+		lt: 			/>/g,
+		nbsp: 			/&nbsp;/g
+	},
 
-    /**
-     * Creates a chart, piggybacks g Raphael JS
-     * @param {Object} o options
-     * x: { legend: "", data: [0]}, //x data
-     * y: { legend: "", data: [0]}, //y data
-     * title: "",
-     * data: [0], //chart data
-     * legend: "",
-     * td: jS.getTd(this.sheet, this.row, this.col), //td container for cell
-     * chart: jQuery('<div class="' + jS.cl.chart + '" />') //chart
-     * @returns {jQuery|HTMLElement}
-     */
-    chart:function (o) {
-        var jS = this.jS,
-	        chart = document.createElement('div'),
-	        td = this.td,
-	        gR,
-	        body = document.body;
+	/**
+	 * Creates a chart, piggybacks g Raphael JS
+	 * @param {Object} o options
+	 * x: { legend: "", data: [0]}, //x data
+	 * y: { legend: "", data: [0]}, //y data
+	 * title: "",
+	 * data: [0], //chart data
+	 * legend: "",
+	 * td: jS.getTd(this.sheet, this.row, this.col), //td container for cell
+	 * chart: jQuery('<div class="' + jS.cl.chart + '" />') //chart
+	 * @returns {jQuery|HTMLElement}
+	 */
+	chart:function (o) {
+		var jS = this.jS,
+			chart = document.createElement('div'),
+			td = this.td,
+			gR,
+			body = document.body;
 
-	    body.appendChild(chart);
+		body.appendChild(chart);
 
-        function sanitize(v, toNum) {
-            if (!v) {
-                if (toNum) {
-                    v = 0;
-                } else {
-                    v = "";
-                }
-            } else {
-                if (toNum) {
-                    v = arrHelpers.toNumbers(v);
-                } else {
-                    v = arrHelpers.flatten(v);
-                }
-            }
-            return v;
-        }
+		function sanitize(v, toNum) {
+			if (!v) {
+				if (toNum) {
+					v = 0;
+				} else {
+					v = "";
+				}
+			} else {
+				if (toNum) {
+					v = arrHelpers.toNumbers(v);
+				} else {
+					v = arrHelpers.flatten(v);
+				}
+			}
+			return v;
+		}
 
-        o = $.extend({
-            x:{ legend:"", data:[0]},
-            y:{ legend:"", data:[0]},
-            title:"",
-            data:[0],
-            legend:""
-        }, o);
+		o = $.extend({
+			x:{ legend:"", data:[0]},
+			y:{ legend:"", data:[0]},
+			title:"",
+			data:[0],
+			legend:""
+		}, o);
 
 		chart.className = jS.cl.chart;
 		chart.onmousedown = function () {
@@ -11183,139 +11183,139 @@ var jSE = $.sheet.engine = {
 			return false;
 		};
 
-        jS.controls.chart[jS.i] = jS.obj.chart().add(chart);
+		jS.controls.chart[jS.i] = jS.obj.chart().add(chart);
 
-        o.data = sanitize(o.data, true);
-        o.x.data = sanitize(o.x.data, true);
-        o.y.data = sanitize(o.y.data, true);
-        o.legend = sanitize(o.legend);
-        o.x.legend = sanitize(o.x.legend);
-        o.y.legend = sanitize(o.y.legend);
+		o.data = sanitize(o.data, true);
+		o.x.data = sanitize(o.x.data, true);
+		o.y.data = sanitize(o.y.data, true);
+		o.legend = sanitize(o.legend);
+		o.x.legend = sanitize(o.x.legend);
+		o.y.legend = sanitize(o.y.legend);
 
-        o.legend = (o.legend ? o.legend : o.data);
+		o.legend = (o.legend ? o.legend : o.data);
 
-        var width,
-            height,
-            r = Raphael(chart);
+		var width,
+			height,
+			r = Raphael(chart);
 
-	    if (td.clientHeight > 0) {
-		    width = Math.max(td.clientWidth, 100);
-		    height = Math.max(td.clientHeight, 50);
-	    }
+		if (td.clientHeight > 0) {
+			width = Math.max(td.clientWidth, 100);
+			height = Math.max(td.clientHeight, 50);
+		}
 
-        if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
-        switch (o.type) {
-            case "bar":
-                gR = r.barchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
-                    .hover(function () {
-                        this.flag = r.popup(
-                            this.bar.x,
-                            this.bar.y,
-                            this.bar.value || "0"
-                        ).insertBefore(this);
-                    }, function () {
-                        this.flag.animate({
-                                opacity:0
-                            }, 300,
+		if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
+		switch (o.type) {
+			case "bar":
+				gR = r.barchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
+					.hover(function () {
+						this.flag = r.popup(
+							this.bar.x,
+							this.bar.y,
+							this.bar.value || "0"
+						).insertBefore(this);
+					}, function () {
+						this.flag.animate({
+								opacity:0
+							}, 300,
 
-                            function () {
-                                this.remove();
-                            }
-                        );
-                    });
-                break;
-            case "hbar":
-                gR = r.hbarchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
-                    .hover(function () {
-                        this.flag = r.popup(this.bar.x, this.bar.y, this.bar.value || "0").insertBefore(this);
-                    }, function () {
-                        this.flag.animate({
-                                opacity:0
-                            }, 300,
-                            function () {
-                                this.remove();
-                            }
-                        );
-                    });
-                break;
-            case "line":
-                gR = r.linechart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, {
-                    nostroke:false,
-                    axis:"0 0 1 1",
-                    symbol:"circle",
-                    smooth:true
-                })
-                    .hoverColumn(function () {
-                        this.tags = r.set();
-                        if (this.symbols.length) {
-                            for (var i = 0, ii = this.y.length; i < ii; i++) {
-                                this.tags.push(
-                                    r
-                                        .tag(this.x, this.y[i], this.values[i], 160, 10)
-                                        .insertBefore(this)
-                                        .attr([
-                                            { fill:"#fff" },
-                                            { fill:this.symbols[i].attr("fill") }
-                                        ])
-                                );
-                            }
-                        }
-                    }, function () {
-                        this.tags && this.tags.remove();
-                    });
+							function () {
+								this.remove();
+							}
+						);
+					});
+				break;
+			case "hbar":
+				gR = r.hbarchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
+					.hover(function () {
+						this.flag = r.popup(this.bar.x, this.bar.y, this.bar.value || "0").insertBefore(this);
+					}, function () {
+						this.flag.animate({
+								opacity:0
+							}, 300,
+							function () {
+								this.remove();
+							}
+						);
+					});
+				break;
+			case "line":
+				gR = r.linechart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, {
+					nostroke:false,
+					axis:"0 0 1 1",
+					symbol:"circle",
+					smooth:true
+				})
+					.hoverColumn(function () {
+						this.tags = r.set();
+						if (this.symbols.length) {
+							for (var i = 0, ii = this.y.length; i < ii; i++) {
+								this.tags.push(
+									r
+										.tag(this.x, this.y[i], this.values[i], 160, 10)
+										.insertBefore(this)
+										.attr([
+											{ fill:"#fff" },
+											{ fill:this.symbols[i].attr("fill") }
+										])
+								);
+							}
+						}
+					}, function () {
+						this.tags && this.tags.remove();
+					});
 
-                break;
-            case "pie":
-                gR = r.piechart(width / 2, height / 2, (width < height ? width : height) / 2, o.data, {legend:o.legend})
-                    .hover(function () {
-                        this.sector.stop();
-                        this.sector.scale(1.1, 1.1, this.cx, this.cy);
+				break;
+			case "pie":
+				gR = r.piechart(width / 2, height / 2, (width < height ? width : height) / 2, o.data, {legend:o.legend})
+					.hover(function () {
+						this.sector.stop();
+						this.sector.scale(1.1, 1.1, this.cx, this.cy);
 
-                        if (this.label) {
-                            this.label[0].stop();
-                            this.label[0].attr({ r:7.5 });
-                            this.label[1].attr({ "font-weight":800 });
-                        }
-                    }, function () {
-                        this.sector.animate({ transform:'s1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
+						if (this.label) {
+							this.label[0].stop();
+							this.label[0].attr({ r:7.5 });
+							this.label[1].attr({ "font-weight":800 });
+						}
+					}, function () {
+						this.sector.animate({ transform:'s1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
 
-                        if (this.label) {
-                            this.label[0].animate({ r:5 }, 500, "bounce");
-                            this.label[1].attr({ "font-weight":400 });
-                        }
-                    });
-                break;
-            case "dot":
-                gR = r.dotchart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, o.data, {
-                    symbol:"o",
-                    max:10,
-                    heat:true,
-                    axis:"0 0 1 1",
-                    axisxstep:o.x.data.length - 1,
-                    axisystep:o.y.data.length - 1,
-                    axisxlabels:(o.x.legend ? o.x.legend : o.x.data),
-                    axisylabels:(o.y.legend ? o.y.legend : o.y.data),
-                    axisxtype:" ",
-                    axisytype:" "
-                })
-                    .hover(function () {
-                        this.marker = this.marker || r.tag(this.x, this.y, this.value, 0, this.r + 2).insertBefore(this);
-                        this.marker.show();
-                    }, function () {
-                        this.marker && this.marker.hide();
-                    });
+						if (this.label) {
+							this.label[0].animate({ r:5 }, 500, "bounce");
+							this.label[1].attr({ "font-weight":400 });
+						}
+					});
+				break;
+			case "dot":
+				gR = r.dotchart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, o.data, {
+					symbol:"o",
+					max:10,
+					heat:true,
+					axis:"0 0 1 1",
+					axisxstep:o.x.data.length - 1,
+					axisystep:o.y.data.length - 1,
+					axisxlabels:(o.x.legend ? o.x.legend : o.x.data),
+					axisylabels:(o.y.legend ? o.y.legend : o.y.data),
+					axisxtype:" ",
+					axisytype:" "
+				})
+					.hover(function () {
+						this.marker = this.marker || r.tag(this.x, this.y, this.value, 0, this.r + 2).insertBefore(this);
+						this.marker.show();
+					}, function () {
+						this.marker && this.marker.hide();
+					});
 
-                break;
-        }
+				break;
+		}
 
-        gR.mousedown(function () {
+		gR.mousedown(function () {
 			$(td).mousedown().mouseup();
 		});
 
-	    body.removeChild(chart);
+		body.removeChild(chart);
 
-        return chart;
-    }
+		return chart;
+	}
 };/**
  * The functions container of all functions used in jQuery.sheet
  * @namespace
@@ -11323,2028 +11323,2028 @@ var jSE = $.sheet.engine = {
  * @name jFN
  */
 var jFN = $.sheet.fn = {
-    /**
-     * information function
-     * @param v
-     * @returns {Boolean}
-     * @this jSCell
-     * @memberOf jFN
-     */
-    ISNUMBER:function (v) {
-        var result;
-        if (!isNaN(v.valueOf())) {
-            result = new Boolean(true);
-            result.html = 'TRUE';
-            return result;
-        }
-        result = new Boolean(false);
-        result.html = 'FALSE'
-        return result;
-    },
-    /**
-     * information function
-     * @param v
-     * @memberOf jFN
-     * @returns {*}
-     */
-    N:function (v) {
-        if (v == null) {
-            return 0;
-        }
-        if (v instanceof Date) {
-            return v.getTime();
-        }
-        if (typeof(v) == 'object') {
-            v = v.toString();
-        }
-        if (typeof(v) == 'string') {
-            v = parseFloat(v.replace(jSE.regEx.n, ''));
-        }
-        if (isNaN(v)) {
-            return 0;
-        }
-        if (typeof(v) == 'number') {
-            return v;
-        }
-        if (v == true) {
-            return 1;
-        }
-        return 0;
-    },
+	/**
+	 * information function
+	 * @param v
+	 * @returns {Boolean}
+	 * @this jSCell
+	 * @memberOf jFN
+	 */
+	ISNUMBER:function (v) {
+		var result;
+		if (!isNaN(v.valueOf())) {
+			result = new Boolean(true);
+			result.html = 'TRUE';
+			return result;
+		}
+		result = new Boolean(false);
+		result.html = 'FALSE'
+		return result;
+	},
+	/**
+	 * information function
+	 * @param v
+	 * @memberOf jFN
+	 * @returns {*}
+	 */
+	N:function (v) {
+		if (v == null) {
+			return 0;
+		}
+		if (v instanceof Date) {
+			return v.getTime();
+		}
+		if (typeof(v) == 'object') {
+			v = v.toString();
+		}
+		if (typeof(v) == 'string') {
+			v = parseFloat(v.replace(jSE.regEx.n, ''));
+		}
+		if (isNaN(v)) {
+			return 0;
+		}
+		if (typeof(v) == 'number') {
+			return v;
+		}
+		if (v == true) {
+			return 1;
+		}
+		return 0;
+	},
 
-    /**
-     * information function
-     * @returns {*|string}
-     * @memberOf jFN
-     */
-    VERSION:function () {
-        return this.jS.version;
-    },
+	/**
+	 * information function
+	 * @returns {*|string}
+	 * @memberOf jFN
+	 */
+	VERSION:function () {
+		return this.jS.version;
+	},
 
-    /**
-     * math function
-     * @param v
-     * @returns {number}
-     * @memberOf jFN
-     */
-    ABS:function (v) {
-        return Math.abs(jFN.N(v));
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	ABS:function (v) {
+		return Math.abs(jFN.N(v));
+	},
 
-    /**
-     * math function
-     * @param value
-     * @param significance
-     * @returns {number}
-     * @memberOf jFN
-     */
-    CEILING:function (value, significance) {
-        significance = significance || 1;
-        return (parseInt(value / significance) * significance) + significance;
-    },
+	/**
+	 * math function
+	 * @param value
+	 * @param significance
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	CEILING:function (value, significance) {
+		significance = significance || 1;
+		return (parseInt(value / significance) * significance) + significance;
+	},
 
-    /**
-     * math function
-     * @param v
-     * @returns {number}
-     * @memberOf jFN
-     */
-    EVEN:function (v) {
-        v = Math.round(v);
-        var even = (v % 2 == 0);
-        if (!even) {
-            if (v > 0) {
-                v++;
-            } else {
-                v--;
-            }
-        }
-        return v;
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	EVEN:function (v) {
+		v = Math.round(v);
+		var even = (v % 2 == 0);
+		if (!even) {
+			if (v > 0) {
+				v++;
+			} else {
+				v--;
+			}
+		}
+		return v;
+	},
 
-    /**
-     * math function
-     * @param v
-     * @returns {number}
-     * @memberOf jFN
-     */
-    EXP:function (v) {
-        return Math.exp(v);
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	EXP:function (v) {
+		return Math.exp(v);
+	},
 
-    /**
-     * math function
-     * @param value
-     * @param significance
-     * @returns {*}
-     * @memberOf jFN
-     */
-    FLOOR:function (value, significance) {
-        significance = significance || 1;
-        if (
-            (value < 0 && significance > 0 )
-                || (value > 0 && significance < 0 )
-            ) {
-            var result = new Number(0);
-            result.html = '#NUM';
-            return result;
-        }
-        if (value >= 0) {
-            return Math.floor(value / significance) * significance;
-        } else {
-            return Math.ceil(value / significance) * significance;
-        }
-    },
+	/**
+	 * math function
+	 * @param value
+	 * @param significance
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	FLOOR:function (value, significance) {
+		significance = significance || 1;
+		if (
+			(value < 0 && significance > 0 )
+				|| (value > 0 && significance < 0 )
+			) {
+			var result = new Number(0);
+			result.html = '#NUM';
+			return result;
+		}
+		if (value >= 0) {
+			return Math.floor(value / significance) * significance;
+		} else {
+			return Math.ceil(value / significance) * significance;
+		}
+	},
 
-    /**
-     * math function
-     * @param v
-     * @returns {number}
-     * @memberOf jFN
-     */
-    INT:function (v) {
-        return Math.floor(jFN.N(v));
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	INT:function (v) {
+		return Math.floor(jFN.N(v));
+	},
 
-    /**
-     * math function
-     * @param v
-     * @returns {number}
-     * @memberOf jFN
-     */
-    LN:function (v) {
-        return Math.log(v);
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	LN:function (v) {
+		return Math.log(v);
+	},
 
-    /**
-     * math function
-     * @param v
-     * @param n
-     * @returns {number}
-     * @memberOf jFN
-     */
-    LOG:function (v, n) {
-        n = n || 10;
-        return Math.log(v) / Math.log(n);
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @param n
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	LOG:function (v, n) {
+		n = n || 10;
+		return Math.log(v) / Math.log(n);
+	},
 
-    /**
-     * math function
-     * @param v
-     * @returns {*}
-     * @memberOf jFN
-     */
-    LOG10:function (v) {
-        return jFN.LOG(v);
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	LOG10:function (v) {
+		return jFN.LOG(v);
+	},
 
-    /**
-     * math function
-     * @param x
-     * @param y
-     * @returns {number}
-     * @memberOf jFN
-     */
-    MOD:function (x, y) {
-        var modulus = x % y;
-        if (y < 0) {
-            modulus *= -1;
-        }
-        return modulus;
-    },
+	/**
+	 * math function
+	 * @param x
+	 * @param y
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	MOD:function (x, y) {
+		var modulus = x % y;
+		if (y < 0) {
+			modulus *= -1;
+		}
+		return modulus;
+	},
 
-    /**
-     * math function
-     * @param v
-     * @returns {number}
-     * @memberOf jFN
-     */
-    ODD:function (v) {
-        var gTZ = false;
-        if (v > 0) {
-            v = Math.floor(Math.round(v));
-            gTZ = true;
-        } else {
-            v = Math.ceil(v);
-        }
+	/**
+	 * math function
+	 * @param v
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	ODD:function (v) {
+		var gTZ = false;
+		if (v > 0) {
+			v = Math.floor(Math.round(v));
+			gTZ = true;
+		} else {
+			v = Math.ceil(v);
+		}
 
-        var vTemp = Math.abs(v);
-        if ((vTemp % 2) == 0) { //even
-            vTemp++;
-        }
+		var vTemp = Math.abs(v);
+		if ((vTemp % 2) == 0) { //even
+			vTemp++;
+		}
 
-        if (gTZ) {
-            return vTemp;
-        } else {
-            return -vTemp;
-        }
-    },
+		if (gTZ) {
+			return vTemp;
+		} else {
+			return -vTemp;
+		}
+	},
 
-    /**
-     * math function
-     * @returns {number}
-     * @memberOf jFN
-     */
-    PI:function () {
-        return Math.PI;
-    },
+	/**
+	 * math function
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	PI:function () {
+		return Math.PI;
+	},
 
-    /**
-     * math function
-     * @param x
-     * @param y
-     * @returns {number}
-     * @memberOf jFN
-     */
-    POWER:function (x, y) {
-        return Math.pow(x, y);
-    },
+	/**
+	 * math function
+	 * @param x
+	 * @param y
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	POWER:function (x, y) {
+		return Math.pow(x, y);
+	},
 
-    /**
-     * math function
-     * @param v
-     * @returns {number}
-     * @memberOf jFN
-     */
-    SQRT:function (v) {
-        return Math.sqrt(v);
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	SQRT:function (v) {
+		return Math.sqrt(v);
+	},
 
-    /**
-     * math function
-     * @returns {number}
-     * @memberOf jFN
-     */
-    RAND:function () {
-        return Math.random();
-    },
+	/**
+	 * math function
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	RAND:function () {
+		return Math.random();
+	},
 
-    /**
-     * math function
-     * @returns {number}
-     * @memberOf jFN
-     */
-    RND:function () {
-        return Math.random();
-    },
+	/**
+	 * math function
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	RND:function () {
+		return Math.random();
+	},
 
-    /**
-     * math function
-     * @param v
-     * @param decimals
-     * @returns {number}
-     * @memberOf jFN
-     */
-    ROUND:function (v, decimals) {
-        var shift = Math.pow(10, decimals || 0);
-        return Math.round(v * shift) / shift;
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @param decimals
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	ROUND:function (v, decimals) {
+		var shift = Math.pow(10, decimals || 0);
+		return Math.round(v * shift) / shift;
+	},
 
-    /**
-     * math function
-     * @param v
-     * @param decimals
-     * @returns {number}
-     * @memberOf jFN
-     */
-    ROUNDDOWN:function (v, decimals) {
-        var neg = (v < 0);
-        v = Math.abs(v);
-        decimals = decimals || 0;
-        v = Math.floor(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
-        return (neg ? -v : v);
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @param decimals
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	ROUNDDOWN:function (v, decimals) {
+		var neg = (v < 0);
+		v = Math.abs(v);
+		decimals = decimals || 0;
+		v = Math.floor(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
+		return (neg ? -v : v);
+	},
 
-    /**
-     * math function
-     * @param v
-     * @param decimals
-     * @returns {number}
-     * @memberOf jFN
-     */
-    ROUNDUP:function (v, decimals) {
-        var neg = (v < 0);
-        v = Math.abs(v);
-        decimals = decimals || 0;
-        v = Math.ceil(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
-        return (neg ? -v : v);
-    },
+	/**
+	 * math function
+	 * @param v
+	 * @param decimals
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	ROUNDUP:function (v, decimals) {
+		var neg = (v < 0);
+		v = Math.abs(v);
+		decimals = decimals || 0;
+		v = Math.ceil(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
+		return (neg ? -v : v);
+	},
 
-    /**
-     * math function
-     * @returns {number}
-     * @memberOf jFN
-     */
-    SUM:function () {
-        var sum = 0,
-            v = arrHelpers.toNumbers(arguments),
-            i = v.length - 1;
+	/**
+	 * math function
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	SUM:function () {
+		var sum = 0,
+			v = arrHelpers.toNumbers(arguments),
+			i = v.length - 1;
 
-        if (i < 0) {
-            return 0;
-        }
+		if (i < 0) {
+			return 0;
+		}
 
-        do {
-            sum += v[i] * 1;
-        } while (i--);
+		do {
+			sum += v[i] * 1;
+		} while (i--);
 
-        return sum;
-    },
+		return sum;
+	},
 
-    /**
-     * math function
-     * @param number
-     * @param digits
-     * @returns {*}
-     * @memberOf jFN
-     */
-    TRUNC:function (number, digits) {
-        digits = digits || 0;
-        number = number + '';
+	/**
+	 * math function
+	 * @param number
+	 * @param digits
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	TRUNC:function (number, digits) {
+		digits = digits || 0;
+		number = number + '';
 
-        if (digits == 0) {
-            return number.split('.').shift();
-        }
+		if (digits == 0) {
+			return number.split('.').shift();
+		}
 
-        if (number.match('.')) {
-            if (digits == 1) {
-                number = number.substr(0, number.length - 1);
-            } else if (digits == -1) {
-                number = number.split('.').shift();
-                number = number.substr(0, number.length - 1) + '0';
-            }
-        }
+		if (number.match('.')) {
+			if (digits == 1) {
+				number = number.substr(0, number.length - 1);
+			} else if (digits == -1) {
+				number = number.split('.').shift();
+				number = number.substr(0, number.length - 1) + '0';
+			}
+		}
 
-        return number;
-    },
-
-
-    /**
-     * statistical function
-     * @param v
-     * @returns {number}
-     * @memberOf jFN
-     */
-    AVERAGE:function (v) {
-        return jFN.SUM(arguments) / jFN.COUNT(arguments);
-    },
-
-    /**
-     * statistical function
-     * @param v
-     * @returns {*}
-     * @memberOf jFN
-     */
-    AVG:function (v) {
-        return jFN.AVERAGE(v);
-    },
-
-    /**
-     * statistical function
-     * @returns {number}
-     * @memberOf jFN
-     */
-    COUNT:function () {
-        var count = 0,
-            v = arrHelpers.toNumbers(arguments),
-            i = v.length - 1;
-
-        if (i < 0) {
-            return count;
-        }
-
-        do {
-            if (v[i] !== null) {
-                count++;
-            }
-        } while (i--);
-
-        return count;
-    },
-
-    /**
-     * statistical function
-     * @returns {number}
-     * @memberOf jFN
-     */
-    COUNTA:function () {
-        var count = 0,
-            v = arrHelpers.flatten(arguments),
-            i = v.length - 1;
-
-        if (i < 0) {
-            return count;
-        }
-
-        do {
-            if (v[i]) {
-                count++;
-            }
-        } while (i--);
-
-        return count;
-    },
-
-    /**
-     * statistical function
-     * @returns {*}
-     * @memberOf jFN
-     */
-    MAX:function () {
-        var v = arrHelpers.toNumbers(arguments),
-            max = v[0],
-            i = v.length - 1;
-
-        if (i < 0) {
-            return 0;
-        }
-
-        do {
-            max = (v[i] > max ? v[i] : max);
-        } while (i--);
-
-        return max;
-    },
-
-    /**
-     * statistical function
-     * @returns {*}
-     * @memberOf jFN
-     */
-    MIN:function () {
-        var v = arrHelpers.toNumbers(arguments),
-            min = v[0],
-            i = v.length - 1;
-
-        if (i < 0) {
-            return 0;
-        }
-
-        do {
-            min = (v[i] < min ? v[i] : min);
-        } while (i--);
-
-        return min;
-    },
-
-    /**
-     * string function
-     * @param v
-     * @returns {Number}
-     * @memberOf jFN
-     */
-    ASC:function (v) {
-        return v.charCodeAt(0);
-    },
-    /**
-     * string function
-     * @param v
-     * @returns {string}
-     * @memberOf jFN
-     */
-    CHAR:function (v) {
-        return String.fromCharCode(v);
-    },
-    /**
-     * string function
-     * @param v
-     * @returns {String}
-     * @memberOf jFN
-     */
-    CLEAN:function (v) {
-        var exp = new RegExp("[\cG\x1B\cL\cJ\cM\cI\cK\x07\x1B\f\n\r\t\v]","g");
-        return v.replace(exp, '');
-    },
-    /**
-     * string function
-     * @param v
-     * @returns {*}
-     * @memberOf jFN
-     */
-    CODE:function (v) {
-        return jFN.ASC(v);
-    },
-    /**
-     * string function
-     * @returns {String}
-     * @memberOf jFN
-     */
-    CONCATENATE:function () {
-        var arr = arrHelpers.flatten(arguments),
-            result = '',
-            cell = this;
-        jQuery.each(arr, function (i) {
-            result += arr[i];
-        });
-        return result;
-    },
-    /**
-     * string function
-     * @param v
-     * @param decimals
-     * @param symbol
-     * @returns {Number}
-     * @memberOf jFN
-     */
-    DOLLAR:function (v, decimals, symbol) {
-        decimals = decimals || 2;
-        symbol = symbol || '$';
-
-        var result = new Number(v),
-            r = jFN.FIXED(v, decimals, false);
-
-        if (v >= 0) {
-            result.html = symbol + r;
-        } else {
-            result.html = '(' + symbol + r.slice(1) + ')';
-        }
-        return result;
-    },
-    /**
-     * string function
-     * @param v
-     * @param decimals
-     * @param noCommas
-     * @returns {String}
-     * @memberOf jFN
-     */
-    FIXED:function (v, decimals, noCommas) {
-        decimals = (decimals === undefined ? 2 : decimals);
-        var multiplier = Math.pow( 10, decimals),
-            result,
-            v = Math.round( v * multiplier ) / multiplier;
+		return number;
+	},
 
 
+	/**
+	 * statistical function
+	 * @param v
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	AVERAGE:function (v) {
+		return jFN.SUM(arguments) / jFN.COUNT(arguments);
+	},
 
-        result = new String(v.toFixed(decimals));
-        result.html = Globalize.format(v, 'n' + decimals);
+	/**
+	 * statistical function
+	 * @param v
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	AVG:function (v) {
+		return jFN.AVERAGE(v);
+	},
 
-        if (noCommas) {
-            result.html = result.html.replace(Globalize.culture().numberFormat[','], '');
-        }
+	/**
+	 * statistical function
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	COUNT:function () {
+		var count = 0,
+			v = arrHelpers.toNumbers(arguments),
+			i = v.length - 1;
 
-        return result;
+		if (i < 0) {
+			return count;
+		}
 
-    },
-    /**
-     * string function
-     * @param v
-     * @param numberOfChars
-     * @returns {string}
-     * @memberOf jFN
-     */
-    LEFT:function (v, numberOfChars) {
-        numberOfChars = numberOfChars || 1;
-        return v.substring(0, numberOfChars);
-    },
-    /**
-     * string function
-     * @param v
-     * @returns {*}
-     * @memberOf jFN
-     */
-    LEN:function (v) {
-        if (!v) {
-            return 0;
-        }
-        return v.length;
-    },
-    /**
-     * string function
-     * @param v
-     * @returns {string}
-     * @memberOf jFN
-     */
-    LOWER:function (v) {
-        return v.toLowerCase();
-    },
+		do {
+			if (v[i] !== null) {
+				count++;
+			}
+		} while (i--);
 
-    /**
-     * string function
-     * @param v
-     * @param start
-     * @param end
-     * @returns {*}
-     * @memberOf jFN
-     */
-    MID:function (v, start, end) {
-        if (!v || !start || !end) {
+		return count;
+	},
+
+	/**
+	 * statistical function
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	COUNTA:function () {
+		var count = 0,
+			v = arrHelpers.flatten(arguments),
+			i = v.length - 1;
+
+		if (i < 0) {
+			return count;
+		}
+
+		do {
+			if (v[i]) {
+				count++;
+			}
+		} while (i--);
+
+		return count;
+	},
+
+	/**
+	 * statistical function
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	MAX:function () {
+		var v = arrHelpers.toNumbers(arguments),
+			max = v[0],
+			i = v.length - 1;
+
+		if (i < 0) {
+			return 0;
+		}
+
+		do {
+			max = (v[i] > max ? v[i] : max);
+		} while (i--);
+
+		return max;
+	},
+
+	/**
+	 * statistical function
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	MIN:function () {
+		var v = arrHelpers.toNumbers(arguments),
+			min = v[0],
+			i = v.length - 1;
+
+		if (i < 0) {
+			return 0;
+		}
+
+		do {
+			min = (v[i] < min ? v[i] : min);
+		} while (i--);
+
+		return min;
+	},
+
+	/**
+	 * string function
+	 * @param v
+	 * @returns {Number}
+	 * @memberOf jFN
+	 */
+	ASC:function (v) {
+		return v.charCodeAt(0);
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @returns {string}
+	 * @memberOf jFN
+	 */
+	CHAR:function (v) {
+		return String.fromCharCode(v);
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	CLEAN:function (v) {
+		var exp = new RegExp("[\cG\x1B\cL\cJ\cM\cI\cK\x07\x1B\f\n\r\t\v]","g");
+		return v.replace(exp, '');
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	CODE:function (v) {
+		return jFN.ASC(v);
+	},
+	/**
+	 * string function
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	CONCATENATE:function () {
+		var arr = arrHelpers.flatten(arguments),
+			result = '',
+			cell = this;
+		jQuery.each(arr, function (i) {
+			result += arr[i];
+		});
+		return result;
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @param decimals
+	 * @param symbol
+	 * @returns {Number}
+	 * @memberOf jFN
+	 */
+	DOLLAR:function (v, decimals, symbol) {
+		decimals = decimals || 2;
+		symbol = symbol || '$';
+
+		var result = new Number(v),
+			r = jFN.FIXED(v, decimals, false);
+
+		if (v >= 0) {
+			result.html = symbol + r;
+		} else {
+			result.html = '(' + symbol + r.slice(1) + ')';
+		}
+		return result;
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @param decimals
+	 * @param noCommas
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	FIXED:function (v, decimals, noCommas) {
+		decimals = (decimals === undefined ? 2 : decimals);
+		var multiplier = Math.pow( 10, decimals),
+			result,
+			v = Math.round( v * multiplier ) / multiplier;
+
+
+
+		result = new String(v.toFixed(decimals));
+		result.html = Globalize.format(v, 'n' + decimals);
+
+		if (noCommas) {
+			result.html = result.html.replace(Globalize.culture().numberFormat[','], '');
+		}
+
+		return result;
+
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @param numberOfChars
+	 * @returns {string}
+	 * @memberOf jFN
+	 */
+	LEFT:function (v, numberOfChars) {
+		numberOfChars = numberOfChars || 1;
+		return v.substring(0, numberOfChars);
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	LEN:function (v) {
+		if (!v) {
+			return 0;
+		}
+		return v.length;
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @returns {string}
+	 * @memberOf jFN
+	 */
+	LOWER:function (v) {
+		return v.toLowerCase();
+	},
+
+	/**
+	 * string function
+	 * @param v
+	 * @param start
+	 * @param end
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	MID:function (v, start, end) {
+		if (!v || !start || !end) {
 			var result = new Number(0);
 			result.html = 'ERROR';
 			return result;
-        }
-        return v.substring(start - 1, end + start - 1);
-    },
-    /**
-     * string function
-     * @param oldText
-     * @param start
-     * @param numberOfChars
-     * @param newText
-     * @returns {*}
-     * @memberOf jFN
-     */
-    REPLACE:function (oldText, start, numberOfChars, newText) {
-        if (!oldText || !start || !numberOfChars || !newText) {
+		}
+		return v.substring(start - 1, end + start - 1);
+	},
+	/**
+	 * string function
+	 * @param oldText
+	 * @param start
+	 * @param numberOfChars
+	 * @param newText
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	REPLACE:function (oldText, start, numberOfChars, newText) {
+		if (!oldText || !start || !numberOfChars || !newText) {
 			var result = new String('');
 			result.html = 'ERROR';
 			return result;
-        }
-        var result = oldText.split('');
-        result.splice(start - 1, numberOfChars);
-        result.splice(start - 1, 0, newText);
-        return result.join('');
-    },
-    /**
-     * string function
-     * @param v
-     * @param times
-     * @returns {string}
-     * @memberOf jFN
-     */
-    REPT:function (v, times) {
-        var result = '';
-        for (var i = 0; i < times; i++) {
-            result += v;
-        }
-        return result;
-    },
-    /**
-     * string function
-     * @param v
-     * @param numberOfChars
-     * @returns {string}
-     * @memberOf jFN
-     */
-    RIGHT:function (v, numberOfChars) {
-        numberOfChars = numberOfChars || 1;
-        return v.substring(v.length - numberOfChars, v.length);
-    },
-    /**
-     * string function
-     * @param find
-     * @param body
-     * @param start
-     * @returns {*}
-     * @memberOf jFN
-     */
-    SEARCH:function (find, body, start) {
-        start = start || 0;
-        if (start) {
-            body = body.split('');
-            body.splice(0, start - 1);
-            body = body.join('');
-        }
-        var i = body.search(find);
+		}
+		var result = oldText.split('');
+		result.splice(start - 1, numberOfChars);
+		result.splice(start - 1, 0, newText);
+		return result.join('');
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @param times
+	 * @returns {string}
+	 * @memberOf jFN
+	 */
+	REPT:function (v, times) {
+		var result = '';
+		for (var i = 0; i < times; i++) {
+			result += v;
+		}
+		return result;
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @param numberOfChars
+	 * @returns {string}
+	 * @memberOf jFN
+	 */
+	RIGHT:function (v, numberOfChars) {
+		numberOfChars = numberOfChars || 1;
+		return v.substring(v.length - numberOfChars, v.length);
+	},
+	/**
+	 * string function
+	 * @param find
+	 * @param body
+	 * @param start
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	SEARCH:function (find, body, start) {
+		start = start || 0;
+		if (start) {
+			body = body.split('');
+			body.splice(0, start - 1);
+			body = body.join('');
+		}
+		var i = body.search(find);
 
-        if (i < 0) {
+		if (i < 0) {
 			var result = new String('');
 			result.html = '#VALUE!';
 			return result;
-        }
+		}
 
-        return start + (start ? 0 : 1) + i;
-    },
-    /**
-     * string function
-     * @param text
-     * @param oldText
-     * @param newText
-     * @param nthAppearance
-     * @returns {string}
-     * @memberOf jFN
-     */
-    SUBSTITUTE:function (text, oldText, newText, nthAppearance) {
-        nthAppearance = nthAppearance || 0;
-        oldText = new RegExp(oldText, 'g');
-        var i = 1;
-        text = text.replace(oldText, function (match, contents, offset, s) {
-            var result = match;
-            if (nthAppearance) {
-                if (i >= nthAppearance) {
-                    result = newText;
-                }
-            } else {
-                result = newText;
-            }
+		return start + (start ? 0 : 1) + i;
+	},
+	/**
+	 * string function
+	 * @param text
+	 * @param oldText
+	 * @param newText
+	 * @param nthAppearance
+	 * @returns {string}
+	 * @memberOf jFN
+	 */
+	SUBSTITUTE:function (text, oldText, newText, nthAppearance) {
+		nthAppearance = nthAppearance || 0;
+		oldText = new RegExp(oldText, 'g');
+		var i = 1;
+		text = text.replace(oldText, function (match, contents, offset, s) {
+			var result = match;
+			if (nthAppearance) {
+				if (i >= nthAppearance) {
+					result = newText;
+				}
+			} else {
+				result = newText;
+			}
 
-            i++;
-            return result;
-        });
-        return text;
-    },
-    /**
-     * string function
-     * @returns {*}
-     * @memberOf jFN
-     */
-    TEXT:function (value, formatText) {
-        //for the time being
-        //TODO: fully implement
-        return value;
-    },
-    /**
-     * string function
-     * @param v
-     * @returns {string}
-     * @memberOf jFN
-     */
-    UPPER:function (v) {
-        return v.toUpperCase();
-    },
-    /**
-     * string function
-     * @param v
-     * @returns {*}
-     * @memberOf jFN
-     */
-    VALUE:function (v) {
-        if (jQuery.isNumeric(v)) {
-            return v *= 1;
-        } else {
+			i++;
+			return result;
+		});
+		return text;
+	},
+	/**
+	 * string function
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	TEXT:function (value, formatText) {
+		//for the time being
+		//TODO: fully implement
+		return value;
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @returns {string}
+	 * @memberOf jFN
+	 */
+	UPPER:function (v) {
+		return v.toUpperCase();
+	},
+	/**
+	 * string function
+	 * @param v
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	VALUE:function (v) {
+		if (jQuery.isNumeric(v)) {
+			return v *= 1;
+		} else {
 			var result = new String('');
 			result.html = '#VALUE!';
 			return result;
-        }
-    },
+		}
+	},
 
-    /**
-     * date/time function
-     * @returns {Date}
-     * @memberOf jFN
-     */
-    NOW:function () {
-        var today = new Date();
-        today.html = dates.toString(today);
-        return today;
-    },
-    /**
-     * date/time function
-     * @returns {Number}
-     * @memberOf jFN
-     */
-    TODAY:function () {
-        var today = new Date(),
-            result = new Number(dates.toCentury(today) - 1);
-        result.html = dates.toString(today, 'd');
-        return result;
-    },
-    /**
-     * date/time function
-     * @param weeksBack
-     * @returns {Date}
-     * @memberOf jFN
-     */
-    WEEKENDING:function (weeksBack) {
-        var date = new Date();
-        date = new Date(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate() + 5 - date.getDay() - ((weeksBack || 0) * 7)
-        );
+	/**
+	 * date/time function
+	 * @returns {Date}
+	 * @memberOf jFN
+	 */
+	NOW:function () {
+		var today = new Date();
+		today.html = dates.toString(today);
+		return today;
+	},
+	/**
+	 * date/time function
+	 * @returns {Number}
+	 * @memberOf jFN
+	 */
+	TODAY:function () {
+		var today = new Date(),
+			result = new Number(dates.toCentury(today) - 1);
+		result.html = dates.toString(today, 'd');
+		return result;
+	},
+	/**
+	 * date/time function
+	 * @param weeksBack
+	 * @returns {Date}
+	 * @memberOf jFN
+	 */
+	WEEKENDING:function (weeksBack) {
+		var date = new Date();
+		date = new Date(
+			date.getFullYear(),
+			date.getMonth(),
+			date.getDate() + 5 - date.getDay() - ((weeksBack || 0) * 7)
+		);
 
-        date.html = dates.toString(date, 'd');
-        return date;
-    },
-    /**
-     * date/time function
-     * @param date
-     * @param returnValue
-     * @returns {number}
-     * @memberOf jFN
-     */
-    WEEKDAY:function (date, returnValue) {
-        date = dates.get(date);
-        var day = date.getDay();
+		date.html = dates.toString(date, 'd');
+		return date;
+	},
+	/**
+	 * date/time function
+	 * @param date
+	 * @param returnValue
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	WEEKDAY:function (date, returnValue) {
+		date = dates.get(date);
+		var day = date.getDay();
 
-        returnValue = (returnValue ? returnValue : 1);
-        switch (returnValue) {
-            case 3:
-                switch (day) {
-                    case 0:return 7;
-                    case 1:return 1;
-                    case 2:return 2;
-                    case 3:return 3;
-                    case 4:return 4;
-                    case 5:return 5;
-                    case 6:return 6;
-                }
-                break;
-            case 2:
-                switch (day) {
-                    case 0:return 6;
-                    case 1:return 0;
-                    case 2:return 1;
-                    case 3:return 2;
-                    case 4:return 3;
-                    case 5:return 4;
-                    case 6:return 5;
-                }
-                break;
-            case 1:
-                day++;
-                break;
-        }
+		returnValue = (returnValue ? returnValue : 1);
+		switch (returnValue) {
+			case 3:
+				switch (day) {
+					case 0:return 7;
+					case 1:return 1;
+					case 2:return 2;
+					case 3:return 3;
+					case 4:return 4;
+					case 5:return 5;
+					case 6:return 6;
+				}
+				break;
+			case 2:
+				switch (day) {
+					case 0:return 6;
+					case 1:return 0;
+					case 2:return 1;
+					case 3:return 2;
+					case 4:return 3;
+					case 5:return 4;
+					case 6:return 5;
+				}
+				break;
+			case 1:
+				day++;
+				break;
+		}
 
-        return day;
-    },
-    /**
-     * date/time function
-     * @param date
-     * @returns {number}
-     * @memberOf jFN
-     */
-    WEEKNUM:function (date) {//TODO: implement week starting
-        date = dates.get(date);
-        return dates.week(date) + 1;
-    },
-    /**
-     * date/time function
-     * @param date
-     * @returns {number}
-     * @memberOf jFN
-     */
-    YEAR:function (date) {
-        date = dates.get(date);
-        return date.getFullYear();
-    },
-    /**
-     * date/time function
-     * @param year
-     * @param month
-     * @param day
-     * @returns {number}
-     * @memberOf jFN
-     */
-    DAYSFROM:function (year, month, day) {
-        return Math.floor((new Date() - new Date(year, (month - 1), day)) / dates.dayDiv);
-    },
-    /**
-     * date/time function
-     * @param v1
-     * @param v2
-     * @returns {number}
-     * @memberOf jFN
-     */
-    DAYS:function (v1, v2) {
-        var date1 = dates.get(v1),
-            date2 = dates.get(v2),
-            ONE_DAY = 1000 * 60 * 60 * 24;
-        return Math.round(Math.abs(date1.getTime() - date2.getTime()) / ONE_DAY);
-    },
-    /**
-     * date/time function
-     * @param date
-     * @returns {number}
-     * @memberOf jFN
-     */
-    DAY:function (date) {
-        date = dates.get(date);
-        return date.getDate();
-    },
-    /**
-     * date/time function
-     * @param date1
-     * @param date2
-     * @param method
-     * @returns {number}
-     * @memberOf jFN
-     */
-    DAYS360:function (date1, date2, method) {
-        date1 = dates.get(date1);
-        date2 = dates.get(date2);
+		return day;
+	},
+	/**
+	 * date/time function
+	 * @param date
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	WEEKNUM:function (date) {//TODO: implement week starting
+		date = dates.get(date);
+		return dates.week(date) + 1;
+	},
+	/**
+	 * date/time function
+	 * @param date
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	YEAR:function (date) {
+		date = dates.get(date);
+		return date.getFullYear();
+	},
+	/**
+	 * date/time function
+	 * @param year
+	 * @param month
+	 * @param day
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	DAYSFROM:function (year, month, day) {
+		return Math.floor((new Date() - new Date(year, (month - 1), day)) / dates.dayDiv);
+	},
+	/**
+	 * date/time function
+	 * @param v1
+	 * @param v2
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	DAYS:function (v1, v2) {
+		var date1 = dates.get(v1),
+			date2 = dates.get(v2),
+			ONE_DAY = 1000 * 60 * 60 * 24;
+		return Math.round(Math.abs(date1.getTime() - date2.getTime()) / ONE_DAY);
+	},
+	/**
+	 * date/time function
+	 * @param date
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	DAY:function (date) {
+		date = dates.get(date);
+		return date.getDate();
+	},
+	/**
+	 * date/time function
+	 * @param date1
+	 * @param date2
+	 * @param method
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	DAYS360:function (date1, date2, method) {
+		date1 = dates.get(date1);
+		date2 = dates.get(date2);
 
-        var startDate = date1.getDate(),
-            endDate = date2.getDate(),
-            startIsLastDay = dates.isLastDayOfMonth(date1),
-            endIsLastDay = dates.isLastDayOfMonth(date2),
-            monthCount = dates.diffMonths(date1, date2);
+		var startDate = date1.getDate(),
+			endDate = date2.getDate(),
+			startIsLastDay = dates.isLastDayOfMonth(date1),
+			endIsLastDay = dates.isLastDayOfMonth(date2),
+			monthCount = dates.diffMonths(date1, date2);
 
-        if (method) {//Euro method
-            startDate = Math.min(startDate, 30);
-            endDate = Math.min(endDate, 30);
-        } else { //Standard
-            if (startIsLastDay) {
-                startDate = 30;
-            }
-            if (endIsLastDay) {
-                if (startDate < 30) {
-                    monthCount++;
-                    endDate = 1;
-                } else {
-                    endDate = 30;
-                }
-            }
-        }
+		if (method) {//Euro method
+			startDate = Math.min(startDate, 30);
+			endDate = Math.min(endDate, 30);
+		} else { //Standard
+			if (startIsLastDay) {
+				startDate = 30;
+			}
+			if (endIsLastDay) {
+				if (startDate < 30) {
+					monthCount++;
+					endDate = 1;
+				} else {
+					endDate = 30;
+				}
+			}
+		}
 
-        return (monthCount * 30) + (endDate - startDate);
-    },
-    /**
-     * date/time function
-     * @param year
-     * @param month
-     * @param day
-     * @returns {Number}
-     * @memberOf jFN
-     */
-    DATE:function (year, month, day) {
-        var date = new Date(year, month - 1, day),
-            result = new Number(dates.toCentury(date));
-        result.html = dates.toString(date, 'd');
+		return (monthCount * 30) + (endDate - startDate);
+	},
+	/**
+	 * date/time function
+	 * @param year
+	 * @param month
+	 * @param day
+	 * @returns {Number}
+	 * @memberOf jFN
+	 */
+	DATE:function (year, month, day) {
+		var date = new Date(year, month - 1, day),
+			result = new Number(dates.toCentury(date));
+		result.html = dates.toString(date, 'd');
 
-        return result;
-    },
-    /**
-     * date/time function
-     * @param date
-     * @returns {Number}
-     * @memberOf jFN
-     */
-    DATEVALUE:function (date) {
-        date = dates.get(date);
-        var result = new Number(dates.toCentury(date));
-        result.html = dates.toString(date, 'd');
-        return result;
-    },
-    /**
-     * date/time function
-     * @param date
-     * @param months
-     * @returns {Number}
-     * @memberOf jFN
-     */
-    EDATE:function (date, months) {
-        date = dates.get(date);
-        date.setMonth(date.getMonth() + months);
-        var result = new Number(dates.toCentury(date));
-        result.html = dates.toString(date, 'd');
-        return result;
-    },
-    /**
-     * date/time function
-     * @param date
-     * @param months
-     * @returns {Number}
-     * @memberOf jFN
-     */
-    EOMONTH:function (date, months) {
-        date = dates.get(date);
-        date.setMonth(date.getMonth() + months + 1);
-        date = new Date(date.getFullYear(), date.getMonth(), 0);
-        var result = new Number(dates.toCentury(date));
-        result.html = dates.toString(date, 'd');
-        return result;
-    },
-    /**
-     * date/time function
-     * @param time
-     * @returns {*}
-     * @memberOf jFN
-     */
-    HOUR:function (time) {
-        time = times.fromMath(time);
-        return time.hour;
-    },
-    /**
-     * date/time function
-     * @param time
-     * @returns {*}
-     * @memberOf jFN
-     */
-    MINUTE:function (time) {
-        return times.fromMath(time).minute;
-    },
-    /**
-     * date/time function
-     * @param date
-     * @returns {number}
-     * @memberOf jFN
-     */
-    MONTH:function (date) {
-        date = dates.get(date);
-        return date.getMonth() + 1;
-    },
-    /**
-     * date/time function
-     * @param time
-     * @returns {*}
-     * @memberOf jFN
-     */
-    SECOND:function (time) {
-        return times.fromMath(time).second;
-    },
-    /**
-     * date/time function
-     * @param hour
-     * @param minute
-     * @param second
-     * @returns {number}
-     * @memberOf jFN
-     */
-    TIME:function (hour, minute, second) {
-        second = (second ? second : 0);
-        minute = (minute ? minute : 0);
-        hour = (hour ? hour : 0);
+		return result;
+	},
+	/**
+	 * date/time function
+	 * @param date
+	 * @returns {Number}
+	 * @memberOf jFN
+	 */
+	DATEVALUE:function (date) {
+		date = dates.get(date);
+		var result = new Number(dates.toCentury(date));
+		result.html = dates.toString(date, 'd');
+		return result;
+	},
+	/**
+	 * date/time function
+	 * @param date
+	 * @param months
+	 * @returns {Number}
+	 * @memberOf jFN
+	 */
+	EDATE:function (date, months) {
+		date = dates.get(date);
+		date.setMonth(date.getMonth() + months);
+		var result = new Number(dates.toCentury(date));
+		result.html = dates.toString(date, 'd');
+		return result;
+	},
+	/**
+	 * date/time function
+	 * @param date
+	 * @param months
+	 * @returns {Number}
+	 * @memberOf jFN
+	 */
+	EOMONTH:function (date, months) {
+		date = dates.get(date);
+		date.setMonth(date.getMonth() + months + 1);
+		date = new Date(date.getFullYear(), date.getMonth(), 0);
+		var result = new Number(dates.toCentury(date));
+		result.html = dates.toString(date, 'd');
+		return result;
+	},
+	/**
+	 * date/time function
+	 * @param time
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	HOUR:function (time) {
+		time = times.fromMath(time);
+		return time.hour;
+	},
+	/**
+	 * date/time function
+	 * @param time
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	MINUTE:function (time) {
+		return times.fromMath(time).minute;
+	},
+	/**
+	 * date/time function
+	 * @param date
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	MONTH:function (date) {
+		date = dates.get(date);
+		return date.getMonth() + 1;
+	},
+	/**
+	 * date/time function
+	 * @param time
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	SECOND:function (time) {
+		return times.fromMath(time).second;
+	},
+	/**
+	 * date/time function
+	 * @param hour
+	 * @param minute
+	 * @param second
+	 * @returns {number}
+	 * @memberOf jFN
+	 */
+	TIME:function (hour, minute, second) {
+		second = (second ? second : 0);
+		minute = (minute ? minute : 0);
+		hour = (hour ? hour : 0);
 
-        if (second && second > 60) {
-            var minuteFromSecond = (((second / 60) + '').split('.')[0]) * 1;
-            second = second - (minuteFromSecond * 60);
-            minute += minuteFromSecond;
-        }
+		if (second && second > 60) {
+			var minuteFromSecond = (((second / 60) + '').split('.')[0]) * 1;
+			second = second - (minuteFromSecond * 60);
+			minute += minuteFromSecond;
+		}
 
-        if (minute && minute > 60) {
-            var hourFromMinute = (((minute / 60) + '').split('.')[0]) * 1;
-            minute = minute - (hourFromMinute * 60);
-            hour += hourFromMinute;
-        }
+		if (minute && minute > 60) {
+			var hourFromMinute = (((minute / 60) + '').split('.')[0]) * 1;
+			minute = minute - (hourFromMinute * 60);
+			hour += hourFromMinute;
+		}
 
-        var millisecond = (hour * 60 * 60 * 1000) + (minute * 60 * 1000) + (second * 1000);
+		var millisecond = (hour * 60 * 60 * 1000) + (minute * 60 * 1000) + (second * 1000);
 
-        return millisecond / dates.dayDiv;
-    },
-    /**
-     * date/time function
-     * @param time
-     * @returns {*}
-     * @memberOf jFN
-     */
-    TIMEVALUE:function (time) {
-        if (!isNaN(time)) {
-            return time;
-        }
-        if (/([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm)/.test(time)) {
-            return times.fromString(time, true);
-        } else if (/([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?/.test(time)) {
-            return times.fromString(time);
-        }
-        return 0;
-    },
-    /**
-     * date/time function
-     * @param startDate
-     * @param days
-     * @param holidays
-     * @returns {Number}
-     * @memberOf jFN
-     */
-    WORKDAY:function (startDate, days, holidays) {
-        var workDays = {1:true, 2:true, 3:true, 4:true, 5:true},
-            startDate = dates.get(startDate),
-            days = (days && !isNaN(days) ? days : 0),
-            dayCounter = 0,
-            daysSoFar = 0,
-            workingDate = startDate,
-            result;
+		return millisecond / dates.dayDiv;
+	},
+	/**
+	 * date/time function
+	 * @param time
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	TIMEVALUE:function (time) {
+		if (!isNaN(time)) {
+			return time;
+		}
+		if (/([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm)/.test(time)) {
+			return times.fromString(time, true);
+		} else if (/([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?/.test(time)) {
+			return times.fromString(time);
+		}
+		return 0;
+	},
+	/**
+	 * date/time function
+	 * @param startDate
+	 * @param days
+	 * @param holidays
+	 * @returns {Number}
+	 * @memberOf jFN
+	 */
+	WORKDAY:function (startDate, days, holidays) {
+		var workDays = {1:true, 2:true, 3:true, 4:true, 5:true},
+			startDate = dates.get(startDate),
+			days = (days && !isNaN(days) ? days : 0),
+			dayCounter = 0,
+			daysSoFar = 0,
+			workingDate = startDate,
+			result;
 
-        if (holidays) {
-            if (!jQuery.isArray(holidays)) {
-                holidays = [holidays];
-            }
-            holidays = arrHelpers.flatten(holidays);
-            var holidaysTemp = {};
-            jQuery.each(holidays, function (i) {
-                if (holidays[i]) {
-                    holidaysTemp[dates.toString(dates.get(holidays[i]), 'd')] = true;
-                }
-            });
-            holidays = holidaysTemp;
-        } else {
-            holidays = {};
-        }
+		if (holidays) {
+			if (!jQuery.isArray(holidays)) {
+				holidays = [holidays];
+			}
+			holidays = arrHelpers.flatten(holidays);
+			var holidaysTemp = {};
+			jQuery.each(holidays, function (i) {
+				if (holidays[i]) {
+					holidaysTemp[dates.toString(dates.get(holidays[i]), 'd')] = true;
+				}
+			});
+			holidays = holidaysTemp;
+		} else {
+			holidays = {};
+		}
 
-        while (daysSoFar < days) {
-            workingDate = new Date(workingDate.setDate(workingDate.getDate() + 1));
-            if (workDays[workingDate.getDay()]) {
-                if (!holidays[dates.toString(workingDate, 'd')]) {
-                    daysSoFar++;
-                }
-            }
-            dayCounter++;
-        }
+		while (daysSoFar < days) {
+			workingDate = new Date(workingDate.setDate(workingDate.getDate() + 1));
+			if (workDays[workingDate.getDay()]) {
+				if (!holidays[dates.toString(workingDate, 'd')]) {
+					daysSoFar++;
+				}
+			}
+			dayCounter++;
+		}
 
-        result = new Number(dates.toCentury(workingDate));
-        result.html = dates.toString(workingDate, 'd');
-        return result;
-    },
-    /**
-     * date/time function
-     * @param startDate
-     * @param endDate
-     * @param basis
-     * @returns {*}
-     * @memberOf jFN
-     */
-    YEARFRAC:function (startDate, endDate, basis) {
-        startDate = dates.get(startDate);
-        endDate = dates.get(endDate);
+		result = new Number(dates.toCentury(workingDate));
+		result.html = dates.toString(workingDate, 'd');
+		return result;
+	},
+	/**
+	 * date/time function
+	 * @param startDate
+	 * @param endDate
+	 * @param basis
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	YEARFRAC:function (startDate, endDate, basis) {
+		startDate = dates.get(startDate);
+		endDate = dates.get(endDate);
 
-        if (!startDate || !endDate) {
+		if (!startDate || !endDate) {
 			var result = new String('');
 			result.html = '#VALUE!';
 			return result;
-        }
+		}
 
-        basis = (basis ? basis : 0);
-        this.html = [];
+		basis = (basis ? basis : 0);
+		this.html = [];
 
-        var numerator = dates.diff(startDate, endDate, basis),
-            denom = dates.calcAnnualBasis(startDate, endDate, basis);
-        return numerator / denom;
-    },
+		var numerator = dates.diff(startDate, endDate, basis),
+			denom = dates.calcAnnualBasis(startDate, endDate, basis);
+		return numerator / denom;
+	},
 
-    /**
-     * logical function
-     * @returns {*}
-     * @memberOf jFN
-     */
-    AND:function () {
-        var args = arguments,
-            res,
-            cell = this;
-        $.each(args, function (i) {
-            if (args[i].valueOf() !== true && res == undefined) {
-                res = jFN.FALSE();
-            }
-        });
-        if (!res) {
-            res = jFN.TRUE();
-        }
-        return res;
-    },
-    /**
-     * logical function
-     * @returns {Boolean}
-     * @memberOf jFN
-     */
-    FALSE:function () {
-        var result = new Boolean(false);
-        result.html = 'FALSE';
-        return result;
-    },
-    /**
-     * logical function
-     * @param expression
-     * @param resultTrue
-     * @param resultFalse
-     * @returns {*}
-     * @memberOf jFN
-     */
-    IF:function (expression, resultTrue, resultFalse) {
-        if (expression.valueOf()) {
-            return resultTrue;
-        } else {
-            return resultFalse;
-        }
-    },
-    /**
-     * logical function
-     * @param v
-     * @returns {Boolean}
-     * @memberOf jFN
-     */
-    NOT:function (v) {
-        var result;
-        if (!v.valueOf()) {
-            result = new Boolean(true);
-            result.html = 'TRUE';
-        } else {
-            result = new Boolean(false);
-            result.html = 'FALSE';
-        }
+	/**
+	 * logical function
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	AND:function () {
+		var args = arguments,
+			res,
+			cell = this;
+		$.each(args, function (i) {
+			if (args[i].valueOf() !== true && res == undefined) {
+				res = jFN.FALSE();
+			}
+		});
+		if (!res) {
+			res = jFN.TRUE();
+		}
+		return res;
+	},
+	/**
+	 * logical function
+	 * @returns {Boolean}
+	 * @memberOf jFN
+	 */
+	FALSE:function () {
+		var result = new Boolean(false);
+		result.html = 'FALSE';
+		return result;
+	},
+	/**
+	 * logical function
+	 * @param expression
+	 * @param resultTrue
+	 * @param resultFalse
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	IF:function (expression, resultTrue, resultFalse) {
+		if (expression.valueOf()) {
+			return resultTrue;
+		} else {
+			return resultFalse;
+		}
+	},
+	/**
+	 * logical function
+	 * @param v
+	 * @returns {Boolean}
+	 * @memberOf jFN
+	 */
+	NOT:function (v) {
+		var result;
+		if (!v.valueOf()) {
+			result = new Boolean(true);
+			result.html = 'TRUE';
+		} else {
+			result = new Boolean(false);
+			result.html = 'FALSE';
+		}
 
-        return result;
-    },
-    /**
-     * logical function
-     * @returns {Boolean}
-     * @memberOf jFN
-     */
-    OR:function () {
-        var args = arguments,
-            result,
-            i = args.length - 1,
-            v;
+		return result;
+	},
+	/**
+	 * logical function
+	 * @returns {Boolean}
+	 * @memberOf jFN
+	 */
+	OR:function () {
+		var args = arguments,
+			result,
+			i = args.length - 1,
+			v;
 
-        if (i > -1) {
-            do {
-                v = args[i].valueOf();
-                if (v) {
-                    result = new Boolean(true);
-                    result.html = 'TRUE';
-                    return result;
-                }
-            } while (i--);
-        }
-        result = new Boolean(false);
-        result.html = 'FALSE';
-        return result;
-    },
-    /**
-     * logical function
-     * @returns {Boolean}
-     * @memberOf jFN
-     */
-    TRUE:function () {
-        var result = new Boolean(true);
-        result.html = 'TRUE';
-        return result;
-    },
-    /**
-     * logical function
-     * @param left
-     * @param right
-     * @returns {Boolean}
-     * @memberOf jFN
-     */
-    GREATER:function(left, right) {
-        var result;
+		if (i > -1) {
+			do {
+				v = args[i].valueOf();
+				if (v) {
+					result = new Boolean(true);
+					result.html = 'TRUE';
+					return result;
+				}
+			} while (i--);
+		}
+		result = new Boolean(false);
+		result.html = 'FALSE';
+		return result;
+	},
+	/**
+	 * logical function
+	 * @returns {Boolean}
+	 * @memberOf jFN
+	 */
+	TRUE:function () {
+		var result = new Boolean(true);
+		result.html = 'TRUE';
+		return result;
+	},
+	/**
+	 * logical function
+	 * @param left
+	 * @param right
+	 * @returns {Boolean}
+	 * @memberOf jFN
+	 */
+	GREATER:function(left, right) {
+		var result;
 
-        if (left > right) {
-            result = new Boolean(true);
-            result.html = 'TRUE';
-        } else {
-            result = new Boolean(false);
-            result.html = 'FALSE';
-        }
+		if (left > right) {
+			result = new Boolean(true);
+			result.html = 'TRUE';
+		} else {
+			result = new Boolean(false);
+			result.html = 'FALSE';
+		}
 
-        return result;
-    },
-    /**
-     * logical function
-     * @param left
-     * @param right
-     * @returns {Boolean}
-     * @memberOf jFN
-     */
-    LESS:function(left, right) {
-        var result;
+		return result;
+	},
+	/**
+	 * logical function
+	 * @param left
+	 * @param right
+	 * @returns {Boolean}
+	 * @memberOf jFN
+	 */
+	LESS:function(left, right) {
+		var result;
 
-        if (left < right) {
-            result = new Boolean(true);
-            result.html = 'TRUE';
-        } else {
-            result = new Boolean(false);
-            result.html = 'FALSE';
-        }
+		if (left < right) {
+			result = new Boolean(true);
+			result.html = 'TRUE';
+		} else {
+			result = new Boolean(false);
+			result.html = 'FALSE';
+		}
 
-        return result;
-    },
-    /**
-     * logical function
-     * @param left
-     * @param right
-     * @returns {Boolean}
-     * @memberOf jFN
-     */
-    EQUAL: function(left, right) {
-        var result;
+		return result;
+	},
+	/**
+	 * logical function
+	 * @param left
+	 * @param right
+	 * @returns {Boolean}
+	 * @memberOf jFN
+	 */
+	EQUAL: function(left, right) {
+		var result;
 
-        if (left === right) {
-            result = new Boolean(true);
-            result.html = 'TRUE';
-        } else {
-            result = new Boolean(false);
-            result.html = 'FALSE';
-        }
+		if (left === right) {
+			result = new Boolean(true);
+			result.html = 'TRUE';
+		} else {
+			result = new Boolean(false);
+			result.html = 'FALSE';
+		}
 
-        return result;
-    },
-    /**
-     * logical function
-     * @param left
-     * @param right
-     * @returns {Boolean}
-     * @memberOf jFN
-     */
-    GREATER_EQUAL:function(left, right) {
-        var result;
+		return result;
+	},
+	/**
+	 * logical function
+	 * @param left
+	 * @param right
+	 * @returns {Boolean}
+	 * @memberOf jFN
+	 */
+	GREATER_EQUAL:function(left, right) {
+		var result;
 
-        if (left >= right) {
-            result = new Boolean(true);
-            result.html = 'TRUE';
-        } else {
-            result = new Boolean(false);
-            result.html = 'FALSE';
-        }
+		if (left >= right) {
+			result = new Boolean(true);
+			result.html = 'TRUE';
+		} else {
+			result = new Boolean(false);
+			result.html = 'FALSE';
+		}
 
-        return result;
-    },
-    /**
-     * logical function
-     * @param left
-     * @param right
-     * @returns {Boolean}
-     * @memberOf jFN
-     */
-    LESS_EQUAL:function(left, right) {
-        var result;
+		return result;
+	},
+	/**
+	 * logical function
+	 * @param left
+	 * @param right
+	 * @returns {Boolean}
+	 * @memberOf jFN
+	 */
+	LESS_EQUAL:function(left, right) {
+		var result;
 
-        if (left <= right) {
-            result = new Boolean(true);
-            result.html = 'TRUE';
-        } else {
-            result = new Boolean(false);
-            result.html = 'FALSE';
-        }
+		if (left <= right) {
+			result = new Boolean(true);
+			result.html = 'TRUE';
+		} else {
+			result = new Boolean(false);
+			result.html = 'FALSE';
+		}
 
-        return result;
-    },
+		return result;
+	},
 
-    /**
-     * html function
-     * @param v
-     * @returns {String}
-     * @memberOf jFN
-     */
-    IMG:function (v) {
-        var result = new String('');
-        result.html = $(document.createElement('img'))
-            .attr('src', v);
-        return result;
-    },
-    /**
-     * html function
-     * @param v
-     * @returns {*}
-     * @memberOf jFN
-     */
-    TRIM:function (v) {
-        if (typeof(v) == 'string') {
-            v = $.trim(v);
-        }
-        return v;
-    },
-    /**
-     * html function
-     * @param link
-     * @param [name]
-     * @returns {String}
-     * @memberOf jFN
-     */
-    HYPERLINK:function (link, name) {
-        name = name || 'LINK';
-        var result = new String(name);
-        result.html = $(document.createElement('a'))
-            .attr('href', link)
-            .attr('target', '_new')
-            .text(name);
+	/**
+	 * html function
+	 * @param v
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	IMG:function (v) {
+		var result = new String('');
+		result.html = $(document.createElement('img'))
+			.attr('src', v);
+		return result;
+	},
+	/**
+	 * html function
+	 * @param v
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	TRIM:function (v) {
+		if (typeof(v) == 'string') {
+			v = $.trim(v);
+		}
+		return v;
+	},
+	/**
+	 * html function
+	 * @param link
+	 * @param [name]
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	HYPERLINK:function (link, name) {
+		name = name || 'LINK';
+		var result = new String(name);
+		result.html = $(document.createElement('a'))
+			.attr('href', link)
+			.attr('target', '_new')
+			.text(name);
 
-        return result;
-    },
-    /**
-     * html function
-     * @returns {*}
-     * @memberOf jFN
-     */
-    DROPDOWN:function () {
-        var cell = this,
-            jS = this.jS,
-            td = this.td,
-            v,
-            html,
-            select,
-            id,
-            result,
-	        i = 0,
-	        max;
+		return result;
+	},
+	/**
+	 * html function
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	DROPDOWN:function () {
+		var cell = this,
+			jS = this.jS,
+			td = this.td,
+			v,
+			html,
+			select,
+			id,
+			result,
+			i = 0,
+			max;
 
-	    if (td !== null) {
-		    html = $(td).children().detach();
-	    }
+		if (td !== null) {
+			html = $(td).children().detach();
+		}
 
-        if (html === undefined || cell.needsUpdated || html.length < 1) {
-            v = arrHelpers.flatten(arguments);
-            v = arrHelpers.unique(v);
+		if (html === undefined || cell.needsUpdated || html.length < 1) {
+			v = arrHelpers.flatten(arguments);
+			v = arrHelpers.unique(v);
 
-	        if (this.id !== null) {
-		        id = this.id + '-dropdown';
-	        } else if (td !== null) {
-		        id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
-	        }
+			if (this.id !== null) {
+				id = this.id + '-dropdown';
+			} else if (td !== null) {
+				id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+			}
 
-            select = document.createElement('select');
-            select.setAttribute('name', id);
-            select.setAttribute('id', id);
-            select.className = 'jSDropdown';
-            select.cell = this;
+			select = document.createElement('select');
+			select.setAttribute('name', id);
+			select.setAttribute('id', id);
+			select.className = 'jSDropdown';
+			select.cell = this;
 
-            select.onmouseup = function() {
-	            if (this.cell.td !== null) {
-                    jS.cellEdit(this.cell.td);
-	            }
-            };
-            select.onchange = function () {
-                cell.value = this.value;
-                jS.calcDependencies.call(cell);
-            };
-
-            jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
-
-	        max = (v.length <= 50 ? v.length : 50);
-            for (; i < max; i++) {
-                if (v[i]) {
-                    var opt = document.createElement('option');
-                    opt.setAttribute('value', v[i]);
-                    opt.text = opt.innerText = v[i];
-                    select.appendChild(opt);
-                }
-            }
-
-            if (!jS.s.editable) {
-                select.setAttribute('disabled', true);
-            } else {
-                jS.s.parent.bind('sheetKill', function() {
-                    td.innerText = td.textContent = cell.value = select.value;
-                });
-            }
-
-            select.value = cell.value || v[0];
-        }
-
-        if (typeof cell.value !== 'object') {
-            result = new String(cell.value);
-        } else {
-	        result = cell.value;
-        }
-
-        result.html = select;
-        return result;
-    },
-    /**
-     * html function
-     * @returns {*}
-     * @memberOf jFN
-     */
-    RADIO:function () {
-        var cell = this,
-            jS = this.jS,
-            td = this.td,
-            v,
-            html,
-            inputs,
-            $inputs,
-            radio,
-            id,
-	        result;
-
-	    if (td !== null) {
-		    html = $(td).children().detach();
-	    }
-
-        if (html === undefined || html.length < 1 || cell.needsUpdated) {
-            v = arrHelpers.flatten(arguments);
-            v = arrHelpers.unique(v);
-            inputs = [];
-
-	        if (this.id !== null) {
-		        id = this.id + '-radio';
-	        } else if (td !== null) {
-		        id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
-	        }
-
-	        html = document.createElement('span');
-	        html.className = 'jSRadio';
-	        html.onmousedown = function () {
+			select.onmouseup = function() {
 				if (this.cell.td !== null) {
 					jS.cellEdit(this.cell.td);
 				}
-            };
-	        html.cell = cell;
+			};
+			select.onchange = function () {
+				cell.value = this.value;
+				jS.calcDependencies.call(cell);
+			};
 
-            jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
+			jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
 
-            for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
-                if (v[i]) {
-                    var input = document.createElement('input'),
-                        label = document.createElement('span');
+			max = (v.length <= 50 ? v.length : 50);
+			for (; i < max; i++) {
+				if (v[i]) {
+					var opt = document.createElement('option');
+					opt.setAttribute('value', v[i]);
+					opt.text = opt.innerText = v[i];
+					select.appendChild(opt);
+				}
+			}
 
-                    input.setAttribute('type', 'radio');
-                    input.setAttribute('name', id);
-                    input.className = id;
-                    input.value = v[i];
-                    input.onchange = function() {
-                        cell.value = jQuery(this).val();
-                        jS.calcDependencies.call(cell);
-                    };
+			if (!jS.s.editable) {
+				select.setAttribute('disabled', true);
+			} else {
+				jS.s.parent.bind('sheetKill', function() {
+					td.innerText = td.textContent = cell.value = select.value;
+				});
+			}
 
-                    inputs.push(input);
+			select.value = cell.value || v[0];
+		}
 
-                    if (v[i] == cell.value) {
-                        input.setAttribute('checked', 'true');
-                    }
-                    label.textContent = label.innerText = v[i];
-	                html.appendChild(input);
-	                html.input = input;
-                    label.onclick = function () {
-                        $(this).prev().click();
-                    };
-	                html.appendChild(label);
-	                html.appendChild(document.createElement('br'));
-                }
-            }
+		if (typeof cell.value !== 'object') {
+			result = new String(cell.value);
+		} else {
+			result = cell.value;
+		}
 
-            $inputs = $(inputs);
+		result.html = select;
+		return result;
+	},
+	/**
+	 * html function
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	RADIO:function () {
+		var cell = this,
+			jS = this.jS,
+			td = this.td,
+			v,
+			html,
+			inputs,
+			$inputs,
+			radio,
+			id,
+			result;
 
-            if (!jS.s.editable) {
-                cell.value = $inputs.filter(':checked').val();
-                $inputs.attr('disabled', true);
-            } else {
-                jS.s.parent.bind('sheetKill', function() {
-                    cell.value = $inputs.filter(':checked').val();
-                    td.textContent = td.innerText = cell.value;
-                });
-            }
-        }
+		if (td !== null) {
+			html = $(td).children().detach();
+		}
 
-	    if (typeof cell.value !== 'object') {
-		    result = new String(cell.value);
-	    } else {
-		    result = cell.value;
-	    }
+		if (html === undefined || html.length < 1 || cell.needsUpdated) {
+			v = arrHelpers.flatten(arguments);
+			v = arrHelpers.unique(v);
+			inputs = [];
 
-        result.html = html;
+			if (this.id !== null) {
+				id = this.id + '-radio';
+			} else if (td !== null) {
+				id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+			}
 
-        return result;
-    },
-    /**
-     * html function
-     * @param v
-     * @returns {*}
-     * @memberOf jFN
-     */
-    CHECKBOX:function (v) {
-        if ($.isArray(v)) v = v[0];
+			html = document.createElement('span');
+			html.className = 'jSRadio';
+			html.onmousedown = function () {
+				if (this.cell.td !== null) {
+					jS.cellEdit(this.cell.td);
+				}
+			};
+			html.cell = cell;
 
-        var cell = this,
-            jS = this.jS,
-            td = this.td,
-            html,
+			jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
+
+			for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
+				if (v[i]) {
+					var input = document.createElement('input'),
+						label = document.createElement('span');
+
+					input.setAttribute('type', 'radio');
+					input.setAttribute('name', id);
+					input.className = id;
+					input.value = v[i];
+					input.onchange = function() {
+						cell.value = jQuery(this).val();
+						jS.calcDependencies.call(cell);
+					};
+
+					inputs.push(input);
+
+					if (v[i] == cell.value) {
+						input.setAttribute('checked', 'true');
+					}
+					label.textContent = label.innerText = v[i];
+					html.appendChild(input);
+					html.input = input;
+					label.onclick = function () {
+						$(this).prev().click();
+					};
+					html.appendChild(label);
+					html.appendChild(document.createElement('br'));
+				}
+			}
+
+			$inputs = $(inputs);
+
+			if (!jS.s.editable) {
+				cell.value = $inputs.filter(':checked').val();
+				$inputs.attr('disabled', true);
+			} else {
+				jS.s.parent.bind('sheetKill', function() {
+					cell.value = $inputs.filter(':checked').val();
+					td.textContent = td.innerText = cell.value;
+				});
+			}
+		}
+
+		if (typeof cell.value !== 'object') {
+			result = new String(cell.value);
+		} else {
+			result = cell.value;
+		}
+
+		result.html = html;
+
+		return result;
+	},
+	/**
+	 * html function
+	 * @param v
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	CHECKBOX:function (v) {
+		if ($.isArray(v)) v = v[0];
+
+		var cell = this,
+			jS = this.jS,
+			td = this.td,
+			html,
 			label,
-            checkbox,
-            id,
-            result;
+			checkbox,
+			id,
+			result;
 
-	    if (td !== null) {
-		    html = $(td).children().detach();
-	    }
+		if (td !== null) {
+			html = $(td).children().detach();
+		}
 
-        if (html === undefined || html.length < 1 || cell.needsUpdated) {
-	        if (this.id !== null) {
-		        id = this.id + '-checkbox';
-	        } else if (td !== null) {
-		        id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
-	        }
+		if (html === undefined || html.length < 1 || cell.needsUpdated) {
+			if (this.id !== null) {
+				id = this.id + '-checkbox';
+			} else if (td !== null) {
+				id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+			}
 
-            checkbox = document.createElement('input');
-            checkbox.setAttribute('type', 'checkbox');
-            checkbox.setAttribute('name', id);
-            checkbox.setAttribute('id', id);
-            checkbox.className = id;
-            checkbox.value = v;
-            checkbox.onchange = function () {
-                if ($(this).is(':checked')) {
-                    cell.value = v;
-                } else {
-                    cell.value = '';
-                }
-                jS.calcDependencies.call(cell);
-            };
+			checkbox = document.createElement('input');
+			checkbox.setAttribute('type', 'checkbox');
+			checkbox.setAttribute('name', id);
+			checkbox.setAttribute('id', id);
+			checkbox.className = id;
+			checkbox.value = v;
+			checkbox.onchange = function () {
+				if ($(this).is(':checked')) {
+					cell.value = v;
+				} else {
+					cell.value = '';
+				}
+				jS.calcDependencies.call(cell);
+			};
 
-            if (!jS.s.editable) {
-                checkbox.setAttribute('disabled', 'true');
-            } else {
-                jS.s.parent.bind('sheetKill', function() {
-                    cell.value = (cell.value == 'true' || $(checkbox).is(':checked') ? v : '');
+			if (!jS.s.editable) {
+				checkbox.setAttribute('disabled', 'true');
+			} else {
+				jS.s.parent.bind('sheetKill', function() {
+					cell.value = (cell.value == 'true' || $(checkbox).is(':checked') ? v : '');
 					if (cell.td !== null) {
 						cell.td.innerText = cell.td.textContent = cell.cell.value;
 					}
-                });
-            }
+				});
+			}
 
-            html = document.createElement('span');
-            html.className='jSCheckbox';
-            html.appendChild(checkbox);
-            label = document.createElement('span');
-            label.textContent = label.innerText = v;
-            html.appendChild(label);
-            html.appendChild(document.createElement('br'));
-            html.onmousedown = function () {
+			html = document.createElement('span');
+			html.className='jSCheckbox';
+			html.appendChild(checkbox);
+			label = document.createElement('span');
+			label.textContent = label.innerText = v;
+			html.appendChild(label);
+			html.appendChild(document.createElement('br'));
+			html.onmousedown = function () {
 				if (this.cell.td !== null) {
 					jS.cellEdit(td);
 				}
-            };
-            html.cell = cell;
+			};
+			html.cell = cell;
 
-            jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
+			jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 
-            if (v == cell.value || cell.value === 'true') {
-                checkbox.checked =  true;
-            }
-        }
+			if (v == cell.value || cell.value === 'true') {
+				checkbox.checked =  true;
+			}
+		}
 
-	    //when spreadsheet initiates, this will be the value, otherwise we are dependent on the checkbox being checked
-	    if (
-		    cell.value === 'true'
-		    || $(checkbox).is(':checked')
-	    ) {
-		    result = new String(v);
-	    }
+		//when spreadsheet initiates, this will be the value, otherwise we are dependent on the checkbox being checked
+		if (
+			cell.value === 'true'
+			|| $(checkbox).is(':checked')
+		) {
+			result = new String(v);
+		}
 
-	    //if no value, than empty string
-	    else {
-		    result = new String('');
-	    }
+		//if no value, than empty string
+		else {
+			result = new String('');
+		}
 
-        result.html = html;
+		result.html = html;
 
-	    return result;
-    },
-    /**
-     * html function
-     * @param values
-     * @param legend
-     * @param title
-     * @returns {String}
-     * @memberOf jFN
-     */
-    BARCHART:function (values, legend, title) {
-        var result = new String('');
-        result.html = jSE.chart.call(this, {
-            type:'bar',
-            data:values,
-            legend:legend,
-            title:title
-        });
-        return result;
-    },
-    /**
-     * html function
-     * @param values
-     * @param legend
-     * @param title
-     * @returns {String}
-     * @memberOf jFN
-     */
-    HBARCHART:function (values, legend, title) {
-        var result = new String('');
-        result.html = jSE.chart.call(this, {
-            type:'hbar',
-            data:values,
-            legend:legend,
-            title:title
-        });
-        return result;
-    },
-    /**
-     * html function
-     * @param valuesX
-     * @param valuesY
-     * @returns {String}
-     * @memberOf jFN
-     */
-    LINECHART:function (valuesX, valuesY) {
-        var result = new String('');
-        result.html = jSE.chart.call(this, {
-            type:'line',
-            x:{
-                data:valuesX
-            },
-            y:{
-                data:valuesY
-            },
-            title:""
-        });
-        return result;
-    },
-    /**
-     * html function
-     * @param values
-     * @param legend
-     * @param title
-     * @returns {String}
-     * @memberOf jFN
-     */
-    PIECHART:function (values, legend, title) {
-        var result = new String('');
-        result.html = jSE.chart.call(this, {
-            type:'pie',
-            data:values,
-            legend:legend,
-            title:title
-        });
-        return result;
-    },
-    /**
-     * html function
-     * @param valuesX
-     * @param valuesY
-     * @param values
-     * @param legendX
-     * @param legendY
-     * @param title
-     * @returns {String}
-     * @memberOf jFN
-     */
-    DOTCHART:function (valuesX, valuesY, values, legendX, legendY, title) {
-        var result = new String('');
-        result.html = jSE.chart.call(this, {
-            type:'dot',
-            data:(values ? values : valuesX),
-            x:{
-                data:valuesX,
-                legend:legendX
-            },
-            y:{
-                data:(valuesY ? valuesY : valuesX),
-                legend:(legendY ? legendY : legendX)
-            },
-            title:title
-        });
-        return result;
-    },
-    /**
-     * html function
-     * @param v
-     * @returns {*}
-     * @memberOf jFN
-     */
-    CELLREF:function (v) {
-        return (this.jS.spreadsheets[v] ? this.jS.spreadsheets[v] : 'Cell Reference Not Found');
-    },
-    /**
-     * html function
-     * @param [pre] text before
-     * @param [post] test after
-     * @returns {string}
-     * @memberOf jFN
-     */
-    CALCTIME:function (pre, post) {
-        pre = pre || '';
-        post = post || '';
+		return result;
+	},
+	/**
+	 * html function
+	 * @param values
+	 * @param legend
+	 * @param title
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	BARCHART:function (values, legend, title) {
+		var result = new String('');
+		result.html = jSE.chart.call(this, {
+			type:'bar',
+			data:values,
+			legend:legend,
+			title:title
+		});
+		return result;
+	},
+	/**
+	 * html function
+	 * @param values
+	 * @param legend
+	 * @param title
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	HBARCHART:function (values, legend, title) {
+		var result = new String('');
+		result.html = jSE.chart.call(this, {
+			type:'hbar',
+			data:values,
+			legend:legend,
+			title:title
+		});
+		return result;
+	},
+	/**
+	 * html function
+	 * @param valuesX
+	 * @param valuesY
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	LINECHART:function (valuesX, valuesY) {
+		var result = new String('');
+		result.html = jSE.chart.call(this, {
+			type:'line',
+			x:{
+				data:valuesX
+			},
+			y:{
+				data:valuesY
+			},
+			title:""
+		});
+		return result;
+	},
+	/**
+	 * html function
+	 * @param values
+	 * @param legend
+	 * @param title
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	PIECHART:function (values, legend, title) {
+		var result = new String('');
+		result.html = jSE.chart.call(this, {
+			type:'pie',
+			data:values,
+			legend:legend,
+			title:title
+		});
+		return result;
+	},
+	/**
+	 * html function
+	 * @param valuesX
+	 * @param valuesY
+	 * @param values
+	 * @param legendX
+	 * @param legendY
+	 * @param title
+	 * @returns {String}
+	 * @memberOf jFN
+	 */
+	DOTCHART:function (valuesX, valuesY, values, legendX, legendY, title) {
+		var result = new String('');
+		result.html = jSE.chart.call(this, {
+			type:'dot',
+			data:(values ? values : valuesX),
+			x:{
+				data:valuesX,
+				legend:legendX
+			},
+			y:{
+				data:(valuesY ? valuesY : valuesX),
+				legend:(legendY ? legendY : legendX)
+			},
+			title:title
+		});
+		return result;
+	},
+	/**
+	 * html function
+	 * @param v
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	CELLREF:function (v) {
+		return (this.jS.spreadsheets[v] ? this.jS.spreadsheets[v] : 'Cell Reference Not Found');
+	},
+	/**
+	 * html function
+	 * @param [pre] text before
+	 * @param [post] test after
+	 * @returns {string}
+	 * @memberOf jFN
+	 */
+	CALCTIME:function (pre, post) {
+		pre = pre || '';
+		post = post || '';
 
-        var cell = this,
-            jS = this.jS;
+		var cell = this,
+			jS = this.jS;
 
-        this.jS.s.parent.one('sheetCalculation', function () {
-            jS.time.last = jS.calcLast;
-            cell.td.text(pre + jS.time.diff() + post);
-        });
-        return "";
-    },
+		this.jS.s.parent.one('sheetCalculation', function () {
+			jS.time.last = jS.calcLast;
+			cell.td.text(pre + jS.time.diff() + post);
+		});
+		return "";
+	},
 
 
-    /**
-     * cell function
-     * @param value
-     * @param tableArray
-     * @param indexNumber
-     * @param notExactMatch
-     * @returns {*}
-     * @memberOf jFN
-     */
-    HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
-
-		if (value === undefined) return null;
-
-        var jS = this.jS,
-            found,
-            result = '',
-            range = tableArray[0];
-
-        indexNumber = indexNumber || 1;
-        notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
-
-        if (value !== undefined || ((isNaN(value) && value != '#REF!') || value.length === 0)) {
-
-            if (notExactMatch) {
-                found = arrHelpers.lSearch(range, value);
-            } else {
-                var i = range.indexOf(value);
-                if (i > -1) {
-                    found = range[i];
-                }
-            }
-        } else {
-            arrHelpers.getClosestNum(value, range, function(closest, i) {
-                if (notExactMatch) {
-                    found = closest;
-                } else if (closest == value) {
-                    found = closest;
-                }
-            });
-        }
-
-        if (found !== undefined) {
-			result = found.value;
-        }
-
-        return result;
-    },
-    /**
-     * cell function
-     * @param value
-     * @param tableArray
-     * @param indexNumber
-     * @param notExactMatch
-     * @returns {*}
-     * @memberOf jFN
-     */
-    VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
+	/**
+	 * cell function
+	 * @param value
+	 * @param tableArray
+	 * @param indexNumber
+	 * @param notExactMatch
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
 
 		if (value === undefined) return null;
 
-        var jS = this.jS,
-            found,
-            result = '',
-            range = tableArray[0];
+		var jS = this.jS,
+			found,
+			result = '',
+			range = tableArray[0];
 
-        notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
+		indexNumber = indexNumber || 1;
+		notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
+		if (value !== undefined || ((isNaN(value) && value != '#REF!') || value.length === 0)) {
 
-        if ((isNaN(value) && value != '#REF!') || value.length === 0) {
+			if (notExactMatch) {
+				found = arrHelpers.lSearch(range, value);
+			} else {
+				var i = range.indexOf(value);
+				if (i > -1) {
+					found = range[i];
+				}
+			}
+		} else {
+			arrHelpers.getClosestNum(value, range, function(closest, i) {
+				if (notExactMatch) {
+					found = closest;
+				} else if (closest == value) {
+					found = closest;
+				}
+			});
+		}
 
-            if (notExactMatch) {
-                found = arrHelpers.lSearch(range, value);
-            } else {
-                var i = range.indexOf(value);
-                if (i > -1) {
-                    found = range[i];
-                }
-            }
-        } else {
-            arrHelpers.getClosestNum(value, range, function(closest, i) {
-                if (notExactMatch) {
-                    found = closest;
-                } else if (closest == value) {
-                    found = closest;
-                }
-            });
-        }
-
-        if (found !== undefined) {
+		if (found !== undefined) {
 			result = found.value;
-        }
+		}
 
-        return result;
-    },
-    /**
-     * cell function
-     * @param col
-     * @returns {*}
-     * @memberOf jFN
-     */
-    THISROWCELL:function (col) {
-        var jS = this.jS;
+		return result;
+	},
+	/**
+	 * cell function
+	 * @param value
+	 * @param tableArray
+	 * @param indexNumber
+	 * @param notExactMatch
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
 
-        if (isNaN(col)) {
-            col = jSE.columnLabelIndex(col);
-        }
-        return jS.updateCellValue(this.sheetIndex, this.rowIndex, col);
-    },
-    /**
-     * cell function
-     * @param row
-     * @returns {*}
-     * @memberOf jFN
-     */
-    THISCOLCELL:function (row) {
-        var jS = this.jS;
+		if (value === undefined) return null;
 
-        return jS.updateCellValue(this.sheetIndex, row, this.colIndex);
-    }
+		var jS = this.jS,
+			found,
+			result = '',
+			range = tableArray[0];
+
+		notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
+
+
+		if ((isNaN(value) && value != '#REF!') || value.length === 0) {
+
+			if (notExactMatch) {
+				found = arrHelpers.lSearch(range, value);
+			} else {
+				var i = range.indexOf(value);
+				if (i > -1) {
+					found = range[i];
+				}
+			}
+		} else {
+			arrHelpers.getClosestNum(value, range, function(closest, i) {
+				if (notExactMatch) {
+					found = closest;
+				} else if (closest == value) {
+					found = closest;
+				}
+			});
+		}
+
+		if (found !== undefined) {
+			result = found.value;
+		}
+
+		return result;
+	},
+	/**
+	 * cell function
+	 * @param col
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	THISROWCELL:function (col) {
+		var jS = this.jS;
+
+		if (isNaN(col)) {
+			col = jSE.columnLabelIndex(col);
+		}
+		return jS.updateCellValue(this.sheetIndex, this.rowIndex, col);
+	},
+	/**
+	 * cell function
+	 * @param row
+	 * @returns {*}
+	 * @memberOf jFN
+	 */
+	THISCOLCELL:function (row) {
+		var jS = this.jS;
+
+		return jS.updateCellValue(this.sheetIndex, row, this.colIndex);
+	}
 };var key = { /* key objects, makes it easier to develop */
-    BACKSPACE: 			8,
-    CAPS_LOCK: 			20,
-    COMMA: 				188,
-    CONTROL: 			17,
-    ALT:				18,
-    DELETE: 			46,
-    DOWN: 				40,
-    END: 				35,
-    ENTER: 				13,
-    ESCAPE: 			27,
-    HOME: 				36,
-    INSERT: 			45,
-    LEFT: 				37,
-    NUMPAD_ADD: 		107,
-    NUMPAD_DECIMAL: 	110,
-    NUMPAD_DIVIDE: 		111,
-    NUMPAD_ENTER: 		108,
-    NUMPAD_MULTIPLY: 	106,
-    NUMPAD_SUBTRACT: 	109,
-    PAGE_DOWN: 			34,
-    PAGE_UP: 			33,
-    PERIOD: 			190,
-    RIGHT: 				39,
-    SHIFT: 				16,
-    SPACE: 				32,
-    TAB: 				9,
-    UP: 				38,
-    C:                  67,
-    F:					70,
-    V:					86,
-    X:                  88,
-    Y:					89,
-    Z:					90,
+	BACKSPACE: 			8,
+	CAPS_LOCK: 			20,
+	COMMA: 				188,
+	CONTROL: 			17,
+	ALT:				18,
+	DELETE: 			46,
+	DOWN: 				40,
+	END: 				35,
+	ENTER: 				13,
+	ESCAPE: 			27,
+	HOME: 				36,
+	INSERT: 			45,
+	LEFT: 				37,
+	NUMPAD_ADD: 		107,
+	NUMPAD_DECIMAL: 	110,
+	NUMPAD_DIVIDE: 		111,
+	NUMPAD_ENTER: 		108,
+	NUMPAD_MULTIPLY: 	106,
+	NUMPAD_SUBTRACT: 	109,
+	PAGE_DOWN: 			34,
+	PAGE_UP: 			33,
+	PERIOD: 			190,
+	RIGHT: 				39,
+	SHIFT: 				16,
+	SPACE: 				32,
+	TAB: 				9,
+	UP: 				38,
+	C:				  67,
+	F:					70,
+	V:					86,
+	X:				  88,
+	Y:					89,
+	Z:					90,
 	UNKNOWN:			229
 };
 
 var arrHelpers = window.arrHelpers = {
-    math: Math,
-    toNumbers:function (arr) {
-        arr = this.flatten(arr);
-        var i = arr.length - 1;
+	math: Math,
+	toNumbers:function (arr) {
+		arr = this.flatten(arr);
+		var i = arr.length - 1;
 
-        if (i < 0) {
-            return [];
-        }
+		if (i < 0) {
+			return [];
+		}
 
-        do {
-            if (arr[i]) {
-                arr[i] = $.trim(arr[i]);
-                if (isNaN(arr[i])) {
-                    arr[i] = 0;
-                } else {
-                    arr[i] = arr[i] * 1;
-                }
-            } else {
-                arr[i] = 0;
-            }
-        } while (i--);
+		do {
+			if (arr[i]) {
+				arr[i] = $.trim(arr[i]);
+				if (isNaN(arr[i])) {
+					arr[i] = 0;
+				} else {
+					arr[i] = arr[i] * 1;
+				}
+			} else {
+				arr[i] = 0;
+			}
+		} while (i--);
 
-        return arr;
-    },
-    unique:function (arr) {
+		return arr;
+	},
+	unique:function (arr) {
 		var o = {}, i, l = arr.length, r = [];
 		for(i=0; i<l;i+=1) o[arr[i]] = arr[i];
 		for(i in o) r.push(o[i]);
 		return r;
-    },
-    flatten:function (arr) {
-        var flat = [];
-        for (var i = 0, l = arr.length; i < l; i++) {
-            var type = Object.prototype.toString.call(arr[i]).split(' ').pop().split(']').shift().toLowerCase();
-            if (type) {
-                flat = flat.concat(/^(array|collection|arguments|object)$/.test(type) ? this.flatten(arr[i]) : arr[i]);
-            }
-        }
-        return flat;
-    },
-    insertAt:function (arr, val, index) {
-        $(val).each(function () {
-            if (index > -1 && index <= arr.length) {
-                arr.splice(index, 0, this);
-            }
-        });
-        return arr;
-    },
-    closest:function (array, num, min, max) {
-        array = array || [];
-        num = num || 0;
-        min = min || 0;
-        max = max || array.length - 1;
+	},
+	flatten:function (arr) {
+		var flat = [];
+		for (var i = 0, l = arr.length; i < l; i++) {
+			var type = Object.prototype.toString.call(arr[i]).split(' ').pop().split(']').shift().toLowerCase();
+			if (type) {
+				flat = flat.concat(/^(array|collection|arguments|object)$/.test(type) ? this.flatten(arr[i]) : arr[i]);
+			}
+		}
+		return flat;
+	},
+	insertAt:function (arr, val, index) {
+		$(val).each(function () {
+			if (index > -1 && index <= arr.length) {
+				arr.splice(index, 0, this);
+			}
+		});
+		return arr;
+	},
+	closest:function (array, num, min, max) {
+		array = array || [];
+		num = num || 0;
+		min = min || 0;
+		max = max || array.length - 1;
 
-        var target;
+		var target;
 
-        while (true) {
-            target = ((min + max) >> 1);
-            if (target === max || target === min) {
-                return array[target];
-            }
-            if (array[target] > num) {
-                max = target;
-            } else if (array[target] < num) {
-                min = target;
-            } else {
-                return array[target];
-            }
-        }
-    },
-    getClosestNum: function(num, ar, fn) {
-        var i = 0, I, closest, closestDiff, currentDiff;
-        if(ar.length) {
-            closest = ar[0];
-            I = i;
-            for(i;i<ar.length;i++) {
-                closestDiff = Math.abs(num - closest);
-                currentDiff = Math.abs(num - ar[i]);
-                if(currentDiff < closestDiff)
-                {
-                    I = i;
-                    closest = ar[i];
-                }
-                closestDiff = null;
-                currentDiff = null;
-            }
-            //returns first element that is closest to number
-            if (fn) {
-                return fn(closest, I);
-            }
-            return closest;
-        }
-        //no length
-        return false;
-    },
+		while (true) {
+			target = ((min + max) >> 1);
+			if (target === max || target === min) {
+				return array[target];
+			}
+			if (array[target] > num) {
+				max = target;
+			} else if (array[target] < num) {
+				min = target;
+			} else {
+				return array[target];
+			}
+		}
+	},
+	getClosestNum: function(num, ar, fn) {
+		var i = 0, I, closest, closestDiff, currentDiff;
+		if(ar.length) {
+			closest = ar[0];
+			I = i;
+			for(i;i<ar.length;i++) {
+				closestDiff = Math.abs(num - closest);
+				currentDiff = Math.abs(num - ar[i]);
+				if(currentDiff < closestDiff)
+				{
+					I = i;
+					closest = ar[i];
+				}
+				closestDiff = null;
+				currentDiff = null;
+			}
+			//returns first element that is closest to number
+			if (fn) {
+				return fn(closest, I);
+			}
+			return closest;
+		}
+		//no length
+		return false;
+	},
 	//http://stackoverflow.com/questions/11919065/sort-an-array-by-the-levenshtein-distance-with-best-performance-in-javascript
 	levenshtein: (function() {
 		var row2 = [];
@@ -13397,284 +13397,284 @@ var arrHelpers = window.arrHelpers = {
 };
 
 var dates = {
-    dayDiv: 86400000,
-    math: Math,
-    toCentury:function (date, dayDiv) {
-        dayDiv = dayDiv || 86400000;
+	dayDiv: 86400000,
+	math: Math,
+	toCentury:function (date, dayDiv) {
+		dayDiv = dayDiv || 86400000;
 
-        return this.math.round(this.math.abs((new Date(1900, 0, -1)) - date) / dayDiv);
-    },
-    get:function (date, dayDiv) {
-        dayDiv = dayDiv || 86400000;
+		return this.math.round(this.math.abs((new Date(1900, 0, -1)) - date) / dayDiv);
+	},
+	get:function (date, dayDiv) {
+		dayDiv = dayDiv || 86400000;
 
-        if (date.getMonth) {
-            return date;
-        } else if (isNaN(date)) {
-            return new Date(Globalize.parseDate(date));
-        } else {
-            date *= dayDiv;
-            //date = new Date(date);
-            var newDate = (new Date(1900, 0, -1)) * 1;
-            date += newDate;
-            date = new Date(date);
-            return date;
-        }
-    },
-    week:function (date, dayDiv) {
-        dayDiv = dayDiv || 86400000;
+		if (date.getMonth) {
+			return date;
+		} else if (isNaN(date)) {
+			return new Date(Globalize.parseDate(date));
+		} else {
+			date *= dayDiv;
+			//date = new Date(date);
+			var newDate = (new Date(1900, 0, -1)) * 1;
+			date += newDate;
+			date = new Date(date);
+			return date;
+		}
+	},
+	week:function (date, dayDiv) {
+		dayDiv = dayDiv || 86400000;
 
-        var onejan = new Date(date.getFullYear(), 0, 1);
-        return this.math.ceil((((date - onejan) / dayDiv) + onejan.getDay() + 1) / 7);
-    },
-    toString:function (date, pattern) {
-        if (!pattern) {
-            return Globalize.format(date);
-        }
-        return Globalize.format(date, Globalize.culture().calendar.patterns[pattern]);
-    },
-    diff:function (start, end, basis, dayDiv) {
-        dayDiv = dayDiv || 86400000;
+		var onejan = new Date(date.getFullYear(), 0, 1);
+		return this.math.ceil((((date - onejan) / dayDiv) + onejan.getDay() + 1) / 7);
+	},
+	toString:function (date, pattern) {
+		if (!pattern) {
+			return Globalize.format(date);
+		}
+		return Globalize.format(date, Globalize.culture().calendar.patterns[pattern]);
+	},
+	diff:function (start, end, basis, dayDiv) {
+		dayDiv = dayDiv || 86400000;
 
-        switch (basis) {
-            case 0:
-                return this.days360Nasd(start, end, 0, true);
-            case 1:
-            case 2:
-            case 3:
-                var result = this.math.abs(end - start) / dayDiv;
-                return result;
-            case 4:
-                return this.days360Euro(start, end);
-        }
+		switch (basis) {
+			case 0:
+				return this.days360Nasd(start, end, 0, true);
+			case 1:
+			case 2:
+			case 3:
+				var result = this.math.abs(end - start) / dayDiv;
+				return result;
+			case 4:
+				return this.days360Euro(start, end);
+		}
 
-        return 0;
-    },
-    diffMonths:function (start, end) {
-        var months;
-        months = (end.getFullYear() - start.getFullYear()) * 12;
-        months -= start.getMonth() + 1;
-        months += end.getMonth() + 1;
-        return months;
-    },
-    days360:function (startYear, endYear, startMonth, endMonth, startDate, endDate) {
-        return ((endYear - startYear) * 360) + ((endMonth - startMonth) * 30) + (endDate - startDate)
-    },
-    days360Nasd:function (start, end, method, useEom) {
-        var startDate = start.getDate(),
-            startMonth = start.getMonth(),
-            startYear = start.getFullYear(),
-            endDate = end.getDate(),
-            endMonth = end.getMonth(),
-            endYear = end.getFullYear();
+		return 0;
+	},
+	diffMonths:function (start, end) {
+		var months;
+		months = (end.getFullYear() - start.getFullYear()) * 12;
+		months -= start.getMonth() + 1;
+		months += end.getMonth() + 1;
+		return months;
+	},
+	days360:function (startYear, endYear, startMonth, endMonth, startDate, endDate) {
+		return ((endYear - startYear) * 360) + ((endMonth - startMonth) * 30) + (endDate - startDate)
+	},
+	days360Nasd:function (start, end, method, useEom) {
+		var startDate = start.getDate(),
+			startMonth = start.getMonth(),
+			startYear = start.getFullYear(),
+			endDate = end.getDate(),
+			endMonth = end.getMonth(),
+			endYear = end.getFullYear();
 
-        if (
-            (endMonth == 2 && this.isEndOfMonth(endDate, endMonth, endYear)) &&
-                (
-                    (startMonth == 2 && this.isEndOfMonth(startDate, startMonth, startYear)) ||
-                        method == 3
-                    )
-            ) {
-            endDate = 30;
-        }
+		if (
+			(endMonth == 2 && this.isEndOfMonth(endDate, endMonth, endYear)) &&
+				(
+					(startMonth == 2 && this.isEndOfMonth(startDate, startMonth, startYear)) ||
+						method == 3
+					)
+			) {
+			endDate = 30;
+		}
 
-        if (endDate == 31 && (startDate >= 30 || method == 3)) {
-            endDate = 30;
-        }
+		if (endDate == 31 && (startDate >= 30 || method == 3)) {
+			endDate = 30;
+		}
 
-        if (startDate == 31) {
-            startDate = 30;
-        }
+		if (startDate == 31) {
+			startDate = 30;
+		}
 
-        if (useEom && startMonth == 2 && this.isEndOfMonth(startDate, startMonth, startYear)) {
-            startDate = 30;
-        }
+		if (useEom && startMonth == 2 && this.isEndOfMonth(startDate, startMonth, startYear)) {
+			startDate = 30;
+		}
 
-        return this.days360(startYear, endYear, startMonth, endMonth, startDate, endDate);
-    },
-    days360Euro:function (start, end) {
-        var startDate = start.getDate(),
-            startMonth = start.getMonth(),
-            startYear = start.getFullYear(),
-            endDate = end.getDate(),
-            endMonth = end.getMonth(),
-            endYear = end.getFullYear();
+		return this.days360(startYear, endYear, startMonth, endMonth, startDate, endDate);
+	},
+	days360Euro:function (start, end) {
+		var startDate = start.getDate(),
+			startMonth = start.getMonth(),
+			startYear = start.getFullYear(),
+			endDate = end.getDate(),
+			endMonth = end.getMonth(),
+			endYear = end.getFullYear();
 
-        if (startDate == 31) startDate = 30;
-        if (endDate == 31) endDate = 30;
+		if (startDate == 31) startDate = 30;
+		if (endDate == 31) endDate = 30;
 
-        return this.days360(startYear, endYear, startMonth, endMonth, startDate, endDate);
-    },
-    isEndOfMonth:function (day, month, year) {
-        return day == (new Date(year, month + 1, 0, 23, 59, 59)).getDate();
-    },
-    isLeapYear:function (year) {
-        return new Date(year, 1, 29).getMonth() == 1;
-    },
-    calcAnnualBasis:function (start, end, basis) {
-        switch (basis) {
-            case 0:
-            case 2:
-            case 4: return 360;
-            case 3: return 365;
-            case 1:
-                var startDate = start.getDate(),
-                    startMonth = start.getMonth(),
-                    startYear = start.getFullYear(),
-                    endDate = end.getDate(),
-                    endMonth = end.getMonth(),
-                    endYear = end.getFullYear(),
-                    result = 0;
+		return this.days360(startYear, endYear, startMonth, endMonth, startDate, endDate);
+	},
+	isEndOfMonth:function (day, month, year) {
+		return day == (new Date(year, month + 1, 0, 23, 59, 59)).getDate();
+	},
+	isLeapYear:function (year) {
+		return new Date(year, 1, 29).getMonth() == 1;
+	},
+	calcAnnualBasis:function (start, end, basis) {
+		switch (basis) {
+			case 0:
+			case 2:
+			case 4: return 360;
+			case 3: return 365;
+			case 1:
+				var startDate = start.getDate(),
+					startMonth = start.getMonth(),
+					startYear = start.getFullYear(),
+					endDate = end.getDate(),
+					endMonth = end.getMonth(),
+					endYear = end.getFullYear(),
+					result = 0;
 
-                if (startYear == endYear) {
-                    if (this.isLeapYear(startYear)) {
-                        result = 366;
-                    } else {
-                        result = 365;
-                    }
-                } else if (((endYear - 1) == startYear) && ((startMonth > endMonth) || ((startMonth == endMonth) && startDate >= endDate))) {
-                    if (this.isLeapYear(startYear)) {
-                        if (startMonth < 2 || (startMonth == 2 && startDate <= 29)) {
-                            result = 366;
-                        } else {
-                            result = 365;
-                        }
-                    } else if (this.isLeapYear(endYear)) {
-                        if (endMonth > 2 || (endMonth == 2 && endDate == 29)) {
-                            result = 366;
-                        } else {
-                            result = 365;
-                        }
-                    } else {
-                        result = 365;
-                    }
-                } else {
-                    for (var iYear = startYear; iYear <= endYear; iYear++) {
-                        if (this.isLeapYear(iYear)) {
-                            result += 366;
-                        } else {
-                            result += 365;
-                        }
-                    }
-                    result = result / (endYear - startYear + 1);
-                }
-                return result;
-        }
-        return 0;
-    },
-    lastDayOfMonth:function (date) {
-        date.setDate(0);
-        return date.getDate();
-    },
-    isLastDayOfMonth:function (date) {
-        return (date.getDate() == this.lastDayOfMonth(date));
-    }
+				if (startYear == endYear) {
+					if (this.isLeapYear(startYear)) {
+						result = 366;
+					} else {
+						result = 365;
+					}
+				} else if (((endYear - 1) == startYear) && ((startMonth > endMonth) || ((startMonth == endMonth) && startDate >= endDate))) {
+					if (this.isLeapYear(startYear)) {
+						if (startMonth < 2 || (startMonth == 2 && startDate <= 29)) {
+							result = 366;
+						} else {
+							result = 365;
+						}
+					} else if (this.isLeapYear(endYear)) {
+						if (endMonth > 2 || (endMonth == 2 && endDate == 29)) {
+							result = 366;
+						} else {
+							result = 365;
+						}
+					} else {
+						result = 365;
+					}
+				} else {
+					for (var iYear = startYear; iYear <= endYear; iYear++) {
+						if (this.isLeapYear(iYear)) {
+							result += 366;
+						} else {
+							result += 365;
+						}
+					}
+					result = result / (endYear - startYear + 1);
+				}
+				return result;
+		}
+		return 0;
+	},
+	lastDayOfMonth:function (date) {
+		date.setDate(0);
+		return date.getDate();
+	},
+	isLastDayOfMonth:function (date) {
+		return (date.getDate() == this.lastDayOfMonth(date));
+	}
 };
 
 var times = window.times = {
-    math: Math,
-    fromMath:function (time) {
-        var result = {}, me = this;
+	math: Math,
+	fromMath:function (time) {
+		var result = {}, me = this;
 
-        result.hour = ((time * 24) + '').split('.')[0] * 1;
+		result.hour = ((time * 24) + '').split('.')[0] * 1;
 
-        result.minute = function (time) {
-            time = me.math.round(time * 24 * 100) / 100;
-            time = (time + '').split('.');
-            var minute = 0;
-            if (time[1]) {
-                if (time[1].length < 2) {
-                    time[1] += '0';
-                }
-                minute = time[1] * 0.6;
-            }
-            return me.math.round(minute);
-        }(time);
+		result.minute = function (time) {
+			time = me.math.round(time * 24 * 100) / 100;
+			time = (time + '').split('.');
+			var minute = 0;
+			if (time[1]) {
+				if (time[1].length < 2) {
+					time[1] += '0';
+				}
+				minute = time[1] * 0.6;
+			}
+			return me.math.round(minute);
+		}(time);
 
-        result.second = function (time) {
-            time = me.math.round(time * 24 * 10000) / 10000;
-            time = (time + '').split('.');
-            var second = 0;
-            if (time[1]) {
-                for (var i = 0; i < 4; i++) {
-                    if (!time[1].charAt(i)) {
-                        time[1] += '0';
-                    }
-                }
-                var secondDecimal = ((time[1] * 0.006) + '').split('.');
-                if (secondDecimal[1]) {
-                    if (secondDecimal[1] && secondDecimal[1].length > 2) {
-                        secondDecimal[1] = secondDecimal[1].substr(0, 2);
-                    }
+		result.second = function (time) {
+			time = me.math.round(time * 24 * 10000) / 10000;
+			time = (time + '').split('.');
+			var second = 0;
+			if (time[1]) {
+				for (var i = 0; i < 4; i++) {
+					if (!time[1].charAt(i)) {
+						time[1] += '0';
+					}
+				}
+				var secondDecimal = ((time[1] * 0.006) + '').split('.');
+				if (secondDecimal[1]) {
+					if (secondDecimal[1] && secondDecimal[1].length > 2) {
+						secondDecimal[1] = secondDecimal[1].substr(0, 2);
+					}
 
-                    return me.math.round(secondDecimal[1] * 0.6);
-                }
-            }
-            return second;
-        }(time);
+					return me.math.round(secondDecimal[1] * 0.6);
+				}
+			}
+			return second;
+		}(time);
 
-        return result;
-    },
-    fromString:function (time, isAmPm) {
-        var date = new Date(), timeParts = time, timeValue, hour, minute, second, meridiem;
-        if (isAmPm) {
-            meridiem = timeParts.substr(-2).toLowerCase(); //get ampm;
-            timeParts = timeParts.replace(/(am|pm)/i, '');
-        }
+		return result;
+	},
+	fromString:function (time, isAmPm) {
+		var date = new Date(), timeParts = time, timeValue, hour, minute, second, meridiem;
+		if (isAmPm) {
+			meridiem = timeParts.substr(-2).toLowerCase(); //get ampm;
+			timeParts = timeParts.replace(/(am|pm)/i, '');
+		}
 
-        timeParts = timeParts.split(':');
-        hour = timeParts[0] * 1;
-        minute = timeParts[1] * 1;
-        second = (timeParts[2] ? timeParts[2] : 0) * 1;
+		timeParts = timeParts.split(':');
+		hour = timeParts[0] * 1;
+		minute = timeParts[1] * 1;
+		second = (timeParts[2] ? timeParts[2] : 0) * 1;
 
-        if (isAmPm && meridiem == 'pm') {
-            hour += 12;
-        }
+		if (isAmPm && meridiem == 'pm') {
+			hour += 12;
+		}
 
-        return jFN.TIME(hour, minute, second);
-    }
+		return jFN.TIME(hour, minute, second);
+	}
 };
 
 
 $.extend(Math, {
-    log10:function (arg) {
-        // http://kevin.vanzonneveld.net
-        // +   original by: Philip Peterson
-        // +   improved by: Onno Marsman
-        // +   improved by: Tod Gentille
-        // +   improved by: Brett Zamir (http://brett-zamir.me)
-        // *	 example 1: log10(10);
-        // *	 returns 1: 1
-        // *	 example 2: log10(1);
-        // *	 returns 2: 0
-        return Math.log(arg) / 2.302585092994046; // Math.LN10
-    },
-    signum:function (x) {
-        return (x / Math.abs(x)) || x;
-    },
-    log1p: function (x) {
-        // http://kevin.vanzonneveld.net
-        // +   original by: Brett Zamir (http://brett-zamir.me)
-        // %          note 1: Precision 'n' can be adjusted as desired
-        // *     example 1: log1p(1e-15);
-        // *     returns 1: 9.999999999999995e-16
+	log10:function (arg) {
+		// http://kevin.vanzonneveld.net
+		// +   original by: Philip Peterson
+		// +   improved by: Onno Marsman
+		// +   improved by: Tod Gentille
+		// +   improved by: Brett Zamir (http://brett-zamir.me)
+		// *	 example 1: log10(10);
+		// *	 returns 1: 1
+		// *	 example 2: log10(1);
+		// *	 returns 2: 0
+		return Math.log(arg) / 2.302585092994046; // Math.LN10
+	},
+	signum:function (x) {
+		return (x / Math.abs(x)) || x;
+	},
+	log1p: function (x) {
+		// http://kevin.vanzonneveld.net
+		// +   original by: Brett Zamir (http://brett-zamir.me)
+		// %		  note 1: Precision 'n' can be adjusted as desired
+		// *	 example 1: log1p(1e-15);
+		// *	 returns 1: 9.999999999999995e-16
 
-        var ret = 0,
-            n = 50; // degree of precision
-        if (x <= -1) {
-            return '-INF'; // JavaScript style would be to return Number.NEGATIVE_INFINITY
-        }
-        if (x < 0 || x > 1) {
-            return Math.log(1 + x);
-        }
-        for (var i = 1; i < n; i++) {
-            if ((i % 2) === 0) {
-                ret -= Math.pow(x, i) / i;
-            } else {
-                ret += Math.pow(x, i) / i;
-            }
-        }
-        return ret;
-    }
+		var ret = 0,
+			n = 50; // degree of precision
+		if (x <= -1) {
+			return '-INF'; // JavaScript style would be to return Number.NEGATIVE_INFINITY
+		}
+		if (x < 0 || x > 1) {
+			return Math.log(1 + x);
+		}
+		for (var i = 1; i < n; i++) {
+			if ((i % 2) === 0) {
+				ret -= Math.pow(x, i) / i;
+			} else {
+				ret += Math.pow(x, i) / i;
+			}
+		}
+		return ret;
+	}
 });
 
 /**
@@ -13765,23 +13765,23 @@ $.printSource = function (s) {
 	w.document.close();
 };//This is a fix for Jison
 if (!Object.getPrototypeOf) {
-    Object.getPrototypeOf = function(obj) {
-        return obj || {};
-    };
+	Object.getPrototypeOf = function(obj) {
+		return obj || {};
+	};
 }
 
 //IE8 fix
 if (!Array.prototype.indexOf) {
-    $.sheet.max = 60;
-    Array.prototype.indexOf = function(obj, start) {
-        for (var i = (start || 0), j = this.length; i < j; i++) {
-            if (this[i] === obj) { return i; }
-        }
-        return -1;
-    }
+	$.sheet.max = 60;
+	Array.prototype.indexOf = function(obj, start) {
+		for (var i = (start || 0), j = this.length; i < j; i++) {
+			if (this[i] === obj) { return i; }
+		}
+		return -1;
+	}
 }
 
-    return Sheet;
+	return Sheet;
 })(jQuery, document, window, Date, String, Number, Boolean, Math, RegExp, Error);
 /* parser generated by jison 0.4.15 */
 /*
