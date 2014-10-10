@@ -1417,6 +1417,7 @@ var jFN = $.sheet.fn = {
 			};
 			select.onchange = function () {
 				cell.value = this.value;
+				jS.setCellNeedsUpdated(cell);
 				jS.calcDependencies.call(cell);
 			};
 
@@ -1506,6 +1507,7 @@ var jFN = $.sheet.fn = {
 					input.value = v[i];
 					input.onchange = function() {
 						cell.value = jQuery(this).val();
+						jS.setCellNeedsUpdated(cell);
 						jS.calcDependencies.call(cell);
 					};
 
@@ -1589,6 +1591,7 @@ var jFN = $.sheet.fn = {
 				} else {
 					cell.value = '';
 				}
+				jS.setCellNeedsUpdated(cell);
 				jS.calcDependencies.call(cell);
 			};
 
@@ -1817,7 +1820,7 @@ var jFN = $.sheet.fn = {
 		}
 
 		if (found !== undefined) {
-			result = found.value;
+			result = found;
 		}
 
 		return result;
@@ -1864,7 +1867,7 @@ var jFN = $.sheet.fn = {
 		}
 
 		if (found !== undefined) {
-			result = found.value;
+			result = found;
 		}
 
 		return result;
