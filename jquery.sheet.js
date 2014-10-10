@@ -140,8 +140,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 								 cssId + ' col:nth-child(-n+' + indexes[0] + ') {display: none;}' +
 
 								 //but show those that are frozen
-								 cssId + ' tr *:nth-child(-n+' + that.frozenAt.col + 1 + ') {display: table-cell;}' +
-								 cssId + ' col:nth-child(-n+' + that.frozenAt.col + 1 + ') {display: table-column;}' +
+								 cssId + ' tr *:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-cell;}' +
+								 cssId + ' col:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-column;}' +
 
 								 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
 								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}' +
