@@ -147,7 +147,15 @@
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex, jsonCell) {
 			var jitCell,
-				value;
+				value,
+				formula,
+				cellType,
+				uneditable,
+				hasValue,
+				hasFormula,
+				hasCellType,
+				hasUneditable;
+
 
 			if (jsonCell === undefined) {
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
@@ -160,25 +168,32 @@
 			}
 
 			value = jsonCell['value'];
+			formula = jsonCell['formula'];
+			cellType = jsonCell['cellType'];
+			uneditable = jsonCell['uneditable'];
+
+			hasValue = (value !== undefined && value !== null);
+			hasFormula = (formula !== undefined && formula !== null);
+			hasCellType = (cellType !== undefined && cellType !== null);
+			hasUneditable = (uneditable !== undefined && uneditable !== null);
 
 			jitCell = {
 				td: null,
-				html: [],
+				html: '',
 				state: [],
 				calcCount: 0,
-				calcLast: -1,
-				calcDependenciesLast: -1,
-				cellType: jsonCell['cellType'] || '',
-				formula: jsonCell['formula'] || '',
-				value: (value !== undefined && value !== null ? new String(value) : new String()),
-				uneditable: jsonCell['uneditable'],
+				cellType: hasCellType ? cellType : null,
+				formula: hasFormula ? formula : '',
+				value: hasValue ? new String(value) : new String(),
+				uneditable: hasUneditable ? jsonCell['uneditable'] : null,
 				type: 'cell',
 				sheetIndex: sheetIndex,
 				rowIndex: rowIndex,
 				colIndex: columnIndex,
 				dependencies: [],
 				id: null,
-				loadedFrom: jsonCell
+				loadedFrom: jsonCell,
+				needsUpdated: hasFormula
 			};
 
 			jitCell.value.cell = jitCell;

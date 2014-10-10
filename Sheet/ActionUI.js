@@ -3,9 +3,9 @@
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-	var Constructor = function(enclosure, pane, table, cl, frozenAt, max) {
+	var Constructor = function(enclosure, table, cl, frozenAt, max) {
 		this.enclosure = enclosure;
-		this.pane = pane;
+		this.pane = document.createElement('div');
 		this.table = table;
 		this.max = max;
 		this.xIndex = 0;
@@ -44,6 +44,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		};
 
 		var that = this,
+			pane = this.pane,
 			cssId = '#' + table.getAttribute('id'),
 			scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
 			scrollInner = pane.scrollInner = document.createElement('div'),

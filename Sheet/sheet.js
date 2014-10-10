@@ -750,7 +750,6 @@ $.fn.extend({
 					cell.value = value;
 					cell.valueOverride = cell.formula = '';
 				}
-				cell.calcLast = cell.calcDependenciesLast = 0;
 				jS.updateCellValue.call(cell, sheetIndex, rowIndex, colIndex);
 				jS.updateCellDependencies.call(cell);
 				return true;
@@ -782,7 +781,6 @@ $.fn.extend({
 			try {
 				cell.formula = formula;
 				cell.valueOverride = cell.value = '';
-				cell.calcLast = cell.calcDependenciesLast = 0;
 				jS.updateCellValue.call(cell, sheetIndex, rowIndex, colIndex);
 			} catch (e) {}
 		}
@@ -809,8 +807,7 @@ $.fn.extend({
 				&& (cell = jS.getCell(rowIndex, colIndex, sheetIndex))
 			) {
 			try {
-				cell.html = [html];
-				cell.calcLast = cell.calcDependenciesLast = 0;
+				cell.html = html;
 				jS.updateCellValue.call(cell, sheetIndex, rowIndex, colIndex);
 			} catch (e) {}
 		}
@@ -1556,11 +1553,9 @@ $.sheet = {
 				 * @param {Number} [rowIndex]
 				 * @param {Number} [colIndex]
 				 * @param {Number} [calcCount]
-				 * @param {Date} [calcLast]
-				 * @param {Date} [calcDependenciesLast]
 				 * @memberOf jS
 				 */
-				createCell:function (sheetIndex, rowIndex, colIndex, calcCount, calcLast, calcDependenciesLast) {
+				createCell:function (sheetIndex, rowIndex, colIndex, calcCount) {
 					//first create cell
 					var sheet,
 						row,
@@ -1598,8 +1593,6 @@ $.sheet = {
 						cellType:td.getAttribute('data-celltype') || null,
 						value:td.textContent || td.innerText || '',
 						calcCount:calcCount || 0,
-						calcLast:calcLast || -1,
-						calcDependenciesLast:calcDependenciesLast || -1,
 						sheetIndex:sheetIndex,
 						type: 'cell',
 						jS: jS,
@@ -1685,8 +1678,6 @@ $.sheet = {
 						cellType: null,
 						value: '',
 						calcCount: 0,
-						calcLast: -1,
-						calcDependenciesLast: -1,
 						sheetIndex: sheetIndex,
 						type: 'cell',
 						jS: jS,
@@ -1746,6 +1737,15 @@ $.sheet = {
 					});
 
 					return flatDependencyTree;
+				},
+
+				setCellNeedsUpdated: function(cell) {
+					var allDependencies = jS.getAllCellDependencies(cell),
+						i = 0;
+					cell.needsUpdated = true;
+					for (;i < allDependencies.length; i++) {
+						allDependencies[i].needsUpdated = true;
+					}
 				},
 
 				/**
@@ -1924,10 +1924,8 @@ $.sheet = {
 
 										spreadsheetRow[at] = cell;
 
-										if (cell.calcLast < 0) {
-											jS.updateCellValue.call(cell, jS.i, row, at);
-											jS.updateCellDependencies.call(cell);
-										}
+										jS.updateCellValue.call(cell, jS.i, row, at);
+										jS.updateCellDependencies.call(cell);
 
 										rowParent.insertBefore(td, rowParent.children[at]);
 
@@ -2019,10 +2017,8 @@ $.sheet = {
 
 										spreadsheetRow[at] = cell;
 
-										if (cell.calcLast < 0) {
-											jS.updateCellValue.call(cell, jS.i, row, at);
-											jS.updateCellDependencies.call(cell);
-										}
+										jS.updateCellValue.call(cell, jS.i, row, at);
+										jS.updateCellDependencies.call(cell);
 
 										rowParent.insertBefore(td, rowParent.children[at]);
 
@@ -2955,39 +2951,39 @@ $.sheet = {
 					 * @memberOf jS.controlFactory
 					 */
 					enclosure:function (table) {
-						var pane = document.createElement('div'),
-							enclosure = document.createElement('div'),
+						var enclosure = document.createElement('div'),
 							$enclosure = $(enclosure),
-							actionUI = new Sheet.ActionUI(enclosure, pane, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
+							actionUI = new Sheet.ActionUI(enclosure, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
 							scrollUI = actionUI.scrollUI,
+							pane = actionUI.pane,
 							mostEverScrollLeft = 0,
 							mostEverScrollTop = 0;
 
 						table.size = function() { return jS.tableSize(table); };
 						pane.size = function() { return jS.sheetSize(table); };
-
 						scrollUI.onscroll = function() {
-							if (!jS.isBusy()) {
-								var that = this,
-									xUpdated,
-									yUpdated;
+							this.scrollTop = this.scrollLeft = 0;
+							scrollUI.onscroll = function () {
+								if (!jS.isBusy()) {
+									var that = this,
+										xUpdated,
+										yUpdated;
 
-								thaw([
-									function() {
-										xUpdated = actionUI.scrollTo({axis:'x', pixel:that.scrollLeft});
-									},
+									thaw([
+										function () {
+											xUpdated = actionUI.scrollTo({axis: 'x', pixel: that.scrollLeft});
+										},
 
-									function() {
-										yUpdated = actionUI.scrollTo({axis:'y', pixel:that.scrollTop});
-									},
-
-									function() {
-										if (xUpdated || yUpdated) {
+										function () {
+											yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
+										},
+										function () {
 											if (xUpdated && that.scrollLeft > mostEverScrollLeft) {
 												mostEverScrollLeft = that.scrollLeft;
 												jS.calcVisibleCol(actionUI);
 											}
-
+										},
+										function() {
 											if (yUpdated) {
 												if (that.scrollTop > mostEverScrollTop) {
 													mostEverScrollTop = that.scrollTop;
@@ -2995,16 +2991,19 @@ $.sheet = {
 												}
 												jS.updateYBarWidthToCorner(actionUI);
 											}
-
-											jS.obj.barHelper().remove();
-											jS.autoFillerGoToTd();
-											if (pane.inPlaceEdit) {
-												pane.inPlaceEdit.goToTd();
+										},
+										function() {
+											if (xUpdated && yUpdated) {
+												jS.obj.barHelper().remove();
+												jS.autoFillerGoToTd();
+												if (pane.inPlaceEdit) {
+													pane.inPlaceEdit.goToTd();
+												}
 											}
 										}
-									}
-								]);
-							}
+									]);
+								}
+							};
 						};
 						scrollUI.onmousedown = function() {
 							jS.obj.barHelper().remove();
@@ -3013,7 +3012,9 @@ $.sheet = {
 						enclosure.actionUI = pane.actionUI = actionUI;
 
 						enclosure.scrollUI = pane.scrollUI = scrollUI;
-						enclosure.appendChild(enclosure.scrollUI);
+						enclosure.appendChild(scrollUI);
+						scrollUI.scrollTop = 0;
+						scrollUI.scrollLeft = 0;
 
 						pane.setAttribute('class', jS.cl.pane + ' ' + jS.theme.pane);
 						enclosure.appendChild(pane);
@@ -3692,7 +3693,8 @@ $.sheet = {
 
 									//This should return either a val from textbox or formula, but if fails it tries once more from formula.
 									var v = formula.val(),
-										cell = td.jSCell;
+										cell = td.jSCell,
+										i = 0;
 
 									if (!cell.edited) {
 										cell.edited = true;
@@ -3702,13 +3704,15 @@ $.sheet = {
 									s.parent.one('sheetPreCalculation', function () {
 										if (v.charAt(0) == '=' && jS.formulaParser) {
 											td.setAttribute('data-formula', v);
-											cell.value = v;
+											//change only formula, previous value will be stored and recalculated momentarily
 											cell.formula = v;
 										} else {
 											td.removeAttribute('data-formula');
 											cell.value = v;
 											cell.formula = '';
 										}
+
+										jS.setCellNeedsUpdated(cell);
 									});
 									jS.calcDependencies.call(cell);
 
@@ -4264,7 +4268,9 @@ $.sheet = {
 						jS.addSheet();
 					} else if (i != jS.i) {
 						jS.setActiveSheet(i);
-						jS.calc(i);
+						if (s.loader === null) {
+							jS.calc(i);
+						}
 					}
 
 					return true;
@@ -4475,7 +4481,6 @@ $.sheet = {
 						lastLoc = {},
 						colSpan = 0,
 						rowSpan = 0,
-						last = new Date(),
 						i = tds.length - 1,
 						cell,
 						_td,
@@ -4525,7 +4530,6 @@ $.sheet = {
 									cell.value = '';
 									cell.html = '';
 									cell.defer = td.jSCell;
-									cell.calcLast = last;
 
 									_td.removeAttribute('data-formula');
 									_td.removeAttribute('data-celltype');
@@ -4541,7 +4545,6 @@ $.sheet = {
 
 						td.jSCell.value = cellsValue.join(' ');
 						td.jSCell.formula = (td.jSCell.formula ? cellsValue.join(' ') : '');
-						td.jSCell.calcLast = last;
 
 						td.style.display = '';
 						td.setAttribute('rowSpan', rowSpan);
@@ -4616,8 +4619,7 @@ $.sheet = {
 						return false;
 					}
 
-					var activeTd = jS.obj.tdActive(),
-						last = new Date();
+					var activeTd = jS.obj.tdActive();
 
 					if (cells.length < 1) {
 						return false;
@@ -4657,7 +4659,7 @@ $.sheet = {
 										cells[i].td.setAttribute('data-formula', newV);
 									});
 
-									jS.calcDependencies.call(cells[i], last);
+									jS.calcDependencies.call(cells[i]);
 								} while (i--);
 								return true;
 							}
@@ -4682,7 +4684,7 @@ $.sheet = {
 									cells[i].td.removeAttribute('data-formula');
 								});
 
-								jS.calcDependencies.call(cells[i], last);
+								jS.calcDependencies.call(cells[i]);
 
 								fn();
 							} while (i--);
@@ -4712,14 +4714,13 @@ $.sheet = {
 								cell.formula = '';
 								cell.value = '';
 							});
-							jS.calcDependencies.call(cell, last);
+							jS.calcDependencies.call(cell);
 						}
 					};
 					var cellValues = [],
 						firstLoc,
 						lastLoc,
 						minLoc = {},
-						last = new Date(),
 						i = cells.length - 1,
 						row,
 						col;
@@ -4779,7 +4780,6 @@ $.sheet = {
 								col:size.cols
 							}
 						},
-						last = new Date(),
 						cellStack = [];
 
 
@@ -4793,7 +4793,7 @@ $.sheet = {
 						}
 
 						cellStack.push(function() {
-							jS.calcDependencies.call(cell, last, true);
+							jS.calcDependencies.call(cell, true);
 						});
 
 					}, affectedRange.first, affectedRange.last);
@@ -5702,7 +5702,7 @@ $.sheet = {
 							} else {
 								cells[i].cellType = type;
 							}
-							cells[i].calcLast = 0;
+							//TODO set needsUpdate on cell and dependencies
 							jS.updateCellValue.call(cells[i]);
 						} while(i--);
 					}
@@ -5840,16 +5840,13 @@ $.sheet = {
 					}
 
 					//we detect the last value, so that we don't have to update all cell, thus saving resources
-					if (cell.calcLast !== jS.calcLast || cell.calcDependenciesLast !== jS.calcDependenciesLast) {
+					if (cell.needsUpdated) {
 
 						//reset values
 						cell.oldValue = cell.value;
 						cell.state.unshift('updating');
 						cell.fnCount = 0;
 						delete cell.valueOverride;
-						cell.calcLast = jS.calcLast;
-						cell.calcDependenciesLast = jS.calcDependenciesLast;
-						cell.needsUpdated = true;
 						cell.rowIndex = rowIndex;
 						cell.colIndex = colIndex;
 
@@ -5882,6 +5879,8 @@ $.sheet = {
 							} catch (e) {
 								cell.value = e.toString();
 							}
+
+							cell.needsUpdated = false;
 
 							jS.callStack--;
 
@@ -5966,9 +5965,7 @@ $.sheet = {
 				updateCellDependencies:function () {
 					var dependencies,
 						dependantCell,
-						i,
-						calcLast = this.calcLast,
-						calcDependenciesLast = this.calcDependenciesLast;
+						i;
 
 					//just in case it was never set
 					dependencies = this.dependencies;
@@ -5995,7 +5992,7 @@ $.sheet = {
 					}
 
 					//if no calculation was performed, then the dependencies have not changed
-					if (this.dependencies.length === 0 && this.calcLast === calcLast && this.calcDependenciesLast === calcDependenciesLast) {
+					if (this.dependencies.length === 0) {
 						this.dependencies = dependencies;
 					}
 				},
@@ -6459,21 +6456,12 @@ $.sheet = {
 
 							return result;
 						} else {
-							return s.error({error:"Function " + fn + " Not Found"});
+							result = new String();
+							result.html = "Function " + fn + " Not Found";
+							return result;
 						}
 					}
 				},
-
-				/**
-				 * Date of last calculation
-				 * @memberOf jS
-				 */
-				calcLast:0,
-
-				/**
-				 * @memberOf jS
-				 */
-				calcDependenciesLast:0,
 
 				/**
 				 * Where jS.spreadsheets are calculated, and returned to their td counterpart
@@ -6491,8 +6479,6 @@ $.sheet = {
 					) {
 						return false;
 					} //readonly is no calc at all
-
-					jS.calcDependenciesLast = jS.calcLast = new Date();
 
 					if (s.loader !== null) {
 						s.loader.cycleCells(sheetIndex, jS.updateCellValue);
@@ -6537,8 +6523,6 @@ $.sheet = {
 				},
 				calcVisibleInit: function(sheetIndex) {
 					sheetIndex = sheetIndex || jS.i;
-
-					jS.calcLast = jS.calcLast || new Date();
 
 					var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
 						ignite = jS.updateCellValue,
@@ -6735,13 +6719,10 @@ $.sheet = {
 
 				/**
 				 * Calculates just the dependencies of a single cell, and their dependencies recursively
-				 * @param {Date} last
 				 * @param {Boolean} skipUndoable
 				 * @memberOf jS
 				 */
-				calcDependencies:function (last, skipUndoable) {
-					last = last || new Date();
-					jS.calcDependenciesLast = last;
+				calcDependencies:function (skipUndoable) {
 
 					if (!skipUndoable) {
 						var cell = this;
@@ -7938,7 +7919,6 @@ $.sheet = {
 						});
 
 						if (id != jS.undo.id || !fn) {
-							jS.calcLast = new Date();
 							jS.undo.draw(after);
 						}
 
@@ -7972,11 +7952,9 @@ $.sheet = {
 							cell.sheetIndex = clone.sheetIndex;
 							cell.rowIndex = loc.row;
 							cell.colIndex = loc.col;
-							cell.calcLast = clone.calcLast;
 							cell.html = clone.html;
 							cell.state = clone.state;
 							cell.jS = clone.jS;
-							cell.calcDependenciesLast = clone.calcDependenciesLast;
 							td.setAttribute('style', clone.style);
 							td.setAttribute('class', clone.cl);
 
@@ -8285,12 +8263,11 @@ $.sheet = {
 						row = jS.spreadsheets[jS.i].splice(val.row.rowIndex, 1);
 						cell = val.cell;
 						cell.value = val.valueOf();
-						cell.calcLast = 0;
 						val.row.parentNode.removeChild(val.row);
 						trSibling.after(val.row);
 						val.row.children[0].innerHTML = trSibling[0].rowIndex + offset;
 						jS.spreadsheets[jS.i].splice(trSibling[0].rowIndex + 1, 0, row[0]);
-						jS.calcDependencies.call(cell, date, true);
+						jS.calcDependencies.call(cell, true);
 					}
 
 					jS.undo.createCells(selected);
@@ -8320,7 +8297,6 @@ $.sheet = {
 					while(selected.length){
 						cell = selected.pop();
 						cell.value = num[selected.length];
-						cell.calcLast = 0;
 						jS.updateCellValue.call(cell);
 						jS.updateCellDependencies.call(cell);
 					}
@@ -8423,9 +8399,8 @@ $.sheet = {
 							td.col = colGroup.children[vals.length + td.cellIndex - 1];
 							td.barTop = td.col.bar;
 							cell.value = td.jSCell.value;
-							cell.calcLast = date;
 							jS.spreadsheets[jS.i][tr.rowIndex].splice(td.cellIndex, 0, cell[0]);
-							jS.calcDependencies.call(cell, date, true);
+							jS.calcDependencies.call(cell, true);
 						}
 					}
 					jS.undo.createCells(selected);
@@ -8455,7 +8430,6 @@ $.sheet = {
 					while(selected.length){
 						cell = selected.pop();
 						cell.value = num[selected.length];
-						cell.calcLast = 0;
 						jS.updateCellValue.call(cell);
 						jS.updateCellDependencies.call(cell);
 					}
