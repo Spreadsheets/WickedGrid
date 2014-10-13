@@ -1419,6 +1419,7 @@ var jFN = $.sheet.fn = {
 				cell.value = this.value;
 				jS.setCellNeedsUpdated(cell);
 				jS.calcDependencies.call(cell);
+				jS.trigger('sheetCellEdited', [cell]);
 			};
 
 			jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
@@ -1509,6 +1510,7 @@ var jFN = $.sheet.fn = {
 						cell.value = jQuery(this).val();
 						jS.setCellNeedsUpdated(cell);
 						jS.calcDependencies.call(cell);
+						jS.trigger('sheetCellEdited', [cell]);
 					};
 
 					inputs.push(input);
@@ -1593,6 +1595,7 @@ var jFN = $.sheet.fn = {
 				}
 				jS.setCellNeedsUpdated(cell);
 				jS.calcDependencies.call(cell);
+				jS.trigger('sheetCellEdited', [cell]);
 			};
 
 			if (!jS.s.editable) {
