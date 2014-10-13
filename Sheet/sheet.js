@@ -7861,27 +7861,20 @@ $.sheet = {
 						window.UndoManager
 							? new UndoManager()
 							: {
-							undo: emptyFN,
-							redo: emptyFN,
-							register: emptyFN,
-							notLoaded: true
-						}),
+								undo: emptyFN,
+								redo: emptyFN,
+								register: emptyFN
+							}),
 					cells:[],
-					id:0,
+					id:-1,
 					createCells: function(cells, fn, id) {
-						if (jS.undo.manager.notLoaded) {
-							this.createCells = function(cells, fn, id) {
-								return fn(cells);
-							};
-							return this.createCells(cells, fn, id);
-						}
-						if (id == u) {
+						if (id === u) {
 							jS.undo.id++;
 							id = jS.undo.id;
 						}
 
 						var before = (new Sheet.CellRange(cells)).clone().cells,
-							after = (fn ? (new Sheet.CellRange(fn(cells)).clone()).cells : before);
+							after = (fn !== u ? (new Sheet.CellRange(fn(cells)).clone()).cells : before);
 
 						before.id = id;
 						after.id = id;
@@ -7895,7 +7888,7 @@ $.sheet = {
 							}
 						});
 
-						if (id != jS.undo.id || !fn) {
+						if (id !== jS.undo.id) {
 							jS.undo.draw(after);
 						}
 
@@ -7916,11 +7909,13 @@ $.sheet = {
 						var i,
 							td,
 							clone,
-							cell;
+							cell,
+							loc;
 
 						for (i = 0; i < clones.length; i++) {
 							clone = clones[i];
-							cell = jS.spreadsheets[clone.sheetIndex][clone.rowIndex][clone.columnIndex];
+							loc = jS.getTdLocation(clone.td);
+							cell = jS.spreadsheets[clone.sheetIndex][loc.row][loc.col];
 
 							cell.value = clone.value;
 							cell.formula = clone.formula;
@@ -7937,7 +7932,7 @@ $.sheet = {
 							td.setAttribute('style', clone.style);
 							td.setAttribute('class', clone.cl);
 
-							jS.setCellNeedsUpdated.call(cell);
+							jS.setCellNeedsUpdated(cell);
 							jS.updateCellValue.call(cell);
 						}
 					}

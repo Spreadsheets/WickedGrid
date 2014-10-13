@@ -21,23 +21,23 @@ STRING                              [A-Za-z0-9]+
 
 ({STRING})(?=[!]) {
 	//js
-		if (yy.obj.type == 'cell') return 'SHEET';
+		if (yy.obj.typeName == 'Sheet.Cell') return 'SHEET';
 		return 'VARIABLE';
 
 	/*php
-		if ($this->type == 'cell') return 'SHEET';
+		if ($this->typeName == 'Sheet.Cell') return 'SHEET';
 		return 'VARIABLE';
 	*/
 }
 ({SINGLE_QUOTED_STRING}|{DOUBLE_QUOTED_STRING})(?=[!]) {
     //js
         yytext = yytext.substring(1, yytext.length - 1);
-        if (yy.obj.type == 'cell') return 'SHEET';
+        if (yy.obj.typeName == 'Sheet.Cell') return 'SHEET';
         return 'VARIABLE';
 
     /*php
         $yytext = substr($yytext, 1, -1);
-        if ($this->type == 'cell') return 'SHEET';
+        if ($this->typeName == 'Sheet.Cell') return 'SHEET';
         return 'VARIABLE';
     */
 }

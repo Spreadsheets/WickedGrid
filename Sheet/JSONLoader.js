@@ -579,7 +579,9 @@
 			jS.i = i;
 
 			return this.json = output;
-		}
+		},
+		type: Constructor,
+		typeName: 'Sheet.JSONLoader'
 	};
 
 	return Constructor;

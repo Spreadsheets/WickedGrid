@@ -447,7 +447,9 @@
 			}
 
 			return output;
-		}
+		},
+		type: Constructor,
+		typeName: 'Sheet.XMLLoader'
 	};
 
 	return Constructor;
