@@ -57,8 +57,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		typeName: 'Sheet.Cell'
 	};
 
-
-
 	return Constructor;
 })();Sheet.CellRange = (function() {
 	function Constructor(cells) {
@@ -1265,18 +1263,19 @@ Sheet.StyleUpdater = (function(document) {
 					}
 				}
 
-				if (cell.loadedFrom === undefined) {
+				if (cell.loadedFrom === null) {
 					cell.loadedFrom = jsonCell;
 				}
 
 				td.className = jsonCell['class'] || '';
 				td.setAttribute('style', jsonCell['style'] || '');
 
-				if (jsonCell['rowspan']) td.setAttribute('rowspan', jsonCell['rowspan'] || '');
-				if (jsonCell['colspan']) td.setAttribute('colspan', jsonCell['colspan'] || '');
-				if (jsonCell['uneditable']) td.setAttribute('data-uneditable', jsonCell['uneditable'] || '');
-				if (jsonCell['id']) {
+				if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan'] || '');
+				if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan'] || '');
+				if (jsonCell['uneditable'] !== undefined) td.setAttribute('data-uneditable', jsonCell['uneditable'] || '');
+				if (jsonCell['id'] !== undefined) {
 					td.setAttribute('id', jsonCell['id']);
+					cell.id = jsonCell['id'];
 				}
 			} else {
 				cell = createCellFn(td);

@@ -107,18 +107,18 @@
 					}
 				}
 
-				if (cell.loadedFrom === undefined) {
+				if (cell.loadedFrom === null) {
 					cell.loadedFrom = jsonCell;
 				}
 
-				td.className = jsonCell['class'] || '';
-				td.setAttribute('style', jsonCell['style'] || '');
-
-				if (jsonCell['rowspan']) td.setAttribute('rowspan', jsonCell['rowspan'] || '');
-				if (jsonCell['colspan']) td.setAttribute('colspan', jsonCell['colspan'] || '');
-				if (jsonCell['uneditable']) td.setAttribute('data-uneditable', jsonCell['uneditable'] || '');
-				if (jsonCell['id']) {
+				if (jsonCell['class'] !== undefined) td.className = jsonCell['class'];
+				if (jsonCell['style'] !== undefined) td.setAttribute('style', jsonCell['style']);
+				if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan']);
+				if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan']);
+				if (jsonCell['uneditable'] !== undefined) td.setAttribute('data-uneditable', jsonCell['uneditable']);
+				if (jsonCell['id'] !== undefined) {
 					td.setAttribute('id', jsonCell['id']);
+					cell.id = jsonCell['id'];
 				}
 			} else {
 				cell = createCellFn(td);
