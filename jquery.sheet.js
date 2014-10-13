@@ -1267,12 +1267,11 @@ Sheet.StyleUpdater = (function(document) {
 					cell.loadedFrom = jsonCell;
 				}
 
-				td.className = jsonCell['class'] || '';
-				td.setAttribute('style', jsonCell['style'] || '');
-
-				if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan'] || '');
-				if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan'] || '');
-				if (jsonCell['uneditable'] !== undefined) td.setAttribute('data-uneditable', jsonCell['uneditable'] || '');
+				if (jsonCell['class'] !== undefined) td.className = jsonCell['class'];
+				if (jsonCell['style'] !== undefined) td.setAttribute('style', jsonCell['style']);
+				if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan']);
+				if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan']);
+				if (jsonCell['uneditable'] !== undefined) td.setAttribute('data-uneditable', jsonCell['uneditable']);
 				if (jsonCell['id'] !== undefined) {
 					td.setAttribute('id', jsonCell['id']);
 					cell.id = jsonCell['id'];
@@ -12741,6 +12740,7 @@ var jFN = $.sheet.fn = {
 				cell.value = this.value;
 				jS.setCellNeedsUpdated(cell);
 				jS.calcDependencies.call(cell);
+				jS.trigger('sheetCellEdited', [cell]);
 			};
 
 			jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
@@ -12831,6 +12831,7 @@ var jFN = $.sheet.fn = {
 						cell.value = jQuery(this).val();
 						jS.setCellNeedsUpdated(cell);
 						jS.calcDependencies.call(cell);
+						jS.trigger('sheetCellEdited', [cell]);
 					};
 
 					inputs.push(input);
@@ -12915,6 +12916,7 @@ var jFN = $.sheet.fn = {
 				}
 				jS.setCellNeedsUpdated(cell);
 				jS.calcDependencies.call(cell);
+				jS.trigger('sheetCellEdited', [cell]);
 			};
 
 			if (!jS.s.editable) {
