@@ -43,7 +43,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		this.sheetIndex = sheetIndex;
 		this.rowIndex = null;
 		this.columnIndex = null;
-		this.type = 'cell';
 		this.jS = (jS !== undefined ? jS : null);
 		this.state = [];
 		this.needsUpdated = true;
@@ -54,7 +53,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 	Constructor.prototype = {
 
+		type: Constructor,
+		typeName: 'Sheet.Cell'
 	};
+
+
 
 	return Constructor;
 })();Sheet.CellRange = (function() {
@@ -98,7 +101,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 
 			return new Constructor(clones);
-		}
+		},
+		type: Constructor,
+		typeName: 'Sheet.CellRange'
 	};
 
 	return Constructor;
@@ -1732,7 +1737,9 @@ Sheet.StyleUpdater = (function(document) {
 			jS.i = i;
 
 			return this.json = output;
-		}
+		},
+		type: Constructor,
+		typeName: 'Sheet.JSONLoader'
 	};
 
 	return Constructor;
@@ -2185,7 +2192,9 @@ Sheet.StyleUpdater = (function(document) {
 			}
 
 			return output;
-		}
+		},
+		type: Constructor,
+		typeName: 'Sheet.XMLLoader'
 	};
 
 	return Constructor;
@@ -10052,27 +10061,20 @@ $.sheet = {
 						window.UndoManager
 							? new UndoManager()
 							: {
-							undo: emptyFN,
-							redo: emptyFN,
-							register: emptyFN,
-							notLoaded: true
-						}),
+								undo: emptyFN,
+								redo: emptyFN,
+								register: emptyFN
+							}),
 					cells:[],
-					id:0,
+					id:-1,
 					createCells: function(cells, fn, id) {
-						if (jS.undo.manager.notLoaded) {
-							this.createCells = function(cells, fn, id) {
-								return fn(cells);
-							};
-							return this.createCells(cells, fn, id);
-						}
-						if (id == u) {
+						if (id === u) {
 							jS.undo.id++;
 							id = jS.undo.id;
 						}
 
 						var before = (new Sheet.CellRange(cells)).clone().cells,
-							after = (fn ? (new Sheet.CellRange(fn(cells)).clone()).cells : before);
+							after = (fn !== u ? (new Sheet.CellRange(fn(cells)).clone()).cells : before);
 
 						before.id = id;
 						after.id = id;
@@ -10086,7 +10088,7 @@ $.sheet = {
 							}
 						});
 
-						if (id != jS.undo.id || !fn) {
+						if (id !== jS.undo.id) {
 							jS.undo.draw(after);
 						}
 
@@ -10107,11 +10109,13 @@ $.sheet = {
 						var i,
 							td,
 							clone,
-							cell;
+							cell,
+							loc;
 
 						for (i = 0; i < clones.length; i++) {
 							clone = clones[i];
-							cell = jS.spreadsheets[clone.sheetIndex][clone.rowIndex][clone.columnIndex];
+							loc = jS.getTdLocation(clone.td);
+							cell = jS.spreadsheets[clone.sheetIndex][loc.row][loc.col];
 
 							cell.value = clone.value;
 							cell.formula = clone.formula;
@@ -10128,7 +10132,7 @@ $.sheet = {
 							td.setAttribute('style', clone.style);
 							td.setAttribute('class', clone.cl);
 
-							jS.setCellNeedsUpdated.call(cell);
+							jS.setCellNeedsUpdated(cell);
 							jS.updateCellValue.call(cell);
 						}
 					}
@@ -14920,11 +14924,11 @@ case 3:return 8;
 break;
 case 4:
 	//js
-		if (yy.obj.type == 'cell') return 31;
+		if (yy.obj.typeName == 'Sheet.Cell') return 31;
 		return 38;
 
 	/*php
-		if ($this->type == 'cell') return 31;
+		if ($this->typeName == 'Sheet.Cell') return 31;
 		return 38;
 	*/
 
@@ -14932,12 +14936,12 @@ break;
 case 5:
     //js
         yy_.yytext = yy_.yytext.substring(1, yy_.yytext.length - 1);
-        if (yy.obj.type == 'cell') return 31;
+        if (yy.obj.typeName == 'Sheet.Cell') return 31;
         return 38;
 
     /*php
         $yy_.yytext = substr($yy_.yytext, 1, -1);
-        if ($this->type == 'cell') return 31;
+        if ($this->typeName == 'Sheet.Cell') return 31;
         return 38;
     */
 

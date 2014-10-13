@@ -9,7 +9,6 @@ Sheet.Cell = (function() {
 		this.sheetIndex = sheetIndex;
 		this.rowIndex = null;
 		this.columnIndex = null;
-		this.type = 'cell';
 		this.jS = (jS !== undefined ? jS : null);
 		this.state = [];
 		this.needsUpdated = true;
@@ -20,6 +19,8 @@ Sheet.Cell = (function() {
 
 	Constructor.prototype = {
 
+		type: Constructor,
+		typeName: 'Sheet.Cell'
 	};
 
 	return Constructor;

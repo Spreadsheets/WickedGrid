@@ -2957,7 +2957,7 @@ case 3:return 8;
 break;
 case 4:
 	
-		if ($this->type == 'cell') return 31;
+		if ($this->typeName == 'Sheet.Cell') return 31;
 		return 38;
 	
 
@@ -2965,7 +2965,7 @@ break;
 case 5:
     
         $this->yy->text = substr($this->yy->text, 1, -1);
-        if ($this->type == 'cell') return 31;
+        if ($this->typeName == 'Sheet.Cell') return 31;
         return 38;
     
 

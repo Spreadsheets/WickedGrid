@@ -39,7 +39,9 @@ Sheet.CellRange = (function() {
 			}
 
 			return new Constructor(clones);
-		}
+		},
+		type: Constructor,
+		typeName: 'Sheet.CellRange'
 	};
 
 	return Constructor;

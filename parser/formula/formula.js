@@ -1131,11 +1131,11 @@ case 3:return 8;
 break;
 case 4:
 	//js
-		if (yy.obj.type == 'cell') return 31;
+		if (yy.obj.typeName == 'Sheet.Cell') return 31;
 		return 38;
 
 	/*php
-		if ($this->type == 'cell') return 31;
+		if ($this->typeName == 'Sheet.Cell') return 31;
 		return 38;
 	*/
 
@@ -1143,12 +1143,12 @@ break;
 case 5:
     //js
         yy_.yytext = yy_.yytext.substring(1, yy_.yytext.length - 1);
-        if (yy.obj.type == 'cell') return 31;
+        if (yy.obj.typeName == 'Sheet.Cell') return 31;
         return 38;
 
     /*php
         $yy_.yytext = substr($yy_.yytext, 1, -1);
-        if ($this->type == 'cell') return 31;
+        if ($this->typeName == 'Sheet.Cell') return 31;
         return 38;
     */
 
