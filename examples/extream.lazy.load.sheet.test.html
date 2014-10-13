@@ -8,7 +8,7 @@
 	<meta content="utf-8" http-equiv="encoding">
 	<title>jQuery.sheet - The Ajax Spreadsheet DTS Lazy Loading</title>
 	<script type="text/javascript" src="../bower_components/jquery-legacy/dist/jquery.js"></script>
-	<script type="text/javascript" src="../parser/formula/formula.js"></script>
+	<script type="text/javascript" src="customFormula.js"></script>
 	<script type="text/javascript" src="../jquery.sheet.js"></script>
 	<script type="text/javascript">
 		$.sheet.preLoad('../');
@@ -67,7 +67,8 @@
 							}
 
 							console.log(edited);
-						}
+						},
+						formulaFunctions: formulaFunctions
 					});
 
 				//$.sheet.instance[0].calcAll();
