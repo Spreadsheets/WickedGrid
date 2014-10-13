@@ -21,15 +21,18 @@ Sheet.CellRange = (function() {
 					dependencies: cell.dependencies,
 					needsUpdated: cell.needsUpdated,
 					calcCount: cell.calcCount,
-					sheet: cell.sheet,
-					calcLast: cell.calcLast,
+					sheetIndex: cell.sheetIndex,
+					rowIndex: cell.rowIndex,
+					columnIndex: cell.columnIndex,
 					html: cell.html,
 					state: cell.state,
 					jS: cell.jS,
-					calcDependenciesLast: cell.calcDependenciesLast,
 					style: cell.style,
 					cl: cell.cl,
-					id: cell.id
+					id: cell.id,
+					cellType: cell.cellType,
+					type: cell.type,
+					uneditable: cell.uneditable
 				};
 
 				clones.push(clone);
