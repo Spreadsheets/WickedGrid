@@ -1272,10 +1272,12 @@ Sheet.StyleUpdater = (function(document) {
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex, jsonCell) {
 			var jitCell,
+				id,
 				value,
 				formula,
 				cellType,
 				uneditable,
+				hasId,
 				hasValue,
 				hasFormula,
 				hasCellType,
@@ -1292,11 +1294,14 @@ Sheet.StyleUpdater = (function(document) {
 				return jsonCell.getCell();
 			}
 
+			id = jsonCell['id'];
 			value = jsonCell['value'];
 			formula = jsonCell['formula'];
 			cellType = jsonCell['cellType'];
 			uneditable = jsonCell['uneditable'];
 
+
+			hasId = (id !== undefined && id !== null);
 			hasValue = (value !== undefined && value !== null);
 			hasFormula = (formula !== undefined && formula !== null);
 			hasCellType = (cellType !== undefined && cellType !== null);
@@ -1316,7 +1321,7 @@ Sheet.StyleUpdater = (function(document) {
 				rowIndex: rowIndex,
 				colIndex: columnIndex,
 				dependencies: [],
-				id: null,
+				id: hasId ? id : null,
 				loadedFrom: jsonCell,
 				needsUpdated: hasFormula
 			};
