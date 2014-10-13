@@ -32,7 +32,32 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	excelSelectModel: 0,
 	googleDriveSelectModel: 1,
 	openOfficeSelectModel: 2
-};Sheet.CellRange = (function() {
+};Sheet.Cell = (function() {
+	function Constructor(sheetIndex, td, jS) {
+		this.td = (td !== undefined ? td : null);
+		this.dependencies = [];
+		this.formula = '';
+		this.cellType = null;
+		this.value = '';
+		this.calcCount = 0;
+		this.sheetIndex = sheetIndex;
+		this.rowIndex = null;
+		this.columnIndex = null;
+		this.type = 'cell';
+		this.jS = (jS !== undefined ? jS : null);
+		this.state = [];
+		this.needsUpdated = true;
+		this.uneditable = false;
+		this.id = null;
+		this.loadedFrom = null;
+	}
+
+	Constructor.prototype = {
+
+	};
+
+	return Constructor;
+})();Sheet.CellRange = (function() {
 	function Constructor(cells) {
 		this.cells = cells || [];
 	}
@@ -55,15 +80,18 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					dependencies: cell.dependencies,
 					needsUpdated: cell.needsUpdated,
 					calcCount: cell.calcCount,
-					sheet: cell.sheet,
-					calcLast: cell.calcLast,
+					sheetIndex: cell.sheetIndex,
+					rowIndex: cell.rowIndex,
+					columnIndex: cell.columnIndex,
 					html: cell.html,
 					state: cell.state,
 					jS: cell.jS,
-					calcDependenciesLast: cell.calcDependenciesLast,
 					style: cell.style,
 					cl: cell.cl,
-					id: cell.id
+					id: cell.id,
+					cellType: cell.cellType,
+					type: cell.type,
+					uneditable: cell.uneditable
 				};
 
 				clones.push(clone);
@@ -1271,6 +1299,16 @@ Sheet.StyleUpdater = (function(document) {
 			return cell;
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex, jsonCell) {
+			if (jsonCell === undefined) {
+				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
+			}
+
+			if (jsonCell === null) return null;
+
+			if (jsonCell.getCell !== undefined) {
+				return jsonCell.getCell();
+			}
+
 			var jitCell,
 				id,
 				value,
@@ -1283,23 +1321,11 @@ Sheet.StyleUpdater = (function(document) {
 				hasCellType,
 				hasUneditable;
 
-
-			if (jsonCell === undefined) {
-				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
-			}
-
-			if (jsonCell === null) return null;
-
-			if (jsonCell.getCell !== undefined) {
-				return jsonCell.getCell();
-			}
-
 			id = jsonCell['id'];
 			value = jsonCell['value'];
 			formula = jsonCell['formula'];
 			cellType = jsonCell['cellType'];
 			uneditable = jsonCell['uneditable'];
-
 
 			hasId = (id !== undefined && id !== null);
 			hasValue = (value !== undefined && value !== null);
@@ -1307,26 +1333,26 @@ Sheet.StyleUpdater = (function(document) {
 			hasCellType = (cellType !== undefined && cellType !== null);
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
 
-			jitCell = {
-				td: null,
-				html: '',
-				state: [],
-				calcCount: 0,
-				cellType: hasCellType ? cellType : null,
-				formula: hasFormula ? formula : '',
-				value: hasValue ? new String(value) : new String(),
-				uneditable: hasUneditable ? jsonCell['uneditable'] : null,
-				type: 'cell',
-				sheetIndex: sheetIndex,
-				rowIndex: rowIndex,
-				colIndex: columnIndex,
-				dependencies: [],
-				id: hasId ? id : null,
-				loadedFrom: jsonCell,
-				needsUpdated: hasFormula
-			};
+			jitCell = new Sheet.Cell(sheetIndex);
+			jitCell.rowIndex = rowIndex;
+			jitCell.columnIndex = columnIndex;
+			jitCell.loadedFrom = jsonCell;
+			jitCell.needsUpdated = hasFormula;
+
+			if (hasCellType) jitCell.cellType = cellType;
+			if (hasFormula) jitCell.formula = formula;
+			if (hasUneditable) jitCell.uneditable = uneditable;
+			if (hasId) jitCell.id = id;
+
+			if (hasValue) {
+				jitCell.value = new String(value);
+			}
+			else {
+				jitCell.value = new String();
+			}
 
 			jitCell.value.cell = jitCell;
+
 
 			jsonCell.getCell = function() {
 				return jitCell;
@@ -3751,21 +3777,15 @@ $.sheet = {
 						return;
 					}
 
-					jSCell = row[colIndex] = td.jSCell = { //create cell
-						td:td,
-						dependencies: [],
-						formula:td.getAttribute('data-formula') || '',
-						cellType:td.getAttribute('data-celltype') || null,
-						value:td.textContent || td.innerText || '',
-						calcCount:calcCount || 0,
-						sheetIndex:sheetIndex,
-						type: 'cell',
-						jS: jS,
-						state: [],
-						needsUpdated: true,
-						uneditable: td.getAttribute('data-uneditable') || false,
-						id: td.getAttribute('id') || null
-					};
+					jSCell = row[colIndex] = td.jSCell = new Sheet.Cell(sheetIndex, td, jS);
+
+					jSCell.formula = td.getAttribute('data-formula');
+					jSCell.cellType = td.getAttribute('data-celltype');
+					jSCell.value = td.textContent || td.innerText;
+					jSCell.calcCount = calcCount || 0;
+					jSCell.needsUpdated = jSCell.formula.length > 0;
+					jSCell.uneditable = td.getAttribute('data-uneditable') || false;
+					jSCell.id = td.getAttribute('id') || null;
 
 					if (jSCell.formula.length > 0 && jSCell.formula.charAt(0) == '=') {
 						jSCell.formula = jSCell.formula.substring(1);
@@ -3834,23 +3854,6 @@ $.sheet = {
 
 					//attach table to td
 					td.table = table;
-				},
-				createUnboundCell: function(sheetIndex, td) {
-					return td.jSCell = { //create cell
-						td: td,
-						dependencies: [],
-						formula: '',
-						cellType: null,
-						value: '',
-						calcCount: 0,
-						sheetIndex: sheetIndex,
-						type: 'cell',
-						jS: jS,
-						state: [],
-						needsUpdated: true,
-						uneditable: false,
-						id: null
-					};
 				},
 
 				/**
@@ -4082,7 +4085,7 @@ $.sheet = {
 								if (setupCell !== null) {
 									o.setCreateCellFn(function (row, at, rowParent) {
 										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-												return jS.createUnboundCell(jS.i, td);
+												return td.jSCell = new Sheet.Cell(jS.i, td, jS);
 											}),
 											td = cell.td,
 											spreadsheetRow = spreadsheet[row];
@@ -4170,7 +4173,7 @@ $.sheet = {
 								if (setupCell !== null) {
 									o.setCreateCellFn(function (row, at, createdBar) {
 										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-												return jS.createUnboundCell(jS.i, td);
+												return td.jSCell = new Sheet.Cell(jS.i, td, jS);
 											}),
 											td = cell.td,
 											rowParent = tBody.children[row],
@@ -8086,7 +8089,7 @@ $.sheet = {
 						cache = jS.filterValue.call(cell);
 
 						if (s.loader !== null) {
-							if (cell.hasOwnProperty('loadedFrom')) {
+							if (cell.loadedFrom !== null) {
 								s.loader.setCellAttributes(cell.loadedFrom, {
 									'cache': cache,
 									'formula': cell.formula,
@@ -10102,11 +10105,13 @@ $.sheet = {
 					},
 					draw: function(clones) {
 						var i,
-							td;
+							td,
+							clone,
+							cell;
+
 						for (i = 0; i < clones.length; i++) {
-							var clone = clones[i],
-								loc = jS.getTdLocation(clone.td),
-								cell = jS.spreadsheets[clone.sheetIndex][loc.row][loc.col];
+							clone = clones[i];
+							cell = jS.spreadsheets[clone.sheetIndex][clone.rowIndex][clone.columnIndex];
 
 							cell.value = clone.value;
 							cell.formula = clone.formula;
@@ -10116,13 +10121,14 @@ $.sheet = {
 							cell.calcCount = clone.calcCount;
 							cell.sheetIndex = clone.sheetIndex;
 							cell.rowIndex = loc.row;
-							cell.colIndex = loc.col;
+							cell.columnIndex = loc.col;
 							cell.html = clone.html;
 							cell.state = clone.state;
 							cell.jS = clone.jS;
 							td.setAttribute('style', clone.style);
 							td.setAttribute('class', clone.cl);
 
+							jS.setCellNeedsUpdated.call(cell);
 							jS.updateCellValue.call(cell);
 						}
 					}
