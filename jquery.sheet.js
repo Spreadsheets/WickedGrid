@@ -3005,7 +3005,6 @@ $.fn.extend({
 				&& (cell = jS.getCell(rowIndex, colIndex, sheetIndex))
 			) {
 			try {
-				cell.html = html;
 				jS.updateCellValue.call(cell, sheetIndex, rowIndex, colIndex);
 			} catch (e) {}
 		}
@@ -6703,7 +6702,6 @@ $.sheet = {
 								if (_td.cellIndex != loc.col || _td.parentNode.rowIndex != loc.row) {
 									cell.formula = null;
 									cell.value = '';
-									cell.html = '';
 									cell.defer = td.jSCell;
 
 									_td.removeAttribute('data-formula');
@@ -8116,18 +8114,22 @@ $.sheet = {
 						cell.value === u
 						|| cell.value === null
 					) {
-						cell.value = new String('');
+						cell.value = new String();
 					}
-
-					cell.value.cell = cell;
 
 					if (cell.value.cell === u) {
 						switch (typeof(cell.value)) {
+							case 'number':
+								cell.value = new Number(cell.value);
+								break;
+							case 'boolean':
+								cell.value = new Boolean(cell.value);
+								break;
 							case 'string':
-							default:
 								cell.value = new String(cell.value);
-								cell.value.cell = cell;
+								break;
 						}
+						cell.value.cell = cell;
 					}
 
 					return (cell.valueOverride !== u ? cell.valueOverride : cell.value);
@@ -10124,7 +10126,6 @@ $.sheet = {
 							cell.sheetIndex = clone.sheetIndex;
 							cell.rowIndex = loc.row;
 							cell.columnIndex = loc.col;
-							cell.html = clone.html;
 							cell.state = clone.state;
 							cell.jS = clone.jS;
 							td.setAttribute('style', clone.style);
