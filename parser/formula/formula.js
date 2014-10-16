@@ -856,7 +856,7 @@ unput:function (ch) {
         var len = ch.length;
         var lines = ch.split(/(?:\r\n?|\n)/g);
 
-        this._input.unCh(len);
+        this._input.unCh(len, ch);
         this.yytext = this.yytext.substr(0, this.yytext.length - len);
         //this.yyleng -= len;
         this.offset -= len;
@@ -1326,9 +1326,10 @@ Parser.InputReader = (function(Math, parser, lexer) {
                 return ch;
             },
 
-            unCh: function unCh(chLength) {
+            unCh: function unCh(chLength, ch) {
                 this.position -= chLength;
                 this.position = Math.max(0, this.position);
+	            this.input = ch + this.input;
                 this.done = (this.position >= this.length);
             },
 
