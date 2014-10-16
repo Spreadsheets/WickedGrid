@@ -498,13 +498,15 @@ if (typeof(window) !== 'undefined') {
 			this.yy = {
 				parseError: function(msg, hash) {
 					this.done = true;
-					var result = new String(msg);
+					var result = new String();
+					result.html = '<pre>' + msg + '</pre>';
 					result.hash = hash;
 					return result;
 				},
 				lexerError: function(msg, hash) {
 					this.done = true;
-					var result = new String(msg);
+					var result = new String();
+					result.html = '<pre>' + msg + '</pre>';
                     result.hash = hash;
                     return result;
 				}

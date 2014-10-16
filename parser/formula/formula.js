@@ -772,13 +772,15 @@ if (typeof(window) !== 'undefined') {
 			this.yy = {
 				parseError: function(msg, hash) {
 					this.done = true;
-					var result = new String(msg);
+					var result = new String();
+					result.html = '<pre>' + msg + '</pre>';
 					result.hash = hash;
 					return result;
 				},
 				lexerError: function(msg, hash) {
 					this.done = true;
-					var result = new String(msg);
+					var result = new String();
+					result.html = '<pre>' + msg + '</pre>';
                     result.hash = hash;
                     return result;
 				}
@@ -810,10 +812,10 @@ parseError:function parseError(str, hash) {
 // resets the lexer, sets new input
 setInput:function (input, yy) {
         this.yy = yy || this.yy || {};
-        this._input = input;
+        this._input = new Parser.InputReader(input);
         this._more = this._backtrack = this.done = false;
         this.yylineno = this.yyleng = 0;
-        this.yytext = this.matched = this.match = '';
+        this.yytext = this.match = '';
         this.conditionStack = ['INITIAL'];
         this.yylloc = {
             first_line: 1,
@@ -830,12 +832,11 @@ setInput:function (input, yy) {
 
 // consumes and returns one char from the input
 input:function () {
-        var ch = this._input[0];
+        var ch = this._input.ch();
         this.yytext += ch;
         this.yyleng++;
         this.offset++;
         this.match += ch;
-        this.matched += ch;
         var lines = ch.match(/(?:\r\n?|\n).*/g);
         if (lines) {
             this.yylineno++;
@@ -847,7 +848,6 @@ input:function () {
             this.yylloc.range[1]++;
         }
 
-        this._input = this._input.slice(1);
         return ch;
     },
 
@@ -856,13 +856,12 @@ unput:function (ch) {
         var len = ch.length;
         var lines = ch.split(/(?:\r\n?|\n)/g);
 
-        this._input = ch + this._input;
+        this._input.unCh(len);
         this.yytext = this.yytext.substr(0, this.yytext.length - len);
         //this.yyleng -= len;
         this.offset -= len;
         var oldLines = this.match.split(/(?:\r\n?|\n)/g);
         this.match = this.match.substr(0, this.match.length - 1);
-        this.matched = this.matched.substr(0, this.matched.length - 1);
 
         if (lines.length - 1) {
             this.yylineno -= lines.length - 1;
@@ -914,17 +913,21 @@ less:function (n) {
 
 // displays already matched input, i.e. for error messages
 pastInput:function () {
-        var past = this.matched.substr(0, this.matched.length - this.match.length);
+        var matched = this._input.toString();
+        var past = matched.substr(0, matched.length - this.match.length);
         return (past.length > 20 ? '...':'') + past.substr(-20).replace(/\n/g, "");
     },
 
 // displays upcoming input, i.e. for error messages
 upcomingInput:function () {
-        var next = this.match;
-        if (next.length < 20) {
-            next += this._input.substr(0, 20-next.length);
+        if (!this.done) {
+            var next = this.match;
+            if (next.length < 20) {
+                next += this._input.toString().substr(0, 20 - next.length);
+            }
+            return (next.substr(0, 20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
         }
-        return (next.substr(0,20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
+        return '';
     },
 
 // displays the character position where the lexing error occurred, i.e. for error messages
@@ -938,7 +941,8 @@ showPosition:function () {
 test_match:function (match, indexed_rule) {
         var token,
             lines,
-            backup;
+            backup,
+            k;
 
         if (this.options.backtrack_lexer) {
             // save context
@@ -953,11 +957,9 @@ test_match:function (match, indexed_rule) {
                 yytext: this.yytext,
                 match: this.match,
                 matches: this.matches,
-                matched: this.matched,
                 yyleng: this.yyleng,
                 offset: this.offset,
                 _more: this._more,
-                _input: this._input,
                 yy: this.yy,
                 conditionStack: this.conditionStack.slice(0),
                 done: this.done
@@ -967,7 +969,7 @@ test_match:function (match, indexed_rule) {
             }
         }
 
-        lines = match[0].match(/(?:\r\n?|\n).*/g);
+        lines = match.match(/(?:\r\n?|\n).*/g);
         if (lines) {
             this.yylineno += lines.length;
         }
@@ -975,12 +977,12 @@ test_match:function (match, indexed_rule) {
             first_line: this.yylloc.last_line,
             last_line: this.yylineno + 1,
             first_column: this.yylloc.last_column,
-            last_column: lines ?
+            last_column: lines !== null ?
                          lines[lines.length - 1].length - lines[lines.length - 1].match(/\r?\n?/)[0].length :
-                         this.yylloc.last_column + match[0].length
+                         this.yylloc.last_column + match.length
         };
-        this.yytext += match[0];
-        this.match += match[0];
+        this.yytext += match;
+        this.match += match;
         this.matches = match;
         this.yyleng = this.yytext.length;
         if (this.options.ranges) {
@@ -988,22 +990,21 @@ test_match:function (match, indexed_rule) {
         }
         this._more = false;
         this._backtrack = false;
-        this._input = this._input.slice(match[0].length);
-        this.matched += match[0];
+        this._input.addMatch(match);
         token = this.performAction.call(this, this.yy, this, indexed_rule, this.conditionStack[this.conditionStack.length - 1]);
-        if (this.done && this._input) {
+        if (this.done && !this._input.done) {
             this.done = false;
         }
         if (token) {
             return token;
         } else if (this._backtrack) {
             // recover context
-            for (var k in backup) {
+            for (k in backup) if (backup.hasOwnProperty(k)) {
                 this[k] = backup[k];
             }
-            return false; // rule action called reject() implying the next rule should be tested instead.
+            return null; // rule action called reject() implying the next rule should be tested instead.
         }
-        return false;
+        return null;
     },
 
 // return next match in input
@@ -1011,7 +1012,7 @@ next:function () {
         if (this.done) {
             return this.EOF;
         }
-        if (!this._input) {
+        if (this._input.done) {
             this.done = true;
         }
 
@@ -1026,34 +1027,34 @@ next:function () {
         var rules = this._currentRules();
         for (var i = 0; i < rules.length; i++) {
             tempMatch = this._input.match(this.rules[rules[i]]);
-            if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
-                match = tempMatch;
+            if (tempMatch !== null && (match === undefined || tempMatch[0].length > match.length)) {
+                match = tempMatch[0];
                 index = i;
                 if (this.options.backtrack_lexer) {
-                    token = this.test_match(tempMatch, rules[i]);
-                    if (token !== false) {
+                    token = this.test_match(tempMatch[0], rules[i]);
+                    if (token !== null) {
                         return token;
                     } else if (this._backtrack) {
-                        match = false;
+                        match = undefined;
                         continue; // rule action called reject() implying a rule MISmatch.
                     } else {
                         // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-                        return false;
+                        return null;
                     }
                 } else if (!this.options.flex) {
                     break;
                 }
             }
         }
-        if (match) {
+        if (match !== undefined) {
             token = this.test_match(match, rules[index]);
-            if (token !== false) {
+            if (token !== null) {
                 return token;
             }
             // else: this is a lexer rule which consumes input without producing a token (e.g. whitespace)
-            return false;
+            return null;
         }
-        if (this._input === "") {
+        if (this._input.done) {
             return this.EOF;
         } else {
             return this.parseError('Lexical error on line ' + (this.yylineno + 1) + '. Unrecognized text.\n' + this.showPosition(), {
@@ -1067,7 +1068,7 @@ next:function () {
 // return next match that has a token
 lex:function lex() {
         var r = this.next();
-        if (r) {
+        if (r !== null) {
             return r;
         } else {
             return this.lex();
@@ -1237,8 +1238,126 @@ return lexer;
 parser.lexer = lexer;
 function Parser () {
   this.yy = {};
-}
-Parser.prototype = parser;parser.Parser = Parser;
+}Parser.prototype = parser;
+
+/**
+ * in input reader for parser/lexer, uses sticky behavior when available, falls back to standard string modification when it is not
+ * @param {String} input
+ */
+Parser.InputReader = (function(Math, parser, lexer) {
+    var stickyCompatible = RegExp.prototype.sticky !== undefined,
+        rules,
+        rule,
+        max,
+        i;
+
+    function Parser_InputReader(input) {
+        this.done = false;
+        this.input = input;
+        this.length = input.length;
+        this.matches = [];
+        this.position = 0;
+    }
+
+	//sticky implementation
+    if (stickyCompatible) {
+        Parser_InputReader.prototype = {
+            addMatch: function addMatch(match) {
+                this.matches.push(match);
+                this.position += match.length;
+                this.done = (this.position >= this.length);
+            },
+
+            ch: function ch() {
+                var ch = this.input[this.position];
+                this.addMatch(ch);
+                return ch;
+            },
+
+            unCh: function unCh(chLength) {
+                this.position -= chLength;
+                this.position = Math.max(0, this.position);
+                this.done = (this.position >= this.length);
+            },
+
+            substring: function substring(start, end) {
+                start = (start != 0 ? this.position + start : this.position);
+                end = (end != 0 ? start + end : this.length);
+                return this.input.substring(start, end);
+            },
+
+            match: function match(rule) {
+                var match;
+                rule.lastIndex = this.position;
+                if ((match = rule.exec(this.input)) !== null) {
+                    return match;
+                }
+                return null;
+            },
+
+            toString: function toString() {
+                return this.matches.join('');
+            }
+        };
+
+        rules = lexer.rules;
+        max = rules.length;
+        i = 0;
+        for(;i < max; i++) {
+            rule = rules[i];
+            rules[i] = new RegExp(rule.source.substring(1),'y');
+        }
+    }
+
+    //fallback to non-sticky implementations
+    else {
+
+        Parser_InputReader.prototype = {
+            addMatch: function addMatch(match) {
+                this.input = this.input.slice(match.length);
+                this.matches.push(match);
+                this.position += match.length;
+                this.done = (this.position >= this.length);
+            },
+
+            ch: function ch() {
+                var ch = this.input[0];
+                this.addMatch(ch);
+                return ch;
+            },
+
+            unCh: function unCh(chLength) {
+                this.position -= chLength;
+                this.position = Math.max(0, this.position);
+                this.done = (this.position >= this.length);
+            },
+
+            substring: function substring(start, end) {
+                start = (start != 0 ? this.position + start : this.position);
+                end = (end != 0 ? start + end : this.length);
+                return this.input.substring(start, end);
+            },
+
+            match: function match(rule) {
+                var match,
+                    input = this.input;
+
+                if ((match = input.match(rule)) !== null) {
+                    return match;
+                }
+
+                return null;
+            },
+
+            toString: function toString() {
+                return this.matches.join('');
+            }
+        };
+    }
+
+    return Parser_InputReader;
+})(Math, parser, lexer);
+parser.Parser = Parser;
 return new Parser;
 })();
 
