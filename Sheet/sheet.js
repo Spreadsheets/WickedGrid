@@ -497,7 +497,7 @@ $.fn.extend({
 							return false;
 						},
 						"Hide row":function (jS) {
-							jS.toggleHide.row();
+							jS.toggleHideRow();
 							return false;
 						}
 					},
@@ -2778,6 +2778,9 @@ $.sheet = {
 
 						var hasChildren = table.tBody.children.length > 0,
 							enclosure = jS.controlFactory.enclosure(table),
+							settings = jS.s,
+							hiddenRows = settings.hiddenRows[i],
+							hiddenColumns = settings.hiddenColumns[i],
 							pane = enclosure.pane,
 							$pane = $(pane),
 							paneContextmenuEvent = function (e) {
@@ -2900,23 +2903,23 @@ $.sheet = {
 						jS.checkMinSize(table);
 
 						jS.controlFactory.tab();
-
-						var settings = jS.s,
-							hiddenRows = settings.hiddenRows,
-							hiddenColumns = settings.hiddenColumns;
-
-						if (!hiddenRows.length || !hiddenColumns.length) {
-							hiddenRows = table.attributes['data-hiddenrows'] || {value:''};
-							hiddenColumns = table.attributes['data-hiddencolumns'] || {value:''};
-
-							if (hiddenRows.value.length > 0)
-								hiddenRows = arrHelpers.toNumbers(hiddenRows.value.split(','));
-
-							if (hiddenColumns.value.length > 0)
-								hiddenColumns = arrHelpers.toNumbers(hiddenColumns.value.split(','));
+						if (settings.loader !== null) {
+								hiddenRows = settings.loader.hiddenRows(i);
+								hiddenColumns = settings.loader.hiddenColumns(i);
 						}
 
-						enclosure.actionUI.hide(hiddenRows, hiddenColumns, jS.rows(table), jS.cols(table));
+						else if (!hiddenRows.length || !hiddenColumns.length) {
+							hiddenRows = table.getAttribute('data-hiddenrows');
+							hiddenColumns = table.getAttribute('data-hiddencolumns');
+
+							if (hiddenRows !== null)
+								hiddenRows = arrHelpers.toNumbers(hiddenRows.split(','));
+
+							if (hiddenColumns !== null)
+								hiddenColumns = arrHelpers.toNumbers(hiddenColumns.split(','));
+						}
+
+						enclosure.actionUI.hide(hiddenRows, hiddenColumns);
 
 						jS.setChanged(true);
 					},
@@ -2932,8 +2935,8 @@ $.sheet = {
 							actionUI = new Sheet.ActionUI(enclosure, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
 							scrollUI = actionUI.scrollUI,
 							pane = actionUI.pane,
-							mostEverScrollLeft = 0,
-							mostEverScrollTop = 0;
+							rows = table.tBody.children,
+							columns = table.colGroup.children;
 
 						table.size = function() { return jS.tableSize(table); };
 						pane.size = function() { return jS.sheetSize(table); };
@@ -2954,15 +2957,13 @@ $.sheet = {
 											yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
 										},
 										function () {
-											if (xUpdated && that.scrollLeft > mostEverScrollLeft) {
-												mostEverScrollLeft = that.scrollLeft;
+											if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
 												jS.calcVisibleCol(actionUI);
 											}
 										},
 										function() {
 											if (yUpdated) {
-												if (that.scrollTop > mostEverScrollTop) {
-													mostEverScrollTop = that.scrollTop;
+												if ( actionUI.scrollAxis.y.size >= (rows.length - 1)) {
 													jS.calcVisibleRow(actionUI);
 												}
 												jS.updateYBarWidthToCorner(actionUI);
@@ -4415,20 +4416,18 @@ $.sheet = {
 					i = i || jS.rowLast;
 					if (!i) return;
 
-					var row = jS.rows()[i],
-						actionUI = jS.obj.pane().actionUI;
+					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideRow(row, i);
+					actionUI.toggleHideRow(i);
 					jS.autoFillerGoToTd();
 				},
 				toggleHideColumn: function(i) {
 					i = i || jS.colLast;
 					if (!i) return;
 
-					var col = jS.cols()[i],
-						actionUI = jS.obj.pane().actionUI;
+					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideColumn(col, i);
+					actionUI.toggleHideColumn(i);
 					jS.autoFillerGoToTd();
 				},
 				rowShowAll: function() {

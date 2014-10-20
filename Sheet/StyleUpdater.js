@@ -4,9 +4,10 @@ Sheet.StyleUpdater = (function(document) {
 		var el = this.styleElement = document.createElement('style');
 		el.styleUpdater = this;
 		this.update = updateFn;
+		this.max = max;
 
 		if (Sheet.StyleUpdater.prototype.nthCss === null) {
-			if (max) {//this is where we check IE8 compatibility
+			if (max !== undefined) {//this is where we check IE8 compatibility
 				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
 					var style = [],
 						index = indexes.length,
@@ -17,6 +18,25 @@ Sheet.StyleUpdater = (function(document) {
 					do {
 						if (indexes[index] > min) {
 							style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
+						}
+					} while (index--);
+
+					if (style.length) {
+						return style.join(',') + css;
+					}
+
+					return '';
+				};
+			} else {
+				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+					var style = [],
+						index = indexes.length;
+
+					css = css || '{display: none;}';
+
+					do {
+						if (indexes[index] > min) {
+							style.unshift(parentSelectorString + ' ' + elementName + ':nth-child(' + (indexes[index] + 1) + ')');
 						}
 					} while (index--);
 

@@ -636,7 +636,7 @@ _handle_error:
                                   (symbol == EOF ? "end of input" :
                                               ("'"+(this.terminals_[symbol] || symbol)+"'"));
                 }
-                var error = this.parseError(errStr, {
+                return this.parseError(errStr, {
                     text: lexer.match,
                     token: this.terminals_[symbol] || symbol,
                     line: lexer.yylineno,
@@ -644,15 +644,6 @@ _handle_error:
                     expected: expected,
                     recoverable: (error_rule_depth !== false)
                 });
-
-                //if we are done, and there is an error, yet have been handled via an override, then return
-                if (this.done) {
-                    if (error === undefined) {
-                        return errStr;
-                    } else {
-                        return error;
-                    }
-                }
             } else if (preErrorSymbol !== EOF) {
                 error_rule_depth = locateNearestErrorRecoveryRule(state);
             }
