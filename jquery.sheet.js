@@ -164,18 +164,18 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					if (style === undefined) {
 						var col = that.frozenAt.col;
-						 if (this.nthCss === null) {
+						 if (this.max === undefined) {
 							 style =
 								 //hide all previous td/th/col elements
-								 cssId + ' tr *:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+								 cssId + ' tr > *:nth-child(-n+' + indexes[0] + ') {display: none;}' +
 								 cssId + ' col:nth-child(-n+' + indexes[0] + ') {display: none;}' +
 
 								 //but show those that are frozen
-								 cssId + ' tr *:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-cell;}' +
+								 cssId + ' tr > *:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-cell;}' +
 								 cssId + ' col:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-column;}' +
 
 								 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}' +
+								 cssId + ' tr > *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}' +
 								 cssId + ' col:nth-child(' + (indexes[0] + 20) + ') ~ col {display: none;}';
 						 } else {
 							 style =
@@ -204,7 +204,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					if (style === undefined) {
 						var row = that.frozenAt.row;
-						if (this.nthCss === null){
+						if (this.max === undefined){
 							style =
 								//hide all previous tr elements
 								cssId + ' tr:nth-child(-n+' + indexes[0] + ') {display: none;}' +
@@ -414,49 +414,51 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		},
 
 
-		hide:function (hiddenRows, hiddenColumns, rows, columns) {
-			var that = this,
-				cssId = '#' + this.table.getAttribute('id'),
-				toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
-					var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
-						this.nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
+		hide:function (hiddenRows, hiddenColumns) {
+			var cssId = '#' + this.table.getAttribute('id'),
+				pane = this.pane,
+				that = this;
 
-					this.setStyle(style);
-				}),
-				toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
-					var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
+			this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
+				var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
+					this.nthCss('> td', cssId + ' tr', that.hiddenColumns, 0) +
+					this.nthCss('> th', cssId + ' tr', that.hiddenColumns, 0);
 
-					this.setStyle(style);
-				}),
-				i,
-				j,
-				pane = this.pane;
+				this.setStyle(style);
+			});
 
-			pane.appendChild(toggleHideStyleX.styleElement);
-			pane.appendChild(toggleHideStyleY.styleElement);
+			this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
+				var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
 
-			this.hiddenRows = [];
-			this.hiddenColumns = [];
+				this.setStyle(style);
+			});
 
-			if (hiddenRows) {
-				i = hiddenRows.length - 1;
-				if (i > -1) {
-					do {
-						j = hiddenRows[i];
-						this.toggleHideRow(rows[j], j);
-					} while (i--);
-				}
+			pane.appendChild(this.toggleHideStyleX.styleElement);
+			pane.appendChild(this.toggleHideStyleY.styleElement);
+
+			this.hiddenRows = hiddenRows;
+			this.hiddenColumns = hiddenColumns;
+
+			this.toggleHideStyleY.update();
+			this.toggleHideStyleX.update();
+		},
+		toggleHideRow: function(index) {
+			var key;
+			if ((key = this.hiddenRows.indexOf(index)) > -1) {
+				this.hiddenRows.splice(key, 1);
+			} else {
+				this.hiddenRows.push(index);
 			}
-
-			if (hiddenColumns) {
-				i = hiddenColumns.length - 1;
-				if (i > -1) {
-					do {
-						j = hiddenColumns[i];
-						this.toggleHideColumn(columns[j], j);
-					} while (i--);
-				}
+			this.toggleHideStyleY.update();
+		},
+		toggleHideColumn: function(index) {
+			var key;
+			if ((key = this.hiddenColumns.indexOf(index)) > -1) {
+				this.hiddenColumns.splice(key, 1);
+			} else {
+				this.hiddenColumns.push(index);
 			}
+			this.toggleHideStyleX.update();
 		},
 		remove: function() {
 
@@ -572,38 +574,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 		},
 
-
-		toggleHideRow:function (row, i) {
-			var $row = $(row);
-			i = Math.max(i + 1, 1);
-
-
-			if ($row.length && $.inArray(i, this.hiddenRows) < 0) {
-				this.hiddenRows.push(i);
-			} else {
-				this.hiddenRows.splice(this.hiddenRows.indexOf(i), 1);
-			}
-
-			this.toggleHideStyleY.update();
-		},
 		rowShowAll:function () {
 			$.each(this.hiddenRows || [], function (j) {
 				$(this).removeData('hidden');
 			});
 			this.toggleHideStyleY.setStyle('');
 			this.hiddenRows = [];
-		},
-		toggleHideColumn:function (col, i) {
-			var $col = $(col);
-			i = Math.max(i + 1, 1);
-
-			if ($col.length && $.inArray(i, this.hiddenColumns) < 0) {
-				this.hiddenColumns.push(i);
-			} else {
-				this.hiddenColumns.splice(this.hiddenColumns.indexOf(i), 1);
-			}
-
-			this.toggleHideStyleX.update();
 		},
 		columnShowAll:function () {
 			this.toggleHideStyleX.setStyle('');
@@ -1063,9 +1039,10 @@ Sheet.StyleUpdater = (function(document) {
 		var el = this.styleElement = document.createElement('style');
 		el.styleUpdater = this;
 		this.update = updateFn;
+		this.max = max;
 
 		if (Sheet.StyleUpdater.prototype.nthCss === null) {
-			if (max) {//this is where we check IE8 compatibility
+			if (max !== undefined) {//this is where we check IE8 compatibility
 				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
 					var style = [],
 						index = indexes.length,
@@ -1076,6 +1053,25 @@ Sheet.StyleUpdater = (function(document) {
 					do {
 						if (indexes[index] > min) {
 							style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
+						}
+					} while (index--);
+
+					if (style.length) {
+						return style.join(',') + css;
+					}
+
+					return '';
+				};
+			} else {
+				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
+					var style = [],
+						index = indexes.length;
+
+					css = css || '{display: none;}';
+
+					do {
+						if (indexes[index] > min) {
+							style.unshift(parentSelectorString + ' ' + elementName + ':nth-child(' + (indexes[index] + 1) + ')');
 						}
 					} while (index--);
 
@@ -1371,6 +1367,28 @@ Sheet.StyleUpdater = (function(document) {
 
 			return jsonSpreadsheet.title || '';
 		},
+		hiddenRows: function(sheetIndex) {
+			var metadata = this.json[sheetIndex].metadata || {},
+				jsonHiddenRows = metadata.hiddenRows || [],
+				max = jsonHiddenRows.length,
+				result = [],
+				i = 0;
+
+			for (;i < max; i++) result.push(jsonHiddenRows[i]);
+
+			return result;
+		},
+		hiddenColumns: function(sheetIndex) {
+			var metadata = this.json[sheetIndex].metadata || {},
+				jsonHiddenColumns = metadata.hiddenColumns || [],
+				max = jsonHiddenColumns.length,
+				result = [],
+				i = 0;
+
+			for (;i < max; i++) result.push(jsonHiddenColumns[i]);
+
+			return result;
+		},
 		hasSpreadsheetAtIndex: function(index) {
 			return (this.json[index] !== undefined);
 		},
@@ -1455,46 +1473,46 @@ Sheet.StyleUpdater = (function(document) {
 		 * Create a table from json
 		 * @param {Array} json array of spreadsheets - schema:<pre>
 		 * [{ // sheet 1, can repeat
-			 *  "title": "Title of spreadsheet",
-			 *  "metadata": {
-			 *	  "widths": [
-			 *		  120, //widths for each column, required
-			 *		  80
-			 *	  ]
-			 *  },
-			 *  "rows": [
-			 *	  { // row 1, repeats for each column of the spreadsheet
-			 *		  "height": 18, //optional
-			 *		  "columns": [
-			 *			  { //column A
-			 *				  "cellType": "", //optional
-			 *				  "class": "css classes", //optional
-			 *				  "formula": "=cell formula", //optional
-			 *				  "value": "value", //optional
-			 *				  "style": "css cell style", //optional
-			 *				  "uneditable": true, //optional
-			 *				  "cache": "" //optional
-			 *			  },
-			 *			  {} //column B
-			 *		  ]
-			 *	  },
-			 *	  { // row 2
-			 *		  "height": 18, //optional
-			 *		  "columns": [
-			 *			  { // column A
-			 *				  "cellType": "", //optional
-			 *				  "class": "css classes", //optional
-			 *				  "formula": "=cell formula", //optional
-			 *				  "value": "value", //optional
-			 *				  "style": "css cell style" //optional
-			 *				  "uneditable": true, //optional
-			 *				  "cache": "" //optional
-			 *			  },
-			 *			  {} // column B
-			 *		  ]
-			 *	  }
-			 *  ]
-			 * }]</pre>
+		 *  "title": "Title of spreadsheet",
+		 *  "metadata": {
+		 *	  "widths": [
+		 *		  120, //widths for each column, required
+		 *		  80
+		 *	  ]
+		 *  },
+		 *  "rows": [
+		 *	  { // row 1, repeats for each column of the spreadsheet
+		 *		  "height": 18, //optional
+		 *		  "columns": [
+		 *			  { //column A
+		 *				  "cellType": "", //optional
+		 *				  "class": "css classes", //optional
+		 *				  "formula": "=cell formula", //optional
+		 *				  "value": "value", //optional
+		 *				  "style": "css cell style", //optional
+		 *				  "uneditable": true, //optional
+		 *				  "cache": "" //optional
+		 *			  },
+		 *			  {} //column B
+		 *		  ]
+		 *	  },
+		 *	  { // row 2
+		 *		  "height": 18, //optional
+		 *		  "columns": [
+		 *			  { // column A
+		 *				  "cellType": "", //optional
+		 *				  "class": "css classes", //optional
+		 *				  "formula": "=cell formula", //optional
+		 *				  "value": "value", //optional
+		 *				  "style": "css cell style" //optional
+		 *				  "uneditable": true, //optional
+		 *				  "cache": "" //optional
+		 *			  },
+		 *			  {} // column B
+		 *		  ]
+		 *	  }
+		 *  ]
+		 * }]</pre>
 		 * @returns {*|jQuery|HTMLElement} a simple html table
 		 * @memberOf Sheet.JSONLoader
 		 */
@@ -1511,6 +1529,8 @@ Sheet.StyleUpdater = (function(document) {
 				widths,
 				width,
 				frozenAt,
+				hiddenRows,
+				hiddenColumns,
 				height,
 				table,
 				colgroup,
@@ -1577,6 +1597,14 @@ Sheet.StyleUpdater = (function(document) {
 							table.attr('data-frozenatcol', frozenAt['col']);
 						}
 					}
+
+					if (hiddenRows = metadata['hiddenRows']) {
+						table.attr('data-hiddenrows', hiddenRows.join(','));
+					}
+
+					if (hiddenColumns = metadata['hiddenColumns']) {
+						table.attr('data-hiddencolumns', hiddenColumns.join(','));
+					}
 				}
 			}
 
@@ -1595,7 +1623,9 @@ Sheet.StyleUpdater = (function(document) {
 				 *		  "120px", //widths for each column, required
 				 *		  "80px"
 				 *	  ],
-				 *	  "frozenAt": {row: 0, col: 0}
+				 *	  "frozenAt": {row: 0, col: 0},
+				 *	  "hiddenRows": [1,2,3],
+				 *	  "hiddenColumns": [1,2,3]
 				 *  },
 				 *  "rows": [
 				 *	  { // row 1, repeats for each column of the spreadsheet
@@ -1639,6 +1669,7 @@ Sheet.StyleUpdater = (function(document) {
 
 			var output = [],
 				i = 1 * jS.i,
+				pane,
 				sheet = jS.spreadsheets.length - 1,
 				jsonSpreadsheet,
 				spreadsheet,
@@ -1661,12 +1692,16 @@ Sheet.StyleUpdater = (function(document) {
 				rowHasValues = false;
 				jS.i = sheet;
 				jS.evt.cellEditDone();
+				pane = jS.obj.pane();
 				jsonSpreadsheet = {
 					"title": (jS.obj.table().attr('title') || ''),
 					"rows": [],
 					"metadata": {
 						"widths": [],
-						"frozenAt": $.extend({}, jS.obj.pane().actionUI.frozenAt)
+						"frozenAt": {
+							"row": pane.actionUI.frozenAt.row,
+							"col": pane.actionUI.frozenAt.col
+						}
 					}
 				};
 
@@ -2695,7 +2730,7 @@ $.fn.extend({
 							return false;
 						},
 						"Hide row":function (jS) {
-							jS.toggleHide.row();
+							jS.toggleHideRow();
 							return false;
 						}
 					},
@@ -4976,6 +5011,9 @@ $.sheet = {
 
 						var hasChildren = table.tBody.children.length > 0,
 							enclosure = jS.controlFactory.enclosure(table),
+							settings = jS.s,
+							hiddenRows = settings.hiddenRows[i],
+							hiddenColumns = settings.hiddenColumns[i],
 							pane = enclosure.pane,
 							$pane = $(pane),
 							paneContextmenuEvent = function (e) {
@@ -5098,23 +5136,23 @@ $.sheet = {
 						jS.checkMinSize(table);
 
 						jS.controlFactory.tab();
-
-						var settings = jS.s,
-							hiddenRows = settings.hiddenRows,
-							hiddenColumns = settings.hiddenColumns;
-
-						if (!hiddenRows.length || !hiddenColumns.length) {
-							hiddenRows = table.attributes['data-hiddenrows'] || {value:''};
-							hiddenColumns = table.attributes['data-hiddencolumns'] || {value:''};
-
-							if (hiddenRows.value.length > 0)
-								hiddenRows = arrHelpers.toNumbers(hiddenRows.value.split(','));
-
-							if (hiddenColumns.value.length > 0)
-								hiddenColumns = arrHelpers.toNumbers(hiddenColumns.value.split(','));
+						if (settings.loader !== null) {
+								hiddenRows = settings.loader.hiddenRows(i);
+								hiddenColumns = settings.loader.hiddenColumns(i);
 						}
 
-						enclosure.actionUI.hide(hiddenRows, hiddenColumns, jS.rows(table), jS.cols(table));
+						else if (!hiddenRows.length || !hiddenColumns.length) {
+							hiddenRows = table.getAttribute('data-hiddenrows');
+							hiddenColumns = table.getAttribute('data-hiddencolumns');
+
+							if (hiddenRows !== null)
+								hiddenRows = arrHelpers.toNumbers(hiddenRows.split(','));
+
+							if (hiddenColumns !== null)
+								hiddenColumns = arrHelpers.toNumbers(hiddenColumns.split(','));
+						}
+
+						enclosure.actionUI.hide(hiddenRows, hiddenColumns);
 
 						jS.setChanged(true);
 					},
@@ -5130,8 +5168,8 @@ $.sheet = {
 							actionUI = new Sheet.ActionUI(enclosure, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
 							scrollUI = actionUI.scrollUI,
 							pane = actionUI.pane,
-							mostEverScrollLeft = 0,
-							mostEverScrollTop = 0;
+							rows = table.tBody.children,
+							columns = table.colGroup.children;
 
 						table.size = function() { return jS.tableSize(table); };
 						pane.size = function() { return jS.sheetSize(table); };
@@ -5152,15 +5190,13 @@ $.sheet = {
 											yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
 										},
 										function () {
-											if (xUpdated && that.scrollLeft > mostEverScrollLeft) {
-												mostEverScrollLeft = that.scrollLeft;
+											if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
 												jS.calcVisibleCol(actionUI);
 											}
 										},
 										function() {
 											if (yUpdated) {
-												if (that.scrollTop > mostEverScrollTop) {
-													mostEverScrollTop = that.scrollTop;
+												if ( actionUI.scrollAxis.y.size >= (rows.length - 1)) {
 													jS.calcVisibleRow(actionUI);
 												}
 												jS.updateYBarWidthToCorner(actionUI);
@@ -6613,20 +6649,18 @@ $.sheet = {
 					i = i || jS.rowLast;
 					if (!i) return;
 
-					var row = jS.rows()[i],
-						actionUI = jS.obj.pane().actionUI;
+					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideRow(row, i);
+					actionUI.toggleHideRow(i);
 					jS.autoFillerGoToTd();
 				},
 				toggleHideColumn: function(i) {
 					i = i || jS.colLast;
 					if (!i) return;
 
-					var col = jS.cols()[i],
-						actionUI = jS.obj.pane().actionUI;
+					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideColumn(col, i);
+					actionUI.toggleHideColumn(i);
 					jS.autoFillerGoToTd();
 				},
 				rowShowAll: function() {
@@ -14431,7 +14465,7 @@ _handle_error:
                                   (symbol == EOF ? "end of input" :
                                               ("'"+(this.terminals_[symbol] || symbol)+"'"));
                 }
-                var error = this.parseError(errStr, {
+                return this.parseError(errStr, {
                     text: lexer.match,
                     token: this.terminals_[symbol] || symbol,
                     line: lexer.yylineno,
@@ -14439,15 +14473,6 @@ _handle_error:
                     expected: expected,
                     recoverable: (error_rule_depth !== false)
                 });
-
-                //if we are done, and there is an error, yet have been handled via an override, then return
-                if (this.done) {
-                    if (error === undefined) {
-                        return errStr;
-                    } else {
-                        return error;
-                    }
-                }
             } else if (preErrorSymbol !== EOF) {
                 error_rule_depth = locateNearestErrorRecoveryRule(state);
             }

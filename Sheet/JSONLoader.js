@@ -215,6 +215,28 @@
 
 			return jsonSpreadsheet.title || '';
 		},
+		hiddenRows: function(sheetIndex) {
+			var metadata = this.json[sheetIndex].metadata || {},
+				jsonHiddenRows = metadata.hiddenRows || [],
+				max = jsonHiddenRows.length,
+				result = [],
+				i = 0;
+
+			for (;i < max; i++) result.push(jsonHiddenRows[i]);
+
+			return result;
+		},
+		hiddenColumns: function(sheetIndex) {
+			var metadata = this.json[sheetIndex].metadata || {},
+				jsonHiddenColumns = metadata.hiddenColumns || [],
+				max = jsonHiddenColumns.length,
+				result = [],
+				i = 0;
+
+			for (;i < max; i++) result.push(jsonHiddenColumns[i]);
+
+			return result;
+		},
 		hasSpreadsheetAtIndex: function(index) {
 			return (this.json[index] !== undefined);
 		},
@@ -299,46 +321,46 @@
 		 * Create a table from json
 		 * @param {Array} json array of spreadsheets - schema:<pre>
 		 * [{ // sheet 1, can repeat
-			 *  "title": "Title of spreadsheet",
-			 *  "metadata": {
-			 *	  "widths": [
-			 *		  120, //widths for each column, required
-			 *		  80
-			 *	  ]
-			 *  },
-			 *  "rows": [
-			 *	  { // row 1, repeats for each column of the spreadsheet
-			 *		  "height": 18, //optional
-			 *		  "columns": [
-			 *			  { //column A
-			 *				  "cellType": "", //optional
-			 *				  "class": "css classes", //optional
-			 *				  "formula": "=cell formula", //optional
-			 *				  "value": "value", //optional
-			 *				  "style": "css cell style", //optional
-			 *				  "uneditable": true, //optional
-			 *				  "cache": "" //optional
-			 *			  },
-			 *			  {} //column B
-			 *		  ]
-			 *	  },
-			 *	  { // row 2
-			 *		  "height": 18, //optional
-			 *		  "columns": [
-			 *			  { // column A
-			 *				  "cellType": "", //optional
-			 *				  "class": "css classes", //optional
-			 *				  "formula": "=cell formula", //optional
-			 *				  "value": "value", //optional
-			 *				  "style": "css cell style" //optional
-			 *				  "uneditable": true, //optional
-			 *				  "cache": "" //optional
-			 *			  },
-			 *			  {} // column B
-			 *		  ]
-			 *	  }
-			 *  ]
-			 * }]</pre>
+		 *  "title": "Title of spreadsheet",
+		 *  "metadata": {
+		 *	  "widths": [
+		 *		  120, //widths for each column, required
+		 *		  80
+		 *	  ]
+		 *  },
+		 *  "rows": [
+		 *	  { // row 1, repeats for each column of the spreadsheet
+		 *		  "height": 18, //optional
+		 *		  "columns": [
+		 *			  { //column A
+		 *				  "cellType": "", //optional
+		 *				  "class": "css classes", //optional
+		 *				  "formula": "=cell formula", //optional
+		 *				  "value": "value", //optional
+		 *				  "style": "css cell style", //optional
+		 *				  "uneditable": true, //optional
+		 *				  "cache": "" //optional
+		 *			  },
+		 *			  {} //column B
+		 *		  ]
+		 *	  },
+		 *	  { // row 2
+		 *		  "height": 18, //optional
+		 *		  "columns": [
+		 *			  { // column A
+		 *				  "cellType": "", //optional
+		 *				  "class": "css classes", //optional
+		 *				  "formula": "=cell formula", //optional
+		 *				  "value": "value", //optional
+		 *				  "style": "css cell style" //optional
+		 *				  "uneditable": true, //optional
+		 *				  "cache": "" //optional
+		 *			  },
+		 *			  {} // column B
+		 *		  ]
+		 *	  }
+		 *  ]
+		 * }]</pre>
 		 * @returns {*|jQuery|HTMLElement} a simple html table
 		 * @memberOf Sheet.JSONLoader
 		 */
@@ -355,6 +377,8 @@
 				widths,
 				width,
 				frozenAt,
+				hiddenRows,
+				hiddenColumns,
 				height,
 				table,
 				colgroup,
@@ -421,6 +445,14 @@
 							table.attr('data-frozenatcol', frozenAt['col']);
 						}
 					}
+
+					if (hiddenRows = metadata['hiddenRows']) {
+						table.attr('data-hiddenrows', hiddenRows.join(','));
+					}
+
+					if (hiddenColumns = metadata['hiddenColumns']) {
+						table.attr('data-hiddencolumns', hiddenColumns.join(','));
+					}
 				}
 			}
 
@@ -439,7 +471,9 @@
 				 *		  "120px", //widths for each column, required
 				 *		  "80px"
 				 *	  ],
-				 *	  "frozenAt": {row: 0, col: 0}
+				 *	  "frozenAt": {row: 0, col: 0},
+				 *	  "hiddenRows": [1,2,3],
+				 *	  "hiddenColumns": [1,2,3]
 				 *  },
 				 *  "rows": [
 				 *	  { // row 1, repeats for each column of the spreadsheet
@@ -483,6 +517,7 @@
 
 			var output = [],
 				i = 1 * jS.i,
+				pane,
 				sheet = jS.spreadsheets.length - 1,
 				jsonSpreadsheet,
 				spreadsheet,
@@ -505,12 +540,16 @@
 				rowHasValues = false;
 				jS.i = sheet;
 				jS.evt.cellEditDone();
+				pane = jS.obj.pane();
 				jsonSpreadsheet = {
 					"title": (jS.obj.table().attr('title') || ''),
 					"rows": [],
 					"metadata": {
 						"widths": [],
-						"frozenAt": $.extend({}, jS.obj.pane().actionUI.frozenAt)
+						"frozenAt": {
+							"row": pane.actionUI.frozenAt.row,
+							"col": pane.actionUI.frozenAt.col
+						}
 					}
 				};
 

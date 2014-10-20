@@ -57,18 +57,18 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					if (style === undefined) {
 						var col = that.frozenAt.col;
-						 if (this.nthCss === null) {
+						 if (this.max === undefined) {
 							 style =
 								 //hide all previous td/th/col elements
-								 cssId + ' tr *:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+								 cssId + ' tr > *:nth-child(-n+' + indexes[0] + ') {display: none;}' +
 								 cssId + ' col:nth-child(-n+' + indexes[0] + ') {display: none;}' +
 
 								 //but show those that are frozen
-								 cssId + ' tr *:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-cell;}' +
+								 cssId + ' tr > *:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-cell;}' +
 								 cssId + ' col:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-column;}' +
 
 								 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}' +
+								 cssId + ' tr > *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}' +
 								 cssId + ' col:nth-child(' + (indexes[0] + 20) + ') ~ col {display: none;}';
 						 } else {
 							 style =
@@ -97,7 +97,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					if (style === undefined) {
 						var row = that.frozenAt.row;
-						if (this.nthCss === null){
+						if (this.max === undefined){
 							style =
 								//hide all previous tr elements
 								cssId + ' tr:nth-child(-n+' + indexes[0] + ') {display: none;}' +
@@ -307,49 +307,51 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		},
 
 
-		hide:function (hiddenRows, hiddenColumns, rows, columns) {
-			var that = this,
-				cssId = '#' + this.table.getAttribute('id'),
-				toggleHideStyleX = this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
-					var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
-						this.nthCss('td', cssId + ' tr', that.hiddenColumns, 0);
+		hide:function (hiddenRows, hiddenColumns) {
+			var cssId = '#' + this.table.getAttribute('id'),
+				pane = this.pane,
+				that = this;
 
-					this.setStyle(style);
-				}),
-				toggleHideStyleY = this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
-					var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
+			this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
+				var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
+					this.nthCss('> td', cssId + ' tr', that.hiddenColumns, 0) +
+					this.nthCss('> th', cssId + ' tr', that.hiddenColumns, 0);
 
-					this.setStyle(style);
-				}),
-				i,
-				j,
-				pane = this.pane;
+				this.setStyle(style);
+			});
 
-			pane.appendChild(toggleHideStyleX.styleElement);
-			pane.appendChild(toggleHideStyleY.styleElement);
+			this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
+				var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
 
-			this.hiddenRows = [];
-			this.hiddenColumns = [];
+				this.setStyle(style);
+			});
 
-			if (hiddenRows) {
-				i = hiddenRows.length - 1;
-				if (i > -1) {
-					do {
-						j = hiddenRows[i];
-						this.toggleHideRow(rows[j], j);
-					} while (i--);
-				}
+			pane.appendChild(this.toggleHideStyleX.styleElement);
+			pane.appendChild(this.toggleHideStyleY.styleElement);
+
+			this.hiddenRows = hiddenRows;
+			this.hiddenColumns = hiddenColumns;
+
+			this.toggleHideStyleY.update();
+			this.toggleHideStyleX.update();
+		},
+		toggleHideRow: function(index) {
+			var key;
+			if ((key = this.hiddenRows.indexOf(index)) > -1) {
+				this.hiddenRows.splice(key, 1);
+			} else {
+				this.hiddenRows.push(index);
 			}
-
-			if (hiddenColumns) {
-				i = hiddenColumns.length - 1;
-				if (i > -1) {
-					do {
-						j = hiddenColumns[i];
-						this.toggleHideColumn(columns[j], j);
-					} while (i--);
-				}
+			this.toggleHideStyleY.update();
+		},
+		toggleHideColumn: function(index) {
+			var key;
+			if ((key = this.hiddenColumns.indexOf(index)) > -1) {
+				this.hiddenColumns.splice(key, 1);
+			} else {
+				this.hiddenColumns.push(index);
 			}
+			this.toggleHideStyleX.update();
 		},
 		remove: function() {
 
@@ -465,38 +467,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 		},
 
-
-		toggleHideRow:function (row, i) {
-			var $row = $(row);
-			i = Math.max(i + 1, 1);
-
-
-			if ($row.length && $.inArray(i, this.hiddenRows) < 0) {
-				this.hiddenRows.push(i);
-			} else {
-				this.hiddenRows.splice(this.hiddenRows.indexOf(i), 1);
-			}
-
-			this.toggleHideStyleY.update();
-		},
 		rowShowAll:function () {
 			$.each(this.hiddenRows || [], function (j) {
 				$(this).removeData('hidden');
 			});
 			this.toggleHideStyleY.setStyle('');
 			this.hiddenRows = [];
-		},
-		toggleHideColumn:function (col, i) {
-			var $col = $(col);
-			i = Math.max(i + 1, 1);
-
-			if ($col.length && $.inArray(i, this.hiddenColumns) < 0) {
-				this.hiddenColumns.push(i);
-			} else {
-				this.hiddenColumns.splice(this.hiddenColumns.indexOf(i), 1);
-			}
-
-			this.toggleHideStyleX.update();
 		},
 		columnShowAll:function () {
 			this.toggleHideStyleX.setStyle('');
