@@ -2011,15 +2011,16 @@ $.sheet = {
 									o.setCreateCellFn(function (row, at, createdBar) {
 										var td = document.createElement('td'),
 											rowParent = tBody.children[row],
-											spreadsheetRow = spreadsheet[row];
+											spreadsheetRow = spreadsheet[row],
+											cell = new Sheet.Cell(jS.i, td, jS);
 
 										if (spreadsheetRow === undefined) {
 											spreadsheet[row] = spreadsheetRow = [];
 										}
 
 										rowParent.insertBefore(td, rowParent.children[at]);
-										spreadsheet[row].splice(at, 0, {});
-										jS.createCell(jS.i, row, at);
+										spreadsheetRow.splice(at, 0, cell);
+										jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
 									});
 								}
 
