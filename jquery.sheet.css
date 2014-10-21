@@ -66,10 +66,13 @@
 .jSTdMenu {
 	padding: 3px;
 	background-image: none ! important;
-	border: none ! important;
+	border-width: 1px;
 	position: absolute;
 	z-index: 1001;
-	width: 200px;
+	min-width: 200px;
+	font-size: smaller;
+	font-weight: normal ! important;
+	box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
 }
 .jSTdMenu div
 {

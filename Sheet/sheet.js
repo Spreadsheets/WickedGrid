@@ -448,11 +448,6 @@ $.fn.extend({
 					},
 					frozenAt:[],
 					contextmenuTop:{
-						"Toggle freeze columns to here":function (jS) {
-							var col = jS.getTdLocation(jS.obj.tdActive()).col,
-								actionUI = jS.obj.pane().actionUI;
-							actionUI.frozenAt.col = (actionUI.frozenAt.col == col ? 0 : col);
-						},
 						"Insert column after":function (jS) {
 							jS.controlFactory.addColumn(jS.colLast);
 							return false;
@@ -475,14 +470,14 @@ $.fn.extend({
 						},
 						"Show all columns": function (jS) {
 							jS.columnShowAll();
+						},
+						"Toggle freeze columns to here":function (jS) {
+							var col = jS.getTdLocation(jS.obj.tdActive()).col,
+								actionUI = jS.obj.pane().actionUI;
+							actionUI.frozenAt.col = (actionUI.frozenAt.col == col ? 0 : col);
 						}
 					},
 					contextmenuLeft:{
-						"Toggle freeze rows to here":function (jS) {
-							var row = jS.getTdLocation(jS.obj.tdActive()).row,
-								actionUI = jS.obj.pane().actionUI;
-							actionUI.frozenAt.row = (actionUI.frozenAt.row == row ? 0 : row);
-						},
 						"Insert row after":function (jS) {
 							jS.controlFactory.addRow(jS.rowLast);
 							return false;
@@ -505,28 +500,17 @@ $.fn.extend({
 						},
 						"Show all rows": function (jS) {
 							jS.rowShowAll();
+						},
+						"Toggle freeze rows to here":function (jS) {
+							var row = jS.getTdLocation(jS.obj.tdActive()).row,
+								actionUI = jS.obj.pane().actionUI;
+							actionUI.frozenAt.row = (actionUI.frozenAt.row == row ? 0 : row);
 						}
 					},
 					contextmenuCell:{
-						"Copy":false,
+						/*"Copy":false,
 						"Cut":false,
-						"Insert column after":function (jS) {
-							jS.controlFactory.addColumn(jS.colLast);
-							return false;
-						},
-						"Insert column before":function (jS) {
-							jS.controlFactory.addColumn(jS.colLast, true);
-							return false;
-						},
-						"Add column to end":function (jS) {
-							jS.controlFactory.addColumn();
-							return false;
-						},
-						"Delete this column":function (jS) {
-							jS.deleteColumn();
-							return false;
-						},
-						"line1":"line",
+						"line1":'line',*/
 						"Insert row after":function (jS) {
 							jS.controlFactory.addRow(jS.rowLast);
 							return false;
@@ -544,6 +528,23 @@ $.fn.extend({
 							return false;
 						},
 						"line2":'line',
+						"Insert column after":function (jS) {
+							jS.controlFactory.addColumn(jS.colLast);
+							return false;
+						},
+						"Insert column before":function (jS) {
+							jS.controlFactory.addColumn(jS.colLast, true);
+							return false;
+						},
+						"Add column to end":function (jS) {
+							jS.controlFactory.addColumn();
+							return false;
+						},
+						"Delete this column":function (jS) {
+							jS.deleteColumn();
+							return false;
+						},
+						"line3":"line",
 						"Add spreadsheet":function (jS) {
 							jS.addSheet();
 						},
