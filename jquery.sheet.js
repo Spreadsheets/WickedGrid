@@ -2705,6 +2705,9 @@ $.fn.extend({
 						"Hide column":function (jS) {
 							jS.toggleHideColumn();
 							return false;
+						},
+						"Show all columns": function (jS) {
+							jS.columnShowAll();
 						}
 					},
 					contextmenuLeft:{
@@ -2732,6 +2735,9 @@ $.fn.extend({
 						"Hide row":function (jS) {
 							jS.toggleHideRow();
 							return false;
+						},
+						"Show all rows": function (jS) {
+							jS.rowShowAll();
 						}
 					},
 					contextmenuCell:{
