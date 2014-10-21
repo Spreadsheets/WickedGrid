@@ -4429,6 +4429,12 @@ $.sheet = {
 					actionUI.toggleHideRow(i);
 					jS.autoFillerGoToTd();
 				},
+				toggleHideRowRange: function(startIndex, endIndex) {
+					var actionUI = jS.obj.pane().actionUI;
+
+					actionUI.toggleHideRowRange(startIndex, endIndex);
+					jS.autoFillerGoToTd();
+				},
 				toggleHideColumn: function(i) {
 					i = i || jS.colLast;
 					if (!i) return;
@@ -4436,6 +4442,12 @@ $.sheet = {
 					var actionUI = jS.obj.pane().actionUI;
 
 					actionUI.toggleHideColumn(i);
+					jS.autoFillerGoToTd();
+				},
+				toggleHideColumnRange: function(startIndex, endIndex) {
+					var actionUI = jS.obj.pane().actionUI;
+
+					actionUI.toggleHideColumnRange(startIndex, endIndex);
 					jS.autoFillerGoToTd();
 				},
 				rowShowAll: function() {
