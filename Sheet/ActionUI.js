@@ -312,19 +312,21 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				pane = this.pane,
 				that = this;
 
-			this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
-				var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
-					this.nthCss('> td', cssId + ' tr', that.hiddenColumns, 0) +
-					this.nthCss('> th', cssId + ' tr', that.hiddenColumns, 0);
+			if (this.toggleHideStyleX === null) {
+				this.toggleHideStyleX = new Sheet.StyleUpdater(function () {
+					var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
+						this.nthCss('> td', cssId + ' tr', that.hiddenColumns, 0) +
+						this.nthCss('> th', cssId + ' tr', that.hiddenColumns, 0);
 
-				this.setStyle(style);
-			});
+					this.setStyle(style);
+				});
 
-			this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
-				var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
+				this.toggleHideStyleY = new Sheet.StyleUpdater(function () {
+					var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
 
-				this.setStyle(style);
-			});
+					this.setStyle(style);
+				});
+			}
 
 			pane.appendChild(this.toggleHideStyleX.styleElement);
 			pane.appendChild(this.toggleHideStyleY.styleElement);
@@ -335,6 +337,11 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			this.toggleHideStyleY.update();
 			this.toggleHideStyleX.update();
 		},
+
+		/**
+		 * Toggles a row to be visible
+		 * @param {Number} index
+		 */
 		toggleHideRow: function(index) {
 			var key;
 			if ((key = this.hiddenRows.indexOf(index)) > -1) {
@@ -344,6 +351,57 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 			this.toggleHideStyleY.update();
 		},
+
+		/**
+		 * Toggles a range of rows to be visible starting at index of 1
+		 * @param {Number} startIndex
+		 * @param {Number} [endIndex]
+		 */
+		toggleHideRowRange: function(startIndex, endIndex) {
+			if (!startIndex) return;
+			if (!endIndex) endIndex = startIndex;
+
+			var hiddenRows = this.hiddenRows,
+				newHiddenRows = [],
+				max = hiddenRows.length,
+				hiddenRow,
+				i = 0,
+				removing = null;
+
+			for(;i < max; i++){
+				hiddenRow = hiddenRows[i];
+				if (hiddenRow >= startIndex && hiddenRow <= endIndex) {
+					if (removing === null) {
+						removing = true;
+					}
+				} else {
+					newHiddenRows.push(hiddenRow);
+				}
+			}
+
+			if (removing === null) {
+				for(i = startIndex; i <= endIndex; i++) {
+					newHiddenRows.push(i);
+				}
+			}
+
+			this.hiddenRows = newHiddenRows;
+			this.toggleHideStyleY.update();
+		},
+
+		/**
+		 * Makes all rows visible
+		 */
+		rowShowAll:function () {
+			this.toggleHideStyleY.setStyle('');
+			this.hiddenRows = [];
+		},
+
+
+		/**
+		 * Toggles a column to be visible
+		 * @param {Number} index
+		 */
 		toggleHideColumn: function(index) {
 			var key;
 			if ((key = this.hiddenColumns.indexOf(index)) > -1) {
@@ -353,6 +411,47 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 			this.toggleHideStyleX.update();
 		},
+		/**
+		 * Toggles a range of columns to be visible starting at index of 1
+		 * @param {Number} startIndex
+		 * @param {Number} [endIndex]
+		 */
+		toggleHideColumnRange: function(startIndex, endIndex) {
+			if (!startIndex) return;
+			if (!endIndex) endIndex = startIndex;
+
+			var hiddenColumns = this.hiddenColumns,
+				newHiddenColumns = [],
+				max = hiddenColumns.length,
+				hiddenColumn,
+				i = 0,
+				removing = null;
+
+			for(;i < max; i++){
+				hiddenColumn = hiddenColumns[i];
+				if (hiddenColumn >= startIndex && hiddenColumn <= endIndex) {
+					if (removing === null) {
+						removing = true;
+					}
+				} else {
+					newHiddenColumns.push(hiddenColumn);
+				}
+			}
+
+			if (removing === null) {
+				for(i = startIndex; i <= endIndex; i++) {
+					newHiddenColumns.push(i);
+				}
+			}
+
+			this.hiddenColumns = newHiddenColumns;
+			this.toggleHideStyleX.update();
+		},
+		columnShowAll:function () {
+			this.toggleHideStyleX.setStyle('');
+			this.hiddenColumns = [];
+		},
+
 		remove: function() {
 
 		},
@@ -420,9 +519,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			pos.value = pos.value || 0;
 			pos.pixel = pos.pixel || 0;
 
-			if (!this.scrollAxis) {
-				this.scrollStart(pos.axis);
-			}
 			var me = this.scrollAxis[pos.axis];
 
 			if (!pos.value) {
@@ -442,7 +538,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			me.value = pos.value;
 
-			if (indexes.length) {
+			if (indexes.length > 0) {
 				if (me.scrollStyle) {
 					return me.scrollStyle.update(indexes);
 				}
@@ -467,17 +563,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 		},
 
-		rowShowAll:function () {
-			$.each(this.hiddenRows || [], function (j) {
-				$(this).removeData('hidden');
-			});
-			this.toggleHideStyleY.setStyle('');
-			this.hiddenRows = [];
-		},
-		columnShowAll:function () {
-			this.toggleHideStyleX.setStyle('');
-			this.hiddenColumns = [];
-		}
+		/**
+		 * @type Sheet.StyleUpdater
+		 */
+		toggleHideStyleX: null,
+
+		/**
+		 * @type Sheet.StyleUpdater
+		 */
+		toggleHideStyleY: null
 	};
 
 	return Constructor;

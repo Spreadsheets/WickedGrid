@@ -204,7 +204,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					if (style === undefined) {
 						var row = that.frozenAt.row;
-						if (this.max === undefined){
+						if (that.max === undefined){
 							style =
 								//hide all previous tr elements
 								cssId + ' tr:nth-child(-n+' + indexes[0] + ') {display: none;}' +
@@ -419,19 +419,21 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				pane = this.pane,
 				that = this;
 
-			this.toggleHideStyleX = new Sheet.StyleUpdater(function() {
-				var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
-					this.nthCss('> td', cssId + ' tr', that.hiddenColumns, 0) +
-					this.nthCss('> th', cssId + ' tr', that.hiddenColumns, 0);
+			if (this.toggleHideStyleX === null) {
+				this.toggleHideStyleX = new Sheet.StyleUpdater(function () {
+					var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
+						this.nthCss('> td', cssId + ' tr', that.hiddenColumns, 0) +
+						this.nthCss('> th', cssId + ' tr', that.hiddenColumns, 0);
 
-				this.setStyle(style);
-			});
+					this.setStyle(style);
+				});
 
-			this.toggleHideStyleY = new Sheet.StyleUpdater(function() {
-				var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
+				this.toggleHideStyleY = new Sheet.StyleUpdater(function () {
+					var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
 
-				this.setStyle(style);
-			});
+					this.setStyle(style);
+				});
+			}
 
 			pane.appendChild(this.toggleHideStyleX.styleElement);
 			pane.appendChild(this.toggleHideStyleY.styleElement);
@@ -442,6 +444,11 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			this.toggleHideStyleY.update();
 			this.toggleHideStyleX.update();
 		},
+
+		/**
+		 * Toggles a row to be visible
+		 * @param {Number} index
+		 */
 		toggleHideRow: function(index) {
 			var key;
 			if ((key = this.hiddenRows.indexOf(index)) > -1) {
@@ -451,6 +458,57 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 			this.toggleHideStyleY.update();
 		},
+
+		/**
+		 * Toggles a range of rows to be visible starting at index of 1
+		 * @param {Number} startIndex
+		 * @param {Number} [endIndex]
+		 */
+		toggleHideRowRange: function(startIndex, endIndex) {
+			if (!startIndex) return;
+			if (!endIndex) endIndex = startIndex;
+
+			var hiddenRows = this.hiddenRows,
+				newHiddenRows = [],
+				max = hiddenRows.length,
+				hiddenRow,
+				i = 0,
+				removing = null;
+
+			for(;i < max; i++){
+				hiddenRow = hiddenRows[i];
+				if (hiddenRow >= startIndex && hiddenRow <= endIndex) {
+					if (removing === null) {
+						removing = true;
+					}
+				} else {
+					newHiddenRows.push(hiddenRow);
+				}
+			}
+
+			if (removing === null) {
+				for(i = startIndex; i <= endIndex; i++) {
+					newHiddenRows.push(i);
+				}
+			}
+
+			this.hiddenRows = newHiddenRows;
+			this.toggleHideStyleY.update();
+		},
+
+		/**
+		 * Makes all rows visible
+		 */
+		rowShowAll:function () {
+			this.toggleHideStyleY.setStyle('');
+			this.hiddenRows = [];
+		},
+
+
+		/**
+		 * Toggles a column to be visible
+		 * @param {Number} index
+		 */
 		toggleHideColumn: function(index) {
 			var key;
 			if ((key = this.hiddenColumns.indexOf(index)) > -1) {
@@ -460,6 +518,47 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 			this.toggleHideStyleX.update();
 		},
+		/**
+		 * Toggles a range of columns to be visible starting at index of 1
+		 * @param {Number} startIndex
+		 * @param {Number} [endIndex]
+		 */
+		toggleHideColumnRange: function(startIndex, endIndex) {
+			if (!startIndex) return;
+			if (!endIndex) endIndex = startIndex;
+
+			var hiddenColumns = this.hiddenColumns,
+				newHiddenColumns = [],
+				max = hiddenColumns.length,
+				hiddenColumn,
+				i = 0,
+				removing = null;
+
+			for(;i < max; i++){
+				hiddenColumn = hiddenColumns[i];
+				if (hiddenColumn >= startIndex && hiddenColumn <= endIndex) {
+					if (removing === null) {
+						removing = true;
+					}
+				} else {
+					newHiddenColumns.push(hiddenColumn);
+				}
+			}
+
+			if (removing === null) {
+				for(i = startIndex; i <= endIndex; i++) {
+					newHiddenColumns.push(i);
+				}
+			}
+
+			this.hiddenColumns = newHiddenColumns;
+			this.toggleHideStyleX.update();
+		},
+		columnShowAll:function () {
+			this.toggleHideStyleX.setStyle('');
+			this.hiddenColumns = [];
+		},
+
 		remove: function() {
 
 		},
@@ -527,9 +626,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			pos.value = pos.value || 0;
 			pos.pixel = pos.pixel || 0;
 
-			if (!this.scrollAxis) {
-				this.scrollStart(pos.axis);
-			}
 			var me = this.scrollAxis[pos.axis];
 
 			if (!pos.value) {
@@ -549,7 +645,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			me.value = pos.value;
 
-			if (indexes.length) {
+			if (indexes.length > 0) {
 				if (me.scrollStyle) {
 					return me.scrollStyle.update(indexes);
 				}
@@ -574,17 +670,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 		},
 
-		rowShowAll:function () {
-			$.each(this.hiddenRows || [], function (j) {
-				$(this).removeData('hidden');
-			});
-			this.toggleHideStyleY.setStyle('');
-			this.hiddenRows = [];
-		},
-		columnShowAll:function () {
-			this.toggleHideStyleX.setStyle('');
-			this.hiddenColumns = [];
-		}
+		/**
+		 * @type Sheet.StyleUpdater
+		 */
+		toggleHideStyleX: null,
+
+		/**
+		 * @type Sheet.StyleUpdater
+		 */
+		toggleHideStyleY: null
 	};
 
 	return Constructor;
@@ -1038,7 +1132,7 @@ Sheet.StyleUpdater = (function(document) {
 	function Constructor(updateFn, max) {
 		var el = this.styleElement = document.createElement('style');
 		el.styleUpdater = this;
-		this.update = updateFn;
+		this._update = updateFn;
 		this.max = max;
 
 		if (Sheet.StyleUpdater.prototype.nthCss === null) {
@@ -1084,70 +1178,84 @@ Sheet.StyleUpdater = (function(document) {
 			}
 		}
 	}
+	Constructor.prototype = {
+		/**
+		 * @methodOf Sheet.StyleUpdater
+		 * @type {Function}
+		 */
+		setStyle: null,
+		/**
+		 * @methodOf Sheet.StyleUpdater
+		 * @type {Function}
+		 */
+		getStyle: null,
+
+		/**
+		 * Creates css for an iterated element
+		 * @param {String} elementName
+		 * @param {String} parentSelectorString
+		 * @param {Array} indexes
+		 * @param {Number} min
+		 * @param {String} [css]
+		 * @methodOf Sheet.StyleUpdater
+		 * @type {Function}
+		 * @returns {String}
+		 */
+		nthCss: null,
+
+		/**
+		 * Repeats a string a number of times
+		 * @param {String} str
+		 * @param {Number} num
+		 * @returns {String}
+		 */
+		repeat: function (str, num) {
+			var result = '';
+			while (num > 0) {
+				if (num & 1) {
+					result += str;
+				}
+				num >>= 1;
+				str += str;
+			}
+			return result;
+		},
+		update: function() {
+			return this._update.apply(this, arguments);
+		}
+	};
 
 	//ie
 	if (document.createElement('style').styleSheet) {
-		Constructor.prototype = {
-			setStyle: function (css) {
-				var el = this.styleElement,
-					ss = el.styleSheet;
+		Constructor.prototype.setStyle = function(css) {
+			var el = this.styleElement,
+				ss = el.styleSheet;
 
-				ss.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
-				if (!ss.disabled) {
-					ss.cssText = css;
-				}
-			},
-			getStyle: function() {
-				var el = this.styleElement,
-					ss = el.styleSheet;
-
-				ss.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
-				if (!ss.disabled) {
-					return ss.cssText;
-				}
-				return '';
+			ss.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
+			if (!ss.disabled) {
+				ss.cssText = css;
 			}
+		};
+
+		Constructor.prototype.getStyle = function() {
+			var el = this.styleElement,
+				ss = el.styleSheet;
+
+			ss.disabled = false;//IE8 bug, for some reason in some scenarios disabled never becomes enabled.  And even setting here don't actually set it, it just ensures that is is set to disabled = false when the time is right
+			if (!ss.disabled) {
+				return ss.cssText;
+			}
+			return '';
 		};
 	} else {
 		//standard
-		Constructor.prototype = {
-			setStyle: function (css) {
-				this.styleElement.innerHTML = css;
-			},
-			getStyle: function() {
-				return this.styleElement.innerHTML;
-			}
+		Constructor.prototype.setStyle = function(css) {
+			this.styleElement.innerHTML = css;
+		};
+		Constructor.prototype.getStyle = function() {
+			return this.styleElement.innerHTML;
 		};
 	}
-
-	/**
-	 * Creates css for an iterated element
-	 * @param {String} elementName
-	 * @param {String} parentSelectorString
-	 * @param {Array} indexes
-	 * @param {Number} min
-	 * @param {String} [css]
-	 * @returns {String}
-	 */
-	Constructor.prototype.nthCss = null;
-
-	/**
-	 * Repeats a string a number of times
-	 * @param {String} str
-	 * @param {Number} num
-	 * @returns {String}
-	 */
-	Constructor.prototype.repeat = function (str, num) {
-		var result = '';
-		while (num > 0) {
-			if (num & 1) {
-				result += str;
-			}
-			num >>= 1;
-			str += str;
-		}
-		return result;
-	};
 
 	return Constructor;
 })(document);/**
@@ -4252,7 +4360,7 @@ $.sheet = {
 										}
 
 										rowParent.insertBefore(td, rowParent.children[at]);
-										spreadsheet[row].splice(at, 0, cell);
+										spreadsheetRow.splice(at, 0, cell);
 										jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
 									});
 								}
@@ -6662,6 +6770,12 @@ $.sheet = {
 					actionUI.toggleHideRow(i);
 					jS.autoFillerGoToTd();
 				},
+				toggleHideRowRange: function(startIndex, endIndex) {
+					var actionUI = jS.obj.pane().actionUI;
+
+					actionUI.toggleHideRowRange(startIndex, endIndex);
+					jS.autoFillerGoToTd();
+				},
 				toggleHideColumn: function(i) {
 					i = i || jS.colLast;
 					if (!i) return;
@@ -6669,6 +6783,12 @@ $.sheet = {
 					var actionUI = jS.obj.pane().actionUI;
 
 					actionUI.toggleHideColumn(i);
+					jS.autoFillerGoToTd();
+				},
+				toggleHideColumnRange: function(startIndex, endIndex) {
+					var actionUI = jS.obj.pane().actionUI;
+
+					actionUI.toggleHideColumnRange(startIndex, endIndex);
 					jS.autoFillerGoToTd();
 				},
 				rowShowAll: function() {
