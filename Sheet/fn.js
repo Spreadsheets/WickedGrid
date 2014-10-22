@@ -1281,7 +1281,7 @@ var jFN = $.sheet.fn = {
 	EQUAL: function(left, right) {
 		var result;
 
-		if (left === right) {
+		if (left.toString() === right.toString()) {
 			result = new Boolean(true);
 			result.html = 'TRUE';
 		} else {
@@ -1784,34 +1784,35 @@ var jFN = $.sheet.fn = {
 	/**
 	 * cell function
 	 * @param value
-	 * @param tableArray
+	 * @param range
 	 * @param indexNumber
 	 * @param notExactMatch
 	 * @returns {*}
 	 * @memberOf jFN
 	 */
-	HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
+	HLOOKUP:function (value, range, indexNumber, notExactMatch) {
 
 		if (value === undefined) return null;
 
 		var jS = this.jS,
 			found,
+			foundCell,
 			result = '',
-			range = tableArray[0];
+			i = 0,
+			max = range.length;
 
 		indexNumber = indexNumber || 1;
 		notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
 		if (value !== undefined || ((isNaN(value) && value != '#REF!') || value.length === 0)) {
 
-			if (notExactMatch) {
-				found = arrHelpers.lSearch(range, value);
-			} else {
-				var i = range.indexOf(value);
-				if (i > -1) {
+			for(; i < max; i++) {
+				if (range[i].toString() == value) {
 					found = range[i];
+					break;
 				}
 			}
+
 		} else {
 			arrHelpers.getClosestNum(value, range, function(closest, i) {
 				if (notExactMatch) {
@@ -1823,7 +1824,11 @@ var jFN = $.sheet.fn = {
 		}
 
 		if (found !== undefined) {
-			result = found;
+			foundCell = found.cell;
+			result = jS.updateCellValue(foundCell.sheetIndex, indexNumber, foundCell.columnIndex);
+		} else {
+			result = new String();
+			result.html = '#N/A';
 		}
 
 		return result;
@@ -1831,34 +1836,34 @@ var jFN = $.sheet.fn = {
 	/**
 	 * cell function
 	 * @param value
-	 * @param tableArray
+	 * @param range
 	 * @param indexNumber
 	 * @param notExactMatch
 	 * @returns {*}
 	 * @memberOf jFN
 	 */
-	VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
+	VLOOKUP:function (value, range, indexNumber, notExactMatch) {
 
 		if (value === undefined) return null;
 
 		var jS = this.jS,
 			found,
-			result = '',
-			range = tableArray[0];
+			foundCell,
+			result,
+			i = 0,
+			max = range.length;
 
 		notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
 
 		if ((isNaN(value) && value != '#REF!') || value.length === 0) {
-
-			if (notExactMatch) {
-				found = arrHelpers.lSearch(range, value);
-			} else {
-				var i = range.indexOf(value);
-				if (i > -1) {
+			for(; i < max; i++) {
+				if (range[i].toString() == value) {
 					found = range[i];
+					break;
 				}
 			}
+
 		} else {
 			arrHelpers.getClosestNum(value, range, function(closest, i) {
 				if (notExactMatch) {
@@ -1870,7 +1875,11 @@ var jFN = $.sheet.fn = {
 		}
 
 		if (found !== undefined) {
-			result = found;
+			foundCell = found.cell;
+			result = jS.updateCellValue(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
+		} else {
+			result = new String();
+			result.html = '#N/A';
 		}
 
 		return result;

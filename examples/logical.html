@@ -7,13 +7,35 @@
 	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 	<meta content="utf-8" http-equiv="encoding">
 	<title>jQuery.sheet - The Ajax Spreadsheet</title>
-	<script type="text/javascript" src="../bower_components/jquery-legacy/dist/jquery.js"></script>
-    <script type="text/javascript" src="../parser/formula/formula.js"></script>
-	<script type="text/javascript" src="../jquery.sheet.js"></script>
-	<script type="text/javascript">
+	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
+    <script src="../parser/formula/formula.js"></script>
+	<script src="../jquery.sheet.js"></script>
+	<script src="customFormula.js"></script>
+	<script src="utilities/tableify.js"></script>
+
+	<script>
 		$.sheet.preLoad('../');
 		$(function() {
-			$('#sheetParent').sheet();
+			var table =
+tableify('Month	Avg. High °F	Avg. Low °F	Mean °F	Avg. Precip. in.	Record High °F	Record Low °F\n\
+Jan	67	46	57	0.91 	88 (1971)	16 (1913)\n\
+Feb	71	49	60	0.96 	92 (1986)	24 (1933)\n\
+Mar	77	54	66	0.99 	100 (1988)	25 (1966)\n\
+Apr	85	60	73	0.28 	105 (1992)	35 (1922)\n\
+May	95	69	82	0.11 	114 (1910)	39 (1899)\n\
+Jun	104	78	91	0.02 	122 (1990)	49 (1908)\n\
+Jul	106	84	95	1.05 	121 (1995)	63 (1912)\n\
+Aug	105	83	94	1.00 	117 (2011)	58 (1917)\n\
+Sep	100	77	89	0.64 	116 (1950)	47 (1965)\n\
+Oct	89	65	77	0.58 	107 (1980)	34 (1971)\n\
+Nov	76	53	65	0.65 	96 (1924)	27 (1931)\n\
+Dec	66	45	56	0.88 	87 (1950)	22 (1911)', 'Weather Statistics');
+			
+			$('#sheetParent')
+					.append(table)
+					.sheet({
+						formulaFunctions: formulaFunctions
+					});
 		});
 	</script>
 </head>
@@ -95,6 +117,34 @@
 			<td>OR</td>
 			<td data-formula="=OR(FALSE(), FALSE())"></td>
 			<td data-formula="=FALSE()"></td>
+			<td data-formula="=IF(B11 = C11, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>ISBLANK</td>
+			<td data-formula="=ISBLANK()"></td>
+			<td data-formula="=TRUE"></td>
+			<td data-formula="=IF(B11 = C11, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>ISBLANK</td>
+			<td data-formula="=ISBLANK(TRUE)"></td>
+			<td data-formula="=FALSE"></td>
+			<td data-formula="=IF(B11 = C11, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>ISBLANK</td>
+			<td data-formula="=ISBLANK(SHEET2!A2)"></td>
+			<td data-formula="=FALSE"></td>
+			<td data-formula="=IF(B11 = C11, TRUE, FALSE)"></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>ISBLANK</td>
+			<td data-formula="=ISBLANK(0)"></td>
+			<td data-formula="=FALSE"></td>
 			<td data-formula="=IF(B11 = C11, TRUE, FALSE)"></td>
 			<td></td>
 		</tr>

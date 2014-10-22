@@ -7,9 +7,9 @@
 	<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 	<meta content="utf-8" http-equiv="encoding">
 	<title>jQuery.sheet - The Ajax Spreadsheet</title>
-	<script type="text/javascript" src="../bower_components/jquery-legacy/dist/jquery.js"></script>
-	<script type="text/javascript" src="../jquery.sheet.js"></script>
-	<script type="text/javascript">
+	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
+	<script src="../jquery.sheet.js"></script>
+	<script>
 		$.sheet.preLoad('../');
 		$(function() {
             if (confirm('There are ' + (1000 * 26) + ' cells in this spreadsheet, each with a formula (RAND()*PI()).  This particular spreadsheet is usually used to find what makes jQuery.sheet slow, and make it faster.  It may take some time, proceed?')) {
