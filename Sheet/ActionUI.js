@@ -331,8 +331,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			pane.appendChild(this.toggleHideStyleX.styleElement);
 			pane.appendChild(this.toggleHideStyleY.styleElement);
 
-			this.hiddenRows = hiddenRows;
-			this.hiddenColumns = hiddenColumns;
+			this.hiddenRows = (hiddenRows !== null ? hiddenRows : []);
+			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
 			this.toggleHideStyleY.update();
 			this.toggleHideStyleX.update();

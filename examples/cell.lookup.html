@@ -7,13 +7,15 @@
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
     <meta content="utf-8" http-equiv="encoding">
     <title>jQuery.sheet - The Ajax Spreadsheet</title>
-    <script type="text/javascript" src="../bower_components/jquery-legacy/dist/jquery.js"></script>
-    <script type="text/javascript" src="../parser/formula/formula.js"></script>
-    <script type="text/javascript" src="../jquery.sheet.js"></script>
-    <script type="text/javascript">
+    <script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
+    <script src="../jquery.sheet.js"></script>
+	<script src="utilities/tableify.js"></script>
+	<script src="customFormula.js"></script>
+    <script>
         $.sheet.preLoad('../');
         $(function() {
-            var data = tsv.parse("Density	Viscosity	Temperature\n\
+
+            var table = tableify("Density	Viscosity	Temperature\n\
 0.457	3.55	500\n\
 0.525	3.25	400\n\
 0.616	2.93	300\n\
@@ -22,29 +24,13 @@
 0.835	2.38	150\n\
 0.946	2.17	100\n\
 1.09	1.95	50\n\
-1.29	1.71	0"),
-                    table = document.createElement('table'),
-                    tr,
-                    td,
-                    row,
-                    col;
+1.29	1.71	0", 'Weather Statistics');
 
-            table.setAttribute('title', 'Lookup Data');
-
-            while(data.length) {
-                row = data.shift();
-                tr = document.createElement('tr');
-                table.appendChild(tr);
-                while(row.length) {
-                    col = row.shift();
-                    td = document.createElement('td');
-                    td.innerHTML = col;
-                    tr.appendChild(td);
-                }
-            }
             $('#sheetParent')
                     .append(table)
-                    .sheet();
+                    .sheet({
+			            formulaFunctions: formulaFunctions
+		            });
         });
     </script>
 </head>
@@ -114,6 +100,27 @@
             <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
             <td></td>
         </tr>
+	    <tr>
+		    <td>MATCH</td>
+		    <td data-formula="MATCH(0.947, SHEET2!A2:A10, 1)"></td>
+		    <td>0.946</td>
+		    <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+		    <td></td>
+	    </tr>
+	    <tr>
+		    <td>MATCH</td>
+		    <td data-formula="MATCH(2.75, SHEET2!A2:C10, 0)"></td>
+		    <td>2.75</td>
+		    <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+		    <td></td>
+	    </tr>
+	    <tr>
+		    <td>MATCH</td>
+		    <td data-formula="MATCH(2.75, SHEET2!B2:B10, -1)"></td>
+		    <td>2.75</td>
+		    <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+		    <td></td>
+	    </tr>
     </table>
 </div>
 </body>
