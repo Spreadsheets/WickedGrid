@@ -6364,6 +6364,9 @@ $.sheet = {
 						}
 
 						if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
+							result.rowCount = (rowIndexEnd - rowIndex) + 1;
+							result.columnCount = (colIndexEnd - colIndexStart) + 1;
+
 							do {
 								colIndex = colIndexStart;
 								row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
@@ -6438,17 +6441,22 @@ $.sheet = {
 					remoteCellRangeValue:function (sheet, start, end) {
 						var _start = jSE.parseLocation(start.colString, start.rowString),
 							_end = jSE.parseLocation(end.colString, end.rowString),
-							sheetIndex = jSE.parseSheetLocation(sheet);
+							sheetIndex = jSE.parseSheetLocation(sheet),
+							colIndex,
+							maxColIndex = _end.col,
+							rowIndex,
+							maxRowIndex = _end.row,
+							result = [];
 
 						if (sheetIndex < 0) {
 							sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
 						}
 
-						var result = [];
-
-						for (var i = _start.row; i <= _end.row; i++) {
-							for (var j = _start.col; j <= _end.col; j++) {
-								result.push(jS.updateCellValue(sheetIndex, i, j));
+						result.rowCount = (maxRowIndex - _start.row) + 1;
+						result.columnCount = (maxColIndex - _start.col) + 1;
+						for (colIndex = _start.col; colIndex <= maxColIndex; colIndex++) {
+							for (rowIndex = _start.row; rowIndex <= maxRowIndex; rowIndex++) {
+								result.push(jS.updateCellValue(sheetIndex, rowIndex, colIndex));
 							}
 						}
 
