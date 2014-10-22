@@ -204,7 +204,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					if (style === undefined) {
 						var row = that.frozenAt.row;
-						if (that.max === undefined){
+						if (this.max === undefined){
 							style =
 								//hide all previous tr elements
 								cssId + ' tr:nth-child(-n+' + indexes[0] + ') {display: none;}' +
@@ -438,8 +438,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			pane.appendChild(this.toggleHideStyleX.styleElement);
 			pane.appendChild(this.toggleHideStyleY.styleElement);
 
-			this.hiddenRows = hiddenRows;
-			this.hiddenColumns = hiddenColumns;
+			this.hiddenRows = (hiddenRows !== null ? hiddenRows : []);
+			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
 			this.toggleHideStyleY.update();
 			this.toggleHideStyleX.update();
@@ -3914,7 +3914,11 @@ $.sheet = {
 						tr,
 						td,
 						tdsX,
-						tdsY;
+						tdsY,
+						formula,
+						cellType,
+						uneditable,
+						id;
 
 					if ((sheet = jS.spreadsheets[sheetIndex]) === u) { //check if spreadsheet exists, if not, create it as an array
 						sheet = jS.spreadsheets[sheetIndex] = [];
@@ -3935,13 +3939,25 @@ $.sheet = {
 
 					jSCell = row[colIndex] = td.jSCell = new Sheet.Cell(sheetIndex, td, jS);
 
-					jSCell.formula = td.getAttribute('data-formula');
-					jSCell.cellType = td.getAttribute('data-celltype');
+					formula = td.getAttribute('data-formula');
+					cellType = td.getAttribute('data-celltype');
+					uneditable = td.getAttribute('data-uneditable');
+					id = td.getAttribute('id');
+
+					if (formula !== null)
+						jSCell.formula = formula;
+					if (cellType !== null)
+						jSCell.cellType = cellType;
+					if (uneditable !== null)
+						jSCell.uneditable = uneditable;
+					if (id !== null)
+						jSCell.id = id;
+
 					jSCell.value = td.textContent || td.innerText;
 					jSCell.calcCount = calcCount || 0;
 					jSCell.needsUpdated = jSCell.formula.length > 0;
-					jSCell.uneditable = td.getAttribute('data-uneditable') || false;
-					jSCell.id = td.getAttribute('id') || null;
+
+
 
 					if (jSCell.formula.length > 0 && jSCell.formula.charAt(0) == '=') {
 						jSCell.formula = jSCell.formula.substring(1);
@@ -5257,15 +5273,20 @@ $.sheet = {
 								hiddenColumns = settings.loader.hiddenColumns(i);
 						}
 
-						else if (!hiddenRows.length || !hiddenColumns.length) {
-							hiddenRows = table.getAttribute('data-hiddenrows');
-							hiddenColumns = table.getAttribute('data-hiddencolumns');
+						else {
+							if (hiddenRows === u || hiddenRows.length > 0) {
+								hiddenRows = table.getAttribute('data-hiddenrows');
 
-							if (hiddenRows !== null)
-								hiddenRows = arrHelpers.toNumbers(hiddenRows.split(','));
+								if (hiddenRows !== null)
+									hiddenRows = arrHelpers.toNumbers(hiddenRows.split(','));
+							}
 
-							if (hiddenColumns !== null)
-								hiddenColumns = arrHelpers.toNumbers(hiddenColumns.split(','));
+							if (hiddenColumns === u || hiddenColumns.length > 0) {
+								hiddenColumns = table.getAttribute('data-hiddencolumns');
+
+								if (hiddenColumns !== null)
+									hiddenColumns = arrHelpers.toNumbers(hiddenColumns.split(','));
+							}
 						}
 
 						enclosure.actionUI.hide(hiddenRows, hiddenColumns);
@@ -8174,6 +8195,9 @@ $.sheet = {
 						return jS.updateCellValue.call(cell.defer);
 					}
 
+					cell.rowIndex = rowIndex;
+					cell.columnIndex = colIndex;
+
 					//we detect the last value, so that we don't have to update all cell, thus saving resources
 					if (cell.needsUpdated) {
 
@@ -8182,8 +8206,6 @@ $.sheet = {
 						cell.state.unshift('updating');
 						cell.fnCount = 0;
 						delete cell.valueOverride;
-						cell.rowIndex = rowIndex;
-						cell.colIndex = colIndex;
 
 						//increment times this cell has been calculated
 						cell.calcCount++;
@@ -8771,7 +8793,7 @@ $.sheet = {
 							}
 						}
 
-						return [result];
+						return result;
 					},
 
 					/**
@@ -13268,34 +13290,35 @@ var jFN = $.sheet.fn = {
 	/**
 	 * cell function
 	 * @param value
-	 * @param tableArray
+	 * @param range
 	 * @param indexNumber
 	 * @param notExactMatch
 	 * @returns {*}
 	 * @memberOf jFN
 	 */
-	HLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
+	HLOOKUP:function (value, range, indexNumber, notExactMatch) {
 
 		if (value === undefined) return null;
 
 		var jS = this.jS,
 			found,
+			foundCell,
 			result = '',
-			range = tableArray[0];
+			i = 0,
+			max = range.length;
 
 		indexNumber = indexNumber || 1;
 		notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
 		if (value !== undefined || ((isNaN(value) && value != '#REF!') || value.length === 0)) {
 
-			if (notExactMatch) {
-				found = arrHelpers.lSearch(range, value);
-			} else {
-				var i = range.indexOf(value);
-				if (i > -1) {
+			for(; i < max; i++) {
+				if (range[i].toString() == value) {
 					found = range[i];
+					break;
 				}
 			}
+
 		} else {
 			arrHelpers.getClosestNum(value, range, function(closest, i) {
 				if (notExactMatch) {
@@ -13307,7 +13330,11 @@ var jFN = $.sheet.fn = {
 		}
 
 		if (found !== undefined) {
-			result = found;
+			foundCell = found.cell;
+			result = jS.updateCellValue(foundCell.sheetIndex, indexNumber, foundCell.columnIndex);
+		} else {
+			result = new String();
+			result.html = '#N/A';
 		}
 
 		return result;
@@ -13315,34 +13342,34 @@ var jFN = $.sheet.fn = {
 	/**
 	 * cell function
 	 * @param value
-	 * @param tableArray
+	 * @param range
 	 * @param indexNumber
 	 * @param notExactMatch
 	 * @returns {*}
 	 * @memberOf jFN
 	 */
-	VLOOKUP:function (value, tableArray, indexNumber, notExactMatch) {
+	VLOOKUP:function (value, range, indexNumber, notExactMatch) {
 
 		if (value === undefined) return null;
 
 		var jS = this.jS,
 			found,
-			result = '',
-			range = tableArray[0];
+			foundCell,
+			result,
+			i = 0,
+			max = range.length;
 
 		notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
 
 
 		if ((isNaN(value) && value != '#REF!') || value.length === 0) {
-
-			if (notExactMatch) {
-				found = arrHelpers.lSearch(range, value);
-			} else {
-				var i = range.indexOf(value);
-				if (i > -1) {
+			for(; i < max; i++) {
+				if (range[i].toString() == value) {
 					found = range[i];
+					break;
 				}
 			}
+
 		} else {
 			arrHelpers.getClosestNum(value, range, function(closest, i) {
 				if (notExactMatch) {
@@ -13354,7 +13381,11 @@ var jFN = $.sheet.fn = {
 		}
 
 		if (found !== undefined) {
-			result = found;
+			foundCell = found.cell;
+			result = jS.updateCellValue(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
+		} else {
+			result = new String();
+			result.html = '#N/A';
 		}
 
 		return result;
