@@ -5306,51 +5306,94 @@ $.sheet = {
 							scrollUI = actionUI.scrollUI,
 							pane = actionUI.pane,
 							rows = table.tBody.children,
-							columns = table.colGroup.children;
+							columns = table.colGroup.children,
+							usingLoader = (s.loader !== null);
 
 						table.size = function() { return jS.tableSize(table); };
 						pane.size = function() { return jS.sheetSize(table); };
+
+						//here we have two different types of functionality to cut down on logic between behaviours.
 						scrollUI.onscroll = function() {
 							this.scrollTop = this.scrollLeft = 0;
-							scrollUI.onscroll = function () {
-								if (!jS.isBusy()) {
-									var that = this,
-										xUpdated,
-										yUpdated;
+							if (usingLoader) {
+								scrollUI.onscroll = function () {
+									if (!jS.isBusy()) {
+										var that = this,
+											xUpdated,
+											yUpdated;
 
-									thaw([
-										function () {
-											xUpdated = actionUI.scrollTo({axis: 'x', pixel: that.scrollLeft});
-										},
+										thaw([
+											function () {
+												xUpdated = actionUI.scrollTo({axis: 'x', pixel: that.scrollLeft});
+											},
 
-										function () {
-											yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
-										},
-										function () {
-											if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
-												jS.calcVisibleCol(actionUI);
+											function () {
+												yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
+											},
+											function () {
+												if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
+													jS.calcVisibleCol(actionUI);
+												}
+											},
+											function () {
+												if (yUpdated) {
+													if (actionUI.scrollAxis.y.size >= (rows.length - 1)) {
+														jS.calcVisibleRow(actionUI);
+													}
+													jS.updateYBarWidthToCorner(actionUI);
+												}
+											},
+											function () {
+												if (xUpdated && yUpdated) {
+													jS.obj.barHelper().remove();
+													jS.autoFillerGoToTd();
+													if (pane.inPlaceEdit) {
+														pane.inPlaceEdit.goToTd();
+													}
+												}
 											}
-										},
-										function() {
-											if (yUpdated) {
-												if ( actionUI.scrollAxis.y.size >= (rows.length - 1)) {
+										]);
+									}
+								};
+							} else {
+								scrollUI.onscroll = function () {
+									if (!jS.isBusy()) {
+										var that = this,
+											xUpdated,
+											yUpdated;
+
+										thaw([
+											function () {
+												xUpdated = actionUI.scrollTo({axis: 'x', pixel: that.scrollLeft});
+											},
+
+											function () {
+												yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
+											},
+											function () {
+												if (xUpdated) {
+													jS.calcVisibleCol(actionUI);
+												}
+											},
+											function () {
+												if (yUpdated) {
 													jS.calcVisibleRow(actionUI);
+													jS.updateYBarWidthToCorner(actionUI);
 												}
-												jS.updateYBarWidthToCorner(actionUI);
-											}
-										},
-										function() {
-											if (xUpdated && yUpdated) {
-												jS.obj.barHelper().remove();
-												jS.autoFillerGoToTd();
-												if (pane.inPlaceEdit) {
-													pane.inPlaceEdit.goToTd();
+											},
+											function () {
+												if (xUpdated && yUpdated) {
+													jS.obj.barHelper().remove();
+													jS.autoFillerGoToTd();
+													if (pane.inPlaceEdit) {
+														pane.inPlaceEdit.goToTd();
+													}
 												}
 											}
-										}
-									]);
-								}
-							};
+										]);
+									}
+								};
+							}
 						};
 						scrollUI.onmousedown = function() {
 							jS.obj.barHelper().remove();
@@ -8195,8 +8238,10 @@ $.sheet = {
 						return jS.updateCellValue.call(cell.defer);
 					}
 
-					cell.rowIndex = rowIndex;
-					cell.columnIndex = colIndex;
+					if (rowIndex !== u && colIndex !== u) {
+						cell.rowIndex = rowIndex;
+						cell.columnIndex = colIndex;
+					}
 
 					//we detect the last value, so that we don't have to update all cell, thus saving resources
 					if (cell.needsUpdated) {
