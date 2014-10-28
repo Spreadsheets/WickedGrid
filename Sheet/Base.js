@@ -9,5 +9,7 @@ var Sheet = {
 	openOfficeSelectModel: 2,
 
 	defaultColumnWidth: 120,
-	defaultRowHeight: 20
+	defaultRowHeight: 20,
+
+	calcStack: 0
 };
