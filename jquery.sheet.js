@@ -34,7 +34,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	openOfficeSelectModel: 2,
 
 	defaultColumnWidth: 120,
-	defaultRowHeight: 20
+	defaultRowHeight: 20,
+
+	calcStack: 0
 };Sheet.Cell = (function() {
 	var u = undefined;
 
