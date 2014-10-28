@@ -6,5 +6,8 @@ var Sheet = {
 
 	excelSelectModel: 0,
 	googleDriveSelectModel: 1,
-	openOfficeSelectModel: 2
+	openOfficeSelectModel: 2,
+
+	defaultColumnWidth: 120,
+	defaultRowHeight: 20
 };

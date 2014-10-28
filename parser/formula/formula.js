@@ -108,7 +108,7 @@ case 4:
 
 	    //js
 	        
-            this.$ = yy.handler.time.call(yy.obj, $$[$0], true);
+            this.$ = yy.handler.time($$[$0], true);
         //
     
 break;
@@ -116,7 +116,7 @@ case 5:
 
         //js
             
-            this.$ = yy.handler.time.call(yy.obj, $$[$0]);
+            this.$ = yy.handler.time($$[$0]);
         //
 
     
@@ -172,7 +172,7 @@ case 11:
 
 	    //js
 	        
-            this.$ = yy.handler.callFunction.call(yy.obj, 'EQUAL', [$$[$0-2], $$[$0]]);
+            this.$ = yy.handler.callFunction(yy.obj, 'EQUAL', [$$[$0-2], $$[$0]]);
 
         /*php
             this.$ = $$[$0-2] == $$[$0];
@@ -206,7 +206,7 @@ case 14:
 
         //js
             
-            this.$ = yy.handler.callFunction.call(yy.obj, 'LESS_EQUAL', [$$[$0-3], $$[$0]]);
+            this.$ = yy.handler.callFunction(yy.obj, 'LESS_EQUAL', [$$[$0-3], $$[$0]]);
 
         /*php
             this.$ = ($$[$0-3] * 1) <= ($$[$0] * 1);
@@ -217,7 +217,7 @@ case 15:
 
         //js
             
-            this.$ = yy.handler.callFunction.call(yy.obj, 'GREATER_EQUAL', [$$[$0-3], $$[$0]]);
+            this.$ = yy.handler.callFunction(yy.obj, 'GREATER_EQUAL', [$$[$0-3], $$[$0]]);
 
         /*php
             this.$ = ($$[$0-3] * 1) >= ($$[$0] * 1);
@@ -246,7 +246,7 @@ case 18:
 
 	    //js
 	        
-			this.$ = yy.handler.callFunction.call(yy.obj, 'GREATER', [$$[$0-2], $$[$0]]);
+			this.$ = yy.handler.callFunction(yy.obj, 'GREATER', [$$[$0-2], $$[$0]]);
 
 		/*php
 		    this.$ = ($$[$0-2] * 1) > ($$[$0] * 1);
@@ -257,7 +257,7 @@ case 19:
 
         //js
             
-            this.$ = yy.handler.callFunction.call(yy.obj, 'LESS', [$$[$0-2], $$[$0]]);
+            this.$ = yy.handler.callFunction(yy.obj, 'LESS', [$$[$0-2], $$[$0]]);
 
         /*php
             this.$ = ($$[$0-2] * 1) < ($$[$0] * 1);
@@ -348,7 +348,7 @@ case 27:
 
 	    //js
 	        
-			this.$ = yy.handler.callFunction.call(yy.obj, $$[$0-2]);
+			this.$ = yy.handler.callFunction(yy.obj, $$[$0-2]);
 
 		/*php
 		    this.$ = $this->callFunction($$[$0-2]);
@@ -359,7 +359,7 @@ case 28:
 
 	    //js
 	        
-			this.$ = yy.handler.callFunction.call(yy.obj, $$[$0-3], $$[$0-1]);
+			this.$ = yy.handler.callFunction(yy.obj, $$[$0-3], $$[$0-1]);
 
         /*php
             this.$ = $this->callFunction($$[$0-3], $$[$0-1]);
@@ -370,7 +370,7 @@ case 30:
 
 	    //js
 	        
-			this.$ = yy.handler.cellValue.call(yy.obj, $$[$0]);
+			this.$ = yy.handler.cellValue(yy.obj, $$[$0]);
 
         /*php
             this.$ = $this->cellValue($$[$0]);
@@ -380,7 +380,7 @@ break;
 case 31:
 
 	    //js
-			this.$ = yy.handler.cellRangeValue.call(yy.obj, $$[$0-2], $$[$0]);
+			this.$ = yy.handler.cellRangeValue(yy.obj, $$[$0-2], $$[$0]);
 
         /*php
             this.$ = $this->cellRangeValue($$[$0-2], $$[$0]);
@@ -390,7 +390,7 @@ break;
 case 32:
 
 	    //js
-			this.$ = yy.handler.remoteCellValue.call(yy.obj, $$[$0-2], $$[$0]);
+			this.$ = yy.handler.remoteCellValue(yy.obj, $$[$0-2], $$[$0]);
 
         /*php
             this.$ = $this->remoteCellValue($$[$0-2], $$[$0]);
@@ -400,7 +400,7 @@ break;
 case 33:
 
 	    //js
-            this.$ = yy.handler.remoteCellRangeValue.call(yy.obj, $$[$0-4], $$[$0-2], $$[$0]);
+            this.$ = yy.handler.remoteCellRangeValue(yy.obj, $$[$0-4], $$[$0-2], $$[$0]);
 
         /*php
             this.$ = $this->remoteCellRangeValue($$[$0-4], $$[$0-2], $$[$0]);

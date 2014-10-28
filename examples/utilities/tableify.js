@@ -23,7 +23,11 @@ var tableify = (function(document, TSV) {
 			while (row.length) {
 				col = row.shift();
 				td = document.createElement('td');
-				td.innerHTML = col;
+				if (col.charAt(0) === '=') {
+					td.setAttribute('data-formula', col);
+				} else {
+					td.innerHTML = col;
+				}
 				tr.appendChild(td);
 			}
 		}

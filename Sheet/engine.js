@@ -28,7 +28,7 @@ var jSE = $.sheet.engine = {
 					if (colIndex > 0) {
 						do {
 							cell = row[colIndex];
-							ignite.call(cell, sheet, rowIndex, colIndex);
+							cell.updateValue();
 						} while (colIndex-- > 1);
 					}
 				}

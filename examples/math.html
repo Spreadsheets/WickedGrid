@@ -10,10 +10,21 @@
 	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
     <script src="../parser/formula/formula.js"></script>
 	<script src="../jquery.sheet.js"></script>
+	<script src="customFormula.js"></script>
+	<script src="utilities/tableify.js"></script>
 	<script>
+		var table = tableify('Array 1	Array 1	Array 2	Array 2\n\
+3	4	2	7\n\
+8	6	6	7\n\
+1	9	5	3'
+		, 'Arrays');
 		$.sheet.preLoad('../');
 		$(function() {
-			$('#sheetParent').sheet();
+			$('#sheetParent')
+				.append(table)
+				.sheet({
+					formulaFunctions: formulaFunctions
+				});
 		});
 	</script>
 </head>
@@ -469,6 +480,20 @@
             <td data-formula="=IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
             <td></td>
         </tr>
+		<tr>
+			<td>SUMPRODUCT</td>
+			<td data-formula="SUMPRODUCT(Arrays!A2:B4, Arrays!C2:D4)"></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td>SUMPRODUCT</td>
+			<td data-formula="SUMPRODUCT(Arrays!A2:B4)"></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
 		</tbody>
 	</table>
 </div>

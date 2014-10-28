@@ -15,7 +15,7 @@
         $.sheet.preLoad('../');
         $(function() {
 
-            var table = tableify("Density	Viscosity	Temperature\n\
+            var table1 = tableify("Density	Viscosity	Temperature\n\
 0.457	3.55	500\n\
 0.525	3.25	400\n\
 0.616	2.93	300\n\
@@ -24,10 +24,21 @@
 0.835	2.38	150\n\
 0.946	2.17	100\n\
 1.09	1.95	50\n\
-1.29	1.71	0", 'Weather Statistics');
+1.29	1.71	0", 'Weather Statistics'),
+	            table2 = tableify("=TRANSPOSE(SHEET2!A2:A10)\t\t\t\t\t\t\t\t\t\n\
+=TRANSPOSE(A1:I1)\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t", "Transpose Playground");
 
             $('#sheetParent')
-                    .append(table)
+                    .append(table1)
+		            .append(table2)
                     .sheet({
 			            formulaFunctions: formulaFunctions
 		            });
@@ -35,7 +46,7 @@
     </script>
 </head>
 <body>
-<div id="sheetParent" title="Cell Lookup">
+<div id="sheetParent" title="Cell Lookup" style="height: 600px;">
     <table title="Test">
         <tr>
             <td class="styleBold styleCenter">Function</td>
@@ -118,6 +129,27 @@
 		    <td>MATCH</td>
 		    <td data-formula="MATCH(2.75, SHEET2!B2:B10, -1)"></td>
 		    <td>4</td>
+		    <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+		    <td></td>
+	    </tr>
+	    <tr>
+		    <td>TRANSPOSE</td>
+		    <td data-formula="TRANSPOSE(SHEET2!A2:A10)"></td>
+		    <td></td>
+		    <td></td>
+		    <td></td>
+	    </tr>
+	    <tr>
+		    <td>OFFSET</td>
+		    <td data-formula="OFFSET(SHEET2!A2,2,2)"></td>
+		    <td>300</td>
+		    <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
+		    <td></td>
+	    </tr>
+	    <tr>
+		    <td>OFFSET</td>
+		    <td data-formula="SUM(OFFSET(SHEET2!A2,2,2,2,2))"></td>
+		    <td>550</td>
 		    <td data-formula="IF(THISROWCELL('B') = THISROWCELL('C'), TRUE, FALSE)"></td>
 		    <td></td>
 	    </tr>
