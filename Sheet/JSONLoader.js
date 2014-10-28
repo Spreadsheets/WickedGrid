@@ -43,28 +43,23 @@
 				cols: firstRowColumns.length
 			};
 		},
-		setWidth: function(sheetIndex, columnIndex, colElement) {
+		getWidth: function(sheetIndex, columnIndex) {
 			var json = this.json,
-				jsonSpreadsheet = json[sheetIndex],
+				jsonSpreadsheet = json[sheetIndex] || {},
 				metadata = jsonSpreadsheet.metadata || {},
 				widths = metadata.widths || [],
-				width = widths[columnIndex];
+				width = widths[columnIndex] || Sheet.defaultColumnWidth;
 
-			colElement.style.width = width + 'px';
+			return width;
 		},
-		setRowHeight: function(sheetIndex, rowIndex, barTd) {
+		getHeight: function(sheetIndex, rowIndex) {
 			var json = this.json,
-				jsonSpreadsheet,
-				rows,
-				row,
-				height;
+				jsonSpreadsheet = json[sheetIndex] || {},
+				rows = jsonSpreadsheet.rows || [],
+				row = rows[rowIndex] || {},
+				height = row.height || Sheet.defaultRowHeight;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return;
-			if ((row = rows[rowIndex]) === undefined) return;
-			if ((height = row.height) === undefined) return;
-
-			barTd.style.height = height + 'px';
+			return height;
 		},
 		setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
 			var td = document.createElement('td'),
@@ -109,6 +104,7 @@
 
 				if (cell.loadedFrom === null) {
 					cell.loadedFrom = jsonCell;
+					cell.loader = this;
 				}
 
 				if (jsonCell['class'] !== undefined) td.className = jsonCell['class'];
@@ -116,6 +112,10 @@
 				if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan']);
 				if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan']);
 				if (jsonCell['uneditable'] !== undefined) td.setAttribute('data-uneditable', jsonCell['uneditable']);
+				if (jsonCell['cellType'] !== undefined) {
+					td.setAttribute('data-celltype', jsonCell['cellType']);
+					cell.cellType = jsonCell['cellType'];
+				}
 				if (jsonCell['id'] !== undefined) {
 					td.setAttribute('id', jsonCell['id']);
 					cell.id = jsonCell['id'];
@@ -145,10 +145,8 @@
 
 			return cell;
 		},
-		jitCell: function(sheetIndex, rowIndex, columnIndex, jsonCell) {
-			if (jsonCell === undefined) {
-				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
-			}
+		jitCell: function(sheetIndex, rowIndex, columnIndex, jS, cellHandler) {
+			var jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
 
 			if (jsonCell === null) return null;
 
@@ -180,10 +178,11 @@
 			hasCellType = (cellType !== undefined && cellType !== null);
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
 
-			jitCell = new Sheet.Cell(sheetIndex);
+			jitCell = new Sheet.Cell(sheetIndex, null, jS, cellHandler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = jsonCell;
+			jitCell.loader = this;
 			jitCell.needsUpdated = hasFormula;
 
 			if (hasCellType) jitCell.cellType = cellType;

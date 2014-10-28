@@ -67,11 +67,17 @@ var arrHelpers = window.arrHelpers = {
 		return r;
 	},
 	flatten:function (arr) {
-		var flat = [];
-		for (var i = 0, l = arr.length; i < l; i++) {
-			var type = Object.prototype.toString.call(arr[i]).split(' ').pop().split(']').shift().toLowerCase();
-			if (type) {
-				flat = flat.concat(/^(array|collection|arguments|object)$/.test(type) ? this.flatten(arr[i]) : arr[i]);
+		var flat = [],
+			item,
+			i = 0,
+			max = arr.length;
+
+		for (; i < max; i++) {
+			item = arr[i];
+			if (item instanceof Array) {
+				flat = flat.concat(this.flatten(item));
+			} else {
+				flat = flat.concat(item);
 			}
 		}
 		return flat;

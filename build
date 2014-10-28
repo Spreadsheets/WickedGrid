@@ -25,6 +25,8 @@ JS_FILES=(
 	#constructors first
 	Base.js
 	Cell.js
+	CellHandler.js
+	CellTypeHandlers.js
 	CellRange.js
 	ActionUI.js
 	SpreadsheetUI.js

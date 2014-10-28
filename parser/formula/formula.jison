@@ -119,13 +119,13 @@ expression
 	| TIME_AMPM {
 	    //js
 	        
-            $$ = yy.handler.time.call(yy.obj, $1, true);
+            $$ = yy.handler.time($1, true);
         //
     }
 	| TIME_24 {
         //js
             
-            $$ = yy.handler.time.call(yy.obj, $1);
+            $$ = yy.handler.time($1);
         //
 
     }
@@ -169,7 +169,7 @@ expression
 	| expression '=' expression {
 	    //js
 	        
-            $$ = yy.handler.callFunction.call(yy.obj, 'EQUAL', [$1, $3]);
+            $$ = yy.handler.callFunction(yy.obj, 'EQUAL', [$1, $3]);
 
         /*php
             $$ = $1 == $3;
@@ -197,7 +197,7 @@ expression
 	| expression '<' '=' expression {
         //js
             
-            $$ = yy.handler.callFunction.call(yy.obj, 'LESS_EQUAL', [$1, $4]);
+            $$ = yy.handler.callFunction(yy.obj, 'LESS_EQUAL', [$1, $4]);
 
         /*php
             $$ = ($1 * 1) <= ($4 * 1);
@@ -206,7 +206,7 @@ expression
     | expression '>' '=' expression {
         //js
             
-            $$ = yy.handler.callFunction.call(yy.obj, 'GREATER_EQUAL', [$1, $4]);
+            $$ = yy.handler.callFunction(yy.obj, 'GREATER_EQUAL', [$1, $4]);
 
         /*php
             $$ = ($1 * 1) >= ($4 * 1);
@@ -229,7 +229,7 @@ expression
 	| expression '>' expression {
 	    //js
 	        
-			$$ = yy.handler.callFunction.call(yy.obj, 'GREATER', [$1, $3]);
+			$$ = yy.handler.callFunction(yy.obj, 'GREATER', [$1, $3]);
 
 		/*php
 		    $$ = ($1 * 1) > ($3 * 1);
@@ -238,7 +238,7 @@ expression
 	| expression '<' expression {
         //js
             
-            $$ = yy.handler.callFunction.call(yy.obj, 'LESS', [$1, $3]);
+            $$ = yy.handler.callFunction(yy.obj, 'LESS', [$1, $3]);
 
         /*php
             $$ = ($1 * 1) < ($3 * 1);
@@ -313,7 +313,7 @@ expression
 	| FUNCTION '(' ')' {
 	    //js
 	        
-			$$ = yy.handler.callFunction.call(yy.obj, $1);
+			$$ = yy.handler.callFunction(yy.obj, $1);
 
 		/*php
 		    $$ = $this->callFunction($1);
@@ -322,7 +322,7 @@ expression
 	| FUNCTION '(' expseq ')' {
 	    //js
 	        
-			$$ = yy.handler.callFunction.call(yy.obj, $1, $3);
+			$$ = yy.handler.callFunction(yy.obj, $1, $3);
 
         /*php
             $$ = $this->callFunction($1, $3);
@@ -335,7 +335,7 @@ cellRange :
 	cell {
 	    //js
 	        
-			$$ = yy.handler.cellValue.call(yy.obj, $1);
+			$$ = yy.handler.cellValue(yy.obj, $1);
 
         /*php
             $$ = $this->cellValue($1);
@@ -343,7 +343,7 @@ cellRange :
     }
 	| cell ':' cell {
 	    //js
-			$$ = yy.handler.cellRangeValue.call(yy.obj, $1, $3);
+			$$ = yy.handler.cellRangeValue(yy.obj, $1, $3);
 
         /*php
             $$ = $this->cellRangeValue($1, $3);
@@ -351,7 +351,7 @@ cellRange :
     }
 	| SHEET '!' cell {
 	    //js
-			$$ = yy.handler.remoteCellValue.call(yy.obj, $1, $3);
+			$$ = yy.handler.remoteCellValue(yy.obj, $1, $3);
 
         /*php
             $$ = $this->remoteCellValue($1, $3);
@@ -359,7 +359,7 @@ cellRange :
     }
 	| SHEET '!' cell ':' cell {
 	    //js
-            $$ = yy.handler.remoteCellRangeValue.call(yy.obj, $1, $3, $5);
+            $$ = yy.handler.remoteCellRangeValue(yy.obj, $1, $3, $5);
 
         /*php
             $$ = $this->remoteCellRangeValue($1, $3, $5);

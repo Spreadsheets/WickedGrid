@@ -1417,7 +1417,7 @@ var jFN = $.sheet.fn = {
 			};
 			select.onchange = function () {
 				cell.value = this.value;
-				jS.setCellNeedsUpdated(cell);
+				cell.setNeedsUpdated();
 				jS.calcDependencies.call(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
@@ -1825,7 +1825,12 @@ var jFN = $.sheet.fn = {
 
 		if (found !== undefined) {
 			foundCell = found.cell;
-			result = jS.updateCellValue(foundCell.sheetIndex, indexNumber, foundCell.columnIndex);
+			foundCell = jS.getCell(foundCell.sheetIndex, indexNumber, foundCell.columnIndex);
+			if (foundCell !== null) {
+				result = foundCell.updateValue();
+			} else {
+				result = '';
+			}
 		} else {
 			result = new String();
 			result.html = '#N/A';
@@ -1876,7 +1881,12 @@ var jFN = $.sheet.fn = {
 
 		if (found !== undefined) {
 			foundCell = found.cell;
-			result = jS.updateCellValue(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
+			foundCell = jS.getCell(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
+			if (foundCell !== null) {
+				result = foundCell.updateValue();
+			} else {
+				result = '';
+			}
 		} else {
 			result = new String();
 			result.html = '#N/A';
@@ -1896,7 +1906,7 @@ var jFN = $.sheet.fn = {
 		if (isNaN(col)) {
 			col = jSE.columnLabelIndex(col);
 		}
-		return jS.updateCellValue(this.sheetIndex, this.rowIndex, col);
+		return jS.getCell(this.sheetIndex, this.rowIndex, col).updateValue();
 	},
 	/**
 	 * cell function
@@ -1907,6 +1917,6 @@ var jFN = $.sheet.fn = {
 	THISCOLCELL:function (row) {
 		var jS = this.jS;
 
-		return jS.updateCellValue(this.sheetIndex, row, this.colIndex);
+		return jS.getCell(this.sheetIndex, row, this.colIndex).updateValue();
 	}
 };

@@ -60,7 +60,7 @@
 						},
 						sheetCellEdited: function(event, jS, cell) {
 							var i = 0,
-								depends = jS.getAllCellDependencies(cell),
+								depends = cell.getAllDependencies(),
 								max = depends.length,
 								dCell;
 
