@@ -652,7 +652,6 @@ $.fn.extend({
 					cell.valueOverride = cell.formula = '';
 				}
 				cell.updateValue();
-				cell.updateDependencies();
 				return true;
 			} catch (e) {}
 		}
@@ -682,7 +681,6 @@ $.fn.extend({
 					cell.formula = formula;
 					cell.valueOverride = cell.value = '';
 					cell.updateValue();
-					cell.updateDependencies();
 				}
 			} catch (e) {}
 		}
@@ -1366,7 +1364,7 @@ $.sheet = {
 						.removeClass(jS.theme.parent)
 						.html('');
 
-					s.parent[0].jS = u;
+					delete s.parent[0].jS
 
 					this.obj.menus().remove();
 
@@ -1720,9 +1718,12 @@ $.sheet = {
 							case "row":
 								setupCell = null;
 							case "row-init":
-								if (!i) {
+								//ensure that i isn't out of bounds
+								if (i === u || i === null || i > tableSize.rows) {
 									i = tableSize.rows;
 									isLast = true;
+								} else if (i === 0 ) {
+									isBefore = false;
 								}
 								loc = {row: i, col: 0};
 								o = this.rowAdder;
@@ -1737,15 +1738,16 @@ $.sheet = {
 									var barParent = document.createElement('tr'),
 										bar = document.createElement('th');
 
-									bar.setAttribute('class', rowBarClasses);
+									bar.className = rowBarClasses;
 									bar.entity = 'left';
 									bar.type = 'bar';
 									bar.style.height = getHeight(jS.i, at) + 'px';
+									bar.innerHTML = barParent.rowIndex;
+
 									barParent.appendChild(bar);
 									frag.appendChild(barParent);
 
-									bar.innerHTML = barParent.rowIndex;
-									controlY.splice(at, 0, $(bar));
+									controlY.splice(at, 0, bar);
 									//make the spreadsheet ready to accept cells;
 									spreadsheet.splice(at, 0, []);
 
@@ -1763,7 +1765,6 @@ $.sheet = {
 										spreadsheetRow[at] = cell;
 
 										cell.updateValue();
-										cell.updateDependencies();
 
 										rowParent.insertBefore(td, rowParent.children[at]);
 
@@ -1779,7 +1780,7 @@ $.sheet = {
 								}
 
 								o.setAddedFinishedFn(function(_offset) {
-									tBody.insertBefore(frag, tBody.children[i].nextSibling);
+									tBody.insertBefore(frag, isBefore ? tBody.children[i] : tBody.children[i].nextSibling);
 									jS.refreshRowLabels(i);
 									offset = _offset;
 								});
@@ -1787,10 +1788,14 @@ $.sheet = {
 							case "col":
 								setupCell = null;
 							case "col-init":
-								if (!i) {
+								//ensure that i isn't out of bounds
+								if (i === u || i === null || i > tableSize.cols) {
 									i = tableSize.cols;
 									isLast = true;
+								} else if (i === 0 ) {
+									isBefore = false;
 								}
+
 								loc = {row: 0, col: i};
 								o = this.columnAdder;
 								if (o.setQty(qty, tableSize) === false) {
@@ -1826,13 +1831,13 @@ $.sheet = {
 										tBody.appendChild(rowParent);
 
 										leftBar.innerHTML = rowParent.rowIndex;
-										controlY.splice(0, 0, $(leftBar));
+										controlY.splice(0, 0, leftBar);
 									}
 
 									colGroup.insertBefore(col, colGroup.children[at]);
 									barParent.insertBefore(topBar, barParent.children[at]);
 
-									controlX.splice(at, 0, $(topBar));
+									controlX.splice(at, 0, topBar);
 
 									return {
 										bar: topBar,
@@ -1856,7 +1861,6 @@ $.sheet = {
 										spreadsheetRow[at] = cell;
 
 										cell.updateValue();
-										cell.updateDependencies();
 
 										rowParent.insertBefore(td, rowParent.children[at]);
 
@@ -1866,16 +1870,14 @@ $.sheet = {
 									o.setCreateCellFn(function (row, at, createdBar) {
 										var td = document.createElement('td'),
 											rowParent = tBody.children[row],
-											spreadsheetRow = spreadsheet[row],
-											cell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
+											spreadsheetRow = spreadsheet[row];
 
 										if (spreadsheetRow === undefined) {
 											spreadsheet[row] = spreadsheetRow = [];
 										}
 
 										rowParent.insertBefore(td, rowParent.children[at]);
-										spreadsheetRow.splice(at, 0, cell);
-										jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
+										jS.createCell(jS.i, row, at);
 									});
 								}
 
@@ -3974,7 +3976,7 @@ $.sheet = {
 						//greater than 1 (corner)
 						if (i > 0) {
 							th = ths[i];
-							th.text(jSE.columnLabelString(th[0].cellIndex));
+							th.textContent = th.innerText = jSE.columnLabelString(th.cellIndex);
 						}
 					}
 				},
@@ -3999,7 +4001,7 @@ $.sheet = {
 					for (var i = start; i < end; i++) {
 						if (i > 0) {
 							th = ths[i];
-							th.text(th[0].parentNode.rowIndex);
+							th.textContent = th.innerText = th.parentNode.rowIndex;
 						}
 					}
 				},
@@ -4295,7 +4297,7 @@ $.sheet = {
 								if (row == 0 && col == 0) { //corner
 									td.type = 'bar';
 									td.entity = 'corner';
-									td.className = jS.theme.bar + ' ' + ' ' + jS.cl.barCorner;
+									td.className = jS.theme.bar + ' ' + jS.cl.barCorner;
 									jS.controls.bar.corner[jS.i] = td;
 								}
 							}
@@ -4496,7 +4498,7 @@ $.sheet = {
 					jS.evt.cellEditDone();
 					jS.autoFillerGoToTd(td);
 					jS.cellSetActive(td, loc);
-					jS.highlighter.set($(tds));
+					jS.highlighter.set(tds);
 					return true;
 				},
 
@@ -5432,7 +5434,7 @@ $.sheet = {
 										highlighter.set(o.td);
 									}, loc, locEnd, false, true);
 								}
-								jS.followMe($(target));
+								jS.followMe(target);
 								var mouseY = e.clientY,
 									mouseX = e.clientX,
 									offset = pane.$enclosure.offset(),
@@ -5459,7 +5461,7 @@ $.sheet = {
 										return false;
 									}
 									previous = jS.spreadsheets[jS.i][up][left];
-									jS.followMe($(previous.td), true);
+									jS.followMe(previous.td, true);
 								}
 
 								locTrack.last = locEnd;
@@ -5602,7 +5604,6 @@ $.sheet = {
 							}
 							//TODO set needsUpdate on cell and dependencies
 							cell.updateValue();
-							cell.updateDependencies();
 
 						} while(i--);
 					}
@@ -5935,7 +5936,6 @@ $.sheet = {
 							jS.setDirty(true);
 							jS.setChanged(true);
 							cell.updateValue();
-							cell.updateDependencies();
 							jS.trigger('sheetCalculation', [
 								{which:'cell', cell: cell}
 							]);
@@ -5950,7 +5950,6 @@ $.sheet = {
 						jS.setDirty(true);
 						jS.setChanged(true);
 						this.updateValue();
-						this.updateDependencies();
 						jS.trigger('sheetCalculation', [
 							{which:'cell', cell: this}
 						]);
@@ -6406,7 +6405,7 @@ $.sheet = {
 
 				/**
 				 * opens a spreadsheet into the active sheet instance
-				 * @param {jQuery|HTMLCollection} tables
+				 * @param {Array} tables
 				 * @memberOf jS
 				 */
 				openSheet:function (tables) {
@@ -6812,7 +6811,7 @@ $.sheet = {
 
 					new SetActive(begin > end);
 
-					jS.highlighter.set($(obj));
+					jS.highlighter.set(obj);
 				},
 
 				/**
@@ -7497,7 +7496,6 @@ $.sheet = {
 						cell = selected.pop();
 						cell.value = num[selected.length];
 						cell.updateValue();
-						cell.updateDependencies();
 					}
 				},
 
@@ -7630,7 +7628,6 @@ $.sheet = {
 						cell = selected.pop();
 						cell.value = num[selected.length];
 						cell.updateValue();
-						cell.updateDependencies();
 					}
 				},
 
@@ -7775,7 +7772,6 @@ $.sheet = {
 		});
 
 		//We need to take the sheet out of the parent in order to get an accurate reading of it's height and width
-		//$(this).html(s.loading);
 		s.origHtml = s.parent.children().detach();
 
 		s.parent.addClass(jS.cl.parent);
@@ -7866,11 +7862,11 @@ $.sheet = {
 					loaderTable.setAttribute('title', s.loader.title(loaderTables.length));
 					loaderTables.push(loaderTable);
 				}
-				jS.openSheet($(loaderTables));
+				jS.openSheet(loaderTables);
 			}
 
 			else {
-				jS.openSheet($(document.createElement('table')));
+				jS.openSheet([document.createElement('table')]);
 			}
 		}
 

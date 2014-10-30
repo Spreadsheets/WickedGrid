@@ -69,7 +69,7 @@
                 jS.controlFactory.addColumn();
             }, function () {
 	            console.log(jS.obj.table().find('td').length);
-                if (tdAtPos(td, 1, 1) && jS.obj.table().find('td').length == (3 * 3)) {
+                if (tdAtPos(td, 1, 1) && jS.obj.table().find('td').length == (2 * 2)) {
                     return 'SUCCESS';
                 }
                 return 'FAILURE';
@@ -79,7 +79,7 @@
                 jS.controlFactory.addRow(1, true);
                 jS.controlFactory.addColumn(1, true);
             }, function () {
-                if (tdAtPos(td, 2, 2) && jS.obj.table().find('td').length == (4 * 4)) {
+                if (tdAtPos(td, 2, 2) && jS.obj.table().find('td').length == (3 * 3)) {
                     return 'SUCCESS';
                 }
                 return 'FAILURE';
