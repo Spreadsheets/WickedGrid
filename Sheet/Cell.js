@@ -38,200 +38,159 @@ Sheet.Cell = (function() {
 		 * @returns {*} cell value after calculated
 		 */
 		updateValue:function () {
-			var sheet,
-				row,
-				cell,
-				fn,
+			if ( !this.needsUpdated) {
+				return this.value;
+			}
+
+			var fn,
 				cache,
-				errorResult = '',
-				result,
-				calcStack = Sheet.calcStack,
-				formulaParser = this.cellHandler.formulaParser(calcStack);
+				value = this.value,
+				formula = this.formula,
+				cellType = this.cellType,
+				cellTypeHandler,
+				defer = this.defer,
+				td = this.td,
+				calcStack,
+				formulaParser;
 
-			//TODO: Doesn't belong here
-			/*if (this === u || this === null || this.jS === u) {
-				foundCell = false;
-				//first detect if the cell exists if not return nothing
-				if ((sheet = jS.spreadsheets[sheetIndex]) === undefined) {
-					errorResult = new String(errorResult);
-					errorResult.html = '#REF!';
-					errorResult.cell = null;
-				} else {
-					if ((row = sheet[rowIndex]) !== undefined) {
-						if ((cell = row[colIndex]) !== undefined) {
-							foundCell = true;
-						}
-					}
-				}
-
-				if (foundCell === false) {
-					if (s.loader !== null) {
-						if ((cell = s.loader.jitCell(sheetIndex, rowIndex, colIndex)) === null) {
-							if (s.loader.hasSpreadsheetAtIndex(sheetIndex)) {
-								return '';
-							} else {
-								return '#REF!';
-							}
-						} else {
-							if (typeof cell.value === 'string') {
-								cell.td.innerHTML = cell.value;
-								return cell.value;
-							}
-						}
-					} else {
-						return errorResult;
-					}
-				}
-			} else {
-				cell = this;
-			}
-
-			//TODO: End, but turn cell into this
-
-			//return cell doesn't exist
-			if (cell === undefined) {
-				return '';
-			}
-*/
 			//detect state, if any
 			switch (this.state[0]) {
 				case 'updating':
-					result = new String();
-					result.cell = this;
-					result.html = '#VAL!';
-					return result;
+					value = new String();
+					value.cell = this;
+					value.html = '#VAL!';
+					return value;
 				case 'updatingDependencies':
 					return (this.valueOverride != u ? this.valueOverride : this.value);
 			}
 
 			//merging creates a defer property, which points the cell to another location to get the other value
-			if (this.defer !== u) {
-				if (this.value.length > 0) {
-					errorResult = new String('');
-					errorResult.cell = this;
-					this.td.innerHTML = '#REF!';
-					return errorResult;
+			if (defer !== u) {
+				if (value.length > 0) {
+					value = new String();
+					value.cell = this;
+					td.innerHTML = '#REF!';
+					return value;
 				}
-				result = this.defer.updateValue().valueOf();
+				value = defer.updateValue().valueOf();
 
 				switch (typeof(result)) {
 					case 'number':
-						result = new Number(result);
+						value = new Number(value);
 						break;
 					case 'boolean':
-						result = new Boolean(result);
+						value = new Boolean(value);
 						break;
 					case 'string':
-						result = new String(result);
+						value = new String(value);
 						break;
 				}
-				result.cell = this;
+				value.cell = this;
 				this.updateDependencies();
-				return result;
+				return this.value = value;
 			}
 
 			//we detect the last value, so that we don't have to update all cell, thus saving resources
-			if (this.needsUpdated) {
+			//reset values
+			this.oldValue = value;
+			this.state.unshift('updating');
+			this.fnCount = 0;
+			delete this.valueOverride;
 
-				//reset values
-				this.oldValue = this.value;
-				this.state.unshift('updating');
-				this.fnCount = 0;
-				delete this.valueOverride;
-
-				//increment times this cell has been calculated
-				this.calcCount++;
-				if (this.formula.length > 0) {
-					if (this.formula.charAt(0) === '=') {
-						this.formula = this.formula.substring(1);
-					}
-
-					Sheet.calcStack++;
-					formulaParser.setObj(this);
-
-					try {
-						this.value = formulaParser.parse(this.formula);
-					} catch (e) {
-						this.value = e.toString();
-					}
-
-					this.needsUpdated = false;
-
-					Sheet.calcStack--;
-
-					if (
-						this.value !== u
-						&& this.value !== null
-						&& this.cellType !== null
-						&& Sheet.CellTypeHandlers[this.cellType] !== u
-					) {
-						this.value = Sheet.CellTypeHandlers[this.cellType].call(this, this.value);
-					}
-				} else if (
-					this.value !== u
-					&& this.value !== null
-					&& this.cellType !== null
-					&& Sheet.CellTypeHandlers[this.cellType] !== u
-				) {
-					this.value = s.cellTypeHandlers[this.cellType].call(this, this.value);
-				} else {
-					switch (typeof this.value) {
-						case 'string':
-							fn = this.cellStartingHandlers[this.value.charAt(0)];
-							if (fn !== u) {
-								this.valueOverride = fn.call(this, this.value);
-							} else {
-								fn = this.cellEndHandlers[this.value.charAt(this.value.length - 1)];
-								if (fn !== u) {
-									this.valueOverride = fn.call(this, this.value);
-								}
-							}
-							break;
-						case 'undefined':
-							this.value = '';
-							break;
-					}
+			//increment times this cell has been calculated
+			this.calcCount++;
+			if (formula.length > 0) {
+				if (formula.charAt(0) === '=') {
+					this.formula = formula = formula.substring(1);
 				}
 
-				cache = this.displayValue();
+				calcStack = Sheet.calcStack;
+				formulaParser = this.cellHandler.formulaParser(calcStack);
+				Sheet.calcStack++;
+				formulaParser.setObj(this);
 
-				if (this.loader !== null) {
-					this.loader.setCellAttributes(this.loadedFrom, {
-						'cache': cache,
-						'formula': this.formula,
-						'value': this.value + '',
-						'cellType': this.cellType,
-						'uneditable': this.uneditable
-					});
+				try {
+					value = formulaParser.parse(formula);
+				} catch (e) {
+					value = e.toString();
 				}
-
 
 				this.needsUpdated = false;
-				this.state.shift();
+
+				Sheet.calcStack--;
+
+				if (
+					value !== u
+					&& value !== null
+					&& cellType !== null
+					&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+				) {
+					value = cellTypeHandler(this, value);
+				}
+			} else if (
+				value !== u
+				&& value !== null
+				&& cellType !== null
+				&& (cellTypeHandler = Sheet.CellTypeHandlers[this.cellType]) !== u
+			) {
+				value = cellTypeHandler.call(this, value);
+			} else {
+				switch (typeof value) {
+					case 'string':
+						fn = this.cellStartingHandlers[value.charAt(0)];
+						if (fn !== u) {
+							this.valueOverride = fn.call(this, value);
+						} else {
+							fn = this.cellEndHandlers[value.charAt(value.length - 1)];
+							if (fn !== u) {
+								this.valueOverride = fn.call(this, value);
+							}
+						}
+						break;
+					case 'undefined':
+						value = '';
+						break;
+				}
 			}
 
 			//setup cell trace from value
 			if (
-				this.value === u
-				|| this.value === null
+				value === u
+				|| value === null
 			) {
-				this.value = new String();
+				value = new String();
 			}
 
-			if (this.value.cell === u) {
-				switch (typeof(this.value)) {
+			if (value.cell === u) {
+				switch (typeof(value)) {
 					case 'number':
-						this.value = new Number(this.value);
+						value = new Number(value);
 						break;
 					case 'boolean':
-						this.value = new Boolean(this.value);
+						value = new Boolean(value);
 						break;
 					case 'string':
-						this.value = new String(this.value);
+						value = new String(value);
 						break;
 				}
-				this.value.cell = this;
+				value.cell = this;
 			}
+			this.value = value;
+			cache = this.displayValue();
+
+			if (this.loader !== null) {
+				this.loader.setCellAttributes(this.loadedFrom, {
+					'cache': cache,
+					'formula': this.formula,
+					'value': this.value + '',
+					'cellType': this.cellType,
+					'uneditable': this.uneditable
+				});
+			}
+
+			this.needsUpdated = false;
+			this.state.shift();
+			this.updateDependencies();
 
 			return (this.valueOverride !== u ? this.valueOverride : this.value);
 		},
@@ -259,7 +218,6 @@ Sheet.Cell = (function() {
 				do {
 					dependantCell = dependencies[i];
 					dependantCell.updateValue();
-					dependantCell.updateDependencies();
 				} while (i-- > 0);
 				this.state.shift();
 			}

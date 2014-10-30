@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>({{pass}}|{{fail}}) {{title}} · Testify Suite</title>
+	<meta charset="utf-8" />
+	<script src="../bower_components/testify.js/Testify.js"></script>
+	<script src="../bower_components/vue/dist/vue.js"></script>
+	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
+	<script src="../jquery.sheet.js"></script>
+	<script src="../utilities/tableify.js"></script>
+	<script>
+		$.sheet.preLoad('../');
+
+		var tf = new Testify("jQuery.sheet / Sheet"),
+				test = new Testify("//");
+
+		$(function() {
+			tf.run();
+
+			document.body.innerHTML = Testify.report.html.ui;
+			Testify.report.html(tf);
+		});
+	</script>
+</head>
+<body></body>
+</html>

@@ -1,5 +1,5 @@
 Sheet.CellTypeHandlers = {
-	percent: function(value) {
+	percent: function(cell, value) {
 		var num = (n(value) ? globalize.parseFloat(value) : value * 1),
 			result;
 
@@ -11,7 +11,7 @@ Sheet.CellTypeHandlers = {
 
 		return value;
 	},
-	date: function(value) {
+	date: function(cell, value) {
 		var date = globalize.parseDate(value);
 		if (date === null) {
 			return value;
@@ -20,7 +20,7 @@ Sheet.CellTypeHandlers = {
 			return date;
 		}
 	},
-	time: function(value) {
+	time: function(cell, value) {
 		var date = globalize.parseDate(value);
 		if (date === null) {
 			return value;
@@ -29,7 +29,7 @@ Sheet.CellTypeHandlers = {
 			return date;
 		}
 	},
-	currency: function(value) {
+	currency: function(cell, value) {
 		var num = (n(value) ? globalize.parseFloat(value) : value * 1),
 			result;
 
@@ -41,7 +41,7 @@ Sheet.CellTypeHandlers = {
 
 		return value;
 	},
-	number: function(value) {
+	number: function(cell, value) {
 		var radix, result;
 		if (!settings.endOfNumber) {
 			radix = globalize.culture().numberFormat['.'];
