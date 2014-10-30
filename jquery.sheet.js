@@ -7499,7 +7499,7 @@ $.sheet = {
 
 					th = tr.children[0];
 
-					text = (th.innerText !== u ? th.innerText : th.textContent);
+					text = (th.innerText !== u ? th.innerText : th.textContent) + '';
 
 					corner.col.style.width = (window.defaultCharSize.width * text.length) + 'px';
 				},
