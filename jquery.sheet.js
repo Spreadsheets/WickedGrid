@@ -172,7 +172,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				&& cellType !== null
 				&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
 			) {
-				value = cellTypeHandler.call(this, value);
+				value = cellTypeHandler(this, value);
 			} else {
 				switch (typeof value) {
 					case 'string':
@@ -401,7 +401,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 		cellStartingHandlers: {
 			'$':function(val, ch) {
-				return this.cellHandler.fn.DOLLAR.call(this, val.substring(1).replace(globalize.culture().numberFormat[','], ''), 2, ch || '$');
+				return this.cellHandler.fn.DOLLAR.call(this, val.substring(1).replace(Globalize.culture().numberFormat[','], ''), 2, ch || '$');
 			},
 			'£':function(val) {
 				return this.cellStartingHandlers['$'].call(this, val, '£');

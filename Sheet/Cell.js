@@ -133,7 +133,7 @@ Sheet.Cell = (function() {
 				&& cellType !== null
 				&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
 			) {
-				value = cellTypeHandler.call(this, value);
+				value = cellTypeHandler(this, value);
 			} else {
 				switch (typeof value) {
 					case 'string':
@@ -362,7 +362,7 @@ Sheet.Cell = (function() {
 
 		cellStartingHandlers: {
 			'$':function(val, ch) {
-				return this.cellHandler.fn.DOLLAR.call(this, val.substring(1).replace(globalize.culture().numberFormat[','], ''), 2, ch || '$');
+				return this.cellHandler.fn.DOLLAR.call(this, val.substring(1).replace(Globalize.culture().numberFormat[','], ''), 2, ch || '$');
 			},
 			'£':function(val) {
 				return this.cellStartingHandlers['$'].call(this, val, '£');
