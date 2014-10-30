@@ -384,8 +384,7 @@ $.fn.extend({
 		settings = settings || {};
 
 		$(this).each(function () {
-			var globalize = Globalize,
-				me = $(this),
+			var me = $(this),
 				defaults = {
 					editable:true,
 					editableNames:true,
@@ -613,12 +612,10 @@ $.fn.extend({
 			cell;
 
 		if (jS.getCell) {
-			try {
-				cell = jS.getCell(sheetIndex, rowIndex, colIndex);
-				if (cell !== null) {
-					return cell.updateValue();
-				}
-			} catch (e) {}
+			cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+			if (cell !== null) {
+				return cell.updateValue();
+			}
 		}
 		return null;
 	},
@@ -1079,10 +1076,15 @@ $.sheet = {
 							parent:[],
 							th:[],
 							ths:function () {
-								var ths = $([]);
-								for (var i in this.th[jS.i]) {
-									ths.pushStack(this.th[jS.i][i]);
+								var ths = [],
+									i = 0,
+									_ths = this.th[jS.i],
+									max = _ths.length;
+
+								for (; i < max; i++) {
+									ths.push(_ths[i]);
 								}
+
 								return ths;
 							}
 						},
@@ -1093,10 +1095,15 @@ $.sheet = {
 							parent:[],
 							th:[],
 							ths:function () {
-								var ths = $([]);
-								for (var i in this.th[jS.i]) {
-									ths.pushStack(this.th[jS.i][i]);
+								var ths = [],
+									i = 0,
+									_ths = this.th[jS.i],
+									max = _ths.length;
+
+								for (; i < max; i++) {
+									ths.push(_ths[i]);
 								}
+
 								return ths;
 							}
 						}
@@ -1153,7 +1160,7 @@ $.sheet = {
 						return jS.controls.bar.helper[jS.i] || (jS.controls.bar.helper[jS.i] = $([]));
 					},
 					barLeft:function (i) {
-						return (jS.controls.bar.y.th[jS.i] && jS.controls.bar.y.th[jS.i][i] ? jS.controls.bar.y.th[jS.i][i] : $([]));
+						return (jS.controls.bar.y.th[jS.i] && jS.controls.bar.y.th[jS.i][i] ? jS.controls.bar.y.th[jS.i][i] : []);
 					},
 					barLeftControls:function () {
 						return jS.controls.bar.y.controls[jS.i] || $([]);
@@ -1168,7 +1175,7 @@ $.sheet = {
 						return jS.controls.bar.y.menu[jS.i] || $([]);
 					},
 					barTop:function (i) {
-						return (jS.controls.bar.x.th[jS.i] && jS.controls.bar.x.th[jS.i][i] ? jS.controls.bar.x.th[jS.i][i] : $([]));
+						return (jS.controls.bar.x.th[jS.i] && jS.controls.bar.x.th[jS.i][i] ? jS.controls.bar.x.th[jS.i][i] : []);
 					},
 					barTopControls:function () {
 						return jS.controls.bar.x.controls[jS.i] || $([]);
@@ -1506,14 +1513,14 @@ $.sheet = {
 						tdsY = jS.controls.bar.y.th[sheetIndex] = [];
 					}
 					if (tdsY[rowIndex] === u) {
-						tdsY[rowIndex] = $(tr.children[0]);
+						tdsY[rowIndex] = tr.children[0];
 					}
 
 					if ((tdsX = jS.controls.bar.x.th[sheetIndex]) === u) {
 						tdsX = jS.controls.bar.x.th[sheetIndex] = [];
 					}
 					if (tdsX[colIndex] !== u) {
-						tdsX[colIndex] = $(tBody.children[0].children[colIndex]);
+						tdsX[colIndex] = tBody.children[0].children[colIndex];
 					}
 
 					//return cell
@@ -1772,7 +1779,12 @@ $.sheet = {
 									});
 								} else {
 									o.setCreateCellFn(function (row, at, rowParent) {
-										var td = document.createElement('td');
+										var td = document.createElement('td'),
+											spreadsheetRow = spreadsheet[row];
+
+										if (spreadsheetRow === undefined) {
+											spreadsheet[row] = spreadsheetRow = [];
+										}
 
 										rowParent.insertBefore(td, rowParent.children[at]);
 										jS.createCell(jS.i, row, at);
@@ -6163,7 +6175,7 @@ $.sheet = {
 					do {
 						var table = jS.obj.table(),
 							col = jS.col(table[0], j),
-							bar = jS.obj.barTop(j).remove(),
+							bar = $(jS.obj.barTop(j)).remove(),
 							tds = col.tds,
 							k = tds.length - 1;
 
@@ -6173,7 +6185,7 @@ $.sheet = {
 						} while (k--);
 
 						//now remove bar
-						jS.obj.barTop(j).remove();
+						$(jS.obj.barTop(j)).remove();
 
 						//now remove col
 						$(col).remove();

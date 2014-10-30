@@ -72,7 +72,7 @@
 				if (jsonCell.getCell !== undefined) {
 					cell = jsonCell.getCell();
 
-					if (cell['formula']) {
+					if (cell['formula'] !== undefined) {
 						td.setAttribute('data-formula', cell['formula'] || '');
 						if (cell.hasOwnProperty('value') && cell.value !== null) {
 							html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;

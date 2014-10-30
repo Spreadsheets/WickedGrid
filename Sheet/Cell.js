@@ -131,7 +131,7 @@ Sheet.Cell = (function() {
 				value !== u
 				&& value !== null
 				&& cellType !== null
-				&& (cellTypeHandler = Sheet.CellTypeHandlers[this.cellType]) !== u
+				&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
 			) {
 				value = cellTypeHandler.call(this, value);
 			} else {

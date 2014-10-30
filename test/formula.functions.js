@@ -32,9 +32,9 @@ tf.test('Formula: Transpose', function() {
 1.29	1.71	0"))
 			.sheet({
 				formulaFunctions: formulaFunctions
-			});
-console.log(div.getCellValue(0,2,1).valueOf());
-	tf.assert(test.assertEquals(spreadsheet[2][1].updateValue().valueOf(), 0.457));
+			}),
+		value = div.getCellValue(0,1,1).valueOf();
+	tf.assert(test.assertEquals(value, 0.457), 'value = ' + value + ', should = ' + 0.457);
 
 	div.getSheet().kill();
 });

@@ -170,7 +170,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				value !== u
 				&& value !== null
 				&& cellType !== null
-				&& (cellTypeHandler = Sheet.CellTypeHandlers[this.cellType]) !== u
+				&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
 			) {
 				value = cellTypeHandler.call(this, value);
 			} else {
@@ -836,68 +836,71 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	};
 
 	return Constructor;
-})(Math);Sheet.CellTypeHandlers = {
-	percent: function(cell, value) {
-		var num = (n(value) ? globalize.parseFloat(value) : value * 1),
-			result;
+})(Math);Sheet.CellTypeHandlers = (function() {
+	var n = isNaN;
+	return {
+		percent: function (cell, value) {
+			var num = (n(value) ? Globalize.parseFloat(value) : value * 1),
+				result;
 
-		if (!n(num)) {//success
-			result = new Number(num);
-			result.html = globalize.format(num, 'p');
-			return result;
-		}
+			if (!n(num)) {//success
+				result = new Number(num);
+				result.html = Globalize.format(num, 'p');
+				return result;
+			}
 
-		return value;
-	},
-	date: function(cell, value) {
-		var date = globalize.parseDate(value);
-		if (date === null) {
 			return value;
-		} else {
-			date.html = globalize.format(date, 'd');
-			return date;
-		}
-	},
-	time: function(cell, value) {
-		var date = globalize.parseDate(value);
-		if (date === null) {
+		},
+		date: function (cell, value) {
+			var date = Globalize.parseDate(value);
+			if (date === null) {
+				return value;
+			} else {
+				date.html = Globalize.format(date, 'd');
+				return date;
+			}
+		},
+		time: function (cell, value) {
+			var date = Globalize.parseDate(value);
+			if (date === null) {
+				return value;
+			} else {
+				date.html = Globalize.format(date, 't');
+				return date;
+			}
+		},
+		currency: function (cell, value) {
+			var num = (n(value) ? Globalize.parseFloat(value) : value * 1),
+				result;
+
+			if (!n(num)) {//success
+				result = new Number(num);
+				result.html = Globalize.format(num, 'c');
+				return result;
+			}
+
 			return value;
-		} else {
-			date.html = globalize.format(date, 't');
-			return date;
-		}
-	},
-	currency: function(cell, value) {
-		var num = (n(value) ? globalize.parseFloat(value) : value * 1),
-			result;
+		},
+		number: function (cell, value) {
+			var radix, result;
+			if (!settings.endOfNumber) {
+				radix = Globalize.culture().numberFormat['.'];
+				settings.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
+			}
 
-		if (!n(num)) {//success
-			result = new Number(num);
-			result.html = globalize.format(num, 'c');
-			return result;
-		}
+			if (!n(value)) {//success
+				result = new Number(value);
+				result.html = Globalize.format(value + '', "n10")
+					.replace(settings.endOfNumber, function (orig, radix, num) {
+						return (num ? radix : '') + (num || '');
+					});
+				return result;
+			}
 
-		return value;
-	},
-	number: function(cell, value) {
-		var radix, result;
-		if (!settings.endOfNumber) {
-			radix = globalize.culture().numberFormat['.'];
-			settings.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
+			return value;
 		}
-
-		if (!n(value)) {//success
-			result = new Number(value);
-			result.html = globalize.format(value + '', "n10")
-				.replace(settings.endOfNumber, function (orig, radix, num) {
-					return (num ? radix : '') + (num || '');
-				});
-			return result;
-		}
-
-		return value;
-	}
-};Sheet.CellRange = (function() {
+	};
+})();Sheet.CellRange = (function() {
 	function Constructor(cells) {
 		this.cells = cells || [];
 	}
@@ -2171,7 +2174,7 @@ Sheet.StyleUpdater = (function(document) {
 				if (jsonCell.getCell !== undefined) {
 					cell = jsonCell.getCell();
 
-					if (cell['formula']) {
+					if (cell['formula'] !== undefined) {
 						td.setAttribute('data-formula', cell['formula'] || '');
 						if (cell.hasOwnProperty('value') && cell.value !== null) {
 							html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
@@ -3563,8 +3566,7 @@ $.fn.extend({
 		settings = settings || {};
 
 		$(this).each(function () {
-			var globalize = Globalize,
-				me = $(this),
+			var me = $(this),
 				defaults = {
 					editable:true,
 					editableNames:true,
@@ -3792,12 +3794,10 @@ $.fn.extend({
 			cell;
 
 		if (jS.getCell) {
-			try {
-				cell = jS.getCell(sheetIndex, rowIndex, colIndex);
-				if (cell !== null) {
-					return cell.updateValue();
-				}
-			} catch (e) {}
+			cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+			if (cell !== null) {
+				return cell.updateValue();
+			}
 		}
 		return null;
 	},
@@ -4258,10 +4258,15 @@ $.sheet = {
 							parent:[],
 							th:[],
 							ths:function () {
-								var ths = $([]);
-								for (var i in this.th[jS.i]) {
-									ths.pushStack(this.th[jS.i][i]);
+								var ths = [],
+									i = 0,
+									_ths = this.th[jS.i],
+									max = _ths.length;
+
+								for (; i < max; i++) {
+									ths.push(_ths[i]);
 								}
+
 								return ths;
 							}
 						},
@@ -4272,10 +4277,15 @@ $.sheet = {
 							parent:[],
 							th:[],
 							ths:function () {
-								var ths = $([]);
-								for (var i in this.th[jS.i]) {
-									ths.pushStack(this.th[jS.i][i]);
+								var ths = [],
+									i = 0,
+									_ths = this.th[jS.i],
+									max = _ths.length;
+
+								for (; i < max; i++) {
+									ths.push(_ths[i]);
 								}
+
 								return ths;
 							}
 						}
@@ -4332,7 +4342,7 @@ $.sheet = {
 						return jS.controls.bar.helper[jS.i] || (jS.controls.bar.helper[jS.i] = $([]));
 					},
 					barLeft:function (i) {
-						return (jS.controls.bar.y.th[jS.i] && jS.controls.bar.y.th[jS.i][i] ? jS.controls.bar.y.th[jS.i][i] : $([]));
+						return (jS.controls.bar.y.th[jS.i] && jS.controls.bar.y.th[jS.i][i] ? jS.controls.bar.y.th[jS.i][i] : []);
 					},
 					barLeftControls:function () {
 						return jS.controls.bar.y.controls[jS.i] || $([]);
@@ -4347,7 +4357,7 @@ $.sheet = {
 						return jS.controls.bar.y.menu[jS.i] || $([]);
 					},
 					barTop:function (i) {
-						return (jS.controls.bar.x.th[jS.i] && jS.controls.bar.x.th[jS.i][i] ? jS.controls.bar.x.th[jS.i][i] : $([]));
+						return (jS.controls.bar.x.th[jS.i] && jS.controls.bar.x.th[jS.i][i] ? jS.controls.bar.x.th[jS.i][i] : []);
 					},
 					barTopControls:function () {
 						return jS.controls.bar.x.controls[jS.i] || $([]);
@@ -4685,14 +4695,14 @@ $.sheet = {
 						tdsY = jS.controls.bar.y.th[sheetIndex] = [];
 					}
 					if (tdsY[rowIndex] === u) {
-						tdsY[rowIndex] = $(tr.children[0]);
+						tdsY[rowIndex] = tr.children[0];
 					}
 
 					if ((tdsX = jS.controls.bar.x.th[sheetIndex]) === u) {
 						tdsX = jS.controls.bar.x.th[sheetIndex] = [];
 					}
 					if (tdsX[colIndex] !== u) {
-						tdsX[colIndex] = $(tBody.children[0].children[colIndex]);
+						tdsX[colIndex] = tBody.children[0].children[colIndex];
 					}
 
 					//return cell
@@ -4951,7 +4961,12 @@ $.sheet = {
 									});
 								} else {
 									o.setCreateCellFn(function (row, at, rowParent) {
-										var td = document.createElement('td');
+										var td = document.createElement('td'),
+											spreadsheetRow = spreadsheet[row];
+
+										if (spreadsheetRow === undefined) {
+											spreadsheet[row] = spreadsheetRow = [];
+										}
 
 										rowParent.insertBefore(td, rowParent.children[at]);
 										jS.createCell(jS.i, row, at);
@@ -9342,7 +9357,7 @@ $.sheet = {
 					do {
 						var table = jS.obj.table(),
 							col = jS.col(table[0], j),
-							bar = jS.obj.barTop(j).remove(),
+							bar = $(jS.obj.barTop(j)).remove(),
 							tds = col.tds,
 							k = tds.length - 1;
 
@@ -9352,7 +9367,7 @@ $.sheet = {
 						} while (k--);
 
 						//now remove bar
-						jS.obj.barTop(j).remove();
+						$(jS.obj.barTop(j)).remove();
 
 						//now remove col
 						$(col).remove();
