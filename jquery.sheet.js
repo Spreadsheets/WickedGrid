@@ -1028,7 +1028,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						 if (this.max === undefined) {
 							 style =
 								 //hide all previous td/th/col elements
-								 cssId + ' tr > *:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+								 cssId + ' tr > *:nth-child(-n+' + indexes[0] + ') {position: none;}' +
 								 cssId + ' col:nth-child(-n+' + indexes[0] + ') {display: none;}' +
 
 								 //but show those that are frozen
@@ -4946,7 +4946,7 @@ $.sheet = {
 									bar.entity = 'left';
 									bar.type = 'bar';
 									bar.style.height = getHeight(jS.i, at) + 'px';
-									bar.innerHTML = barParent.rowIndex;
+									bar.innerHTML = bar.label = barParent.rowIndex;
 
 									barParent.appendChild(bar);
 									frag.appendChild(barParent);
@@ -5024,7 +5024,7 @@ $.sheet = {
 
 									topBar.entity = 'top';
 									topBar.type = 'bar';
-									topBar.innerHTML = jSE.columnLabelString(at);
+									topBar.innerHTML = topBar.label = jSE.columnLabelString(at);
 									topBar.className = colBarClasses;
 
 									//If the row has not been created lets set it up
@@ -6016,7 +6016,8 @@ $.sheet = {
 							pane = actionUI.pane,
 							rows = table.tBody.children,
 							columns = table.colGroup.children,
-							usingLoader = (s.loader !== null);
+							usingLoader = (s.loader !== null),
+							scrollAction;
 
 						table.size = function() { return jS.tableSize(table); };
 						pane.size = function() { return jS.sheetSize(table); };
@@ -6024,85 +6025,78 @@ $.sheet = {
 						//here we have two different types of functionality to cut down on logic between behaviours.
 						scrollUI.onscroll = function() {
 							this.scrollTop = this.scrollLeft = 0;
+							var xUpdated,
+								yUpdated;
+
 							if (usingLoader) {
-								scrollUI.onscroll = function () {
-									if (!jS.isBusy()) {
-										var that = this,
-											xUpdated,
-											yUpdated;
+								scrollAction = [
+									function () {
+										xUpdated = actionUI.scrollTo({axis: 'x', pixel: scrollUI.scrollLeft});
+									},
 
-										thaw([
-											function () {
-												xUpdated = actionUI.scrollTo({axis: 'x', pixel: that.scrollLeft});
-											},
-
-											function () {
-												yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
-											},
-											function () {
-												if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
-													jS.calcVisibleCol(actionUI);
-												}
-											},
-											function () {
-												if (yUpdated) {
-													if (actionUI.scrollAxis.y.size >= (rows.length - 1)) {
-														jS.calcVisibleRow(actionUI);
-													}
-													jS.updateYBarWidthToCorner(actionUI);
-												}
-											},
-											function () {
-												if (xUpdated && yUpdated) {
-													jS.obj.barHelper().remove();
-													jS.autoFillerGoToTd();
-													if (pane.inPlaceEdit) {
-														pane.inPlaceEdit.goToTd();
-													}
-												}
+									function () {
+										yUpdated = actionUI.scrollTo({axis: 'y', pixel: scrollUI.scrollTop});
+									},
+									function () {
+										if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
+											jS.calcVisibleCol(actionUI);
+										}
+									},
+									function () {
+										if (yUpdated) {
+											if (actionUI.scrollAxis.y.size >= (rows.length - 1)) {
+												jS.calcVisibleRow(actionUI);
 											}
-										], u, 10);
+											jS.updateYBarWidthToCorner(actionUI);
+										}
+									},
+									function () {
+										if (xUpdated && yUpdated) {
+											jS.obj.barHelper().remove();
+											jS.autoFillerGoToTd();
+											if (pane.inPlaceEdit) {
+												pane.inPlaceEdit.goToTd();
+											}
+										}
 									}
-								};
+								];
 							} else {
-								scrollUI.onscroll = function () {
-									if (!jS.isBusy()) {
-										var that = this,
-											xUpdated,
-											yUpdated;
+								scrollAction = [
+									function () {
+										xUpdated = actionUI.scrollTo({axis: 'x', pixel: that.scrollLeft});
+									},
 
-										thaw([
-											function () {
-												xUpdated = actionUI.scrollTo({axis: 'x', pixel: that.scrollLeft});
-											},
-
-											function () {
-												yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
-											},
-											function () {
-												if (xUpdated) {
-													jS.calcVisibleCol(actionUI);
-												}
-											},
-											function () {
-												if (yUpdated) {
-													jS.calcVisibleRow(actionUI);
-													jS.updateYBarWidthToCorner(actionUI);
-												}
-											},
-											function () {
-												if (xUpdated && yUpdated) {
-													jS.obj.barHelper().remove();
-													jS.autoFillerGoToTd();
-													if (pane.inPlaceEdit) {
-														pane.inPlaceEdit.goToTd();
-													}
-												}
+									function () {
+										yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
+									},
+									function () {
+										if (xUpdated) {
+											jS.calcVisibleCol(actionUI);
+										}
+									},
+									function () {
+										if (yUpdated) {
+											jS.calcVisibleRow(actionUI);
+											jS.updateYBarWidthToCorner(actionUI);
+										}
+									},
+									function () {
+										if (xUpdated && yUpdated) {
+											jS.obj.barHelper().remove();
+											jS.autoFillerGoToTd();
+											if (pane.inPlaceEdit) {
+												pane.inPlaceEdit.goToTd();
 											}
-										], u, 10);
+										}
 									}
-								};
+								];
 							}
+
+							scrollUI.onscroll = function () {
+								if (!jS.isBusy()) {
+									thaw(scrollAction);
+								}
+							};
 						};
 						scrollUI.onmousedown = function() {
 							jS.obj.barHelper().remove();
@@ -7185,7 +7179,7 @@ $.sheet = {
 						//greater than 1 (corner)
 						if (i > 0) {
 							th = ths[i];
-							th.textContent = th.innerText = jSE.columnLabelString(th.cellIndex);
+							th.innerHTML = th.label = jSE.columnLabelString(th.cellIndex);
 						}
 					}
 				},
@@ -7210,7 +7204,7 @@ $.sheet = {
 					for (var i = start; i < end; i++) {
 						if (i > 0) {
 							th = ths[i];
-							th.textContent = th.innerText = th.parentNode.rowIndex;
+							th.innerHTML = th.label = th.parentNode.rowIndex;
 						}
 					}
 				},
@@ -7521,7 +7515,9 @@ $.sheet = {
 						target = Math.min(s.initCalcRows + scrolledArea.end.row, scrolledArea.end.row + 20, tBody.lastChild.rowIndex),
 						tr = tBody.children[target],
 						th,
-						text;
+						text,
+						newWidth,
+						col = corner.col;
 
 					if (tr === u) {
 						return;
@@ -7529,9 +7525,13 @@ $.sheet = {
 
 					th = tr.children[0];
 
-					text = (th.innerText !== u ? th.innerText : th.textContent) + '';
+					text = th.label + '';
 
-					corner.col.style.width = (window.defaultCharSize.width * text.length) + 'px';
+					newWidth = window.defaultCharSize.width * text.length;
+					if (newWidth !== col._width || col._width === u) {
+						col._width = newWidth;
+						col.style.width = (newWidth) + 'px';
+					}
 				},
 
 				toggleHideRow: function(i) {
@@ -8977,7 +8977,7 @@ $.sheet = {
 								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
 							]);
 						}
-					}, 10);
+					});
 
 					this.calcVisiblePos = pos;
 					jS.setChanged(false);
@@ -9043,7 +9043,7 @@ $.sheet = {
 
 					thaw(stack, {
 						each: each
-					}, 10);
+					});
 
 					jS.trigger('sheetCalculation', [
 						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
@@ -9098,7 +9098,7 @@ $.sheet = {
 
 					thaw(stack,{
 						each: each
-					}, 10);
+					});
 
 					jS.trigger('sheetCalculation', [
 						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
@@ -9365,7 +9365,7 @@ $.sheet = {
 					//remove cells & tds
 					k = jS.spreadsheets[jS.i].length - qty;
 					do {
-						 cells = jS.spreadsheets[jS.i][k].splice(start, qty);
+						cells = jS.spreadsheets[jS.i][k].splice(start, qty);
 						while (cells.length > 0) {
 							$(cells.pop().td).remove();
 						}
