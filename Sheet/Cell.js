@@ -38,7 +38,21 @@ Sheet.Cell = (function() {
 		 * @returns {*} cell value after calculated
 		 */
 		updateValue:function () {
-			if ( !this.needsUpdated) {
+			if ( !this.needsUpdated ) {
+				return this.value;
+			}
+
+			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
+			if (
+				(this.value + '').length < 1
+				|| (
+					!this.hasOperator.test(this.value)
+					&& this.formula.length < 1
+				)
+			) {
+				this.value = new String(this.value);
+				this.value.cell = this;
+				this.updateDependencies();
 				return this.value;
 			}
 
@@ -137,11 +151,11 @@ Sheet.Cell = (function() {
 			} else {
 				switch (typeof value) {
 					case 'string':
-						fn = this.cellStartingHandlers[value.charAt(0)];
+						fn = this.startOperators[value.charAt(0)];
 						if (fn !== u) {
 							this.valueOverride = fn.call(this, value);
 						} else {
-							fn = this.cellEndHandlers[value.charAt(value.length - 1)];
+							fn = this.endOperators[value.charAt(value.length - 1)];
 							if (fn !== u) {
 								this.valueOverride = fn.call(this, value);
 							}
@@ -360,16 +374,18 @@ Sheet.Cell = (function() {
 				.replace(/  /g, '&nbsp; ');
 		},
 
-		cellStartingHandlers: {
+		hasOperator: /(^[$£])|([%]$)/,
+
+		startOperators: {
 			'$':function(val, ch) {
 				return this.cellHandler.fn.DOLLAR.call(this, val.substring(1).replace(Globalize.culture().numberFormat[','], ''), 2, ch || '$');
 			},
 			'£':function(val) {
-				return this.cellStartingHandlers['$'].call(this, val, '£');
+				return this.startOperators['$'].call(this, val, '£');
 			}
 		},
 
-		cellEndHandlers: {
+		endOperators: {
 			'%': function(value) {
 				return value.substring(0, this.value.length - 1) / 100;
 			}
