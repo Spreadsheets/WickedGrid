@@ -60,7 +60,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						 if (this.max === undefined) {
 							 style =
 								 //hide all previous td/th/col elements
-								 cssId + ' tr > *:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+								 cssId + ' tr > *:nth-child(-n+' + indexes[0] + ') {position: none;}' +
 								 cssId + ' col:nth-child(-n+' + indexes[0] + ') {display: none;}' +
 
 								 //but show those that are frozen
