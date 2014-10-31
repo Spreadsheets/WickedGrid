@@ -89,6 +89,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					&& this.formula.length < 1
 				)
 			) {
+				if (this.td !== null) {
+					this.td.innerHTML = this.value;
+				}
 				this.value = new String(this.value);
 				this.value.cell = this;
 				this.updateDependencies();
@@ -4729,10 +4732,6 @@ $.sheet = {
 					if ((jSCells = col.jSCells) === u) jSCells = col.jSCells = [];
 					jSCells.unshift(jSCell);
 
-					//attach td to col
-					if (col.tds === u) col.tds = [];
-					col.tds.unshift(td);
-
 					//attach col to td
 					td.col = col;
 					td.type = 'cell';
@@ -9000,28 +8999,23 @@ $.sheet = {
 						newPos = {row: rowIndex, col: oldPos.col},
 						cell,
 						stack = [],
-						each;
-
-					if (s.loader ===  null) {
 						each = function() {
-							if ((this.cell = this.row[this.colIndex]) === undefined) {
-								jS.createCell(jS.i, this.rowIndex, this.colIndex);
-								this.cell = spreadsheet[this.rowIndex][this.colIndex];
+							if (this.row === u) {
+								while (this.offset > 0 && spreadsheet[this.offset] === undefined) {
+									jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.offset, this.offset, this.colIndex, this.colIndex, true);
+									this.offset--;
+								}
+							} else {
+								if ((this.cell = this.row[this.colIndex]) === undefined) {
+									jS.createCell(jS.i, this.rowIndex, this.colIndex);
+									this.cell = spreadsheet[this.rowIndex][this.colIndex];
+								}
 							}
 
-							this.cell.updateValue();
-						};
-					} else {
-						each = function() {
-							while (this.offset > 0 && spreadsheet[this.offset] === undefined) {
-								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.offset, this.offset, this.colIndex, this.colIndex, true);
-								this.offset--;
-							}
 							if (this.cell !== u) {
 								this.cell.updateValue();
 							}
 						};
-					}
 
 					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
 					targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
@@ -9332,7 +9326,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				deleteColumn:function (i) {
-					var j, start, end, qty, size = jS.sheetSize();
+					var j, start, end, qty, size = jS.sheetSize(), cells;
 
 					if (i) {
 						start = end = i;
@@ -9356,15 +9350,7 @@ $.sheet = {
 					jS.obj.barHelper().remove();
 					do {
 						var table = jS.obj.table(),
-							col = jS.col(table[0], j),
-							bar = $(jS.obj.barTop(j)).remove(),
-							tds = col.tds,
-							k = tds.length - 1;
-
-						//remove tds first
-						do {
-							$(tds[k]).remove();
-						} while (k--);
+							col = jS.col(table[0], j);
 
 						//now remove bar
 						$(jS.obj.barTop(j)).remove();
@@ -9376,10 +9362,13 @@ $.sheet = {
 					//remove column
 					jS.controls.bar.x.th[jS.i].splice(start, qty);
 
-					//remove cells
+					//remove cells & tds
 					k = jS.spreadsheets[jS.i].length - qty;
 					do {
-						jS.spreadsheets[jS.i][k].splice(start, qty);
+						 cells = jS.spreadsheets[jS.i][k].splice(start, qty);
+						while (cells.length > 0) {
+							$(cells.pop().td).remove();
+						}
 					} while (k-- > 1);
 
 					//refresh labels
