@@ -77,7 +77,21 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 * @returns {*} cell value after calculated
 		 */
 		updateValue:function () {
-			if ( !this.needsUpdated) {
+			if ( !this.needsUpdated ) {
+				return this.value;
+			}
+
+			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
+			if (
+				(this.value + '').length < 1
+				|| (
+					!this.hasOperator.test(this.value)
+					&& this.formula.length < 1
+				)
+			) {
+				this.value = new String(this.value);
+				this.value.cell = this;
+				this.updateDependencies();
 				return this.value;
 			}
 
@@ -176,11 +190,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			} else {
 				switch (typeof value) {
 					case 'string':
-						fn = this.cellStartingHandlers[value.charAt(0)];
+						fn = this.startOperators[value.charAt(0)];
 						if (fn !== u) {
 							this.valueOverride = fn.call(this, value);
 						} else {
-							fn = this.cellEndHandlers[value.charAt(value.length - 1)];
+							fn = this.endOperators[value.charAt(value.length - 1)];
 							if (fn !== u) {
 								this.valueOverride = fn.call(this, value);
 							}
@@ -399,16 +413,18 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				.replace(/  /g, '&nbsp; ');
 		},
 
-		cellStartingHandlers: {
+		hasOperator: /(^[$£])|([%]$)/,
+
+		startOperators: {
 			'$':function(val, ch) {
 				return this.cellHandler.fn.DOLLAR.call(this, val.substring(1).replace(Globalize.culture().numberFormat[','], ''), 2, ch || '$');
 			},
 			'£':function(val) {
-				return this.cellStartingHandlers['$'].call(this, val, '£');
+				return this.startOperators['$'].call(this, val, '£');
 			}
 		},
 
-		cellEndHandlers: {
+		endOperators: {
 			'%': function(value) {
 				return value.substring(0, this.value.length - 1) / 100;
 			}
@@ -3715,7 +3731,7 @@ $.fn.extend({
 							callbackIfFalse();
 						}
 					},
-					initCalcRows: 20,
+					initCalcRows: 40,
 					initCalcCols: 10,
 					initScrollRows: 0,
 					initScrollCols: 0,
@@ -6046,7 +6062,7 @@ $.sheet = {
 													}
 												}
 											}
-										]);
+										], u, 10);
 									}
 								};
 							} else {
@@ -6084,7 +6100,7 @@ $.sheet = {
 													}
 												}
 											}
-										]);
+										], u, 10);
 									}
 								};
 							}
@@ -8929,7 +8945,12 @@ $.sheet = {
 						row,
 						columnIndex,
 						pos = {row: -1, col: -1},
-						stack = [];
+						stack = [],
+						each = function() {
+							this.cell.rowIndex = this.rowIndex;
+							this.cell.columnIndex = this.columnIndex;
+							this.cell.updateValue();
+						};
 
 
 					if (rowIndex > 0) {
@@ -8942,12 +8963,7 @@ $.sheet = {
 										stack.push({
 											cell: row[columnIndex],
 											rowIndex: rowIndex,
-											columnIndex: columnIndex,
-											make: function() {
-												this.cell.rowIndex = this.rowIndex;
-												this.cell.columnIndex = this.columnIndex;
-												this.cell.updateValue();
-											}
+											columnIndex: columnIndex
 										});
 									} while (columnIndex-- > 1);
 								}
@@ -8956,15 +8972,13 @@ $.sheet = {
 					}
 
 					thaw(stack, {
-						each: function() {
-							this.make();
-						},
+						each: each,
 						done: function() {
 							jS.trigger('sheetCalculation', [
 								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
 							]);
 						}
-					});
+					}, 10);
 
 					this.calcVisiblePos = pos;
 					jS.setChanged(false);
@@ -8985,58 +8999,48 @@ $.sheet = {
 						oldPos = this.calcVisiblePos,
 						newPos = {row: rowIndex, col: oldPos.col},
 						cell,
-						stack = [];
+						stack = [],
+						each;
+
+					if (s.loader ===  null) {
+						each = function() {
+							if ((this.cell = this.row[this.colIndex]) === undefined) {
+								jS.createCell(jS.i, this.rowIndex, this.colIndex);
+								this.cell = spreadsheet[this.rowIndex][this.colIndex];
+							}
+
+							this.cell.updateValue();
+						};
+					} else {
+						each = function() {
+							while (this.offset > 0 && spreadsheet[this.offset] === undefined) {
+								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.offset, this.offset, this.colIndex, this.colIndex, true);
+								this.offset--;
+							}
+							if (this.cell !== u) {
+								this.cell.updateValue();
+							}
+						};
+					}
 
 					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
 					targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
 					rowIndex = targetRow;
 
-
 					if (rowIndex > 0) {
 						do {
 							colIndex = targetCol;
-							if ((row = spreadsheet[rowIndex]) !== undefined) {
-								if (colIndex > 0) {
-									do {
-
-										stack.push({
-											row: row,
-											cell: row !== u ? row[colIndex] : u,
-											rowIndex: rowIndex,
-											colIndex: colIndex,
-											make: function() {
-												if ((this.cell = this.row[this.colIndex]) === undefined) {
-													jS.createCell(jS.i, this.rowIndex, this.colIndex);
-													this.cell = spreadsheet[this.rowIndex][this.colIndex];
-												}
-
-												this.cell.updateValue();
-											}
-										});
-									} while (colIndex-- > 1);
-								}
-							} else {
-								if (colIndex > 0) {
-									do {
-										var offset = rowIndex;
-										stack.push({
-											row: row,
-											cell: row !== u ? row[colIndex] : u,
-											rowIndex: rowIndex,
-											colIndex: colIndex,
-											offset: offset,
-											make: function() {
-												while (this.offset > 0 && spreadsheet[this.offset] === undefined) {
-													jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.offset, this.offset, this.colIndex, this.colIndex, true);
-													this.offset--;
-												}
-												if (this.cell !== u) {
-													this.cell.updateValue();
-												}
-											}
-										});
-									} while (colIndex-- > 1);
-								}
+							if (colIndex > 0) {
+								do {
+									var offset = rowIndex;
+									stack.push({
+										row: row,
+										cell: row !== u ? row[colIndex] : u,
+										rowIndex: rowIndex,
+										colIndex: colIndex,
+										offset: offset,
+									});
+								} while (colIndex-- > 1);
 							}
 						} while (rowIndex-- > oldPos.row);
 					}
@@ -9044,10 +9048,8 @@ $.sheet = {
 					this.calcVisiblePos = newPos;
 
 					thaw(stack, {
-						each: function() {
-							this.make();
-						}
-					});
+						each: each
+					}, 10);
 
 					jS.trigger('sheetCalculation', [
 						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
@@ -9070,7 +9072,16 @@ $.sheet = {
 						cell,
 						oldPos = this.calcVisiblePos,
 						newPos = {row: oldPos.row, col: oldPos.col},
-						stack = [];
+						stack = [],
+						each = function() {
+							if (this.row === undefined || this.cell === undefined) {
+								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
+								this.row = spreadsheet[this.rowIndex];
+							}
+
+							cell = this.row[this.colIndex];
+							cell.updateValue();
+						};
 
 					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
 					targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
@@ -9084,16 +9095,7 @@ $.sheet = {
 								row: row,
 								cell: row !== u ? row[colIndex] : u,
 								rowIndex: rowIndex,
-								colIndex: colIndex,
-								make: function() {
-									if (this.row === undefined || this.cell === undefined) {
-										jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
-										this.row = spreadsheet[this.rowIndex];
-									}
-
-									cell = this.row[this.colIndex];
-									cell.updateValue();
-								}
+								colIndex: colIndex
 							});
 						} while(rowIndex-- > 1);
 					}
@@ -9101,10 +9103,8 @@ $.sheet = {
 					this.calcVisiblePos = newPos;
 
 					thaw(stack,{
-						each: function() {
-							this.make();
-						}
-					});
+						each: each
+					}, 10);
 
 					jS.trigger('sheetCalculation', [
 						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
