@@ -50,6 +50,9 @@ Sheet.Cell = (function() {
 					&& this.formula.length < 1
 				)
 			) {
+				if (this.td !== null) {
+					this.td.innerHTML = this.value;
+				}
 				this.value = new String(this.value);
 				this.value.cell = this;
 				this.updateDependencies();
