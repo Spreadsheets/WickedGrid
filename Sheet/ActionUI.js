@@ -33,14 +33,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @returns {Object}
 		 */
 		this.scrolledArea = {
-			start: {
-				row: Math.max(this.frozenAt.row, 1),
-				col: Math.max(this.frozenAt.col, 1)
-			},
-			end: {
-				row: Math.max(this.frozenAt.row, 1),
-				col: Math.max(this.frozenAt.col, 1)
-			}
+			row: Math.max(this.frozenAt.row, 1),
+			col: Math.max(this.frozenAt.col, 1)
 		};
 
 		var that = this,
@@ -48,84 +42,55 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			cssId = '#' + table.getAttribute('id'),
 			scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
 			scrollInner = pane.scrollInner = document.createElement('div'),
-			scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(indexes, style) {
-				indexes = indexes || [];
+			scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(index, style) {
+				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
+				if (that.xIndex === index) return false;
 
-				if (indexes.length !== that.xIndex || style) {
-					that.xIndex = indexes.length || that.xIndex;
+				if (index === undefined || index === null) index = that.xIndex;
+				that.xIndex = index;
+				if (style === undefined) {
+					var col = that.frozenAt.col;
+					 style =
+						 //hide all previous td/th/col elements
+						 cssId + ' tr > *:nth-child(-n+' + index + ') {display: none;}' +
+						 cssId + ' col:nth-child(-n+' + index + ') {display: none;}' +
 
+						 //but show those that are frozen
+						 cssId + ' tr > *:nth-child(-n+' + (col + 1) + ') {display: table-cell;}' +
+						 cssId + ' col:nth-child(-n+' + (col + 1) + ') {display: table-column;}' +
 
-					if (style === undefined) {
-						var col = that.frozenAt.col;
-						 if (this.max === undefined) {
-							 style =
-								 //hide all previous td/th/col elements
-								 cssId + ' tr > *:nth-child(-n+' + indexes[0] + ') {position: none;}' +
-								 cssId + ' col:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+						 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
+						 cssId + ' tr > *:nth-child(' + (index + 20) + ') ~ * {display: none;}' +
+						 cssId + ' col:nth-child(' + (index + 20) + ') ~ col {display: none;}';
 
-								 //but show those that are frozen
-								 cssId + ' tr > *:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-cell;}' +
-								 cssId + ' col:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-column;}' +
-
-								 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-								 cssId + ' tr > *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}' +
-								 cssId + ' col:nth-child(' + (indexes[0] + 20) + ') ~ col {display: none;}';
-						 } else {
-							 style =
-								 this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
-								 this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1) +
-								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}';
-						 }
-					}
-
-					this.setStyle(style);
-
-					if (indexes.length) {
-						that.scrolledArea.start.col = Math.max(indexes.pop() || 1, 1);
-						that.scrolledArea.end.col = Math.max(indexes.shift() || 1, 1);
-					}
-
-					return true;
 				}
-				return false;
+
+				this.setStyle(style);
+				that.scrolledArea.col = Math.max(index || 1, 1);
+				return true;
 			}, max),
-			scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(indexes, style){
-				indexes = indexes || [];
+			scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
+				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
+				if (that.yIndex === index) return false;
 
-				if (indexes.length !== that.yIndex || style) {
-					that.yIndex = indexes.length || that.yIndex;
+				if (index === undefined || index === null) index = that.yIndex;
+				that.yIndex = index;
+				if (style === undefined) {
+					var row = that.frozenAt.row;
+					style =
+						//hide all previous tr elements
+						cssId + ' tr:nth-child(-n+' + index + ') {display: none;}' +
 
-					if (style === undefined) {
-						var row = that.frozenAt.row;
-						if (this.max === undefined){
-							style =
-								//hide all previous tr elements
-								cssId + ' tr:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+						//but show those that are frozen
+						cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
 
-								//but show those that are frozen
-								cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
-
-								//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-								cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ tr {display: none;}';
-						}
-
-						else {
-							style =
-								this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1) +
-								cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ * {display: none;}';
-						}
-					}
-
-					this.setStyle(style);
-
-					if (indexes.length) {
-						that.scrolledArea.start.row = Math.max(indexes.pop() || 1, 1);
-						that.scrolledArea.end.row = Math.max(indexes.shift() || 1, 1);
-					}
-
-					return true;
+						//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
+						cssId + ' tr:nth-child(' + (index + 40) + ') ~ tr {display: none;}';
 				}
-				return false;
+
+				this.setStyle(style);
+				that.scrolledArea.row = Math.max(index || 1, 1);
+				return true;
 			});
 
 		scrollOuter.setAttribute('class', cl);
@@ -202,34 +167,38 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			this.yIndex = 0;
 
 			while ((direction = this.directionToSeeTd(td)) !== null) {
-				scrolledTo = this.scrolledArea.end;
+				scrolledTo = this.scrolledArea;
 
 				if (direction.left) {
 					x--;
-					this.scrollTo({
-						axis:'x',
-						value:scrolledTo.col - 1
-					});
+					this.scrollTo(
+						'x',
+						0,
+						scrolledTo.col - 1
+					);
 				} else if (direction.right) {
 					x++;
-					this.scrollTo({
-						axis:'x',
-						value:scrolledTo.col + 1
-					});
+					this.scrollTo(
+						'x',
+						0,
+						scrolledTo.col + 1
+					);
 				}
 
 				if (direction.up) {
 					y--;
-					this.scrollTo({
-						axis:'y',
-						value:scrolledTo.row - 1
-					});
+					this.scrollTo(
+						'y',
+						0,
+						scrolledTo.row - 1
+					);
 				} else if (direction.down) {
 					y++;
-					this.scrollTo({
-						axis:'y',
-						value:scrolledTo.row + 1
-					});
+					this.scrollTo(
+						'y',
+						0,
+						scrolledTo.row + 1
+					);
 				}
 
 				i++;
@@ -264,7 +233,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					right:td.offsetLeft + tdWidth
 				},
 				tdParent = td.parentNode,
-				scrollTo = this.scrolledArea.end;
+				scrollTo = this.scrolledArea;
 
 			if (!td.col) {
 				return null;
@@ -511,44 +480,24 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		/**
 		 * Scrolls to a position within the spreadsheet
-		 * @param {Object} pos {axis, value, pixel} if value not set, pixel is used
+		 * @param {String} axisType
+		 * @param {Number} [pixel]scrollTO
+		 * @param {Number} [value]
 		 */
-		scrollTo:function (pos) {
-			pos = pos || {};
-			pos.axis = pos.axis || 'x';
-			pos.value = pos.value || 0;
-			pos.pixel = pos.pixel || 0;
+		scrollTo:function (axisType, pixel, value) {
+			var axis = this.scrollAxis[axisType],
+				max,
+				i;
 
-			var me = this.scrollAxis[pos.axis];
-
-			if (!pos.value) {
-				pos.value = arrHelpers.closest(me.v, Math.abs(pos.pixel / me.area) * 100, me.min).index;
+			if (value === undefined) {
+				value = arrHelpers.closest(axis.v, Math.abs(pixel / axis.area) * 100, axis.min).index;
 			}
 
-			pos.max = pos.max || me.max;
+			max = axis.max;
+			axis.value = value;
 
-			var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
-				indexes = [];
-
-			if (i >= 0) {
-				do {
-					indexes.push(i + me.min);
-				} while(i-- > 0);
-			}
-
-			me.value = pos.value;
-
-			if (indexes.length > 0) {
-				if (me.scrollStyle) {
-					return me.scrollStyle.update(indexes);
-				}
-			} else {
-				if (me.scrollStyle) {
-					return me.scrollStyle.update();
-				}
-			}
-
-			return false;
+			i = value > max ? max : value;
+			return axis.scrollStyle.update(i);
 		},
 
 		/**
