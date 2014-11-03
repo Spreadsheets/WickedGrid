@@ -94,8 +94,7 @@ Sheet.StyleUpdater = (function(document) {
 	} else {
 		//standard
 		Constructor.prototype.setStyle = function(css) {
-			var that = this;
-			that.styleElement.innerHTML = css;
+			this.styleElement.innerHTML = css;
 		};
 		Constructor.prototype.getStyle = function() {
 			return this.styleElement.innerHTML;

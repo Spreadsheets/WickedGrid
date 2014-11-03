@@ -137,8 +137,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			scrollOuter.style.width = enclosureWidth;
 			scrollOuter.style.height = enclosureHeight;
 
-			that.scrollStart('x');
-			that.scrollStart('y');
+			that.scrollStart('x', justTouch);
+			that.scrollStart('y', justTouch);
 
 			scrollStyleX.update(null, xStyle);
 			scrollStyleY.update(null, yStyle);
@@ -428,8 +428,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		/**
 		 * prepare everything needed for a scroll, needs activated every time spreadsheet changes in size
 		 * @param {String} axisName x or y
+		 * @param {Boolean} justTouch
 		 */
-		scrollStart:function (axisName) {
+		scrollStart:function (axisName, justTouch) {
 			var pane = this.pane,
 				outer = pane.scrollOuter,
 				axis = this.scrollAxis[axisName],
@@ -444,7 +445,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					axis.max = size.cols;
 					axis.min = 0;
 					axis.size = size.cols;
-					pane.scrollStyleX.update();
+					if (!justTouch) {
+						pane.scrollStyleX.update();
+					}
 					axis.scrollStyle = pane.scrollStyleX;
 					axis.area = outer.scrollWidth - outer.clientWidth;
 					axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
@@ -458,7 +461,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					axis.max = size.rows;
 					axis.min = 0;
 					axis.size = size.rows;
-					pane.scrollStyleY.update();
+					if (!justTouch) {
+						pane.scrollStyleY.update();
+					}
 					axis.scrollStyle = pane.scrollStyleY;
 					axis.area = outer.scrollHeight - outer.clientHeight;
 					axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;

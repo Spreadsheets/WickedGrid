@@ -82,20 +82,21 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
-			if (
-				(this.value + '').length < 1
-				|| (
-					!this.hasOperator.test(this.value)
-					&& this.formula.length < 1
+			if (this.formula.length < 1) {
+				if (
+					(this.value + '').length < 1
+					|| !this.hasOperator.test(this.value
+					)
 				)
-			) {
-				if (this.td !== null) {
-					this.td.innerHTML = this.value;
+				{
+					if (this.td !== null) {
+						this.td.innerHTML = this.value;
+					}
+					this.value = new String(this.value);
+					this.value.cell = this;
+					this.updateDependencies();
+					return this.value;
 				}
-				this.value = new String(this.value);
-				this.value.cell = this;
-				this.updateDependencies();
-				return this.value;
 			}
 
 			var fn,
@@ -1105,8 +1106,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			scrollOuter.style.width = enclosureWidth;
 			scrollOuter.style.height = enclosureHeight;
 
-			that.scrollStart('x');
-			that.scrollStart('y');
+			that.scrollStart('x', justTouch);
+			that.scrollStart('y', justTouch);
 
 			scrollStyleX.update(null, xStyle);
 			scrollStyleY.update(null, yStyle);
@@ -1396,8 +1397,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		/**
 		 * prepare everything needed for a scroll, needs activated every time spreadsheet changes in size
 		 * @param {String} axisName x or y
+		 * @param {Boolean} justTouch
 		 */
-		scrollStart:function (axisName) {
+		scrollStart:function (axisName, justTouch) {
 			var pane = this.pane,
 				outer = pane.scrollOuter,
 				axis = this.scrollAxis[axisName],
@@ -1412,7 +1414,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					axis.max = size.cols;
 					axis.min = 0;
 					axis.size = size.cols;
-					pane.scrollStyleX.update();
+					if (!justTouch) {
+						pane.scrollStyleX.update();
+					}
 					axis.scrollStyle = pane.scrollStyleX;
 					axis.area = outer.scrollWidth - outer.clientWidth;
 					axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
@@ -1426,7 +1430,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					axis.max = size.rows;
 					axis.min = 0;
 					axis.size = size.rows;
-					pane.scrollStyleY.update();
+					if (!justTouch) {
+						pane.scrollStyleY.update();
+					}
 					axis.scrollStyle = pane.scrollStyleY;
 					axis.area = outer.scrollHeight - outer.clientHeight;
 					axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
@@ -2033,8 +2039,7 @@ Sheet.StyleUpdater = (function(document) {
 	} else {
 		//standard
 		Constructor.prototype.setStyle = function(css) {
-			var that = this;
-			that.styleElement.innerHTML = css;
+			this.styleElement.innerHTML = css;
 		};
 		Constructor.prototype.getStyle = function() {
 			return this.styleElement.innerHTML;
@@ -5943,8 +5948,8 @@ $.sheet = {
 							columns = table.colGroup.children,
 							usingLoader = (s.loader !== null),
 							scrollAction,
-							lastScrollLeft,
-							lastScrollTop,
+							lastScrollLeft = 0,
+							lastScrollTop = 0,
 							scrollLeft,
 							scrollTop,
 							xUpdated,
@@ -6037,12 +6042,15 @@ $.sheet = {
 
 						//here we have two different types of functionality to cut down on logic between behaviours.
 						scrollUI.onscroll = function () {
-							thaw(scrollAction);
+							this.scrollTop = 0;
+							this.scrollLeft = 0;
+
+							scrollUI.onscroll = function() {
+								if (jS.isBusy()) return;
+								thaw(scrollAction);
+							}
 						};
-						setTimeout(function() {
-							scrollUI.scrollTop = 0;
-							scrollUI.scrollLeft = 0;
-						}, 0);
+
 						scrollUI.onmousedown = function() {
 							jS.obj.barHelper().remove();
 						};

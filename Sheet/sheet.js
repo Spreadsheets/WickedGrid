@@ -2817,8 +2817,8 @@ $.sheet = {
 							columns = table.colGroup.children,
 							usingLoader = (s.loader !== null),
 							scrollAction,
-							lastScrollLeft,
-							lastScrollTop,
+							lastScrollLeft = 0,
+							lastScrollTop = 0,
 							scrollLeft,
 							scrollTop,
 							xUpdated,
@@ -2911,12 +2911,15 @@ $.sheet = {
 
 						//here we have two different types of functionality to cut down on logic between behaviours.
 						scrollUI.onscroll = function () {
-							thaw(scrollAction);
+							this.scrollTop = 0;
+							this.scrollLeft = 0;
+
+							scrollUI.onscroll = function() {
+								if (jS.isBusy()) return;
+								thaw(scrollAction);
+							}
 						};
-						setTimeout(function() {
-							scrollUI.scrollTop = 0;
-							scrollUI.scrollLeft = 0;
-						}, 0);
+
 						scrollUI.onmousedown = function() {
 							jS.obj.barHelper().remove();
 						};
