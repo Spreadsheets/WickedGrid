@@ -82,7 +82,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
-			if (this.formula.length < 1) {
+			if (this.formula.length < 1 && this.cellType === null) {
 				if (
 					(this.value + '').length < 1
 					|| !this.hasOperator.test(this.value
