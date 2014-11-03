@@ -2137,12 +2137,14 @@ Sheet.StyleUpdater = (function(document) {
 					}
 				} else {
 					cell = createCellFn(td);
-					cell.value = jsonCell['value'];
-					if (jsonCell['formula']) {
+					if (jsonCell['formula'] !== undefined) {
 						cell.formula = jsonCell['formula'] || '';
 						td.setAttribute('data-formula', jsonCell['formula'] || '');
-					} else {
-						td.innerHTML = jsonCell['value'];
+						if (jsonCell['value'] !== undefined) {
+							cell.value = jsonCell['value'];
+						}
+					} else if (jsonCell['value'] !== undefined) {
+						td.innerHTML = cell.value = jsonCell['value'];
 					}
 				}
 
@@ -5953,14 +5955,14 @@ $.sheet = {
 
 						if (usingLoader) {
 							scrollAction = [
-								/*function () {
+								function () {
 									xUpdated = false;
 									scrollLeft = scrollUI.scrollLeft;
 									if (lastScrollLeft != scrollLeft) {
 										lastScrollLeft = scrollLeft;
 										xUpdated = actionUI.scrollTo('x', scrollLeft);
 									}
-								},*/
+								},
 
 								function () {
 									yUpdated = false;
