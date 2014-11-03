@@ -43,20 +43,21 @@ Sheet.Cell = (function() {
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
-			if (
-				(this.value + '').length < 1
-				|| (
-					!this.hasOperator.test(this.value)
-					&& this.formula.length < 1
+			if (this.formula.length < 1) {
+				if (
+					(this.value + '').length < 1
+					|| !this.hasOperator.test(this.value
+					)
 				)
-			) {
-				if (this.td !== null) {
-					this.td.innerHTML = this.value;
+				{
+					if (this.td !== null) {
+						this.td.innerHTML = this.value;
+					}
+					this.value = new String(this.value);
+					this.value.cell = this;
+					this.updateDependencies();
+					return this.value;
 				}
-				this.value = new String(this.value);
-				this.value.cell = this;
-				this.updateDependencies();
-				return this.value;
 			}
 
 			var fn,

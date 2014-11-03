@@ -23,20 +23,20 @@
 		$.sheet.preLoad('../');
 		$(function() {
 			$.when(
-				$.getJSON('../../jQuery.sheet/utilities/Base%20data1.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Base%20data2.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Calc1.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Calc2.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Calc3.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Calc4.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Calc5.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Calc6.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Calc7.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Input2.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Inputs1.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Inputs3.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Output1.json'),
-				$.getJSON('../../jQuery.sheet/utilities/Output2.json')
+				$.getJSON('../utilities/Base%20data1.json'),
+				$.getJSON('../utilities/Base%20data2.json'),
+				$.getJSON('../utilities/Calc1.json'),
+				$.getJSON('../utilities/Calc2.json'),
+				$.getJSON('../utilities/Calc3.json'),
+				$.getJSON('../utilities/Calc4.json'),
+				$.getJSON('../utilities/Calc5.json'),
+				$.getJSON('../utilities/Calc6.json'),
+				$.getJSON('../utilities/Calc7.json'),
+				$.getJSON('../utilities/Input2.json'),
+				$.getJSON('../utilities/Inputs1.json'),
+				$.getJSON('../utilities/Inputs3.json'),
+				$.getJSON('../utilities/Output1.json'),
+				$.getJSON('../utilities/Output2.json')
 			).done(function() {
 				var args = arguments,
 					loader = new Sheet.JSONLoader([]),
