@@ -1001,14 +1001,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @returns {Object}
 		 */
 		this.scrolledArea = {
-			start: {
-				row: Math.max(this.frozenAt.row, 1),
-				col: Math.max(this.frozenAt.col, 1)
-			},
-			end: {
-				row: Math.max(this.frozenAt.row, 1),
-				col: Math.max(this.frozenAt.col, 1)
-			}
+			row: Math.max(this.frozenAt.row, 1),
+			col: Math.max(this.frozenAt.col, 1)
 		};
 
 		var that = this,
@@ -1016,84 +1010,55 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			cssId = '#' + table.getAttribute('id'),
 			scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
 			scrollInner = pane.scrollInner = document.createElement('div'),
-			scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(indexes, style) {
-				indexes = indexes || [];
+			scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(index, style) {
+				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
+				if (that.xIndex === index) return false;
 
-				if (indexes.length !== that.xIndex || style) {
-					that.xIndex = indexes.length || that.xIndex;
+				if (index === undefined || index === null) index = that.xIndex;
+				that.xIndex = index;
+				if (style === undefined) {
+					var col = that.frozenAt.col;
+					 style =
+						 //hide all previous td/th/col elements
+						 cssId + ' tr > *:nth-child(-n+' + index + ') {display: none;}' +
+						 cssId + ' col:nth-child(-n+' + index + ') {display: none;}' +
 
+						 //but show those that are frozen
+						 cssId + ' tr > *:nth-child(-n+' + (col + 1) + ') {display: table-cell;}' +
+						 cssId + ' col:nth-child(-n+' + (col + 1) + ') {display: table-column;}' +
 
-					if (style === undefined) {
-						var col = that.frozenAt.col;
-						 if (this.max === undefined) {
-							 style =
-								 //hide all previous td/th/col elements
-								 cssId + ' tr > *:nth-child(-n+' + indexes[0] + ') {position: none;}' +
-								 cssId + ' col:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+						 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
+						 cssId + ' tr > *:nth-child(' + (index + 20) + ') ~ * {display: none;}' +
+						 cssId + ' col:nth-child(' + (index + 20) + ') ~ col {display: none;}';
 
-								 //but show those that are frozen
-								 cssId + ' tr > *:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-cell;}' +
-								 cssId + ' col:nth-child(-n+' + (that.frozenAt.col + 1) + ') {display: table-column;}' +
-
-								 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-								 cssId + ' tr > *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}' +
-								 cssId + ' col:nth-child(' + (indexes[0] + 20) + ') ~ col {display: none;}';
-						 } else {
-							 style =
-								 this.nthCss('col', cssId, indexes, that.frozenAt.col + 1) +
-								 this.nthCss('*', cssId + ' ' + 'tr', indexes, that.frozenAt.col + 1) +
-								 cssId + ' tr *:nth-child(' + (indexes[0] + 20) + ') ~ * {display: none;}';
-						 }
-					}
-
-					this.setStyle(style);
-
-					if (indexes.length) {
-						that.scrolledArea.start.col = Math.max(indexes.pop() || 1, 1);
-						that.scrolledArea.end.col = Math.max(indexes.shift() || 1, 1);
-					}
-
-					return true;
 				}
-				return false;
+
+				this.setStyle(style);
+				that.scrolledArea.col = Math.max(index || 1, 1);
+				return true;
 			}, max),
-			scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(indexes, style){
-				indexes = indexes || [];
+			scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
+				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
+				if (that.yIndex === index) return false;
 
-				if (indexes.length !== that.yIndex || style) {
-					that.yIndex = indexes.length || that.yIndex;
+				if (index === undefined || index === null) index = that.yIndex;
+				that.yIndex = index;
+				if (style === undefined) {
+					var row = that.frozenAt.row;
+					style =
+						//hide all previous tr elements
+						cssId + ' tr:nth-child(-n+' + index + ') {display: none;}' +
 
-					if (style === undefined) {
-						var row = that.frozenAt.row;
-						if (this.max === undefined){
-							style =
-								//hide all previous tr elements
-								cssId + ' tr:nth-child(-n+' + indexes[0] + ') {display: none;}' +
+						//but show those that are frozen
+						cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
 
-								//but show those that are frozen
-								cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
-
-								//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-								cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ tr {display: none;}';
-						}
-
-						else {
-							style =
-								this.nthCss('tr', cssId, indexes, that.frozenAt.row + 1) +
-								cssId + ' tr:nth-child(' + (indexes[0] + 40) + ') ~ * {display: none;}';
-						}
-					}
-
-					this.setStyle(style);
-
-					if (indexes.length) {
-						that.scrolledArea.start.row = Math.max(indexes.pop() || 1, 1);
-						that.scrolledArea.end.row = Math.max(indexes.shift() || 1, 1);
-					}
-
-					return true;
+						//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
+						cssId + ' tr:nth-child(' + (index + 40) + ') ~ tr {display: none;}';
 				}
-				return false;
+
+				this.setStyle(style);
+				that.scrolledArea.row = Math.max(index || 1, 1);
+				return true;
 			});
 
 		scrollOuter.setAttribute('class', cl);
@@ -1170,34 +1135,38 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			this.yIndex = 0;
 
 			while ((direction = this.directionToSeeTd(td)) !== null) {
-				scrolledTo = this.scrolledArea.end;
+				scrolledTo = this.scrolledArea;
 
 				if (direction.left) {
 					x--;
-					this.scrollTo({
-						axis:'x',
-						value:scrolledTo.col - 1
-					});
+					this.scrollTo(
+						'x',
+						0,
+						scrolledTo.col - 1
+					);
 				} else if (direction.right) {
 					x++;
-					this.scrollTo({
-						axis:'x',
-						value:scrolledTo.col + 1
-					});
+					this.scrollTo(
+						'x',
+						0,
+						scrolledTo.col + 1
+					);
 				}
 
 				if (direction.up) {
 					y--;
-					this.scrollTo({
-						axis:'y',
-						value:scrolledTo.row - 1
-					});
+					this.scrollTo(
+						'y',
+						0,
+						scrolledTo.row - 1
+					);
 				} else if (direction.down) {
 					y++;
-					this.scrollTo({
-						axis:'y',
-						value:scrolledTo.row + 1
-					});
+					this.scrollTo(
+						'y',
+						0,
+						scrolledTo.row + 1
+					);
 				}
 
 				i++;
@@ -1232,7 +1201,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					right:td.offsetLeft + tdWidth
 				},
 				tdParent = td.parentNode,
-				scrollTo = this.scrolledArea.end;
+				scrollTo = this.scrolledArea;
 
 			if (!td.col) {
 				return null;
@@ -1479,44 +1448,24 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		/**
 		 * Scrolls to a position within the spreadsheet
-		 * @param {Object} pos {axis, value, pixel} if value not set, pixel is used
+		 * @param {String} axisType
+		 * @param {Number} [pixel]scrollTO
+		 * @param {Number} [value]
 		 */
-		scrollTo:function (pos) {
-			pos = pos || {};
-			pos.axis = pos.axis || 'x';
-			pos.value = pos.value || 0;
-			pos.pixel = pos.pixel || 0;
+		scrollTo:function (axisType, pixel, value) {
+			var axis = this.scrollAxis[axisType],
+				max,
+				i;
 
-			var me = this.scrollAxis[pos.axis];
-
-			if (!pos.value) {
-				pos.value = arrHelpers.closest(me.v, Math.abs(pos.pixel / me.area) * 100, me.min).index;
+			if (value === undefined) {
+				value = arrHelpers.closest(axis.v, Math.abs(pixel / axis.area) * 100, axis.min).index;
 			}
 
-			pos.max = pos.max || me.max;
+			max = axis.max;
+			axis.value = value;
 
-			var i = ((pos.value > pos.max ? pos.max : pos.value) - me.min),
-				indexes = [];
-
-			if (i >= 0) {
-				do {
-					indexes.push(i + me.min);
-				} while(i-- > 0);
-			}
-
-			me.value = pos.value;
-
-			if (indexes.length > 0) {
-				if (me.scrollStyle) {
-					return me.scrollStyle.update(indexes);
-				}
-			} else {
-				if (me.scrollStyle) {
-					return me.scrollStyle.update();
-				}
-			}
-
-			return false;
+			i = value > max ? max : value;
+			return axis.scrollStyle.update(i);
 		},
 
 		/**
@@ -1990,54 +1939,10 @@ Sheet.Highlighter = (function(document, window, $) {
 	return Constructor;
 })();
 Sheet.StyleUpdater = (function(document) {
-	function Constructor(updateFn, max) {
+	function Constructor(updateFn) {
 		var el = this.styleElement = document.createElement('style');
 		el.styleUpdater = this;
 		this._update = updateFn;
-		this.max = max;
-
-		if (Sheet.StyleUpdater.prototype.nthCss === null) {
-			if (max !== undefined) {//this is where we check IE8 compatibility
-				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-					var style = [],
-						index = indexes.length,
-						repeat = this.repeat;
-
-					css = css || '{display: none;}';
-
-					do {
-						if (indexes[index] > min) {
-							style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
-						}
-					} while (index--);
-
-					if (style.length) {
-						return style.join(',') + css;
-					}
-
-					return '';
-				};
-			} else {
-				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-					var style = [],
-						index = indexes.length;
-
-					css = css || '{display: none;}';
-
-					do {
-						if (indexes[index] > min) {
-							style.unshift(parentSelectorString + ' ' + elementName + ':nth-child(' + (indexes[index] + 1) + ')');
-						}
-					} while (index--);
-
-					if (style.length) {
-						return style.join(',') + css;
-					}
-
-					return '';
-				};
-			}
-		}
 	}
 	Constructor.prototype = {
 		/**
@@ -2062,7 +1967,24 @@ Sheet.StyleUpdater = (function(document) {
 		 * @type {Function}
 		 * @returns {String}
 		 */
-		nthCss: null,
+		nthCss: function (elementName, parentSelectorString, indexes, min, css) {
+			var style = [],
+				index = indexes.length;
+
+			css = css || '{display: none;}';
+
+			do {
+				if (indexes[index] > min) {
+					style.unshift(parentSelectorString + ' ' + elementName + ':nth-child(' + (indexes[index] + 1) + ')');
+				}
+			} while (index--);
+
+			if (style.length) {
+				return style.join(',') + css;
+			}
+
+			return '';
+		},
 
 		/**
 		 * Repeats a string a number of times
@@ -2111,7 +2033,8 @@ Sheet.StyleUpdater = (function(document) {
 	} else {
 		//standard
 		Constructor.prototype.setStyle = function(css) {
-			this.styleElement.innerHTML = css;
+			var that = this;
+			that.styleElement.innerHTML = css;
 		};
 		Constructor.prototype.getStyle = function() {
 			return this.styleElement.innerHTML;
@@ -5237,7 +5160,7 @@ $.sheet = {
 								frozenAt = actionUI.frozenAt,
 								scrolledArea = actionUI.scrolledArea;
 
-							if (!(scrolledArea.end.col <= (frozenAt.col + 1))) {
+							if (!(scrolledArea.col <= (frozenAt.col + 1))) {
 								return false;
 							}
 
@@ -5288,7 +5211,7 @@ $.sheet = {
 									var target = jS.nearest($handle, tds);
 
 									jS.obj.barHelper().remove();
-									scrolledArea.end.col = actionUI.frozenAt.col = jS.getTdLocation(target[0]).col - 1;
+									scrolledArea.col = actionUI.frozenAt.col = jS.getTdLocation(target[0]).col - 1;
 									jS.autoFillerHide();
 									actionUI.scrollStart('x', jS.sheetSize(pane.table));
 								},
@@ -5313,7 +5236,7 @@ $.sheet = {
 								frozenAt = actionUI.frozenAt,
 								scrolledArea = actionUI.scrolledArea;
 
-							if (!(scrolledArea.end.row <= (frozenAt.row + 1))) {
+							if (!(scrolledArea.row <= (frozenAt.row + 1))) {
 								return false;
 							}
 
@@ -5361,7 +5284,7 @@ $.sheet = {
 									jS.setDirty(true);
 									var target = jS.nearest($handle, trs);
 									jS.obj.barHelper().remove();
-									scrolledArea.end.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)[0]).row - 1, 0);
+									scrolledArea.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)[0]).row - 1, 0);
 									jS.autoFillerHide();
 									pane.actionUI.scrollStart('y', jS.sheetSize(pane.table));
 								},
@@ -6017,87 +5940,107 @@ $.sheet = {
 							rows = table.tBody.children,
 							columns = table.colGroup.children,
 							usingLoader = (s.loader !== null),
-							scrollAction;
+							scrollAction,
+							lastScrollLeft,
+							lastScrollTop,
+							scrollLeft,
+							scrollTop,
+							xUpdated,
+							yUpdated;
 
 						table.size = function() { return jS.tableSize(table); };
 						pane.size = function() { return jS.sheetSize(table); };
 
-						//here we have two different types of functionality to cut down on logic between behaviours.
-						scrollUI.onscroll = function() {
-							this.scrollTop = this.scrollLeft = 0;
-							var xUpdated,
-								yUpdated;
-
-							if (usingLoader) {
-								scrollAction = [
-									function () {
-										xUpdated = actionUI.scrollTo({axis: 'x', pixel: scrollUI.scrollLeft});
-									},
-
-									function () {
-										yUpdated = actionUI.scrollTo({axis: 'y', pixel: scrollUI.scrollTop});
-									},
-									function () {
-										if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
-											jS.calcVisibleCol(actionUI);
-										}
-									},
-									function () {
-										if (yUpdated) {
-											if (actionUI.scrollAxis.y.size >= (rows.length - 1)) {
-												jS.calcVisibleRow(actionUI);
-											}
-											jS.updateYBarWidthToCorner(actionUI);
-										}
-									},
-									function () {
-										if (xUpdated && yUpdated) {
-											jS.obj.barHelper().remove();
-											jS.autoFillerGoToTd();
-											if (pane.inPlaceEdit) {
-												pane.inPlaceEdit.goToTd();
-											}
-										}
+						if (usingLoader) {
+							scrollAction = [
+								/*function () {
+									xUpdated = false;
+									scrollLeft = scrollUI.scrollLeft;
+									if (lastScrollLeft != scrollLeft) {
+										lastScrollLeft = scrollLeft;
+										xUpdated = actionUI.scrollTo('x', scrollLeft);
 									}
-								];
-							} else {
-								scrollAction = [
-									function () {
-										xUpdated = actionUI.scrollTo({axis: 'x', pixel: that.scrollLeft});
-									},
+								},*/
 
-									function () {
-										yUpdated = actionUI.scrollTo({axis: 'y', pixel: that.scrollTop});
-									},
-									function () {
-										if (xUpdated) {
-											jS.calcVisibleCol(actionUI);
-										}
-									},
-									function () {
-										if (yUpdated) {
+								function () {
+									yUpdated = false;
+									scrollTop = scrollUI.scrollTop;
+									if (lastScrollTop != scrollTop) {
+										lastScrollTop = scrollTop;
+										yUpdated = actionUI.scrollTo('y', scrollTop);
+									}
+								},
+								function () {
+									if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
+										jS.calcVisibleCol(actionUI);
+									}
+								},
+								function () {
+									if (yUpdated) {
+										if (actionUI.scrollAxis.y.size >= (rows.length - 1)) {
 											jS.calcVisibleRow(actionUI);
-											jS.updateYBarWidthToCorner(actionUI);
 										}
-									},
-									function () {
-										if (xUpdated && yUpdated) {
-											jS.obj.barHelper().remove();
-											jS.autoFillerGoToTd();
-											if (pane.inPlaceEdit) {
-												pane.inPlaceEdit.goToTd();
-											}
+										jS.updateYBarWidthToCorner(actionUI);
+									}
+								},
+								function () {
+									if (xUpdated && yUpdated) {
+										jS.obj.barHelper().remove();
+										jS.autoFillerGoToTd();
+										if (pane.inPlaceEdit) {
+											pane.inPlaceEdit.goToTd();
 										}
 									}
-								];
-							}
-
-							scrollUI.onscroll = function () {
-								if (!jS.isBusy()) {
-									thaw(scrollAction);
 								}
-							};
+							];
+						} else {
+							scrollAction = [
+								function () {
+									scrollLeft = scrollUI.scrollLeft;
+									if (lastScrollLeft !== scrollLeft) {
+										lastScrollLeft = scrollLeft;
+										xUpdated = actionUI.scrollTo('x', scrollLeft);
+									}
+								},
+
+								function () {
+									scrollTop = scrollUI.scrollTop;
+									if (lastScrollTop !== scrollTop) {
+										lastScrollTop = scrollTop;
+										yUpdated = actionUI.scrollTo('y', scrollTop);
+									}
+								},
+								function () {
+									if (xUpdated) {
+										jS.calcVisibleCol(actionUI);
+									}
+								},
+								function () {
+									if (yUpdated) {
+										jS.calcVisibleRow(actionUI);
+										jS.updateYBarWidthToCorner(actionUI);
+									}
+								},
+								function () {
+									if (xUpdated && yUpdated) {
+										jS.obj.barHelper().remove();
+										jS.autoFillerGoToTd();
+										if (pane.inPlaceEdit) {
+											pane.inPlaceEdit.goToTd();
+										}
+									}
+								}
+							];
+						}
+
+						//here we have two different types of functionality to cut down on logic between behaviours.
+						scrollUI.onscroll = function () {
+							thaw(scrollAction);
 						};
+						setTimeout(function() {
+							scrollUI.scrollTop = 0;
+							scrollUI.scrollLeft = 0;
+						}, 0);
 						scrollUI.onmousedown = function() {
 							jS.obj.barHelper().remove();
 						};
@@ -7512,7 +7455,7 @@ $.sheet = {
 						table = actionUI.table,
 						tBody = table.tBody,
 						corner = table.corner,
-						target = Math.min(s.initCalcRows + scrolledArea.end.row, scrolledArea.end.row + 20, tBody.lastChild.rowIndex),
+						target = Math.min(s.initCalcRows + scrolledArea.row, scrolledArea.row + 20, tBody.lastChild.rowIndex),
 						tr = tBody.children[target],
 						th,
 						text,
@@ -8986,7 +8929,7 @@ $.sheet = {
 					sheetIndex = sheetIndex || jS.i;
 
 					var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
-						endScrolledArea = actionUI.scrolledArea.end,
+						endScrolledArea = actionUI.scrolledArea,
 						sheetSize = actionUI.pane.size(),
 						initRows = s.initCalcRows,
 						initCols = s.initCalcCols,
@@ -9054,7 +8997,7 @@ $.sheet = {
 					sheetIndex = sheetIndex || jS.i;
 
 					var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
-						endScrolledArea = actionUI.scrolledArea.end,
+						endScrolledArea = actionUI.scrolledArea,
 						sheetSize = actionUI.pane.size(),
 						initRows = s.initCalcRows,
 						initCols = s.initCalcCols,
@@ -9949,9 +9892,9 @@ $.sheet = {
 
 					switch (type) {
 						case 'top':
-							start.row = scrolledArea.end.row;
+							start.row = scrolledArea.row;
 							start.col = first;
-							stop.row = scrolledArea.end.row;
+							stop.row = scrolledArea.row;
 							stop.col = last;
 
 							jS.highlighter.start.row = 1;
@@ -9967,9 +9910,9 @@ $.sheet = {
 							break;
 						case 'left':
 							start.row = first;
-							start.col = scrolledArea.end.col;
+							start.col = scrolledArea.col;
 							stop.row = last;
-							stop.col = scrolledArea.end.col;
+							stop.col = scrolledArea.col;
 
 							jS.highlighter.start.row = first;
 							jS.highlighter.start.col = 1;
@@ -13535,24 +13478,24 @@ var arrHelpers = window.arrHelpers = {
 		return arr;
 	},
 	closest:function (array, num, min, max) {
-		array = array || [];
-		num = num || 0;
 		min = min || 0;
 		max = max || array.length - 1;
 
-		var target;
+		var target,
+			item;
 
 		while (true) {
 			target = ((min + max) >> 1);
-			if (target === max || target === min) {
-				return array[target];
+			item = array[target];
+			if ((target === max || target === min) && item !== num) {
+				return item;
 			}
-			if (array[target] > num) {
+			if (item > num) {
 				max = target;
-			} else if (array[target] < num) {
+			} else if (item < num) {
 				min = target;
 			} else {
-				return array[target];
+				return item;
 			}
 		}
 	},

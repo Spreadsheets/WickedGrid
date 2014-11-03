@@ -91,24 +91,24 @@ var arrHelpers = window.arrHelpers = {
 		return arr;
 	},
 	closest:function (array, num, min, max) {
-		array = array || [];
-		num = num || 0;
 		min = min || 0;
 		max = max || array.length - 1;
 
-		var target;
+		var target,
+			item;
 
 		while (true) {
 			target = ((min + max) >> 1);
-			if (target === max || target === min) {
-				return array[target];
+			item = array[target];
+			if ((target === max || target === min) && item !== num) {
+				return item;
 			}
-			if (array[target] > num) {
+			if (item > num) {
 				max = target;
-			} else if (array[target] < num) {
+			} else if (item < num) {
 				min = target;
 			} else {
-				return array[target];
+				return item;
 			}
 		}
 	},

@@ -1,53 +1,9 @@
 
 Sheet.StyleUpdater = (function(document) {
-	function Constructor(updateFn, max) {
+	function Constructor(updateFn) {
 		var el = this.styleElement = document.createElement('style');
 		el.styleUpdater = this;
 		this._update = updateFn;
-		this.max = max;
-
-		if (Sheet.StyleUpdater.prototype.nthCss === null) {
-			if (max !== undefined) {//this is where we check IE8 compatibility
-				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-					var style = [],
-						index = indexes.length,
-						repeat = this.repeat;
-
-					css = css || '{display: none;}';
-
-					do {
-						if (indexes[index] > min) {
-							style.push(parentSelectorString + ' ' + elementName + ':first-child' + repeat('+' + elementName, indexes[index] - 1));
-						}
-					} while (index--);
-
-					if (style.length) {
-						return style.join(',') + css;
-					}
-
-					return '';
-				};
-			} else {
-				Sheet.StyleUpdater.prototype.nthCss = function (elementName, parentSelectorString, indexes, min, css) {
-					var style = [],
-						index = indexes.length;
-
-					css = css || '{display: none;}';
-
-					do {
-						if (indexes[index] > min) {
-							style.unshift(parentSelectorString + ' ' + elementName + ':nth-child(' + (indexes[index] + 1) + ')');
-						}
-					} while (index--);
-
-					if (style.length) {
-						return style.join(',') + css;
-					}
-
-					return '';
-				};
-			}
-		}
 	}
 	Constructor.prototype = {
 		/**
@@ -72,7 +28,24 @@ Sheet.StyleUpdater = (function(document) {
 		 * @type {Function}
 		 * @returns {String}
 		 */
-		nthCss: null,
+		nthCss: function (elementName, parentSelectorString, indexes, min, css) {
+			var style = [],
+				index = indexes.length;
+
+			css = css || '{display: none;}';
+
+			do {
+				if (indexes[index] > min) {
+					style.unshift(parentSelectorString + ' ' + elementName + ':nth-child(' + (indexes[index] + 1) + ')');
+				}
+			} while (index--);
+
+			if (style.length) {
+				return style.join(',') + css;
+			}
+
+			return '';
+		},
 
 		/**
 		 * Repeats a string a number of times
@@ -121,7 +94,8 @@ Sheet.StyleUpdater = (function(document) {
 	} else {
 		//standard
 		Constructor.prototype.setStyle = function(css) {
-			this.styleElement.innerHTML = css;
+			var that = this;
+			that.styleElement.innerHTML = css;
 		};
 		Constructor.prototype.getStyle = function() {
 			return this.styleElement.innerHTML;
