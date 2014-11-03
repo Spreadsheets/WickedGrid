@@ -860,6 +860,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	var n = isNaN;
 	return {
 		percent: function (cell, value) {
+			//https://stackoverflow.com/questions/2652319/how-do-you-check-that-a-number-is-nan-in-javascript/16988441#16988441
+			//NaN !== NaN
+			if (value !== value) return 0;
 			var num = (n(value) ? Globalize.parseFloat(value) : value * 1),
 				result;
 
@@ -872,6 +875,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			return value;
 		},
 		date: function (cell, value) {
+			if (value !== value) return 0;
 			var date = Globalize.parseDate(value);
 			if (date === null) {
 				return value;
@@ -881,6 +885,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 		},
 		time: function (cell, value) {
+			if (value !== value) return 0;
 			var date = Globalize.parseDate(value);
 			if (date === null) {
 				return value;
@@ -890,6 +895,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 		},
 		currency: function (cell, value) {
+			if (value !== value) return 0;
 			var num = (n(value) ? Globalize.parseFloat(value) : value * 1),
 				result;
 
@@ -902,6 +908,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			return value;
 		},
 		number: function (cell, value) {
+			if (value !== value) return 0;
 			var radix, result;
 			if (!settings.endOfNumber) {
 				radix = Globalize.culture().numberFormat['.'];
