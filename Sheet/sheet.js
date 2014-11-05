@@ -3622,9 +3622,12 @@ $.sheet = {
 					 * @memberOf jS.evt
 					 */
 					cellEditDone:function (force) {
+						var inPlaceEdit = jS.obj.inPlaceEdit(),
+							inPlaceEditHasFocus = $(inPlaceEdit).is(':focus');
+
 						(jS.obj.inPlaceEdit().destroy || emptyFN)();
 						if (jS.cellLast.isEdit || force) {
-							var formula = jS.obj.formula(),
+							var formula = (inPlaceEditHasFocus ? $(inPlaceEdit) : jS.obj.formula()),
 								td = jS.obj.tdActive();
 
 							if (jS.isFormulaEditable(td)) {
