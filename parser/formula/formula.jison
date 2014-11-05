@@ -514,9 +514,9 @@ if (typeof(window) !== 'undefined') {
 		};
 
 		formulaParser.prototype = parser;
-		var newParser = new formulaParser;
+		var newParser = new formulaParser();
 		newParser.setObj = function(obj) {
-			newParser.yy.obj = obj;
+			this.yy.obj = obj;
 		};
 		newParser.yy.handler = handler;
 		return newParser;

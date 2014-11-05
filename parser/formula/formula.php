@@ -2883,7 +2883,7 @@ break;
 
             $this->yy->leng = strlen($this->yy->text);
             if (isset($this->ranges)) {
-                $this->yy->loc->range(new ParserRange($this->offset, $this->offset += $this->yy->leng));
+                $this->yy->loc->range = new ParserRange($this->offset, $this->offset += $this->yy->leng);
             }
             $this->more = false;
             $this->input->addMatch($match[0]);

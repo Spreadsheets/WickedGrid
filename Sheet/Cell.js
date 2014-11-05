@@ -45,8 +45,10 @@ Sheet.Cell = (function() {
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
 			if (this.formula.length < 1 && this.cellType === null) {
 				if (
-					(this.value + '').length < 1
-					|| !this.hasOperator.test(this.value
+					this.value !== undefined
+					&& (
+						(this.value + '').length < 1
+						|| !this.hasOperator.test(this.value)
 					)
 				)
 				{
@@ -92,7 +94,10 @@ Sheet.Cell = (function() {
 				}
 				value = defer.updateValue().valueOf();
 
-				switch (typeof(result)) {
+				switch (typeof(value)) {
+					case 'undefined':
+						value = new String();
+						break;
 					case 'number':
 						value = new Number(value);
 						break;
@@ -100,6 +105,7 @@ Sheet.Cell = (function() {
 						value = new Boolean(value);
 						break;
 					case 'string':
+					default:
 						value = new String(value);
 						break;
 				}
@@ -181,6 +187,9 @@ Sheet.Cell = (function() {
 
 			if (value.cell === u) {
 				switch (typeof(value)) {
+					case 'undefined':
+						value = new String();
+						break;
 					case 'number':
 						value = new Number(value);
 						break;
@@ -188,6 +197,7 @@ Sheet.Cell = (function() {
 						value = new Boolean(value);
 						break;
 					case 'string':
+					default:
 						value = new String(value);
 						break;
 				}
