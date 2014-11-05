@@ -84,8 +84,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
 			if (this.formula.length < 1 && this.cellType === null) {
 				if (
-					(this.value + '').length < 1
-					|| !this.hasOperator.test(this.value
+					this.value !== undefined
+					&& (
+						(this.value + '').length < 1
+						|| !this.hasOperator.test(this.value)
 					)
 				)
 				{
@@ -131,7 +133,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				}
 				value = defer.updateValue().valueOf();
 
-				switch (typeof(result)) {
+				switch (typeof(value)) {
+					case 'undefined':
+						value = new String();
+						break;
 					case 'number':
 						value = new Number(value);
 						break;
@@ -139,6 +144,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						value = new Boolean(value);
 						break;
 					case 'string':
+					default:
 						value = new String(value);
 						break;
 				}
@@ -220,6 +226,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			if (value.cell === u) {
 				switch (typeof(value)) {
+					case 'undefined':
+						value = new String();
+						break;
 					case 'number':
 						value = new Number(value);
 						break;
@@ -227,6 +236,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						value = new Boolean(value);
 						break;
 					case 'string':
+					default:
 						value = new String(value);
 						break;
 				}
@@ -451,6 +461,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		this.jS = jS;
 		this.jSE = jSE;
 		this.fn = fn;
+		this.spareFormulaParsers = {};
 	}
 
 	Constructor.prototype = {
@@ -833,8 +844,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			return result;
 		},
 
-
-		spareFormulaParsers: {},
 		formulaParser: function(callStack) {
 			var formulaParser;
 			//we prevent parsers from overwriting each other
@@ -3519,167 +3528,12 @@ $.fn.extend({
 		var n = isNaN,
 			events = $.sheet.events;
 
-		settings = settings || {};
-
 		$(this).each(function () {
 			var me = $(this),
-				defaults = {
-					editable:true,
-					editableNames:true,
-					barMenus:true,
-					freezableCells:true,
-					allowToggleState:true,
-					menuLeft:null,
-					menuRight:null,
-					newColumnWidth:120,
-					title:null,
-					calcOff:false,
-					lockFormulas:false,
-					parent:me,
-					colMargin:20,
-					boxModelCorrection:2,
-					formulaFunctions:{},
-					formulaVariables:{},
-					cellSelectModel:Sheet.excelSelectModel,
-					autoAddCells:true,
-					resizableCells:true,
-					resizableSheet:true,
-					autoFiller:true,
-					minSize:{rows:1, cols:1},
-					error:function (e) {
-						return e.error;
-					},
-					endOfNumber: false,
-					frozenAt:[],
-					contextmenuTop:{
-						"Insert column after":function (jS) {
-							jS.controlFactory.addColumn(jS.colLast);
-							return false;
-						},
-						"Insert column before":function (jS) {
-							jS.controlFactory.addColumn(jS.colLast, true);
-							return false;
-						},
-						"Add column to end":function (jS) {
-							jS.controlFactory.addColumn();
-							return false;
-						},
-						"Delete this column":function (jS) {
-							jS.deleteColumn();
-							return false;
-						},
-						"Hide column":function (jS) {
-							jS.toggleHideColumn();
-							return false;
-						},
-						"Show all columns": function (jS) {
-							jS.columnShowAll();
-						},
-						"Toggle freeze columns to here":function (jS) {
-							var col = jS.getTdLocation(jS.obj.tdActive()).col,
-								actionUI = jS.obj.pane().actionUI;
-							actionUI.frozenAt.col = (actionUI.frozenAt.col == col ? 0 : col);
-						}
-					},
-					contextmenuLeft:{
-						"Insert row after":function (jS) {
-							jS.controlFactory.addRow(jS.rowLast);
-							return false;
-						},
-						"Insert row before":function (jS) {
-							jS.controlFactory.addRow(jS.rowLast, true);
-							return false;
-						},
-						"Add row to end":function (jS) {
-							jS.controlFactory.addRow();
-							return false;
-						},
-						"Delete this row":function (jS) {
-							jS.deleteRow();
-							return false;
-						},
-						"Hide row":function (jS) {
-							jS.toggleHideRow();
-							return false;
-						},
-						"Show all rows": function (jS) {
-							jS.rowShowAll();
-						},
-						"Toggle freeze rows to here":function (jS) {
-							var row = jS.getTdLocation(jS.obj.tdActive()).row,
-								actionUI = jS.obj.pane().actionUI;
-							actionUI.frozenAt.row = (actionUI.frozenAt.row == row ? 0 : row);
-						}
-					},
-					contextmenuCell:{
-						/*"Copy":false,
-						"Cut":false,
-						"line1":'line',*/
-						"Insert row after":function (jS) {
-							jS.controlFactory.addRow(jS.rowLast);
-							return false;
-						},
-						"Insert row before":function (jS) {
-							jS.controlFactory.addRow(jS.rowLast, true);
-							return false;
-						},
-						"Add row to end":function (jS) {
-							jS.controlFactory.addRow();
-							return false;
-						},
-						"Delete this row":function (jS) {
-							jS.deleteRow();
-							return false;
-						},
-						"line2":'line',
-						"Insert column after":function (jS) {
-							jS.controlFactory.addColumn(jS.colLast);
-							return false;
-						},
-						"Insert column before":function (jS) {
-							jS.controlFactory.addColumn(jS.colLast, true);
-							return false;
-						},
-						"Add column to end":function (jS) {
-							jS.controlFactory.addColumn();
-							return false;
-						},
-						"Delete this column":function (jS) {
-							jS.deleteColumn();
-							return false;
-						},
-						"line3":"line",
-						"Add spreadsheet":function (jS) {
-							jS.addSheet();
-						},
-						"Delete spreadsheet":function (jS) {
-							jS.deleteSheet();
-						}
-					},
-					hiddenRows:[],
-					hiddenColumns:[],
-					alert: function(msg) {
-						alert(msg);
-					},
-					prompt: function(msg, callback, initialValue) {
-						callback(prompt(msg, initialValue));
-					},
-					confirm: function(msg, callbackIfTrue, callbackIfFalse) {
-						if (confirm(msg)) {
-							callbackIfTrue();
-						} else if (callbackIfFalse) {
-							callbackIfFalse();
-						}
-					},
-					initCalcRows: 40,
-					initCalcCols: 10,
-					initScrollRows: 0,
-					initScrollCols: 0,
-					loader: null
-				};
+				chosenSettings = $.extend({}, $.sheet.defaults, settings || {}),
+				jS = this.jS;
 
 			//destroy already existing spreadsheet
-			var jS = this.jS;
 			if (jS) {
 				var tables = me.children().detach();
 				jS.kill();
@@ -3692,19 +3546,21 @@ $.fn.extend({
 				}
 			}
 
+			chosenSettings.parent = me;
+
 			if ((this.className || '').match(/\bnot-editable\b/i) != null) {
-				settings['editable'] = false;
+				chosenSettings['editable'] = false;
 			}
 
 			for (var i in events) {
 				if (events.hasOwnProperty(i)) {
-					me.bind(events[i], settings[events[i]]);
+					me.bind(events[i], chosenSettings[events[i]]);
 				}
 			}
 
 			if (!$.sheet.instance.length) $.sheet.instance = [];
 
-			this.jS = jS = $.sheet.createInstance($.extend(defaults, settings), $.sheet.instance.length);
+			this.jS = jS = $.sheet.createInstance(chosenSettings, $.sheet.instance.length);
 			$.sheet.instance.push(jS);
 		});
 		return this;
@@ -3994,6 +3850,165 @@ $.fn.extend({
  * @name jQuery.sheet
  */
 $.sheet = {
+
+	/**
+	 * Defaults
+	 */
+	defaults: {
+		editable:true,
+		editableNames:true,
+		barMenus:true,
+		freezableCells:true,
+		allowToggleState:true,
+		menuLeft:null,
+		menuRight:null,
+		newColumnWidth:120,
+		title:null,
+		calcOff:false,
+		lockFormulas:false,
+		parent:null,
+		colMargin:20,
+		boxModelCorrection:2,
+		formulaFunctions:{},
+		formulaVariables:{},
+		cellSelectModel:Sheet.excelSelectModel,
+		autoAddCells:true,
+		resizableCells:true,
+		resizableSheet:true,
+		autoFiller:true,
+		minSize:{rows:1, cols:1},
+		error:function (e) {
+			return e.error;
+		},
+		endOfNumber: false,
+		frozenAt:[],
+		contextmenuTop:{
+			"Insert column after":function (jS) {
+				jS.controlFactory.addColumn(jS.colLast);
+				return false;
+			},
+			"Insert column before":function (jS) {
+				jS.controlFactory.addColumn(jS.colLast, true);
+				return false;
+			},
+			"Add column to end":function (jS) {
+				jS.controlFactory.addColumn();
+				return false;
+			},
+			"Delete this column":function (jS) {
+				jS.deleteColumn();
+				return false;
+			},
+			"Hide column":function (jS) {
+				jS.toggleHideColumn();
+				return false;
+			},
+			"Show all columns": function (jS) {
+				jS.columnShowAll();
+			},
+			"Toggle freeze columns to here":function (jS) {
+				var col = jS.getTdLocation(jS.obj.tdActive()).col,
+					actionUI = jS.obj.pane().actionUI;
+				actionUI.frozenAt.col = (actionUI.frozenAt.col == col ? 0 : col);
+			}
+		},
+		contextmenuLeft:{
+			"Insert row after":function (jS) {
+				jS.controlFactory.addRow(jS.rowLast);
+				return false;
+			},
+			"Insert row before":function (jS) {
+				jS.controlFactory.addRow(jS.rowLast, true);
+				return false;
+			},
+			"Add row to end":function (jS) {
+				jS.controlFactory.addRow();
+				return false;
+			},
+			"Delete this row":function (jS) {
+				jS.deleteRow();
+				return false;
+			},
+			"Hide row":function (jS) {
+				jS.toggleHideRow();
+				return false;
+			},
+			"Show all rows": function (jS) {
+				jS.rowShowAll();
+			},
+			"Toggle freeze rows to here":function (jS) {
+				var row = jS.getTdLocation(jS.obj.tdActive()).row,
+					actionUI = jS.obj.pane().actionUI;
+				actionUI.frozenAt.row = (actionUI.frozenAt.row == row ? 0 : row);
+			}
+		},
+		contextmenuCell:{
+			/*"Copy":false,
+			 "Cut":false,
+			 "line1":'line',*/
+			"Insert row after":function (jS) {
+				jS.controlFactory.addRow(jS.rowLast);
+				return false;
+			},
+			"Insert row before":function (jS) {
+				jS.controlFactory.addRow(jS.rowLast, true);
+				return false;
+			},
+			"Add row to end":function (jS) {
+				jS.controlFactory.addRow();
+				return false;
+			},
+			"Delete this row":function (jS) {
+				jS.deleteRow();
+				return false;
+			},
+			"line2":'line',
+			"Insert column after":function (jS) {
+				jS.controlFactory.addColumn(jS.colLast);
+				return false;
+			},
+			"Insert column before":function (jS) {
+				jS.controlFactory.addColumn(jS.colLast, true);
+				return false;
+			},
+			"Add column to end":function (jS) {
+				jS.controlFactory.addColumn();
+				return false;
+			},
+			"Delete this column":function (jS) {
+				jS.deleteColumn();
+				return false;
+			},
+			"line3":"line",
+			"Add spreadsheet":function (jS) {
+				jS.addSheet();
+			},
+			"Delete spreadsheet":function (jS) {
+				jS.deleteSheet();
+			}
+		},
+		hiddenRows:[],
+		hiddenColumns:[],
+		alert: function(msg) {
+			alert(msg);
+		},
+		prompt: function(msg, callback, initialValue) {
+			callback(prompt(msg, initialValue));
+		},
+		confirm: function(msg, callbackIfTrue, callbackIfFalse) {
+			if (confirm(msg)) {
+				callbackIfTrue();
+			} else if (callbackIfFalse) {
+				callbackIfFalse();
+			}
+		},
+		initCalcRows: 40,
+		initCalcCols: 10,
+		initScrollRows: 0,
+		initScrollCols: 0,
+		loader: null
+	},
+
 	/**
 	 * Array of instances of jQuery.sheet, generally short-handed to jS
 	 * @memberOf jQuery.sheet
@@ -4578,6 +4593,7 @@ $.sheet = {
 					var sheet,
 						row,
 						jSCell,
+						value,
 						table,
 						colGroup,
 						col,
@@ -4624,7 +4640,23 @@ $.sheet = {
 					if (id !== null)
 						jSCell.id = id;
 
-					jSCell.value = td.textContent || td.innerText;
+					value = td.textContent || td.innerText;
+					switch (typeof(value)) {
+						case 'undefined':
+							value = new String();
+							break;
+						case 'number':
+							jSCell.value = new Number(value);
+							break;
+						case 'boolean':
+							jSCell.value = new Boolean(value);
+							break;
+						case 'string':
+						default:
+							jSCell.value = new String(value);
+							break;
+					}
+					jSCell.value.cell = jSCell;
 					jSCell.calcCount = calcCount || 0;
 					jSCell.needsUpdated = jSCell.formula.length > 0;
 
@@ -8992,7 +9024,7 @@ $.sheet = {
 										cell: row !== u ? row[colIndex] : u,
 										rowIndex: rowIndex,
 										colIndex: colIndex,
-										offset: offset,
+										offset: offset
 									});
 								} while (colIndex-- > 1);
 							}
@@ -14760,9 +14792,9 @@ if (typeof(window) !== 'undefined') {
 		};
 
 		formulaParser.prototype = parser;
-		var newParser = new formulaParser;
+		var newParser = new formulaParser();
 		newParser.setObj = function(obj) {
-			newParser.yy.obj = obj;
+			this.yy.obj = obj;
 		};
 		newParser.yy.handler = handler;
 		return newParser;

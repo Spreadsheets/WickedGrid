@@ -10,6 +10,7 @@ Sheet.CellHandler = (function(Math) {
 		this.jS = jS;
 		this.jSE = jSE;
 		this.fn = fn;
+		this.spareFormulaParsers = {};
 	}
 
 	Constructor.prototype = {
@@ -392,8 +393,6 @@ Sheet.CellHandler = (function(Math) {
 			return result;
 		},
 
-
-		spareFormulaParsers: {},
 		formulaParser: function(callStack) {
 			var formulaParser;
 			//we prevent parsers from overwriting each other
