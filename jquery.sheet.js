@@ -3983,9 +3983,11 @@ jQuery = jQuery || window.jQuery;
                          * @memberOf jS.evt
                          */
                         cellEditDone:function (force) {
-                            (jS.obj.inPlaceEdit().destroy || emptyFN)();
+	                        var inPlaceEdit = jS.obj.inPlaceEdit(),
+		                        inPlaceEditHasFocus = $(inPlaceEdit).is(':focus');
+                            (inPlaceEdit.destroy || emptyFN)();
                             if (jS.cellLast.isEdit || force) {
-                                var formula = jS.obj.formula(),
+                                var formula = (inPlaceEditHasFocus ? $(inPlaceEdit) : jS.obj.formula()),
                                     td = jS.obj.tdActive();
 
                                 if (jS.isFormulaEditable(td)) {
