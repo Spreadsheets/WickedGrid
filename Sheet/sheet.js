@@ -3570,7 +3570,9 @@ $.sheet = {
 										return true;
 										break;
 									default:
-										$(td).trigger('cellEdit');
+										if (jS.obj.inPlaceEdit().td !== td) {
+											$(td).trigger('cellEdit');
+										}
 										return true;
 										break;
 								}
