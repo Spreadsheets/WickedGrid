@@ -3931,7 +3931,9 @@ jQuery = jQuery || window.jQuery;
                                             return true;
                                             break;
                                         default:
-                                            td.trigger('cellEdit');
+	                                        if (jS.obj.inPlaceEdit().td !== td[0]) {
+		                                        td.trigger('cellEdit');
+	                                        }
                                             return true;
                                             break;
                                     }
