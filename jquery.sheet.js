@@ -78,6 +78,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 */
 		updateValue:function () {
 			if ( !this.needsUpdated ) {
+				this.updateDependencies();
 				return this.value;
 			}
 
@@ -172,11 +173,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				Sheet.calcStack++;
 				formulaParser.setObj(this);
 
-				//try {
+				try {
 					value = formulaParser.parse(formula);
-				//} catch (e) {
-				//	value = e.toString();
-				//}
+				} catch (e) {
+					value = e.toString();
+				}
 
 				this.needsUpdated = false;
 

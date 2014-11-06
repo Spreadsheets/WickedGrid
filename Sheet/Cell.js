@@ -39,6 +39,7 @@ Sheet.Cell = (function() {
 		 */
 		updateValue:function () {
 			if ( !this.needsUpdated ) {
+				this.updateDependencies();
 				return this.value;
 			}
 
@@ -133,11 +134,11 @@ Sheet.Cell = (function() {
 				Sheet.calcStack++;
 				formulaParser.setObj(this);
 
-				//try {
+				try {
 					value = formulaParser.parse(formula);
-				//} catch (e) {
-				//	value = e.toString();
-				//}
+				} catch (e) {
+					value = e.toString();
+				}
 
 				this.needsUpdated = false;
 
