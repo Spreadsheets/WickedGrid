@@ -78,7 +78,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 */
 		updateValue:function () {
 			if ( !this.needsUpdated ) {
-				this.updateDependencies();
 				return this.value;
 			}
 
@@ -4938,9 +4937,15 @@ $.sheet = {
 									barParent.appendChild(bar);
 									frag.appendChild(barParent);
 
-									controlY.splice(at, 0, bar);
-									//make the spreadsheet ready to accept cells;
-									spreadsheet.splice(at, 0, []);
+									if (spreadsheet.length === 0) {
+										controlY[at] = bar;
+										//make the spreadsheet ready to accept cells;
+										spreadsheet[at] = [];
+									} else {
+										controlY.splice(at, 0, bar);
+										//make the spreadsheet ready to accept cells;
+										spreadsheet.splice(at, 0, []);
+									}
 
 									return barParent;
 								});
@@ -4952,7 +4957,11 @@ $.sheet = {
 										td = cell.td,
 										spreadsheetRow = spreadsheet[row];
 
-									spreadsheetRow[at] = cell;
+									if (spreadsheetRow.length === 0) {
+										spreadsheetRow[at] = cell;
+									} else {
+										spreadsheetRow.splice(at, 0, cell);
+									}
 
 									cell.updateValue();
 
@@ -5019,7 +5028,11 @@ $.sheet = {
 									colGroup.insertBefore(col, colGroup.children[at]);
 									barParent.insertBefore(topBar, barParent.children[at]);
 
-									controlX.splice(at, 0, topBar);
+									if (controlX.length === 0) {
+										controlX[at] = topBar;
+									} else {
+										controlX.splice(at, 0, topBar);
+									}
 
 									return {
 										bar: topBar,
@@ -5040,7 +5053,11 @@ $.sheet = {
 										spreadsheet[row] = spreadsheetRow = [];
 									}
 
-									spreadsheetRow.splice(at, 0, cell);
+									if (spreadsheetRow.length === 0) {
+										spreadsheetRow[at] = cell;
+									} else {
+										spreadsheetRow.splice(at, 0, cell);
+									}
 
 									cell.updateValue();
 
@@ -5102,12 +5119,16 @@ $.sheet = {
 					 */
 					barLeft:function (table) {
 						var tr = table.tBody.children,
-							i = tr.length - 1;
+							th,
+							i = tr.length - 1,
+							barLeft = jS.controls.bar.x.th[jS.i] = [];
 
 						//table / tBody / tr
 						if (i > 0) {
 							do {
-								tr[i].insertBefore(document.createElement('th'), tr[i].children[0]);
+								th = document.createElement('th');
+								barLeft[i] = th;
+								tr[i].insertBefore(th, tr[i].children[0]);
 							} while(i-- > 1); //We only go till row 1, row 0 is handled by barTop with corner etc
 						}
 					},
@@ -5127,7 +5148,8 @@ $.sheet = {
 							thCorner = document.createElement('th'),
 
 							barTopParent = document.createElement('tr'),
-							existingTdsInFirstRow = 0;
+							existingTdsInFirstRow = 0,
+							barTop = jS.controls.bar.x.th[jS.i] = [];
 
 						if (trFirst === undefined) {
 							colGroup.innerHTML = '';
@@ -5157,6 +5179,7 @@ $.sheet = {
 						if (i > 0) {
 							do {
 								var th = document.createElement('th');
+								barTop[i] = th;
 								if (!cols[i]) {
 									cols[i] = document.createElement('col');
 									colGroup.insertBefore(cols[i], colCorner.nextSibling);
@@ -12929,7 +12952,7 @@ var jFN = $.sheet.fn = {
 				cell.value = new String(this.value);
 				cell.value.cell = cell;
 				cell.setNeedsUpdated();
-				cell.needsUpdated = false;
+				//cell.needsUpdated = false;
 				jS.calcDependencies.call(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
