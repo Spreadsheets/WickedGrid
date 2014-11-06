@@ -1419,7 +1419,7 @@ var jFN = $.sheet.fn = {
 				cell.value = new String(this.value);
 				cell.value.cell = cell;
 				cell.setNeedsUpdated();
-				cell.needsUpdated = false;
+				//cell.needsUpdated = false;
 				jS.calcDependencies.call(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};

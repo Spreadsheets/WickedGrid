@@ -39,7 +39,6 @@ Sheet.Cell = (function() {
 		 */
 		updateValue:function () {
 			if ( !this.needsUpdated ) {
-				this.updateDependencies();
 				return this.value;
 			}
 
