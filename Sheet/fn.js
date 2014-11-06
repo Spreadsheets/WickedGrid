@@ -1416,8 +1416,10 @@ var jFN = $.sheet.fn = {
 				}
 			};
 			select.onchange = function () {
-				cell.value = this.value;
+				cell.value = new String(this.value);
+				cell.value.cell = cell;
 				cell.setNeedsUpdated();
+				cell.needsUpdated = false;
 				jS.calcDependencies.call(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};

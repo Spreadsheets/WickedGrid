@@ -29,7 +29,7 @@ Sheet.Cell = (function() {
 				throw new Exception('Wrong Type');
 			}
 
-			if (this.dependencies.indexOf(cell) < 0) {
+			if (this.dependencies.indexOf(cell) < 0 && this !== cell) {
 				this.dependencies.push(cell);
 			}
 		},
@@ -133,11 +133,11 @@ Sheet.Cell = (function() {
 				Sheet.calcStack++;
 				formulaParser.setObj(this);
 
-				try {
+				//try {
 					value = formulaParser.parse(formula);
-				} catch (e) {
-					value = e.toString();
-				}
+				//} catch (e) {
+				//	value = e.toString();
+				//}
 
 				this.needsUpdated = false;
 

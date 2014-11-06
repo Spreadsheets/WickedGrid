@@ -108,7 +108,7 @@ case 4:
 
 	    //js
 	        
-            this.$ = yy.handler.time($$[$0], true);
+            this.$ = yy.handler.time(yy.obj, $$[$0], true);
         //
     
 break;
@@ -116,7 +116,7 @@ case 5:
 
         //js
             
-            this.$ = yy.handler.time($$[$0]);
+            this.$ = yy.handler.time(yy.obj, $$[$0]);
         //
 
     
@@ -125,7 +125,7 @@ case 6:
 
 	    //js
 	        
-            this.$ = yy.handler.number($$[$0]);
+            this.$ = yy.handler.number(yy.obj, $$[$0]);
 
         /*php
             this.$ = $$[$0] * 1;
@@ -183,7 +183,7 @@ case 12:
 
 	    //js
 
-			this.$ = yy.handler.performMath('+', $$[$0-2], $$[$0]);
+			this.$ = yy.handler.performMath(yy.obj, '+', $$[$0-2], $$[$0]);
 
         /*php
 			if (is_numeric($$[$0-2]) && is_numeric($$[$0])) {
@@ -268,7 +268,7 @@ case 20:
 
         //js
             
-            this.$ = yy.handler.performMath('-', $$[$0-2], $$[$0]);
+            this.$ = yy.handler.performMath(yy.obj, '-', $$[$0-2], $$[$0]);
 
         /*php
             this.$ = ($$[$0-2] * 1) - ($$[$0] * 1);
@@ -279,7 +279,7 @@ case 21:
 
 	    //js
 	        
-            this.$ = yy.handler.performMath('*', $$[$0-2], $$[$0]);
+            this.$ = yy.handler.performMath(yy.obj, '*', $$[$0-2], $$[$0]);
 
         /*php
             this.$ = ($$[$0-2] * 1) * ($$[$0] * 1);
@@ -290,7 +290,7 @@ case 22:
 
 	    //js
 	        
-            this.$ = yy.handler.performMath('/', $$[$0-2], $$[$0]);
+            this.$ = yy.handler.performMath(yy.obj, '/', $$[$0-2], $$[$0]);
 
         /*php
             this.$ = ($$[$0-2] * 1) / ($$[$0] * 1);
@@ -304,7 +304,7 @@ case 23:
             var n1 = yy.handler.number($$[$0-2]),
                 n2 = yy.handler.number($$[$0]);
 
-            this.$ = yy.handler.performMath('^', $$[$0-2], $$[$0]);
+            this.$ = yy.handler.performMath(yy.obj, '^', $$[$0-2], $$[$0]);
 
         /*php
             this.$ = pow(($$[$0-2] * 1), ($$[$0] * 1));
@@ -315,7 +315,7 @@ case 24:
 
 		//js
 			
-			var n1 = yy.handler.numberInverted($$[$0]);
+			var n1 = yy.handler.numberInverted(yy.obj, $$[$0]);
 			this.$ = n1;
 			if (isNaN(this.$)) {
 			    this.$ = 0;
@@ -330,7 +330,7 @@ case 25:
 
 	    //js
 	        
-			var n1 = yy.handler.number($$[$0]);
+			var n1 = yy.handler.number(yy.obj, $$[$0]);
 			this.$ = n1;
 			if (isNaN(this.$)) {
 			    this.$ = 0;

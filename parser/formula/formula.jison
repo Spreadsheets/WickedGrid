@@ -119,20 +119,20 @@ expression
 	| TIME_AMPM {
 	    //js
 	        
-            $$ = yy.handler.time($1, true);
+            $$ = yy.handler.time(yy.obj, $1, true);
         //
     }
 	| TIME_24 {
         //js
             
-            $$ = yy.handler.time($1);
+            $$ = yy.handler.time(yy.obj, $1);
         //
 
     }
 	| number {
 	    //js
 	        
-            $$ = yy.handler.number($1);
+            $$ = yy.handler.number(yy.obj, $1);
 
         /*php
             $$ = $1 * 1;
@@ -178,7 +178,7 @@ expression
 	| expression '+' expression {
 	    //js
 
-			$$ = yy.handler.performMath('+', $1, $3);
+			$$ = yy.handler.performMath(yy.obj, '+', $1, $3);
 
         /*php
 			if (is_numeric($1) && is_numeric($3)) {
@@ -247,7 +247,7 @@ expression
 	| expression '-' expression {
         //js
             
-            $$ = yy.handler.performMath('-', $1, $3);
+            $$ = yy.handler.performMath(yy.obj, '-', $1, $3);
 
         /*php
             $$ = ($1 * 1) - ($3 * 1);
@@ -256,7 +256,7 @@ expression
 	| expression '*' expression {
 	    //js
 	        
-            $$ = yy.handler.performMath('*', $1, $3);
+            $$ = yy.handler.performMath(yy.obj, '*', $1, $3);
 
         /*php
             $$ = ($1 * 1) * ($3 * 1);
@@ -265,7 +265,7 @@ expression
 	| expression '/' expression {
 	    //js
 	        
-            $$ = yy.handler.performMath('/', $1, $3);
+            $$ = yy.handler.performMath(yy.obj, '/', $1, $3);
 
         /*php
             $$ = ($1 * 1) / ($3 * 1);
@@ -277,7 +277,7 @@ expression
             var n1 = yy.handler.number($1),
                 n2 = yy.handler.number($3);
 
-            $$ = yy.handler.performMath('^', $1, $3);
+            $$ = yy.handler.performMath(yy.obj, '^', $1, $3);
 
         /*php
             $$ = pow(($1 * 1), ($3 * 1));
@@ -286,7 +286,7 @@ expression
 	| '-' expression {
 		//js
 			
-			var n1 = yy.handler.numberInverted($2);
+			var n1 = yy.handler.numberInverted(yy.obj, $2);
 			$$ = n1;
 			if (isNaN($$)) {
 			    $$ = 0;
@@ -299,7 +299,7 @@ expression
 	| '+' expression {
 	    //js
 	        
-			var n1 = yy.handler.number($2);
+			var n1 = yy.handler.number(yy.obj, $2);
 			$$ = n1;
 			if (isNaN($$)) {
 			    $$ = 0;

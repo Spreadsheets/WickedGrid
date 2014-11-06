@@ -1468,14 +1468,10 @@ $.sheet = {
 						row = sheet[rowIndex] = [];
 					}
 
-					if (
-						(table = jS.controls.tables[sheetIndex]) === u
-						|| (tBody = table.tBody) === u
-						|| (tr = tBody.children[rowIndex]) === u
-						|| (td = tr.children[colIndex]) === u
-					) {
-						return;
-					}
+					if ((table = jS.controls.tables[sheetIndex]) === u) return null;
+					if ((tBody = table.tBody) === u) return null;
+					if ((tr = tBody.children[rowIndex]) === u) return null;
+					if ((td = tr.children[colIndex]) === u) return null;
 
 					jSCell = row[colIndex] = td.jSCell = new Sheet.Cell(sheetIndex, td, jS, jS.cellHandler);
 
@@ -1731,7 +1727,11 @@ $.sheet = {
 							loader = (s.loader !== null ? s.loader : null),
 							getWidth = (loader !== null ? function(i, col) { return loader.getWidth(i, col); } : function() { return s.newColumnWidth; }),
 							getHeight = (loader !== null ? function (i, row) { return loader.getHeight(i, row); } : function() { return s.colMargin; }),
-							setupCell = (loader !== null ? loader.setupCell : null),
+							setupCell = (loader !== null ? loader.setupCell : function (sheetIndex, rowIndex, columnIndex, createCellFn) {
+								var td = document.createElement('td'),
+									cell = createCellFn(td);
+								return cell;
+							}),
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
 							tableSize = table.size(),
@@ -1742,7 +1742,7 @@ $.sheet = {
 
 						switch (type) {
 							case "row":
-								setupCell = null;
+								//setupCell = null;
 							case "row-init":
 								//ensure that i isn't out of bounds
 								if (i === u || i === null || i > tableSize.rows) {
@@ -1780,35 +1780,21 @@ $.sheet = {
 									return barParent;
 								});
 
-								if (setupCell !== null) {
-									o.setCreateCellFn(function (row, at, rowParent) {
-										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-												return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-											}),
-											td = cell.td,
-											spreadsheetRow = spreadsheet[row];
+								o.setCreateCellFn(function (row, at, rowParent) {
+									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
+											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
+										}),
+										td = cell.td,
+										spreadsheetRow = spreadsheet[row];
 
-										spreadsheetRow[at] = cell;
+									spreadsheetRow[at] = cell;
 
-										cell.updateValue();
+									cell.updateValue();
 
-										rowParent.insertBefore(td, rowParent.children[at]);
+									rowParent.insertBefore(td, rowParent.children[at]);
 
-										jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
-									});
-								} else {
-									o.setCreateCellFn(function (row, at, rowParent) {
-										var td = document.createElement('td'),
-											spreadsheetRow = spreadsheet[row];
-
-										if (spreadsheetRow === undefined) {
-											spreadsheet[row] = spreadsheetRow = [];
-										}
-
-										rowParent.insertBefore(td, rowParent.children[at]);
-										jS.createCell(jS.i, row, at);
-									});
-								}
+									jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
+								});
 
 								o.setAddedFinishedFn(function(_offset) {
 									tBody.insertBefore(frag, isBefore ? tBody.children[i] : tBody.children[i].nextSibling);
@@ -1817,7 +1803,7 @@ $.sheet = {
 								});
 								break;
 							case "col":
-								setupCell = null;
+								//setupCell = null;
 							case "col-init":
 								//ensure that i isn't out of bounds
 								if (i === u || i === null || i > tableSize.cols) {
@@ -1876,41 +1862,27 @@ $.sheet = {
 										barParent: barParent
 									};
 								});
-								if (setupCell !== null) {
-									o.setCreateCellFn(function (row, at, createdBar) {
-										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-												return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-											}),
-											td = cell.td,
-											rowParent = tBody.children[row],
-											spreadsheetRow = spreadsheet[row];
 
-										if (spreadsheetRow === undefined) {
-											spreadsheet[row] = spreadsheetRow = [];
-										}
+								o.setCreateCellFn(function (row, at, createdBar) {
+									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
+											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
+										}),
+										td = cell.td,
+										rowParent = tBody.children[row],
+										spreadsheetRow = spreadsheet[row];
 
-										spreadsheetRow[at] = cell;
+									if (spreadsheetRow === undefined) {
+										spreadsheet[row] = spreadsheetRow = [];
+									}
 
-										cell.updateValue();
+									spreadsheetRow.splice(at, 0, cell);
 
-										rowParent.insertBefore(td, rowParent.children[at]);
+									cell.updateValue();
 
-										jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
-									});
-								} else {
-									o.setCreateCellFn(function (row, at, createdBar) {
-										var td = document.createElement('td'),
-											rowParent = tBody.children[row],
-											spreadsheetRow = spreadsheet[row];
+									rowParent.insertBefore(td, rowParent.children[at]);
 
-										if (spreadsheetRow === undefined) {
-											spreadsheet[row] = spreadsheetRow = [];
-										}
-
-										rowParent.insertBefore(td, rowParent.children[at]);
-										jS.createCell(jS.i, row, at);
-									});
-								}
+									jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
+								});
 
 								o.setAddedFinishedFn(function(_offset) {
 									jS.refreshColumnLabels(i);
@@ -6176,7 +6148,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				deleteColumn:function (i) {
-					var j, start, end, qty, size = jS.sheetSize(), cells;
+					var j, start, end, qty, size = jS.sheetSize(), cells, k;
 
 					if (i) {
 						start = end = i;

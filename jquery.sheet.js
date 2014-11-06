@@ -68,7 +68,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				throw new Exception('Wrong Type');
 			}
 
-			if (this.dependencies.indexOf(cell) < 0) {
+			if (this.dependencies.indexOf(cell) < 0 && this !== cell) {
 				this.dependencies.push(cell);
 			}
 		},
@@ -172,11 +172,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				Sheet.calcStack++;
 				formulaParser.setObj(this);
 
-				try {
+				//try {
 					value = formulaParser.parse(formula);
-				} catch (e) {
-					value = e.toString();
-				}
+				//} catch (e) {
+				//	value = e.toString();
+				//}
 
 				this.needsUpdated = false;
 
@@ -467,9 +467,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	Constructor.prototype = {
 		/**
 		 * Variable handler for formulaParser, arguments are the variable split by '.'.  Expose variables by using jQuery.sheet setting formulaVariables
+		 * @param {Sheet.Cell} parentCell
+		 * @param {*} variable
 		 * @returns {*}
 		 */
-		variable:function (variable) {
+		variable:function (parentCell, variable) {
 			if (arguments.length) {
 				var name = arguments[0],
 					attr = arguments[1],
@@ -500,20 +502,22 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 		/**
 		 * time to fraction of day 1 / 0-24
+		 * @param {Sheet.Cell} parentCell
 		 * @param {String} time
 		 * @param {Boolean} isAmPm
 		 * @returns {*}
 		 */
-		time:function (time, isAmPm) {
+		time:function (parentCell, time, isAmPm) {
 			return times.fromString(time, isAmPm);
 		},
 
 		/**
 		 * get a number from variable
+		 * @param {Sheet.Cell} parentCell
 		 * @param {*} num
 		 * @returns {Number}
 		 */
-		number:function (num) {
+		number:function (parentCell, num) {
 			switch (typeof num) {
 				case 'number':
 					return num;
@@ -531,11 +535,12 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 		/**
 		 * get a number from variable
+		 * @param {Sheet.Cell} parentCell
 		 * @param {*} _num
 		 * @returns {Number}
 		 */
-		numberInverted: function(_num) {
-			var num = this.number(_num),
+		numberInverted: function(parentCell, _num) {
+			var num = this.number(parentCell, _num),
 				inverted = new Number(num.valueOf() * -1);
 			if (num.html) {
 				inverted.html = num.html;
@@ -545,12 +550,13 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 		/**
 		 * Perform math internally for parser
+		 * @param {Sheet.Cell} parentCell
 		 * @param {String} mathType
 		 * @param {*} num1
 		 * @param {*} num2
 		 * @returns {*}
 		 */
-		performMath: function (mathType, num1, num2) {
+		performMath: function (parentCell, mathType, num1, num2) {
 			if (
 				num1 === u
 				|| num1 === null
@@ -572,6 +578,13 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				errors = [],
 				value,
 				output = function(val) {return val;};
+
+			if (num1.hasOwnProperty('cell')) {
+				num1.cell.addDependency(parentCell);
+			}
+			if (num2.hasOwnProperty('cell')) {
+				num2.cell.addDependency(parentCell);
+			}
 
 			switch (type1 = (typeof num1.valueOf())) {
 				case 'number':break;
@@ -660,12 +673,15 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 */
 		cellValue:function (parentCell, cellRef) {
 			var jS = this.jS,
-				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString), cell;
+				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
+				cell,
+				value;
 
 			cell = jS.getCell(parentCell.sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
-				return cell.updateValue();
+				value = cell.updateValue();
+				return value;
 			} else {
 				return '';
 			}
@@ -715,8 +731,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						}
 
 						if (cell !== null) {
-							parentCell.addDependency(cell);
-
+							cell.addDependency(parentCell);
 							result.unshift(cell.updateValue());
 						}
 					} while(colIndex-- > colIndexEnd);
@@ -761,7 +776,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				jS = this.jS,
 				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
 				sheetIndex = jSE.parseSheetLocation(sheet),
-				cell;
+				cell,
+				value;
 
 			if (sheetIndex < 0) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
@@ -770,8 +786,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			cell = jS.getCell(sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
+				value = cell.updateValue();
 
-				return cell.updateValue();
+				return value;
 			} else {
 				return '';
 			}
@@ -4615,14 +4632,10 @@ $.sheet = {
 						row = sheet[rowIndex] = [];
 					}
 
-					if (
-						(table = jS.controls.tables[sheetIndex]) === u
-						|| (tBody = table.tBody) === u
-						|| (tr = tBody.children[rowIndex]) === u
-						|| (td = tr.children[colIndex]) === u
-					) {
-						return;
-					}
+					if ((table = jS.controls.tables[sheetIndex]) === u) return null;
+					if ((tBody = table.tBody) === u) return null;
+					if ((tr = tBody.children[rowIndex]) === u) return null;
+					if ((td = tr.children[colIndex]) === u) return null;
 
 					jSCell = row[colIndex] = td.jSCell = new Sheet.Cell(sheetIndex, td, jS, jS.cellHandler);
 
@@ -4878,7 +4891,11 @@ $.sheet = {
 							loader = (s.loader !== null ? s.loader : null),
 							getWidth = (loader !== null ? function(i, col) { return loader.getWidth(i, col); } : function() { return s.newColumnWidth; }),
 							getHeight = (loader !== null ? function (i, row) { return loader.getHeight(i, row); } : function() { return s.colMargin; }),
-							setupCell = (loader !== null ? loader.setupCell : null),
+							setupCell = (loader !== null ? loader.setupCell : function (sheetIndex, rowIndex, columnIndex, createCellFn) {
+								var td = document.createElement('td'),
+									cell = createCellFn(td);
+								return cell;
+							}),
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
 							tableSize = table.size(),
@@ -4889,7 +4906,7 @@ $.sheet = {
 
 						switch (type) {
 							case "row":
-								setupCell = null;
+								//setupCell = null;
 							case "row-init":
 								//ensure that i isn't out of bounds
 								if (i === u || i === null || i > tableSize.rows) {
@@ -4927,35 +4944,21 @@ $.sheet = {
 									return barParent;
 								});
 
-								if (setupCell !== null) {
-									o.setCreateCellFn(function (row, at, rowParent) {
-										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-												return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-											}),
-											td = cell.td,
-											spreadsheetRow = spreadsheet[row];
+								o.setCreateCellFn(function (row, at, rowParent) {
+									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
+											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
+										}),
+										td = cell.td,
+										spreadsheetRow = spreadsheet[row];
 
-										spreadsheetRow[at] = cell;
+									spreadsheetRow[at] = cell;
 
-										cell.updateValue();
+									cell.updateValue();
 
-										rowParent.insertBefore(td, rowParent.children[at]);
+									rowParent.insertBefore(td, rowParent.children[at]);
 
-										jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
-									});
-								} else {
-									o.setCreateCellFn(function (row, at, rowParent) {
-										var td = document.createElement('td'),
-											spreadsheetRow = spreadsheet[row];
-
-										if (spreadsheetRow === undefined) {
-											spreadsheet[row] = spreadsheetRow = [];
-										}
-
-										rowParent.insertBefore(td, rowParent.children[at]);
-										jS.createCell(jS.i, row, at);
-									});
-								}
+									jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
+								});
 
 								o.setAddedFinishedFn(function(_offset) {
 									tBody.insertBefore(frag, isBefore ? tBody.children[i] : tBody.children[i].nextSibling);
@@ -4964,7 +4967,7 @@ $.sheet = {
 								});
 								break;
 							case "col":
-								setupCell = null;
+								//setupCell = null;
 							case "col-init":
 								//ensure that i isn't out of bounds
 								if (i === u || i === null || i > tableSize.cols) {
@@ -5023,41 +5026,27 @@ $.sheet = {
 										barParent: barParent
 									};
 								});
-								if (setupCell !== null) {
-									o.setCreateCellFn(function (row, at, createdBar) {
-										var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-												return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-											}),
-											td = cell.td,
-											rowParent = tBody.children[row],
-											spreadsheetRow = spreadsheet[row];
 
-										if (spreadsheetRow === undefined) {
-											spreadsheet[row] = spreadsheetRow = [];
-										}
+								o.setCreateCellFn(function (row, at, createdBar) {
+									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
+											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
+										}),
+										td = cell.td,
+										rowParent = tBody.children[row],
+										spreadsheetRow = spreadsheet[row];
 
-										spreadsheetRow[at] = cell;
+									if (spreadsheetRow === undefined) {
+										spreadsheet[row] = spreadsheetRow = [];
+									}
 
-										cell.updateValue();
+									spreadsheetRow.splice(at, 0, cell);
 
-										rowParent.insertBefore(td, rowParent.children[at]);
+									cell.updateValue();
 
-										jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
-									});
-								} else {
-									o.setCreateCellFn(function (row, at, createdBar) {
-										var td = document.createElement('td'),
-											rowParent = tBody.children[row],
-											spreadsheetRow = spreadsheet[row];
+									rowParent.insertBefore(td, rowParent.children[at]);
 
-										if (spreadsheetRow === undefined) {
-											spreadsheet[row] = spreadsheetRow = [];
-										}
-
-										rowParent.insertBefore(td, rowParent.children[at]);
-										jS.createCell(jS.i, row, at);
-									});
-								}
+									jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
+								});
 
 								o.setAddedFinishedFn(function(_offset) {
 									jS.refreshColumnLabels(i);
@@ -9323,7 +9312,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				deleteColumn:function (i) {
-					var j, start, end, qty, size = jS.sheetSize(), cells;
+					var j, start, end, qty, size = jS.sheetSize(), cells, k;
 
 					if (i) {
 						start = end = i;
@@ -12936,8 +12925,10 @@ var jFN = $.sheet.fn = {
 				}
 			};
 			select.onchange = function () {
-				cell.value = this.value;
+				cell.value = new String(this.value);
+				cell.value.cell = cell;
 				cell.setNeedsUpdated();
+				cell.needsUpdated = false;
 				jS.calcDependencies.call(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
@@ -14126,7 +14117,7 @@ case 4:
 
 	    //js
 	        
-            this.$ = yy.handler.time($$[$0], true);
+            this.$ = yy.handler.time(yy.obj, $$[$0], true);
         //
     
 break;
@@ -14134,7 +14125,7 @@ case 5:
 
         //js
             
-            this.$ = yy.handler.time($$[$0]);
+            this.$ = yy.handler.time(yy.obj, $$[$0]);
         //
 
     
@@ -14143,7 +14134,7 @@ case 6:
 
 	    //js
 	        
-            this.$ = yy.handler.number($$[$0]);
+            this.$ = yy.handler.number(yy.obj, $$[$0]);
 
         /*php
             this.$ = $$[$0] * 1;
@@ -14201,7 +14192,7 @@ case 12:
 
 	    //js
 
-			this.$ = yy.handler.performMath('+', $$[$0-2], $$[$0]);
+			this.$ = yy.handler.performMath(yy.obj, '+', $$[$0-2], $$[$0]);
 
         /*php
 			if (is_numeric($$[$0-2]) && is_numeric($$[$0])) {
@@ -14286,7 +14277,7 @@ case 20:
 
         //js
             
-            this.$ = yy.handler.performMath('-', $$[$0-2], $$[$0]);
+            this.$ = yy.handler.performMath(yy.obj, '-', $$[$0-2], $$[$0]);
 
         /*php
             this.$ = ($$[$0-2] * 1) - ($$[$0] * 1);
@@ -14297,7 +14288,7 @@ case 21:
 
 	    //js
 	        
-            this.$ = yy.handler.performMath('*', $$[$0-2], $$[$0]);
+            this.$ = yy.handler.performMath(yy.obj, '*', $$[$0-2], $$[$0]);
 
         /*php
             this.$ = ($$[$0-2] * 1) * ($$[$0] * 1);
@@ -14308,7 +14299,7 @@ case 22:
 
 	    //js
 	        
-            this.$ = yy.handler.performMath('/', $$[$0-2], $$[$0]);
+            this.$ = yy.handler.performMath(yy.obj, '/', $$[$0-2], $$[$0]);
 
         /*php
             this.$ = ($$[$0-2] * 1) / ($$[$0] * 1);
@@ -14322,7 +14313,7 @@ case 23:
             var n1 = yy.handler.number($$[$0-2]),
                 n2 = yy.handler.number($$[$0]);
 
-            this.$ = yy.handler.performMath('^', $$[$0-2], $$[$0]);
+            this.$ = yy.handler.performMath(yy.obj, '^', $$[$0-2], $$[$0]);
 
         /*php
             this.$ = pow(($$[$0-2] * 1), ($$[$0] * 1));
@@ -14333,7 +14324,7 @@ case 24:
 
 		//js
 			
-			var n1 = yy.handler.numberInverted($$[$0]);
+			var n1 = yy.handler.numberInverted(yy.obj, $$[$0]);
 			this.$ = n1;
 			if (isNaN(this.$)) {
 			    this.$ = 0;
@@ -14348,7 +14339,7 @@ case 25:
 
 	    //js
 	        
-			var n1 = yy.handler.number($$[$0]);
+			var n1 = yy.handler.number(yy.obj, $$[$0]);
 			this.$ = n1;
 			if (isNaN(this.$)) {
 			    this.$ = 0;
