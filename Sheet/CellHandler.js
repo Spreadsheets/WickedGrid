@@ -16,9 +16,11 @@ Sheet.CellHandler = (function(Math) {
 	Constructor.prototype = {
 		/**
 		 * Variable handler for formulaParser, arguments are the variable split by '.'.  Expose variables by using jQuery.sheet setting formulaVariables
+		 * @param {Sheet.Cell} parentCell
+		 * @param {*} variable
 		 * @returns {*}
 		 */
-		variable:function (variable) {
+		variable:function (parentCell, variable) {
 			if (arguments.length) {
 				var name = arguments[0],
 					attr = arguments[1],
@@ -49,20 +51,22 @@ Sheet.CellHandler = (function(Math) {
 
 		/**
 		 * time to fraction of day 1 / 0-24
+		 * @param {Sheet.Cell} parentCell
 		 * @param {String} time
 		 * @param {Boolean} isAmPm
 		 * @returns {*}
 		 */
-		time:function (time, isAmPm) {
+		time:function (parentCell, time, isAmPm) {
 			return times.fromString(time, isAmPm);
 		},
 
 		/**
 		 * get a number from variable
+		 * @param {Sheet.Cell} parentCell
 		 * @param {*} num
 		 * @returns {Number}
 		 */
-		number:function (num) {
+		number:function (parentCell, num) {
 			switch (typeof num) {
 				case 'number':
 					return num;
@@ -80,11 +84,12 @@ Sheet.CellHandler = (function(Math) {
 
 		/**
 		 * get a number from variable
+		 * @param {Sheet.Cell} parentCell
 		 * @param {*} _num
 		 * @returns {Number}
 		 */
-		numberInverted: function(_num) {
-			var num = this.number(_num),
+		numberInverted: function(parentCell, _num) {
+			var num = this.number(parentCell, _num),
 				inverted = new Number(num.valueOf() * -1);
 			if (num.html) {
 				inverted.html = num.html;
@@ -94,12 +99,13 @@ Sheet.CellHandler = (function(Math) {
 
 		/**
 		 * Perform math internally for parser
+		 * @param {Sheet.Cell} parentCell
 		 * @param {String} mathType
 		 * @param {*} num1
 		 * @param {*} num2
 		 * @returns {*}
 		 */
-		performMath: function (mathType, num1, num2) {
+		performMath: function (parentCell, mathType, num1, num2) {
 			if (
 				num1 === u
 				|| num1 === null
@@ -121,6 +127,13 @@ Sheet.CellHandler = (function(Math) {
 				errors = [],
 				value,
 				output = function(val) {return val;};
+
+			if (num1.hasOwnProperty('cell')) {
+				num1.cell.addDependency(parentCell);
+			}
+			if (num2.hasOwnProperty('cell')) {
+				num2.cell.addDependency(parentCell);
+			}
 
 			switch (type1 = (typeof num1.valueOf())) {
 				case 'number':break;
@@ -209,12 +222,15 @@ Sheet.CellHandler = (function(Math) {
 		 */
 		cellValue:function (parentCell, cellRef) {
 			var jS = this.jS,
-				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString), cell;
+				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
+				cell,
+				value;
 
 			cell = jS.getCell(parentCell.sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
-				return cell.updateValue();
+				value = cell.updateValue();
+				return value;
 			} else {
 				return '';
 			}
@@ -264,8 +280,7 @@ Sheet.CellHandler = (function(Math) {
 						}
 
 						if (cell !== null) {
-							parentCell.addDependency(cell);
-
+							cell.addDependency(parentCell);
 							result.unshift(cell.updateValue());
 						}
 					} while(colIndex-- > colIndexEnd);
@@ -310,7 +325,8 @@ Sheet.CellHandler = (function(Math) {
 				jS = this.jS,
 				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
 				sheetIndex = jSE.parseSheetLocation(sheet),
-				cell;
+				cell,
+				value;
 
 			if (sheetIndex < 0) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
@@ -319,8 +335,9 @@ Sheet.CellHandler = (function(Math) {
 			cell = jS.getCell(sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
+				value = cell.updateValue();
 
-				return cell.updateValue();
+				return value;
 			} else {
 				return '';
 			}

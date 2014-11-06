@@ -51,7 +51,7 @@
                     cell.calcLast = 0;
                     fn(cell);
 
-                    jS.updateCellValue(sheet, row, col);
+	                cell.updateValue();
                 },
                 setValue = function (sheet, row, col, val, fn) {
                     fn = fn || function () {};
@@ -60,7 +60,7 @@
                     cell.calcLast = 0;
                     fn(cell);
 
-                    jS.updateCellValue(sheet, row, col);
+	                cell.updateValue();
                 },
                 td = jS.obj.table().find('td').last().css('background-color', 'yellow');
 
@@ -92,7 +92,7 @@
                 if (
                     tdAtPos(td, 2, 2) &&
                     tdAtPos(jS.obj.table().find('td').last(), 4, 4) &&
-                    jS.obj.table().find('td').length == (5 * 5)
+                    jS.obj.table().find('td').length == (4 * 4)
                 ) {
                     return 'SUCCESS';
                 }
@@ -107,7 +107,7 @@
 	            console.log(jS.obj.table()[0]);
                 if (
                     tdAtPos(td, 1, 1) &&
-                    jS.obj.table().find('td').length == (4 * 4)
+                    jS.obj.table().find('td').length == (3 * 3)
                 ) {
                     return 'SUCCESS';
                 }
@@ -121,7 +121,7 @@
             }, function () {
                 if (
                     tdAtPos(td, 1, 1) &&
-                    jS.obj.table().find('td').length == (3 * 3)
+                    jS.obj.table().find('td').length == (2 * 2)
                 ) {
                     return 'SUCCESS';
                 }
