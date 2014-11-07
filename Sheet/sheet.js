@@ -1957,7 +1957,7 @@ $.sheet = {
 						var tr = table.tBody.children,
 							th,
 							i = tr.length - 1,
-							barLeft = jS.controls.bar.x.th[jS.i] = [];
+							barLeft = jS.controls.bar.y.th[jS.i] = [];
 
 						//table / tBody / tr
 						if (i > 0) {

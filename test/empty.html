@@ -3,40 +3,28 @@
 <head>
 	<title>({{pass}}|{{fail}}) {{title}} · Testify Suite</title>
 	<meta charset="utf-8" />
-	<script src="../bower_components/testify.js/Testify.js"></script>
-	<script src="../bower_components/vue/dist/vue.js"></script>
 	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
 	<script src="../jquery.sheet.js"></script>
 	<script src="../utilities/tableify.js"></script>
+	<script src="../examples/customFormula.js"></script>
 	<script>
 		$.sheet.preLoad('../');
 
-		var tf = new Testify("jQuery.sheet / Sheet"),
-				test = new Testify("//");
 
+	</script>
+
+	<script>
 		$(function() {
-			tf.test('Formula: Dependencies', function() {
-				var table = tableify(
-//A          B       C
-'=ABS(-500)\t=A1+A2\t=B1\n\
-100\t\t'),
-						tableHtml = $(table).html(),
-						div = $('<div>')
-								.append(table)
-								.sheet(),
-						jS = div.getSheet(),
-						A1 = jS.spreadsheets[0][1][1], B1 = jS.spreadsheets[0][1][2], C1 = jS.spreadsheets[0][1][3],
-						A2 = jS.spreadsheets[0][2][1], B2 = jS.spreadsheets[0][2][2], C2 = jS.spreadsheets[0][2][3];
+			var div = $('<div>')
+							.append(tableify('original1\toriginal2'
+							))
+							.appendTo('body')
+							.sheet(),
+					jS = div.getSheet(),
+					td,
+					headers;
 
-
-				setTimeout(function() {
-
-
-					document.body.innerHTML = Testify.report.html.ui;
-					Testify.report.html(tf);
-				}, 1000);
-			});
-			tf.run();
+			jS.controlFactory.addColumn(2, true);
 		});
 	</script>
 </head>
