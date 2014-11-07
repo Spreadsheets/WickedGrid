@@ -1140,18 +1140,18 @@ var jFN = $.sheet.fn = {
 	 * @memberOf jFN
 	 */
 	AND:function () {
-		var args = arguments,
-			res,
-			cell = this;
-		$.each(args, function (i) {
-			if (args[i].valueOf() !== true && res == undefined) {
-				res = jFN.FALSE();
+		var arg,
+			i = 0,
+			max = arguments.length;
+
+		for (;i < max; i++) {
+			arg = arguments[i];
+			if ((arg.valueOf !== undefined && arg.valueOf() != true) || arg != true) {
+				return jFN.FALSE();
 			}
-		});
-		if (!res) {
-			res = jFN.TRUE();
 		}
-		return res;
+
+		return jFN.TRUE();
 	},
 	/**
 	 * logical function
