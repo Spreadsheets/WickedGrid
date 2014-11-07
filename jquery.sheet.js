@@ -12679,7 +12679,7 @@ var jFN = $.sheet.fn = {
 
 		for (;i < max; i++) {
 			arg = arguments[i];
-			if ((arg.valueOf !== undefined && arg.valueOf() != true) || arg != true) {
+			if (arg === undefined || (arg.valueOf !== undefined && arg.valueOf() != true) || arg != true) {
 				return jFN.FALSE();
 			}
 		}
