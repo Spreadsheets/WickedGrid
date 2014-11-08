@@ -85,7 +85,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
 
 						//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						cssId + ' tr:nth-child(' + (index + 40) + ') ~ tr {display: none;}';
+						cssId + ' tr:nth-child(' + (index + 70) + ') ~ tr {display: none;}';
 				}
 
 				this.setStyle(style);
