@@ -1491,6 +1491,8 @@ $.sheet = {
 
 					value = td.textContent || td.innerText;
 					switch (typeof(value)) {
+						case 'object':
+							break;
 						case 'undefined':
 							value = new String();
 							break;

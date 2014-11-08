@@ -134,6 +134,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				value = defer.updateValue().valueOf();
 
 				switch (typeof(value)) {
+					case 'object':
+						break;
 					case 'undefined':
 						value = new String();
 						break;
@@ -226,6 +228,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			if (value.cell === u) {
 				switch (typeof(value)) {
+					case 'object':
+						break;
 					case 'undefined':
 						value = new String();
 						break;
@@ -4655,6 +4659,8 @@ $.sheet = {
 
 					value = td.textContent || td.innerText;
 					switch (typeof(value)) {
+						case 'object':
+							break;
 						case 'undefined':
 							value = new String();
 							break;
