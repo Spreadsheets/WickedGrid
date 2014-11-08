@@ -95,6 +95,8 @@ Sheet.Cell = (function() {
 				value = defer.updateValue().valueOf();
 
 				switch (typeof(value)) {
+					case 'object':
+						break;
 					case 'undefined':
 						value = new String();
 						break;
@@ -187,6 +189,8 @@ Sheet.Cell = (function() {
 
 			if (value.cell === u) {
 				switch (typeof(value)) {
+					case 'object':
+						break;
 					case 'undefined':
 						value = new String();
 						break;
