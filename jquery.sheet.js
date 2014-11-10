@@ -2154,6 +2154,16 @@ Sheet.StyleUpdater = (function(document) {
 
 			return metadata.hidden === true;
 		},
+		setMetadata: function(sheetIndex, metadata) {
+			var json = this.json,
+				jsonSpreadsheet = json[sheetIndex] || {},
+				jsonMetadata = jsonSpreadsheet.metadata || (jsonSpreadsheet.metadata = {});
+
+			var i;
+			for (i in metadata) if (metadata.hasOwnProperty(i)) {
+				jsonMetadata[i] = metadata[i];
+			}
+		},
 		setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
 			var td = document.createElement('td'),
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),
@@ -9867,7 +9877,32 @@ $.sheet = {
 				 *
 				 */
 				showSheets: function() {
-					console.log(jS.obj.tabContainer().children().show());
+					jS.obj.tabContainer().children().each(function(i) {
+						$(this).show();
+						if (s.loader !== null) {
+							s.loader.setMetadata(i, {
+								hidden: false
+							});
+						}
+					});
+				},
+
+				showSheet: function(sheetIndex) {
+					jS.obj.tabContainer().children().eq(sheetIndex).show();
+					if (s.loader !== null) {
+						s.loader.setMetadata(sheetIndex, {
+							hidden: false
+						});
+					}
+				},
+
+				hideSheet: function(sheetIndex) {
+					jS.obj.tabContainer().children().eq(sheetIndex).hide();
+					if (s.loader !== null) {
+						s.loader.setMetadata(sheetIndex, {
+							hidden: true
+						});
+					}
 				},
 
 				/**

@@ -6692,7 +6692,32 @@ $.sheet = {
 				 *
 				 */
 				showSheets: function() {
-					jS.obj.tabContainer().children().show();
+					jS.obj.tabContainer().children().each(function(i) {
+						$(this).show();
+						if (s.loader !== null) {
+							s.loader.setMetadata(i, {
+								hidden: false
+							});
+						}
+					});
+				},
+
+				showSheet: function(sheetIndex) {
+					jS.obj.tabContainer().children().eq(sheetIndex).show();
+					if (s.loader !== null) {
+						s.loader.setMetadata(sheetIndex, {
+							hidden: false
+						});
+					}
+				},
+
+				hideSheet: function(sheetIndex) {
+					jS.obj.tabContainer().children().eq(sheetIndex).hide();
+					if (s.loader !== null) {
+						s.loader.setMetadata(sheetIndex, {
+							hidden: true
+						});
+					}
 				},
 
 				/**
