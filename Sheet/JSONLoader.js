@@ -68,6 +68,16 @@
 
 			return metadata.hidden === true;
 		},
+		setMetadata: function(sheetIndex, metadata) {
+			var json = this.json,
+				jsonSpreadsheet = json[sheetIndex] || {},
+				jsonMetadata = jsonSpreadsheet.metadata || (jsonSpreadsheet.metadata = {});
+
+			var i;
+			for (i in metadata) if (metadata.hasOwnProperty(i)) {
+				jsonMetadata[i] = metadata[i];
+			}
+		},
 		setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
 			var td = document.createElement('td'),
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),
