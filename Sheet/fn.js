@@ -1363,13 +1363,15 @@ var jFN = $.sheet.fn = {
 	 * @returns {String}
 	 * @memberOf jFN
 	 */
-	HYPERLINK:function (link, name) {
+	HYPERLINK:function (href, name) {
 		name = name || 'LINK';
-		var result = new String(name);
-		result.html = $(document.createElement('a'))
-			.attr('href', link)
-			.attr('target', '_new')
-			.text(name);
+		var result = new String(name.valueOf()),
+			link = document.createElement('a');
+		link.setAttribute('href', href);
+		link.setAttribute('target', '_new');
+		link.innerText = link.textContent = name;
+
+		result.html = link;
 
 		return result;
 	},
