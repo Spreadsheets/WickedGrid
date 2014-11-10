@@ -61,6 +61,13 @@
 
 			return height;
 		},
+		isHidden: function(sheetIndex) {
+			var json = this.json,
+				jsonSpreadsheet = json[sheetIndex] || {},
+				metadata = jsonSpreadsheet.metadata || {};
+
+			return metadata.hidden === true;
+		},
 		setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
 			var td = document.createElement('td'),
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),

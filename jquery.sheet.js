@@ -2147,6 +2147,13 @@ Sheet.StyleUpdater = (function(document) {
 
 			return height;
 		},
+		isHidden: function(sheetIndex) {
+			var json = this.json,
+				jsonSpreadsheet = json[sheetIndex] || {},
+				metadata = jsonSpreadsheet.metadata || {};
+
+			return metadata.hidden === true;
+		},
 		setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
 			var td = document.createElement('td'),
 				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),
@@ -9716,27 +9723,33 @@ $.sheet = {
 									}
 
 									var showSpreadsheet = function() {
-										jS.obj.enclosure().hide();
-										jS.setBusy(true);
-										var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, table, options);
-										jS.setActiveSheet(-1, spreadsheetUI);
-										jS.calcVisibleInit(i);
-										jS.setBusy(false);
-										jS.sheetSyncSize();
-									};
+											jS.obj.enclosure().hide();
+											jS.setBusy(true);
+											var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, table, options);
+											jS.setActiveSheet(-1, spreadsheetUI);
+											jS.calcVisibleInit(i);
+											jS.setBusy(false);
+											jS.sheetSyncSize();
+										},
+										tab;
 
 									if (makeVisible) {
 										showSpreadsheet();
 										return;
 									}
 
-									jS.controlFactory.customTab(s.loader.title(i))
-										.mousedown(function() {
+
+									tab = jS.controlFactory.customTab(s.loader.title(i))
+										.mousedown(function () {
 											showSpreadsheet();
 											jS.obj.tab().insertBefore(this);
 											$(this).remove();
 											return false;
 										});
+
+									if (s.loader.isHidden(i)) {
+										tab.hide();
+									}
 								};
 
 								//always load at least the first spreadsheet
@@ -9848,6 +9861,13 @@ $.sheet = {
 
 					uiStyle.height = standardHeight;
 					uiStyle.width = standardWidth;
+				},
+
+				/**
+				 *
+				 */
+				showSheets: function() {
+					console.log(jS.obj.tabContainer().children().show());
 				},
 
 				/**
