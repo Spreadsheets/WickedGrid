@@ -108,7 +108,7 @@ original7\toriginal8\toriginal9'))
 	jS.deleteColumn(3);
 
 	td = div.find('table.jS td:contains("original3")');
-	tf.assert(test.assertEquals(td.length, 0), 'correct column deleted');
-	tf.assert(test.assertEquals(div.find('table.jS td').length, 2 * 3), 'cell count is correct');
+	tf.assertEquals(td.length, 0, 'correct column deleted');
+	tf.assertEquals(div.find('table.jS td').length, 2 * 3, 'cell count is correct');
 	div.getSheet().kill();
 });
