@@ -11393,10 +11393,10 @@ var jSE = $.sheet.engine = {
 	 */
 	regEx: {
 		n: 				/[\$,\s]/g,
-		cell: 			/\$?([a-zA-Z]+|[#]REF[!])\$?([0-9]+|[#]REF[!])/gi, //a1
-		range: 			/\$?([a-zA-Z]+)\$?([0-9]+):\$?([a-zA-Z]+)\$?([0-9]+)/gi, //a1:a4
-		remoteCell:		/\$?(SHEET+)\$?([0-9]+)[:!]\$?([a-zA-Z]+)\$?([0-9]+)/gi, //sheet1:a1
-		remoteCellRange:/\$?(SHEET+)\$?([0-9]+)[:!]\$?([a-zA-Z]+)\$?([0-9]+):\$?([a-zA-Z]+)\$?([0-9]+)/gi, //sheet1:a1:b4
+		cell: 			/(\$?[a-zA-Z]+|[#]REF[!])(\$?[0-9]+|[#]REF[!])/gi, //a1
+		range: 			/(\$?[a-zA-Z]+)\$?([0-9]+):(\$?[a-zA-Z]+)(\$?[0-9]+)/gi, //a1:a4
+		remoteCell:		/\$?(SHEET+)(\$?[0-9]+)[:!](\$?[a-zA-Z]+)(\$?[0-9]+)/gi, //sheet1:a1
+		remoteCellRange:/\$?(SHEET+)(\$?[0-9]+)[:!](\$?[a-zA-Z]+)(\$?[0-9]+):(\$?[a-zA-Z]+)(\$?[0-9]+)/gi, //sheet1:a1:b4
 		sheet:			/SHEET/i,
 		amp: 			/&/g,
 		gt: 			/</g,
