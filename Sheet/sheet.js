@@ -6548,27 +6548,33 @@ $.sheet = {
 									}
 
 									var showSpreadsheet = function() {
-										jS.obj.enclosure().hide();
-										jS.setBusy(true);
-										var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, table, options);
-										jS.setActiveSheet(-1, spreadsheetUI);
-										jS.calcVisibleInit(i);
-										jS.setBusy(false);
-										jS.sheetSyncSize();
-									};
+											jS.obj.enclosure().hide();
+											jS.setBusy(true);
+											var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, table, options);
+											jS.setActiveSheet(-1, spreadsheetUI);
+											jS.calcVisibleInit(i);
+											jS.setBusy(false);
+											jS.sheetSyncSize();
+										},
+										tab;
 
 									if (makeVisible) {
 										showSpreadsheet();
 										return;
 									}
 
-									jS.controlFactory.customTab(s.loader.title(i))
-										.mousedown(function() {
+
+									tab = jS.controlFactory.customTab(s.loader.title(i))
+										.mousedown(function () {
 											showSpreadsheet();
 											jS.obj.tab().insertBefore(this);
 											$(this).remove();
 											return false;
 										});
+
+									if (s.loader.isHidden(i)) {
+										tab.hide();
+									}
 								};
 
 								//always load at least the first spreadsheet
@@ -6680,6 +6686,13 @@ $.sheet = {
 
 					uiStyle.height = standardHeight;
 					uiStyle.width = standardWidth;
+				},
+
+				/**
+				 *
+				 */
+				showSheets: function() {
+					jS.obj.tabContainer().children().show();
 				},
 
 				/**
