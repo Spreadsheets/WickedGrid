@@ -38,12 +38,12 @@ Sheet.Cell = (function() {
 		 * @returns {*} cell value after calculated
 		 */
 		updateValue:function () {
-			if ( !this.needsUpdated ) {
+			if ( !this.needsUpdated && this.value.cell !== u) {
 				return this.value;
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
-			if (this.formula.length < 1 && this.cellType === null) {
+			if (this.formula.length < 1 && this.cellType === null && this.defer === u) {
 				if (
 					this.value !== undefined
 					&& (
@@ -86,12 +86,6 @@ Sheet.Cell = (function() {
 
 			//merging creates a defer property, which points the cell to another location to get the other value
 			if (defer !== u) {
-				if (value.length > 0) {
-					value = new String();
-					value.cell = this;
-					td.innerHTML = '#REF!';
-					return value;
-				}
 				value = defer.updateValue().valueOf();
 
 				switch (typeof(value)) {
@@ -113,7 +107,7 @@ Sheet.Cell = (function() {
 				}
 				value.cell = this;
 				this.updateDependencies();
-				return this.value = value;
+				return value;
 			}
 
 			//we detect the last value, so that we don't have to update all cell, thus saving resources

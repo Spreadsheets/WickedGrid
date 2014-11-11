@@ -6564,7 +6564,7 @@ $.sheet = {
 									}
 
 
-									tab = jS.controlFactory.customTab(s.loader.title(i))
+									tab = jS.controlFactory.customTab(table.getAttribute('title'))
 										.mousedown(function () {
 											showSpreadsheet();
 											jS.obj.tab().insertBefore(this);
@@ -7928,7 +7928,7 @@ $.sheet = {
 			if (s.loader !== null) {
 				while(loaderTables.length < s.loader.count) {
 					loaderTable = document.createElement('table');
-					loaderTable.setAttribute('title', s.loader.title(loaderTables.length));
+					loaderTable.setAttribute('title', s.loader.title(loaderTables.length) || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, loaderTables.length + 1));
 					loaderTables.push(loaderTable);
 				}
 				jS.openSheet(loaderTables);

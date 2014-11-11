@@ -77,12 +77,12 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 * @returns {*} cell value after calculated
 		 */
 		updateValue:function () {
-			if ( !this.needsUpdated ) {
+			if ( !this.needsUpdated && this.value.cell !== u) {
 				return this.value;
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
-			if (this.formula.length < 1 && this.cellType === null) {
+			if (this.formula.length < 1 && this.cellType === null && this.defer === u) {
 				if (
 					this.value !== undefined
 					&& (
@@ -125,12 +125,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			//merging creates a defer property, which points the cell to another location to get the other value
 			if (defer !== u) {
-				if (value.length > 0) {
-					value = new String();
-					value.cell = this;
-					td.innerHTML = '#REF!';
-					return value;
-				}
 				value = defer.updateValue().valueOf();
 
 				switch (typeof(value)) {
@@ -152,7 +146,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				}
 				value.cell = this;
 				this.updateDependencies();
-				return this.value = value;
+				return value;
 			}
 
 			//we detect the last value, so that we don't have to update all cell, thus saving resources
@@ -9749,7 +9743,7 @@ $.sheet = {
 									}
 
 
-									tab = jS.controlFactory.customTab(s.loader.title(i))
+									tab = jS.controlFactory.customTab(table.getAttribute('title'))
 										.mousedown(function () {
 											showSpreadsheet();
 											jS.obj.tab().insertBefore(this);
@@ -11113,7 +11107,7 @@ $.sheet = {
 			if (s.loader !== null) {
 				while(loaderTables.length < s.loader.count) {
 					loaderTable = document.createElement('table');
-					loaderTable.setAttribute('title', s.loader.title(loaderTables.length));
+					loaderTable.setAttribute('title', s.loader.title(loaderTables.length) || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, loaderTables.length + 1));
 					loaderTables.push(loaderTable);
 				}
 				jS.openSheet(loaderTables);
