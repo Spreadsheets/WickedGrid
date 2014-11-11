@@ -1,5 +1,4 @@
 tf.test('Behaviour Testing: Adding Rows @ End', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original'))
 			.sheet(),
@@ -21,7 +20,6 @@ tf.test('Behaviour Testing: Adding Rows @ End', function(tf) {
 });
 
 tf.test('Behaviour Testing: Adding Rows @ Before 1', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original'))
 			.sheet(),
@@ -44,7 +42,6 @@ tf.test('Behaviour Testing: Adding Rows @ Before 1', function(tf) {
 });
 
 tf.test('Behaviour Testing: Adding Rows @ After 1', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original'))
 			.sheet(),
@@ -67,7 +64,6 @@ tf.test('Behaviour Testing: Adding Rows @ After 1', function(tf) {
 });
 
 tf.test('Behaviour Testing: Adding Rows @ Before 3', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original1\n\
 original2'
@@ -91,7 +87,6 @@ original2'
 });
 
 tf.test('Behaviour Testing: Adding Columns @ End', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original'))
 			.sheet(),
@@ -114,7 +109,6 @@ tf.test('Behaviour Testing: Adding Columns @ End', function(tf) {
 });
 
 tf.test('Behaviour Testing: Adding Columns @ Before 1', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original'))
 			.sheet(),
@@ -137,7 +131,6 @@ tf.test('Behaviour Testing: Adding Columns @ Before 1', function(tf) {
 });
 
 tf.test('Behaviour Testing: Adding Columns @ After 1', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original'))
 			.sheet(),
@@ -160,7 +153,6 @@ tf.test('Behaviour Testing: Adding Columns @ After 1', function(tf) {
 });
 
 tf.test('Behaviour Testing: Adding Columns @ Before 2', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original1\toriginal2'
 			))

@@ -1,5 +1,4 @@
 tf.test('Behaviour Testing: Deleting Row @ Beginning', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original1\toriginal2\toriginal3\n\
 original4\toriginal5\toriginal6\n\
@@ -18,7 +17,6 @@ original7\toriginal8\toriginal9'))
 });
 
 tf.test('Behaviour Testing: Deleting Row @ Middle', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original1\toriginal2\toriginal3\n\
 original4\toriginal5\toriginal6\n\
@@ -37,7 +35,6 @@ original7\toriginal8\toriginal9'))
 });
 
 tf.test('Behaviour Testing: Deleting Row @ End', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original1\toriginal2\toriginal3\n\
 original4\toriginal5\toriginal6\n\
@@ -56,7 +53,6 @@ original7\toriginal8\toriginal9'))
 });
 
 tf.test('Behaviour Testing: Deleting Column @ Beginning', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original1\toriginal2\toriginal3\n\
 original4\toriginal5\toriginal6\n\
@@ -76,7 +72,6 @@ original7\toriginal8\toriginal9'))
 });
 
 tf.test('Behaviour Testing: Deleting Column @ Middle', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original1\toriginal2\toriginal3\n\
 original4\toriginal5\toriginal6\n\
@@ -96,7 +91,6 @@ original7\toriginal8\toriginal9'))
 });
 
 tf.test('Behaviour Testing: Deleting Column @ End', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('original1\toriginal2\toriginal3\n\
 original4\toriginal5\toriginal6\n\

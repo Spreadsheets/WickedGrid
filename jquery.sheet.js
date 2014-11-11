@@ -5988,14 +5988,14 @@ $.sheet = {
 						}
 
 						else {
-							if (hiddenRows === u || hiddenRows.length > 0) {
+							if (hiddenRows === u || hiddenRows.length < 1) {
 								hiddenRows = table.getAttribute('data-hiddenrows');
 
 								if (hiddenRows !== null)
 									hiddenRows = arrHelpers.toNumbers(hiddenRows.split(','));
 							}
 
-							if (hiddenColumns === u || hiddenColumns.length > 0) {
+							if (hiddenColumns === u || hiddenColumns.length < 1) {
 								hiddenColumns = table.getAttribute('data-hiddencolumns');
 
 								if (hiddenColumns !== null)

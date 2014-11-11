@@ -1,5 +1,4 @@
 tf.test('Formula Shifting: Adding Column Before "B" Column (C becomes D in A column)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=C1\t \t \n\
 =C2\t \t \n\
@@ -19,7 +18,6 @@ tf.test('Formula Shifting: Adding Column Before "B" Column (C becomes D in A col
 
 
 tf.test('Formula Shifting: Deleting "B" Column (C becomes B in A column)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=C1\t \t \n\
 =C2\t \t \n\
@@ -38,7 +36,6 @@ tf.test('Formula Shifting: Deleting "B" Column (C becomes B in A column)', funct
 });
 
 tf.test('Formula Shifting: Deleting "B" Column (A stays as A)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify(' \t \t=A1\n\
  \t \t=A2\n\
@@ -57,7 +54,6 @@ tf.test('Formula Shifting: Deleting "B" Column (A stays as A)', function(tf) {
 });
 
 tf.test('Formula Shifting: Deleting "B" Column ($C stays as $C)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=$C1\t \t \n\
 =$C2\t \t \n\
@@ -77,7 +73,6 @@ tf.test('Formula Shifting: Deleting "B" Column ($C stays as $C)', function(tf) {
 
 
 tf.test('Formula Shifting: Adding Row Before 2 Row (3 becomes 4 in row 1)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=A3\t=B3\t=C3\n\
  \t \t \n\
@@ -97,7 +92,6 @@ tf.test('Formula Shifting: Adding Row Before 2 Row (3 becomes 4 in row 1)', func
 
 
 tf.test('Formula Shifting: Deleting Row 2 (3 becomes 2)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=A3\t=B3\t=C3\n\
  \t \t \n\
@@ -116,7 +110,6 @@ tf.test('Formula Shifting: Deleting Row 2 (3 becomes 2)', function(tf) {
 });
 
 tf.test('Formula Shifting: Deleting 2 Row (1 stays as 1)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify(' \t \t \n\
  \t \t \n\
@@ -135,7 +128,6 @@ tf.test('Formula Shifting: Deleting 2 Row (1 stays as 1)', function(tf) {
 });
 
 tf.test('Formula Shifting: Deleting Row 2 ($3 stays as $3)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=A$3\t=B$3\t=C$3\n\
  \t \t \n\
@@ -156,7 +148,6 @@ tf.test('Formula Shifting: Deleting Row 2 ($3 stays as $3)', function(tf) {
 
 
 tf.test('Formula Shifting: Deleting Row 2 & Column 2 ($C$3 stays as $C$3)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=$C$3\t \t \n\
  \t \t \n\
