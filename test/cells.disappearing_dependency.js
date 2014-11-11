@@ -1,5 +1,4 @@
 tf.test('Disappearing Dependency: Column 3 Disappears', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=C1\t \t \n\
 =C2\t \t \n\
@@ -18,7 +17,6 @@ tf.test('Disappearing Dependency: Column 3 Disappears', function(tf) {
 });
 
 tf.test('Disappearing Dependency: Row 3 Disappears', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=A3\t=B3\t=C3\n\
  \t \t \n\
@@ -37,7 +35,6 @@ tf.test('Disappearing Dependency: Row 3 Disappears', function(tf) {
 });
 
 tf.test('Disappearing Dependency: Column & Row (C3 Disappears)', function(tf) {
-	//unit test
 	var div = $('<div>')
 			.append(tableify('=C3\t \t \n\
  \t \t \n\
