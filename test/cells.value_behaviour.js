@@ -26,3 +26,18 @@ test\'"></td></tr></table>')
 	tf.assertEquals(td.find('br').length, 3, 'expected number of br elements');
 	div.getSheet().kill();
 });
+
+
+tf.test('Value Behaviour: Parenthesis', function() {
+	var div = $('<div>')
+			.append(tableify('=IF((((100 + 100) + 100) + 100) > 100, TRUE, FALSE)\t\n\
+100\t'))
+			.sheet(),
+		jS = div.getSheet(),
+		td;
+
+	td = div.find('table.jS td');
+
+	tf.assertEquals(td[0].jSCell.updateValue(), true);
+	div.getSheet().kill();
+});
