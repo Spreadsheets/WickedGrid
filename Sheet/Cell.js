@@ -53,7 +53,7 @@ Sheet.Cell = (function() {
 				)
 				{
 					if (this.td !== null) {
-						this.td.innerHTML = this.value;
+						this.td.innerHTML = this.encode(this.value);
 					}
 					this.value = new String(this.value);
 					this.value.cell = this;
@@ -381,7 +381,7 @@ Sheet.Cell = (function() {
 				.replace(/&/gi, '&amp;')
 				.replace(/>/gi, '&gt;')
 				.replace(/</gi, '&lt;')
-				.replace(/\n/g, '\n<br>')
+				//.replace(/\n/g, '\n<br>')  breaks are only supported from formulas
 				.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
 				.replace(/  /g, '&nbsp; ');
 		},
