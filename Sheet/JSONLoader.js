@@ -385,6 +385,7 @@
 		toTables: function() {
 
 			var json = this.json,
+				max = this.count,
 				tables = $([]),
 				spreadsheet,
 				rows,
@@ -403,12 +404,12 @@
 				col,
 				tr,
 				td,
-				i,
+				i = 0,
 				j,
 				k;
 
 
-			for (i = 0; i < json.length; i++) {
+			for (; i < max; i++) {
 				spreadsheet = json[i];
 				table = $(document.createElement('table'));
 				if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');

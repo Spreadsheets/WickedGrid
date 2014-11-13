@@ -92,7 +92,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				)
 				{
 					if (this.td !== null) {
-						this.td.innerHTML = this.value;
+						this.td.innerHTML = this.encode(this.value);
 					}
 					this.value = new String(this.value);
 					this.value.cell = this;
@@ -420,7 +420,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				.replace(/&/gi, '&amp;')
 				.replace(/>/gi, '&gt;')
 				.replace(/</gi, '&lt;')
-				.replace(/\n/g, '\n<br>')
+				//.replace(/\n/g, '\n<br>')  breaks are only supported from formulas
 				.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
 				.replace(/  /g, '&nbsp; ');
 		},
@@ -2465,6 +2465,7 @@ Sheet.StyleUpdater = (function(document) {
 		toTables: function() {
 
 			var json = this.json,
+				max = this.count,
 				tables = $([]),
 				spreadsheet,
 				rows,
@@ -2483,12 +2484,12 @@ Sheet.StyleUpdater = (function(document) {
 				col,
 				tr,
 				td,
-				i,
+				i = 0,
 				j,
 				k;
 
 
-			for (i = 0; i < json.length; i++) {
+			for (; i < max; i++) {
 				spreadsheet = json[i];
 				table = $(document.createElement('table'));
 				if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');
@@ -14226,7 +14227,7 @@ case 7:
 
         //js
             
-            this.$ = $$[$0].substring(1, $$[$0].length - 1);
+            this.$ = yy.escape($$[$0].substring(1, $$[$0].length - 1));
         /*php
 	        this.$ = substr($$[$0], 1, -1);
         */
@@ -14236,7 +14237,7 @@ case 8:
 
         //js
 
-            this.$ = $$[$0].substring(2, $$[$0].length - 2);
+            this.$ = yy.escape($$[$0].substring(2, $$[$0].length - 2));
         /*php
             this.$ = substr($$[$0], 2, -2);
         */
@@ -14851,6 +14852,15 @@ if (typeof(window) !== 'undefined') {
 		var formulaParser = function () {
 			this.lexer = new formulaLexer();
 			this.yy = {
+				escape: function(value) {
+					return value
+						.replace(/&/gi, '&amp;')
+						.replace(/>/gi, '&gt;')
+						.replace(/</gi, '&lt;')
+						.replace(/\n/g, '\n<br>')
+						.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
+						.replace(/  /g, '&nbsp; ');
+				},
 				parseError: function(msg, hash) {
 					this.done = true;
 					var result = new String();

@@ -141,7 +141,7 @@ expression
 	| STRING {
         //js
             
-            $$ = $1.substring(1, $1.length - 1);
+            $$ = yy.escape($1.substring(1, $1.length - 1));
         /*php
 	        $$ = substr($1, 1, -1);
         */
@@ -149,7 +149,7 @@ expression
     | ESCAPED_STRING {
         //js
 
-            $$ = $1.substring(2, $1.length - 2);
+            $$ = yy.escape($1.substring(2, $1.length - 2));
         /*php
             $$ = substr($1, 2, -2);
         */
@@ -496,6 +496,15 @@ if (typeof(window) !== 'undefined') {
 		var formulaParser = function () {
 			this.lexer = new formulaLexer();
 			this.yy = {
+				escape: function(value) {
+					return value
+						.replace(/&/gi, '&amp;')
+						.replace(/>/gi, '&gt;')
+						.replace(/</gi, '&lt;')
+						.replace(/\n/g, '\n<br>')
+						.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
+						.replace(/  /g, '&nbsp; ');
+				},
 				parseError: function(msg, hash) {
 					this.done = true;
 					var result = new String();

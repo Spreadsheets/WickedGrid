@@ -136,7 +136,7 @@ case 7:
 
         //js
             
-            this.$ = $$[$0].substring(1, $$[$0].length - 1);
+            this.$ = yy.escape($$[$0].substring(1, $$[$0].length - 1));
         /*php
 	        this.$ = substr($$[$0], 1, -1);
         */
@@ -146,7 +146,7 @@ case 8:
 
         //js
 
-            this.$ = $$[$0].substring(2, $$[$0].length - 2);
+            this.$ = yy.escape($$[$0].substring(2, $$[$0].length - 2));
         /*php
             this.$ = substr($$[$0], 2, -2);
         */
@@ -761,6 +761,15 @@ if (typeof(window) !== 'undefined') {
 		var formulaParser = function () {
 			this.lexer = new formulaLexer();
 			this.yy = {
+				escape: function(value) {
+					return value
+						.replace(/&/gi, '&amp;')
+						.replace(/>/gi, '&gt;')
+						.replace(/</gi, '&lt;')
+						.replace(/\n/g, '\n<br>')
+						.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
+						.replace(/  /g, '&nbsp; ');
+				},
 				parseError: function(msg, hash) {
 					this.done = true;
 					var result = new String();
