@@ -198,7 +198,7 @@ case 13:
 
 	    //js
 	        
-	        this.$ = yy.handler.number($$[$0-1]);
+	        this.$ = $$[$0-1];
         //
 	
 break;

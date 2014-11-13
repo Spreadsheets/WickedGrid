@@ -191,7 +191,7 @@ expression
 	| '(' expression ')' {
 	    //js
 	        
-	        $$ = yy.handler.number($2);
+	        $$ = $2;
         //
 	}
 	| expression '<' '=' expression {
