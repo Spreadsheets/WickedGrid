@@ -1,6 +1,6 @@
 Sheet.CellTypeHandlers = (function() {
-	var n = isNaN;
-	return {
+	var n = isNaN,
+		CellTypeHandlers = {
 		percent: function (cell, value) {
 			//https://stackoverflow.com/questions/2652319/how-do-you-check-that-a-number-is-nan-in-javascript/16988441#16988441
 			//NaN !== NaN
@@ -22,8 +22,9 @@ Sheet.CellTypeHandlers = (function() {
 			if (date === null) {
 				return value;
 			} else {
-				date.html = Globalize.format(date, 'd');
-				return date;
+				cell.valueOverride = date;
+				cell.html = Globalize.format(date, 'd');
+				return value;
 			}
 		},
 		time: function (cell, value) {
@@ -52,15 +53,16 @@ Sheet.CellTypeHandlers = (function() {
 		number: function (cell, value) {
 			if (value !== value) return 0;
 			var radix, result;
-			if (!settings.endOfNumber) {
+
+			if (!CellTypeHandlers.endOfNumber) {
 				radix = Globalize.culture().numberFormat['.'];
-				settings.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
+				CellTypeHandlers.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
 			}
 
 			if (!n(value)) {//success
 				result = new Number(value);
 				result.html = Globalize.format(value + '', "n10")
-					.replace(settings.endOfNumber, function (orig, radix, num) {
+					.replace(CellTypeHandlers.endOfNumber, function (orig, radix, num) {
 						return (num ? radix : '') + (num || '');
 					});
 				return result;
@@ -69,4 +71,6 @@ Sheet.CellTypeHandlers = (function() {
 			return value;
 		}
 	};
+
+	return CellTypeHandlers;
 })();

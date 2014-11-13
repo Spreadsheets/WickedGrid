@@ -38,7 +38,11 @@ Sheet.Cell = (function() {
 		 * @returns {*} cell value after calculated
 		 */
 		updateValue:function () {
-			if ( !this.needsUpdated && this.value.cell !== u) {
+			if (
+				!this.needsUpdated
+				&& this.value.cell !== u
+				&& this.cellType === null
+			) {
 				return this.value;
 			}
 
@@ -370,12 +374,6 @@ Sheet.Cell = (function() {
 			if (!val.replace) {
 				return val || '';
 			}
-			/*var num = $.trim(val) * 1;
-			 if (!isNaN(num)) {
-			 return globalize.format(num, "n10").replace(this.endOfNumber, function (orig, radix, num) {
-			 return (num ? radix : '') + (num || '');
-			 });
-			 }*/
 
 			return val
 				.replace(/&/gi, '&amp;')
