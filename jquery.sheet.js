@@ -77,7 +77,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 * @returns {*} cell value after calculated
 		 */
 		updateValue:function () {
-			if ( !this.needsUpdated && this.value.cell !== u) {
+			if (
+				!this.needsUpdated
+				&& this.value.cell !== u
+				&& this.cellType === null
+			) {
 				return this.value;
 			}
 
@@ -409,12 +413,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			if (!val.replace) {
 				return val || '';
 			}
-			/*var num = $.trim(val) * 1;
-			 if (!isNaN(num)) {
-			 return globalize.format(num, "n10").replace(this.endOfNumber, function (orig, radix, num) {
-			 return (num ? radix : '') + (num || '');
-			 });
-			 }*/
 
 			return val
 				.replace(/&/gi, '&amp;')
@@ -881,8 +879,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 	return Constructor;
 })(Math);Sheet.CellTypeHandlers = (function() {
-	var n = isNaN;
-	return {
+	var n = isNaN,
+		CellTypeHandlers = {
 		percent: function (cell, value) {
 			//https://stackoverflow.com/questions/2652319/how-do-you-check-that-a-number-is-nan-in-javascript/16988441#16988441
 			//NaN !== NaN
@@ -904,8 +902,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			if (date === null) {
 				return value;
 			} else {
-				date.html = Globalize.format(date, 'd');
-				return date;
+				cell.valueOverride = date;
+				cell.html = Globalize.format(date, 'd');
+				return value;
 			}
 		},
 		time: function (cell, value) {
@@ -934,15 +933,16 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		number: function (cell, value) {
 			if (value !== value) return 0;
 			var radix, result;
-			if (!settings.endOfNumber) {
+
+			if (!CellTypeHandlers.endOfNumber) {
 				radix = Globalize.culture().numberFormat['.'];
-				settings.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
+				CellTypeHandlers.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
 			}
 
 			if (!n(value)) {//success
 				result = new Number(value);
 				result.html = Globalize.format(value + '', "n10")
-					.replace(settings.endOfNumber, function (orig, radix, num) {
+					.replace(CellTypeHandlers.endOfNumber, function (orig, radix, num) {
 						return (num ? radix : '') + (num || '');
 					});
 				return result;
@@ -951,6 +951,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			return value;
 		}
 	};
+
+	return CellTypeHandlers;
 })();Sheet.CellRange = (function() {
 	function Constructor(cells) {
 		this.cells = cells || [];
