@@ -3487,7 +3487,8 @@ jQuery = jQuery || window.jQuery;
                                     jS.cellSetActive(td, loc, true, jS.autoFillerNotGroup, function () {
                                         var highlighted = jS.highlighted(),
                                             hLoc = jS.getTdLocation(highlighted.last());
-                                        jS.fillUpOrDown(hLoc.row < loc.row || hLoc.col < loc.col);
+                                        //jS.fillUpOrDown(hLoc.row < loc.row || hLoc.col < loc.col);
+										jS.fillCells();
                                         jS.autoFillerGoToTd(td);
                                         jS.autoFillerNotGroup = false;
                                     });
@@ -5072,7 +5073,99 @@ jQuery = jQuery || window.jQuery;
 
                         return false;
                     },
+					//OA
+					//======================================================================
+					fillCells:function () {
+					
+                        jS.evt.cellEditDone();
+                        cells =jS.highlighted(true);
 
+                        if (cells.length < 1) {
+                            return false;
+                        }
+
+                        var activeTd = jS.obj.tdActive(),
+                            last = new Date();
+							
+
+                        var startLoc = jS.getTdLocation(activeTd[0]),
+							cellsLength = cells.length - 1,
+							formulaCell="",
+							formulaActiveTd = activeTd[0].jSCell.formula;
+							
+							if (cellsLength >= 0) 
+							{
+								for(i=0;i<=cellsLength;i++)
+								{
+									
+									if(formula!="")
+									{
+										var cellLoc = jS.getTdLocation(cells[i].td);
+										if(cellLoc.row>startLoc.row)
+										{
+										currentRow=cellLoc.row-startLoc.row;
+										}
+										else
+										{
+										currentRow=startLoc.row-cellLoc.row;
+										}
+										if(cellLoc.col>startLoc.col)
+										{
+										currentCol=cellLoc.col-startLoc.col;
+										}
+										else
+										{
+										currentCol=startLoc.col-cellLoc.col;
+										}
+										formulaCell=jS.NouvelleFormula(formulaActiveTd,currentRow ,  cellLoc.col-startLoc.col);
+									}
+									
+									s.parent.one('sheetPreCalculation', function () {
+										cells[i].formula = formulaCell;
+										cells[i].value = activeTd[0].jSCell.value;
+										cells[i].td.data('formula', activeTd[0].jSCell.formula);
+									});
+
+									jS.calcDependencies.call(cells[i], last);
+									
+								} 
+								return true;
+							}
+
+                        return false;
+                    },
+					//OA
+					//======================================================================
+					NouvelleFormula: function(formula, rowOffset, colOffset) {
+						var charAt = [];
+						var col = '';
+						var row = '';
+						formula = formula.replace(jSE.regEx.cell, 
+							function(ignored, colStr, rowStr, pos) {
+								charAt[0] = formula.charAt(pos - 1);
+								charAt[1] = formula.charAt(colStr.length + rowStr.length + 1);
+								
+								charAt[0] = (charAt[0] ? charAt[0] : '');
+								charAt[1] = (charAt[1] ? charAt[1] : '');
+								
+								if (colStr.toUpperCase() == "SHEET" || 
+									charAt[0] == ':' || 
+									charAt[1] == ':'
+								) {
+									return ignored;
+								} else {
+									row = parseInt(rowStr) + rowOffset;
+									col = jSE.columnLabelIndex(colStr) + colOffset;
+									row = (row > 0 ? row : '1'); 
+									col = (col > 0 ? col : '1'); 
+									
+									return jSE.columnLabelString(col) + row;
+								}
+							}
+						);
+						return formula;
+					},
+					//======================================================================
                     /**
                      * Turns values into a tab separated value
                      * @param {Object} [cells]
