@@ -4,7 +4,7 @@ tf.test('Formula: Math - ABS', function() {
 			.sheet(),
 		td = div.find('table.jS td:first');
 
-	tf.assert(test.assertEqual(td.html(), 500), td.attr('data-formula'));
+	tf.assertEquals(td.html(), 500, td.attr('data-formula'));
 	div.getSheet().kill();
 });
 
@@ -34,7 +34,7 @@ tf.test('Formula: Transpose', function() {
 				formulaFunctions: formulaFunctions
 			}),
 		value = div.getCellValue(0,1,1).valueOf();
-	tf.assert(test.assertEquals(value, 0.457), 'value = ' + value + ', should = ' + 0.457);
+	tf.assertEquals(value, 0.457, 'value = ' + value + ', should = ' + 0.457);
 
 	div.getSheet().kill();
 });

@@ -67,6 +67,10 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Number}
 		 */
 		number:function (parentCell, num) {
+			if (isNaN(num)) {
+				num = 0;
+			}
+
 			switch (typeof num) {
 				case 'number':
 					return num;
@@ -89,11 +93,16 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Number}
 		 */
 		numberInverted: function(parentCell, _num) {
+			if (isNaN(_num)) {
+				_num = 0;
+			}
+
 			var num = this.number(parentCell, _num),
 				inverted = new Number(num.valueOf() * -1);
 			if (num.html) {
 				inverted.html = num.html;
 			}
+
 			return inverted;
 		},
 
@@ -212,6 +221,10 @@ Sheet.CellHandler = (function(Math) {
 			}
 
 			return output(value);
+		},
+
+		concatenate: function(parentCell, value1, value2) {
+			return value1.toString() + value2.toString();
 		},
 
 		/**

@@ -2,6 +2,15 @@ Sheet.Cell = (function() {
 	var u = undefined;
 
 	function Constructor(sheetIndex, td, jS, cellHandler) {
+		if (Constructor.prototype.thaw === null) {
+			Constructor.prototype.thaw = new Thaw([]);
+			Constructor.prototype.worker = operative(function(formula) {
+
+				return parser.Formula().parse(formula);
+			}, [
+				'http://localhost/p/jQuery.sheet/parser/formula/formula.js'
+			]);
+		}
 		this.td = (td !== undefined ? td : null);
 		this.dependencies = [];
 		this.formula = '';
@@ -35,15 +44,19 @@ Sheet.Cell = (function() {
 		},
 		/**
 		 * Ignites calculation with cell, is recursively called if cell uses value from another cell, can be sent indexes, or be called via .call(cell)
+		 * @param {Function} [fn] callback
 		 * @returns {*} cell value after calculated
 		 */
-		updateValue:function () {
+		updateValue:function (fn) {
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
 				&& this.cellType === null
 			) {
-				return this.value;
+				if (fn !== u) {
+					fn.call(this, this.value);
+				}
+				return;
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
@@ -62,12 +75,18 @@ Sheet.Cell = (function() {
 					this.value = new String(this.value);
 					this.value.cell = this;
 					this.updateDependencies();
-					return this.value;
+
+					if (fn !== u) {
+						fn.call(this, this.value);
+					}
+					return;
 				}
 			}
 
-			var fn,
+			var operatorFn,
+				cell = this,
 				cache,
+				stack,
 				value = this.value,
 				formula = this.formula,
 				cellType = this.cellType,
@@ -75,7 +94,8 @@ Sheet.Cell = (function() {
 				defer = this.defer,
 				td = this.td,
 				calcStack,
-				formulaParser;
+				formulaParser,
+				typesStack;
 
 			//detect state, if any
 			switch (this.state[0]) {
@@ -83,35 +103,47 @@ Sheet.Cell = (function() {
 					value = new String();
 					value.cell = this;
 					value.html = '#VAL!';
-					return value;
+					if (fn !== u) {
+						fn.call(this, value);
+					}
+					return;
 				case 'updatingDependencies':
-					return (this.valueOverride != u ? this.valueOverride : this.value);
+					if (fn !== u) {
+						fn.call(this, this.valueOverride != u ? this.valueOverride : this.value);
+					}
+					return;
 			}
 
 			//merging creates a defer property, which points the cell to another location to get the other value
 			if (defer !== u) {
-				value = defer.updateValue().valueOf();
+				defer.updateValue(function(value) {
+					value = value.valueOf();
 
-				switch (typeof(value)) {
-					case 'object':
-						break;
-					case 'undefined':
-						value = new String();
-						break;
-					case 'number':
-						value = new Number(value);
-						break;
-					case 'boolean':
-						value = new Boolean(value);
-						break;
-					case 'string':
-					default:
-						value = new String(value);
-						break;
-				}
-				value.cell = this;
-				this.updateDependencies();
-				return value;
+					switch (typeof(value)) {
+						case 'object':
+							break;
+						case 'undefined':
+							value = new String();
+							break;
+						case 'number':
+							value = new Number(value);
+							break;
+						case 'boolean':
+							value = new Boolean(value);
+							break;
+						case 'string':
+						default:
+							value = new String(value);
+							break;
+					}
+					value.cell = cell;
+					cell.updateDependencies();
+
+					if (fn !== u) {
+						fn.call(cell, value);
+					}
+				});
+				return;
 			}
 
 			//we detect the last value, so that we don't have to update all cell, thus saving resources
@@ -124,105 +156,118 @@ Sheet.Cell = (function() {
 			//increment times this cell has been calculated
 			this.calcCount++;
 			if (formula.length > 0) {
-				if (formula.charAt(0) === '=') {
-					this.formula = formula = formula.substring(1);
-				}
+				this.thaw.add(function() {
+					if (formula.charAt(0) === '=') {
+						cell.formula = formula = formula.substring(1);
+					}
 
-				calcStack = Sheet.calcStack;
-				formulaParser = this.cellHandler.formulaParser(calcStack);
-				Sheet.calcStack++;
-				formulaParser.setObj(this);
+					calcStack = Sheet.calcStack;
+					formulaParser = cell.cellHandler.formulaParser(calcStack);
+					Sheet.calcStack++;
 
-				try {
-					value = formulaParser.parse(formula);
-				} catch (e) {
-					value = e.toString();
-				}
+					cell.worker(formula, function(parsedFormula) {
+						console.log(parsedFormula);
+					});
 
-				this.needsUpdated = false;
+					cell.needsUpdated = false;
 
-				Sheet.calcStack--;
+					Sheet.calcStack--;
 
-				if (
-					value !== u
-					&& value !== null
-					&& cellType !== null
-					&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-				) {
-					value = cellTypeHandler(this, value);
-				}
+					if (
+						value !== u
+						&& value !== null
+						&& cellType !== null
+						&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+					) {
+						value = cellTypeHandler(this, value);
+					}
+				});
 			} else if (
 				value !== u
 				&& value !== null
 				&& cellType !== null
 				&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
 			) {
-				value = cellTypeHandler(this, value);
+				this.thaw.add(function() {
+					value = cellTypeHandler(cell, value);
+				});
 			} else {
-				switch (typeof value) {
-					case 'string':
-						fn = this.startOperators[value.charAt(0)];
-						if (fn !== u) {
-							this.valueOverride = fn.call(this, value);
-						} else {
-							fn = this.endOperators[value.charAt(value.length - 1)];
-							if (fn !== u) {
-								this.valueOverride = fn.call(this, value);
+				this.thaw.add(function() {
+					switch (typeof value) {
+						case 'string':
+							operatorFn = this.startOperators[value.charAt(0)];
+							if (operatorFn !== u) {
+								this.valueOverride = operatorFn.call(this, value);
+							} else {
+								operatorFn = this.endOperators[value.charAt(value.length - 1)];
+								if (operatorFn !== u) {
+									this.valueOverride = operatorFn.call(this, value);
+								}
 							}
-						}
-						break;
-					case 'undefined':
-						value = '';
-						break;
-				}
-			}
-
-			//setup cell trace from value
-			if (
-				value === u
-				|| value === null
-			) {
-				value = new String();
-			}
-
-			if (value.cell === u) {
-				switch (typeof(value)) {
-					case 'object':
-						break;
-					case 'undefined':
-						value = new String();
-						break;
-					case 'number':
-						value = new Number(value);
-						break;
-					case 'boolean':
-						value = new Boolean(value);
-						break;
-					case 'string':
-					default:
-						value = new String(value);
-						break;
-				}
-				value.cell = this;
-			}
-			this.value = value;
-			cache = this.displayValue();
-
-			if (this.loader !== null) {
-				this.loader.setCellAttributes(this.loadedFrom, {
-					'cache': cache,
-					'formula': this.formula,
-					'value': this.value + '',
-					'cellType': this.cellType,
-					'uneditable': this.uneditable
+							break;
+						case 'undefined':
+							value = '';
+							break;
+					}
 				});
 			}
 
-			this.needsUpdated = false;
-			this.state.shift();
-			this.updateDependencies();
+			this.thaw.add(function() {
+				//setup cell trace from value
+				if (
+					value === u
+					|| value === null
+				) {
+					value = new String();
+				}
 
-			return (this.valueOverride !== u ? this.valueOverride : this.value);
+				if (value.cell === u) {
+					switch (typeof(value)) {
+						case 'object':
+							break;
+						case 'undefined':
+							value = new String();
+							break;
+						case 'number':
+							value = new Number(value);
+							break;
+						case 'boolean':
+							value = new Boolean(value);
+							break;
+						case 'string':
+						default:
+							value = new String(value);
+							break;
+					}
+					value.cell = this;
+				}
+				cell.value = value;
+			});
+
+			this.thaw.add(function() {
+				cache = cell.displayValue();
+
+				if (cell.loader !== null) {
+					cell.loader.setCellAttributes(cell.loadedFrom, {
+						'cache': cache,
+						'formula': cell.formula,
+						'value': cell.value + '',
+						'cellType': cell.cellType,
+						'uneditable': cell.uneditable
+					});
+				}
+
+				cell.needsUpdated = false;
+				cell.state.shift();
+			});
+			this.thaw.add(function() {
+				cell.updateDependencies();
+			});
+			this.thaw.add(function() {
+				if (fn !== u) {
+					fn.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
+				}
+			});
 		},
 
 		/**
@@ -402,7 +447,9 @@ Sheet.Cell = (function() {
 		},
 
 		type: Constructor,
-		typeName: 'Sheet.Cell'
+		typeName: 'Sheet.Cell',
+		thaw: null,
+		worker: null
 	};
 
 	return Constructor;
