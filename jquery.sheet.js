@@ -320,17 +320,17 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				encodedValue = this.encode(value);
 			}
 
-			//if the td is from a loader, and the td has not yet been created, just return it's values
-			if (td === null) {
-				return value;
-			}
-
 			if (html === u) {
 				if (encodedValue !== u) {
 					html = encodedValue;
 				} else {
 					html = value;
 				}
+			}
+
+			//if the td is from a loader, and the td has not yet been created, just return it's values
+			if (td === null) {
+				return html;
 			}
 
 			switch (typeof html) {
@@ -11312,7 +11312,7 @@ var jSE = $.sheet.engine = {
 	 * @memberOf jQuery.sheet.engine
 	 */
 	parseSheetLocation:function (locStr) {
-		var sheetIndex = ((locStr + '').replace('SHEET', '') * 1) - 1;
+		var sheetIndex = ((locStr + '').replace(/SHEET/i, '') * 1) - 1;
 		return isNaN(sheetIndex) ? -1 : sheetIndex ;
 	},
 
@@ -11954,22 +11954,20 @@ var jFN = $.sheet.fn = {
 
 	/**
 	 * statistical function
-	 * @param v
 	 * @returns {number}
 	 * @memberOf jFN
 	 */
-	AVERAGE:function (v) {
-		return jFN.SUM(arguments) / jFN.COUNT(arguments);
+	AVERAGE:function () {
+		return jFN.SUM.apply(this, arguments) / jFN.COUNT.apply(this, arguments);
 	},
 
 	/**
 	 * statistical function
-	 * @param v
-	 * @returns {*}
+	 * @returns {number}
 	 * @memberOf jFN
 	 */
-	AVG:function (v) {
-		return jFN.AVERAGE(v);
+	AVG:function () {
+		return jFN.AVERAGE.apply(this, arguments);
 	},
 
 	/**

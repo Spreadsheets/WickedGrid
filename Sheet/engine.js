@@ -57,7 +57,7 @@ var jSE = $.sheet.engine = {
 	 * @memberOf jQuery.sheet.engine
 	 */
 	parseSheetLocation:function (locStr) {
-		var sheetIndex = ((locStr + '').replace('SHEET', '') * 1) - 1;
+		var sheetIndex = ((locStr + '').replace(/SHEET/i, '') * 1) - 1;
 		return isNaN(sheetIndex) ? -1 : sheetIndex ;
 	},
 
