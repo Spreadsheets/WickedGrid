@@ -281,17 +281,17 @@ Sheet.Cell = (function() {
 				encodedValue = this.encode(value);
 			}
 
-			//if the td is from a loader, and the td has not yet been created, just return it's values
-			if (td === null) {
-				return value;
-			}
-
 			if (html === u) {
 				if (encodedValue !== u) {
 					html = encodedValue;
 				} else {
 					html = value;
 				}
+			}
+
+			//if the td is from a loader, and the td has not yet been created, just return it's values
+			if (td === null) {
+				return html;
 			}
 
 			switch (typeof html) {

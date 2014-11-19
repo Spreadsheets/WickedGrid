@@ -263,8 +263,10 @@
 				max = this.count,
 				i = 0;
 
+			title = title.toLowerCase();
+
 			for(;i < max; i++) {
-				if (json[i].title == title) {
+				if (json[i].title.toLowerCase() == title) {
 					return i;
 				}
 			}

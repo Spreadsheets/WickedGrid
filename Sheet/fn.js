@@ -363,22 +363,20 @@ var jFN = $.sheet.fn = {
 
 	/**
 	 * statistical function
-	 * @param v
 	 * @returns {number}
 	 * @memberOf jFN
 	 */
-	AVERAGE:function (v) {
-		return jFN.SUM(arguments) / jFN.COUNT(arguments);
+	AVERAGE:function () {
+		return jFN.SUM.apply(this, arguments) / jFN.COUNT.apply(this, arguments);
 	},
 
 	/**
 	 * statistical function
-	 * @param v
-	 * @returns {*}
+	 * @returns {number}
 	 * @memberOf jFN
 	 */
-	AVG:function (v) {
-		return jFN.AVERAGE(v);
+	AVG:function () {
+		return jFN.AVERAGE.apply(this, arguments);
 	},
 
 	/**
