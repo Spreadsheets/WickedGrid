@@ -41,6 +41,15 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	var u = undefined;
 
 	function Constructor(sheetIndex, td, jS, cellHandler) {
+		if (Constructor.prototype.thaw === null) {
+			Constructor.prototype.thaw = new Thaw([]);
+			Constructor.prototype.worker = operative(function(formula) {
+
+				return parser.Formula().parse(formula);
+			}, [
+				'http://localhost/p/jQuery.sheet/parser/formula/formula.js'
+			]);
+		}
 		this.td = (td !== undefined ? td : null);
 		this.dependencies = [];
 		this.formula = '';
@@ -74,15 +83,19 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		},
 		/**
 		 * Ignites calculation with cell, is recursively called if cell uses value from another cell, can be sent indexes, or be called via .call(cell)
+		 * @param {Function} [fn] callback
 		 * @returns {*} cell value after calculated
 		 */
-		updateValue:function () {
+		updateValue:function (fn) {
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
 				&& this.cellType === null
 			) {
-				return this.value;
+				if (fn !== u) {
+					fn.call(this, this.value);
+				}
+				return;
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
@@ -101,12 +114,18 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					this.value = new String(this.value);
 					this.value.cell = this;
 					this.updateDependencies();
-					return this.value;
+
+					if (fn !== u) {
+						fn.call(this, this.value);
+					}
+					return;
 				}
 			}
 
-			var fn,
+			var operatorFn,
+				cell = this,
 				cache,
+				stack,
 				value = this.value,
 				formula = this.formula,
 				cellType = this.cellType,
@@ -114,7 +133,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				defer = this.defer,
 				td = this.td,
 				calcStack,
-				formulaParser;
+				formulaParser,
+				typesStack;
 
 			//detect state, if any
 			switch (this.state[0]) {
@@ -122,35 +142,47 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					value = new String();
 					value.cell = this;
 					value.html = '#VAL!';
-					return value;
+					if (fn !== u) {
+						fn.call(this, value);
+					}
+					return;
 				case 'updatingDependencies':
-					return (this.valueOverride != u ? this.valueOverride : this.value);
+					if (fn !== u) {
+						fn.call(this, this.valueOverride != u ? this.valueOverride : this.value);
+					}
+					return;
 			}
 
 			//merging creates a defer property, which points the cell to another location to get the other value
 			if (defer !== u) {
-				value = defer.updateValue().valueOf();
+				defer.updateValue(function(value) {
+					value = value.valueOf();
 
-				switch (typeof(value)) {
-					case 'object':
-						break;
-					case 'undefined':
-						value = new String();
-						break;
-					case 'number':
-						value = new Number(value);
-						break;
-					case 'boolean':
-						value = new Boolean(value);
-						break;
-					case 'string':
-					default:
-						value = new String(value);
-						break;
-				}
-				value.cell = this;
-				this.updateDependencies();
-				return value;
+					switch (typeof(value)) {
+						case 'object':
+							break;
+						case 'undefined':
+							value = new String();
+							break;
+						case 'number':
+							value = new Number(value);
+							break;
+						case 'boolean':
+							value = new Boolean(value);
+							break;
+						case 'string':
+						default:
+							value = new String(value);
+							break;
+					}
+					value.cell = cell;
+					cell.updateDependencies();
+
+					if (fn !== u) {
+						fn.call(cell, value);
+					}
+				});
+				return;
 			}
 
 			//we detect the last value, so that we don't have to update all cell, thus saving resources
@@ -163,105 +195,118 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			//increment times this cell has been calculated
 			this.calcCount++;
 			if (formula.length > 0) {
-				if (formula.charAt(0) === '=') {
-					this.formula = formula = formula.substring(1);
-				}
+				this.thaw.add(function() {
+					if (formula.charAt(0) === '=') {
+						cell.formula = formula = formula.substring(1);
+					}
 
-				calcStack = Sheet.calcStack;
-				formulaParser = this.cellHandler.formulaParser(calcStack);
-				Sheet.calcStack++;
-				formulaParser.setObj(this);
+					calcStack = Sheet.calcStack;
+					formulaParser = cell.cellHandler.formulaParser(calcStack);
+					Sheet.calcStack++;
 
-				try {
-					value = formulaParser.parse(formula);
-				} catch (e) {
-					value = e.toString();
-				}
+					cell.worker(formula, function(parsedFormula) {
+						console.log(parsedFormula);
+					});
 
-				this.needsUpdated = false;
+					cell.needsUpdated = false;
 
-				Sheet.calcStack--;
+					Sheet.calcStack--;
 
-				if (
-					value !== u
-					&& value !== null
-					&& cellType !== null
-					&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-				) {
-					value = cellTypeHandler(this, value);
-				}
+					if (
+						value !== u
+						&& value !== null
+						&& cellType !== null
+						&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+					) {
+						value = cellTypeHandler(this, value);
+					}
+				});
 			} else if (
 				value !== u
 				&& value !== null
 				&& cellType !== null
 				&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
 			) {
-				value = cellTypeHandler(this, value);
+				this.thaw.add(function() {
+					value = cellTypeHandler(cell, value);
+				});
 			} else {
-				switch (typeof value) {
-					case 'string':
-						fn = this.startOperators[value.charAt(0)];
-						if (fn !== u) {
-							this.valueOverride = fn.call(this, value);
-						} else {
-							fn = this.endOperators[value.charAt(value.length - 1)];
-							if (fn !== u) {
-								this.valueOverride = fn.call(this, value);
+				this.thaw.add(function() {
+					switch (typeof value) {
+						case 'string':
+							operatorFn = this.startOperators[value.charAt(0)];
+							if (operatorFn !== u) {
+								this.valueOverride = operatorFn.call(this, value);
+							} else {
+								operatorFn = this.endOperators[value.charAt(value.length - 1)];
+								if (operatorFn !== u) {
+									this.valueOverride = operatorFn.call(this, value);
+								}
 							}
-						}
-						break;
-					case 'undefined':
-						value = '';
-						break;
-				}
-			}
-
-			//setup cell trace from value
-			if (
-				value === u
-				|| value === null
-			) {
-				value = new String();
-			}
-
-			if (value.cell === u) {
-				switch (typeof(value)) {
-					case 'object':
-						break;
-					case 'undefined':
-						value = new String();
-						break;
-					case 'number':
-						value = new Number(value);
-						break;
-					case 'boolean':
-						value = new Boolean(value);
-						break;
-					case 'string':
-					default:
-						value = new String(value);
-						break;
-				}
-				value.cell = this;
-			}
-			this.value = value;
-			cache = this.displayValue();
-
-			if (this.loader !== null) {
-				this.loader.setCellAttributes(this.loadedFrom, {
-					'cache': cache,
-					'formula': this.formula,
-					'value': this.value + '',
-					'cellType': this.cellType,
-					'uneditable': this.uneditable
+							break;
+						case 'undefined':
+							value = '';
+							break;
+					}
 				});
 			}
 
-			this.needsUpdated = false;
-			this.state.shift();
-			this.updateDependencies();
+			this.thaw.add(function() {
+				//setup cell trace from value
+				if (
+					value === u
+					|| value === null
+				) {
+					value = new String();
+				}
 
-			return (this.valueOverride !== u ? this.valueOverride : this.value);
+				if (value.cell === u) {
+					switch (typeof(value)) {
+						case 'object':
+							break;
+						case 'undefined':
+							value = new String();
+							break;
+						case 'number':
+							value = new Number(value);
+							break;
+						case 'boolean':
+							value = new Boolean(value);
+							break;
+						case 'string':
+						default:
+							value = new String(value);
+							break;
+					}
+					value.cell = this;
+				}
+				cell.value = value;
+			});
+
+			this.thaw.add(function() {
+				cache = cell.displayValue();
+
+				if (cell.loader !== null) {
+					cell.loader.setCellAttributes(cell.loadedFrom, {
+						'cache': cache,
+						'formula': cell.formula,
+						'value': cell.value + '',
+						'cellType': cell.cellType,
+						'uneditable': cell.uneditable
+					});
+				}
+
+				cell.needsUpdated = false;
+				cell.state.shift();
+			});
+			this.thaw.add(function() {
+				cell.updateDependencies();
+			});
+			this.thaw.add(function() {
+				if (fn !== u) {
+					fn.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
+				}
+			});
 		},
 
 		/**
@@ -441,7 +486,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		},
 
 		type: Constructor,
-		typeName: 'Sheet.Cell'
+		typeName: 'Sheet.Cell',
+		thaw: null,
+		worker: null
 	};
 
 	return Constructor;
@@ -514,6 +561,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 * @returns {Number}
 		 */
 		number:function (parentCell, num) {
+			if (isNaN(num)) {
+				num = 0;
+			}
+
 			switch (typeof num) {
 				case 'number':
 					return num;
@@ -536,11 +587,16 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 * @returns {Number}
 		 */
 		numberInverted: function(parentCell, _num) {
+			if (isNaN(_num)) {
+				_num = 0;
+			}
+
 			var num = this.number(parentCell, _num),
 				inverted = new Number(num.valueOf() * -1);
 			if (num.html) {
 				inverted.html = num.html;
 			}
+
 			return inverted;
 		},
 
@@ -659,6 +715,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 
 			return output(value);
+		},
+
+		concatenate: function(parentCell, value1, value2) {
+			return value1.toString() + value2.toString();
 		},
 
 		/**
@@ -2345,8 +2405,10 @@ Sheet.StyleUpdater = (function(document) {
 				max = this.count,
 				i = 0;
 
+			title = title.toLowerCase();
+
 			for(;i < max; i++) {
-				if (json[i].title == title) {
+				if (json[i].title.toLowerCase() == title) {
 					return i;
 				}
 			}
@@ -4064,7 +4126,9 @@ $.sheet = {
 
 		nearest:{script:'jquery-nearest/src/jquery.nearest.min.js', thirdParty:true},
 
-		mousewheel:{script:'MouseWheel/MouseWheel.js', thirdParty:true}
+		mousewheel:{script:'MouseWheel/MouseWheel.js', thirdParty:true},
+
+		operative:{script:'operative/dist/operative.js', thirdParty:true}
 	},
 
 	/**
@@ -6063,7 +6127,7 @@ $.sheet = {
 									}
 								},
 								function () {
-									if (xUpdated && yUpdated) {
+									if (xUpdated || yUpdated) {
 										jS.obj.barHelper().remove();
 										jS.autoFillerGoToTd();
 										if (pane.inPlaceEdit) {
@@ -6101,7 +6165,7 @@ $.sheet = {
 									}
 								},
 								function () {
-									if (xUpdated && yUpdated) {
+									if (xUpdated || yUpdated) {
 										jS.obj.barHelper().remove();
 										jS.autoFillerGoToTd();
 										if (pane.inPlaceEdit) {
@@ -8979,6 +9043,12 @@ $.sheet = {
 							this.cell.rowIndex = this.rowIndex;
 							this.cell.columnIndex = this.columnIndex;
 							this.cell.updateValue();
+						},
+						done = function() {
+							stack.length = 0;
+							jS.trigger('sheetCalculation', [
+								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
+							]);
 						};
 
 
@@ -9002,11 +9072,7 @@ $.sheet = {
 
 					thaw(stack, {
 						each: each,
-						done: function() {
-							jS.trigger('sheetCalculation', [
-								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
-							]);
-						}
+						done: done
 					});
 
 					this.calcVisiblePos = pos;
@@ -9045,6 +9111,12 @@ $.sheet = {
 							if (this.cell !== u) {
 								this.cell.updateValue();
 							}
+						},
+						done = function() {
+							stack.length = 0;
+							jS.trigger('sheetCalculation', [
+								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
+							]);
 						};
 
 					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
@@ -9072,12 +9144,10 @@ $.sheet = {
 					this.calcVisiblePos = newPos;
 
 					thaw(stack, {
-						each: each
+						each: each,
+						done: done
 					});
 
-					jS.trigger('sheetCalculation', [
-						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
-					]);
 					jS.setChanged(false);
 				},
 				calcVisibleCol: function(actionUI, sheetIndex) {
@@ -14181,14 +14251,21 @@ case 1:
 break;
 case 2:
 
-        return $$[$0-1];
+    	var types = yy.types;
+    	yy.types = [];
+        return types;
     
 break;
 case 3:
 
         //js
-            
-		    this.$ = yy.handler.variable.apply(yy.obj, $$[$0]);
+
+			var type = {
+		    	type: 'm',
+		    	method: 'variable',
+		    	args: [$$[$0]]
+		    };
+		    yy.types.push(type);
 
         /*php
             this.$ = $this->variable($$[$0]);
@@ -14198,8 +14275,14 @@ break;
 case 4:
 
 	    //js
-	        
-            this.$ = yy.handler.time(yy.obj, $$[$0], true);
+
+            var type = {
+            	type: 'm',
+                method: 'time',
+            	args: [$$[$0], true]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
         //
     
 break;
@@ -14207,7 +14290,13 @@ case 5:
 
         //js
             
-            this.$ = yy.handler.time(yy.obj, $$[$0]);
+            var type = {
+            	type: 'm',
+                method: 'time',
+            	args: [$$[$0]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
         //
 
     
@@ -14216,7 +14305,13 @@ case 6:
 
 	    //js
 	        
-            this.$ = yy.handler.number(yy.obj, $$[$0]);
+            var type = {
+            	type: 'm',
+            	method: 'number',
+            	args: [$$[$0]]
+            };
+            this.$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             this.$ = $$[$0] * 1;
@@ -14227,7 +14322,13 @@ case 7:
 
         //js
             
-            this.$ = yy.escape($$[$0].substring(1, $$[$0].length - 1));
+            var type = {
+            	type: 'v',
+            	value: yy.escape($$[$0].substring(1, $$[$0].length - 1))
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
+
         /*php
 	        this.$ = substr($$[$0], 1, -1);
         */
@@ -14237,22 +14338,38 @@ case 8:
 
         //js
 
-            this.$ = yy.escape($$[$0].substring(2, $$[$0].length - 2));
+            var type = {
+            	type: 'v',
+            	value: yy.escape($$[$0].substring(2, $$[$0].length - 2))
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
+
         /*php
             this.$ = substr($$[$0], 2, -2);
         */
     
 break;
-case 9: case 58:
+case 9:
 
-        this.$ = $$[$0];
+        var type = {
+        	type: 'v',
+        	value: $$[$0]
+        };
+        yy.types.push(type);
     
 break;
 case 10:
 
         //js
             
-            this.$ = $$[$0-2].toString() + $$[$0].toString();
+            var type = {
+            	type: 'm',
+            	method: 'concatenate',
+            	args: [$$[$0-2], $$[$0]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             this.$ = $$[$0-2] . '' . $$[$0];
@@ -14263,7 +14380,13 @@ case 11:
 
 	    //js
 	        
-            this.$ = yy.handler.callFunction(yy.obj, 'EQUAL', [$$[$0-2], $$[$0]]);
+            var type = {
+            	type: 'm',
+            	method: 'callFunction',
+            	args: ['EQUAL', [$$[$0-2], $$[$0]]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             this.$ = $$[$0-2] == $$[$0];
@@ -14274,7 +14397,13 @@ case 12:
 
 	    //js
 
-			this.$ = yy.handler.performMath(yy.obj, '+', $$[$0-2], $$[$0]);
+			var type = {
+				type: 'm',
+				method: 'performMath',
+				args: ['+', $$[$0-2], $$[$0]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
 			if (is_numeric($$[$0-2]) && is_numeric($$[$0])) {
@@ -14297,7 +14426,13 @@ case 14:
 
         //js
             
-            this.$ = yy.handler.callFunction(yy.obj, 'LESS_EQUAL', [$$[$0-3], $$[$0]]);
+            var type = {
+            	type: 'm',
+            	method: 'callFunction',
+            	args: ['LESS_EQUAL', [$$[$0-3], $$[$0]]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             this.$ = ($$[$0-3] * 1) <= ($$[$0] * 1);
@@ -14308,7 +14443,13 @@ case 15:
 
         //js
             
-            this.$ = yy.handler.callFunction(yy.obj, 'GREATER_EQUAL', [$$[$0-3], $$[$0]]);
+            var type = {
+            	type: 'm',
+            	method: 'callFunction',
+            	args: ['GREATER_EQUAL', [$$[$0-3], $$[$0]]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             this.$ = ($$[$0-3] * 1) >= ($$[$0] * 1);
@@ -14317,27 +14458,49 @@ case 15:
 break;
 case 16:
 
-        this.$ = ($$[$0-3]) != ($$[$0]);
+		//js
 
-        //js
-            
-			if (isNaN(this.$)) {
-			    this.$ = 0;
-			}
-        //
+			var type = {
+				type: 'm',
+				method: 'callFunction',
+				args: ['NOT', [$$[$0-3], $$[$0]]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
+
+		/*php
+        	this.$ = ($$[$0-3]) != ($$[$0]);
+		*/
     
 break;
 case 17:
 
-		
-        this.$ = $$[$0-2] != $$[$0];
+		//js
+
+			var type = {
+				type: 'm',
+				method: 'callFunction',
+				args: ['NOT', [$$[$0-2], $$[$01]]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
+
+		/*php
+        	this.$ = $$[$0-2] != $$[$0];
+		*/
     
 break;
 case 18:
 
 	    //js
 	        
-			this.$ = yy.handler.callFunction(yy.obj, 'GREATER', [$$[$0-2], $$[$0]]);
+			var type = {
+				type: 'm',
+				method: 'callFunction',
+				args: ['GREATER', [$$[$0-2], $$[$0]]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 
 		/*php
 		    this.$ = ($$[$0-2] * 1) > ($$[$0] * 1);
@@ -14348,7 +14511,13 @@ case 19:
 
         //js
             
-            this.$ = yy.handler.callFunction(yy.obj, 'LESS', [$$[$0-2], $$[$0]]);
+            var type = {
+            	type: 'm',
+            	method: 'callFunction',
+            	args: ['LESS', [$$[$0-2], $$[$0]]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             this.$ = ($$[$0-2] * 1) < ($$[$0] * 1);
@@ -14359,7 +14528,13 @@ case 20:
 
         //js
             
-            this.$ = yy.handler.performMath(yy.obj, '-', $$[$0-2], $$[$0]);
+            var type = {
+            	type: 'm',
+            	method: 'performMath',
+            	args: ['-', $$[$0-2], $$[$0]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             this.$ = ($$[$0-2] * 1) - ($$[$0] * 1);
@@ -14370,7 +14545,13 @@ case 21:
 
 	    //js
 	        
-            this.$ = yy.handler.performMath(yy.obj, '*', $$[$0-2], $$[$0]);
+            var type = {
+            	type: 'm',
+            	method: 'performMath',
+            	args: ['*', $$[$0-2], $$[$0]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             this.$ = ($$[$0-2] * 1) * ($$[$0] * 1);
@@ -14381,7 +14562,13 @@ case 22:
 
 	    //js
 	        
-            this.$ = yy.handler.performMath(yy.obj, '/', $$[$0-2], $$[$0]);
+            var type = {
+            	type: 'm',
+            	method: 'performMath',
+            	args: ['/', $$[$0-2], $$[$0]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             this.$ = ($$[$0-2] * 1) / ($$[$0] * 1);
@@ -14391,11 +14578,14 @@ break;
 case 23:
 
         //js
-            
-            var n1 = yy.handler.number($$[$0-2]),
-                n2 = yy.handler.number($$[$0]);
 
-            this.$ = yy.handler.performMath(yy.obj, '^', $$[$0-2], $$[$0]);
+            var type = {
+            	type: 'm',
+            	method: 'performMath',
+            	args: ['^', $$[$0-2], $$[$0]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             this.$ = pow(($$[$0-2] * 1), ($$[$0] * 1));
@@ -14405,32 +14595,36 @@ break;
 case 24:
 
 		//js
-			
-			var n1 = yy.handler.numberInverted(yy.obj, $$[$0]);
-			this.$ = n1;
-			if (isNaN(this.$)) {
-			    this.$ = 0;
-			}
+
+			var type = {
+				type: 'm',
+				method: 'invertNumber',
+				args: [$$[$0]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             this.$ = $$[$0-1] * 1;
         */
-		
+	
 break;
 case 25:
 
 	    //js
-	        
-			var n1 = yy.handler.number(yy.obj, $$[$0]);
-			this.$ = n1;
-			if (isNaN(this.$)) {
-			    this.$ = 0;
-			}
+
+	        var type = {
+	        	type: 'm',
+				method: 'number',
+				args: [$$[$0]]
+	        };
+	        this.$ = yy.types.length;
+	        yy.types.push(type);
 
         /*php
             this.$ = $$[$0-1] * 1;
         */
-		
+	
 break;
 case 26:
 /*this.$ = Math.E;*/;
@@ -14439,7 +14633,13 @@ case 27:
 
 	    //js
 	        
-			this.$ = yy.handler.callFunction(yy.obj, $$[$0-2]);
+			var type = {
+				type: 'm',
+				method: 'callFunction',
+				args: [$$[$0-2]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 
 		/*php
 		    this.$ = $this->callFunction($$[$0-2]);
@@ -14450,7 +14650,13 @@ case 28:
 
 	    //js
 	        
-			this.$ = yy.handler.callFunction(yy.obj, $$[$0-3], $$[$0-1]);
+			var type = {
+				type: 'm',
+				method: 'callFunction',
+				args: [$$[$0-3], $$[$0-1]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             this.$ = $this->callFunction($$[$0-3], $$[$0-1]);
@@ -14461,7 +14667,13 @@ case 30:
 
 	    //js
 	        
-			this.$ = yy.handler.cellValue(yy.obj, $$[$0]);
+			var type = {
+				type: 'm',
+				method: 'cellValue',
+				args: [$$[$0]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             this.$ = $this->cellValue($$[$0]);
@@ -14471,7 +14683,14 @@ break;
 case 31:
 
 	    //js
-			this.$ = yy.handler.cellRangeValue(yy.obj, $$[$0-2], $$[$0]);
+
+			var type = {
+				type: 'm',
+				method: 'cellRangeValue',
+				args: [$$[$0-2], $$[$0]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             this.$ = $this->cellRangeValue($$[$0-2], $$[$0]);
@@ -14481,7 +14700,13 @@ break;
 case 32:
 
 	    //js
-			this.$ = yy.handler.remoteCellValue(yy.obj, $$[$0-2], $$[$0]);
+			var type = {
+				type: 'm',
+				method: 'remoteCellValue',
+				args: [$$[$0-2], $$[$0]]
+			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             this.$ = $this->remoteCellValue($$[$0-2], $$[$0]);
@@ -14491,7 +14716,13 @@ break;
 case 33:
 
 	    //js
-            this.$ = yy.handler.remoteCellRangeValue(yy.obj, $$[$0-4], $$[$0-2], $$[$0]);
+            var type = {
+            	type: 'm',
+            	method: 'remoteCellRangeValue',
+            	args: [$$[$0-4], $$[$0-2], $$[$0]]
+            };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             this.$ = $this->remoteCellRangeValue($$[$0-4], $$[$0-2], $$[$0]);
@@ -14501,28 +14732,37 @@ break;
 case 34:
 
 		//js
-			this.$ = {
+			var type = {
+				type: 'cell',
 				colString: $$[$0-1],
 				rowString: $$[$0]
 			};
+			this.$ = yy.types.length;
+			yy.types.push(type);
 	
 break;
 case 35:
 
 		//js
-            this.$ = {
+            var type = {
+            	type: 'cell',
                 colString: $$[$0-1],
                 rowString: $$[$0]
             };
+            this.$ = yy.types.length;
+            yy.types.push(type);
 	
 break;
 case 36: case 37:
 
         //js
-            this.$ = {
+            var type = {
+            	type: 'cell',
                 colString: $$[$0-2],
                 rowString: $$[$0]
             };
+            this.$ = yy.types.length;
+            yy.types.push(type);
     
 break;
 case 38: case 39: case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47: case 48: case 49: case 50:
@@ -14577,6 +14817,11 @@ case 57:
             this.$ = (is_array($$[$0-2]) ? $$[$0-2] : array());
             this.$[] = $$[$0];
         */
+    
+break;
+case 58:
+
+        this.$ = $$[$0];
     
 break;
 case 59:
@@ -14844,48 +15089,50 @@ _handle_error:
     return true;
 }};
 
-if (typeof(window) !== 'undefined') {
-	window.Formula = function(handler) {
-		var formulaLexer = function () {};
-		formulaLexer.prototype = parser.lexer;
 
-		var formulaParser = function () {
-			this.lexer = new formulaLexer();
-			this.yy = {
-				escape: function(value) {
-					return value
-						.replace(/&/gi, '&amp;')
-						.replace(/>/gi, '&gt;')
-						.replace(/</gi, '&lt;')
-						.replace(/\n/g, '\n<br>')
-						.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
-						.replace(/  /g, '&nbsp; ');
-				},
-				parseError: function(msg, hash) {
-					this.done = true;
-					var result = new String();
-					result.html = '<pre>' + msg + '</pre>';
-					result.hash = hash;
-					return result;
-				},
-				lexerError: function(msg, hash) {
-					this.done = true;
-					var result = new String();
-					result.html = '<pre>' + msg + '</pre>';
-                    result.hash = hash;
-                    return result;
-				}
-			};
-		};
+var Formula = function(handler) {
+	var formulaLexer = function () {};
+	formulaLexer.prototype = parser.lexer;
 
-		formulaParser.prototype = parser;
-		var newParser = new formulaParser();
-		newParser.setObj = function(obj) {
-			this.yy.obj = obj;
+	var formulaParser = function () {
+		this.lexer = new formulaLexer();
+		this.yy = {
+			types: [],
+			escape: function(value) {
+				return value
+					.replace(/&/gi, '&amp;')
+					.replace(/>/gi, '&gt;')
+					.replace(/</gi, '&lt;')
+					.replace(/\n/g, '\n<br>')
+					.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
+					.replace(/  /g, '&nbsp; ');
+			},
+			parseError: function(msg, hash) {
+				this.done = true;
+				var result = new String();
+				result.html = '<pre>' + msg + '</pre>';
+				result.hash = hash;
+				return result;
+			},
+			lexerError: function(msg, hash) {
+				this.done = true;
+				var result = new String();
+				result.html = '<pre>' + msg + '</pre>';
+				result.hash = hash;
+				return result;
+			}
 		};
-		newParser.yy.handler = handler;
-		return newParser;
 	};
+
+	formulaParser.prototype = parser;
+	var newParser = new formulaParser();
+	newParser.yy.handler = handler;
+	return newParser;
+};
+if (typeof(window) !== 'undefined') {
+	window.Formula = Formula;
+} else {
+	parser.Formula = Formula;
 }/* generated by jison-lex 0.3.4 */
 var lexer = (function(){
 var lexer = ({
@@ -15222,26 +15469,17 @@ break;
 case 3:return 8;
 break;
 case 4:
-	//js
-		if (yy.obj.typeName == 'Sheet.Cell') return 31;
-		return 38;
-
-	/*php
-		if ($this->typeName == 'Sheet.Cell') return 31;
-		return 38;
-	*/
+	return 31;
 
 break;
 case 5:
     //js
         yy_.yytext = yy_.yytext.substring(1, yy_.yytext.length - 1);
-        if (yy.obj.typeName == 'Sheet.Cell') return 31;
-        return 38;
+        return 31;
 
     /*php
         $yy_.yytext = substr($yy_.yytext, 1, -1);
-        if ($this->typeName == 'Sheet.Cell') return 31;
-        return 38;
+        return 31;
     */
 
 break;

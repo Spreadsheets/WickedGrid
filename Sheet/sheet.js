@@ -882,7 +882,9 @@ $.sheet = {
 
 		nearest:{script:'jquery-nearest/src/jquery.nearest.min.js', thirdParty:true},
 
-		mousewheel:{script:'MouseWheel/MouseWheel.js', thirdParty:true}
+		mousewheel:{script:'MouseWheel/MouseWheel.js', thirdParty:true},
+
+		operative:{script:'operative/dist/operative.js', thirdParty:true}
 	},
 
 	/**
@@ -2881,7 +2883,7 @@ $.sheet = {
 									}
 								},
 								function () {
-									if (xUpdated && yUpdated) {
+									if (xUpdated || yUpdated) {
 										jS.obj.barHelper().remove();
 										jS.autoFillerGoToTd();
 										if (pane.inPlaceEdit) {
@@ -2919,7 +2921,7 @@ $.sheet = {
 									}
 								},
 								function () {
-									if (xUpdated && yUpdated) {
+									if (xUpdated || yUpdated) {
 										jS.obj.barHelper().remove();
 										jS.autoFillerGoToTd();
 										if (pane.inPlaceEdit) {
@@ -5797,6 +5799,12 @@ $.sheet = {
 							this.cell.rowIndex = this.rowIndex;
 							this.cell.columnIndex = this.columnIndex;
 							this.cell.updateValue();
+						},
+						done = function() {
+							stack.length = 0;
+							jS.trigger('sheetCalculation', [
+								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
+							]);
 						};
 
 
@@ -5820,11 +5828,7 @@ $.sheet = {
 
 					thaw(stack, {
 						each: each,
-						done: function() {
-							jS.trigger('sheetCalculation', [
-								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
-							]);
-						}
+						done: done
 					});
 
 					this.calcVisiblePos = pos;
@@ -5863,6 +5867,12 @@ $.sheet = {
 							if (this.cell !== u) {
 								this.cell.updateValue();
 							}
+						},
+						done = function() {
+							stack.length = 0;
+							jS.trigger('sheetCalculation', [
+								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
+							]);
 						};
 
 					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
@@ -5890,12 +5900,10 @@ $.sheet = {
 					this.calcVisiblePos = newPos;
 
 					thaw(stack, {
-						each: each
+						each: each,
+						done: done
 					});
 
-					jS.trigger('sheetCalculation', [
-						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
-					]);
 					jS.setChanged(false);
 				},
 				calcVisibleCol: function(actionUI, sheetIndex) {
