@@ -41,9 +41,8 @@ Sheet.Cell = (function() {
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
-				&& this.cellType === null
 			) {
-				return this.value;
+				return (this.valueOverride !== u ? this.valueOverride : this.value);
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it

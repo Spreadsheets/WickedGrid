@@ -202,7 +202,7 @@
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = jsonCell;
 			jitCell.loader = this;
-			jitCell.needsUpdated = hasFormula;
+			jitCell.needsUpdated = hasFormula || hasCellType;
 
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasFormula) jitCell.formula = formula;

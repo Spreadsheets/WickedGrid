@@ -1457,6 +1457,7 @@ $.sheet = {
 						tdsY,
 						formula,
 						cellType,
+						hasCellType,
 						uneditable,
 						id;
 
@@ -1482,8 +1483,10 @@ $.sheet = {
 
 					if (formula !== null)
 						jSCell.formula = formula;
-					if (cellType !== null)
+					if (cellType !== null) {
 						jSCell.cellType = cellType;
+						hasCellType = true;
+					}
 					if (uneditable !== null)
 						jSCell.uneditable = uneditable;
 					if (id !== null)
@@ -1509,7 +1512,7 @@ $.sheet = {
 					}
 					jSCell.value.cell = jSCell;
 					jSCell.calcCount = calcCount || 0;
-					jSCell.needsUpdated = jSCell.formula.length > 0;
+					jSCell.needsUpdated = jSCell.formula.length > 0 || hasCellType;
 
 
 

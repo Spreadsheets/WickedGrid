@@ -32,12 +32,12 @@ tf.test('Cell Types: Date', function() {
 			.append('<table><tr><td data-celltype="date">1/1/2020</td></tr></table>')
 			.sheet(),
 		jS = div.getSheet(),
-		td;
+		td = div.find('table.jS td'),
+		cell = td[0].jSCell,
+		val = cell.updateValue();
 
-	td = div.find('table.jS td');
-
-	tf.assertEquals(td[0].jSCell.updateValue().toString(), Globalize.parseDate('1/1/2020').toString(), 'valueOverride is correct');
-	tf.assertEquals(td[0].jSCell.value, '1/1/2020', 'value is correct');
+	tf.assertEquals(val.toString(), Globalize.parseDate('1/1/2020').toString(), 'valueOverride is correct');
+	tf.assertEquals(cell.value, '1/1/2020', 'value is correct');
 	div.getSheet().kill();
 });
 
