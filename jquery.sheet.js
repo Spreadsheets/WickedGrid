@@ -80,9 +80,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
-				&& this.cellType === null
 			) {
-				return this.value;
+				return (this.valueOverride !== u ? this.valueOverride : this.value);
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
@@ -2284,7 +2283,7 @@ Sheet.StyleUpdater = (function(document) {
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = jsonCell;
 			jitCell.loader = this;
-			jitCell.needsUpdated = hasFormula;
+			jitCell.needsUpdated = hasFormula || hasCellType;
 
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasFormula) jitCell.formula = formula;
@@ -2345,8 +2344,10 @@ Sheet.StyleUpdater = (function(document) {
 				max = this.count,
 				i = 0;
 
+			title = title.toLowerCase();
+
 			for(;i < max; i++) {
-				if (json[i].title == title) {
+				if (json[i].title.toLowerCase() == title) {
 					return i;
 				}
 			}
@@ -4639,6 +4640,7 @@ $.sheet = {
 						tdsY,
 						formula,
 						cellType,
+						hasCellType,
 						uneditable,
 						id;
 
@@ -4664,8 +4666,10 @@ $.sheet = {
 
 					if (formula !== null)
 						jSCell.formula = formula;
-					if (cellType !== null)
+					if (cellType !== null) {
 						jSCell.cellType = cellType;
+						hasCellType = true;
+					}
 					if (uneditable !== null)
 						jSCell.uneditable = uneditable;
 					if (id !== null)
@@ -4691,7 +4695,7 @@ $.sheet = {
 					}
 					jSCell.value.cell = jSCell;
 					jSCell.calcCount = calcCount || 0;
-					jSCell.needsUpdated = jSCell.formula.length > 0;
+					jSCell.needsUpdated = jSCell.formula.length > 0 || hasCellType;
 
 
 
