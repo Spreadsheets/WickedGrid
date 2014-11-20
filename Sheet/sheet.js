@@ -1529,8 +1529,6 @@ $.sheet = {
 						colGroup.appendChild(col);
 					}
 
-					jS.shortenCellLookupTime(colIndex, jSCell, td, col, tr, tBody, table);
-
 					//now create row
 					if ((tdsY = jS.controls.bar.y.th[sheetIndex]) === u) {
 						tdsY = jS.controls.bar.y.th[sheetIndex] = [];
@@ -1548,36 +1546,6 @@ $.sheet = {
 
 					//return cell
 					return jSCell;
-				},
-				shortenCellLookupTime: function(colIndex, jSCell, td, col, tr, tBody, table) {
-					var jSCells;
-					if ((jSCells = col.jSCells) === u) jSCells = col.jSCells = [];
-					jSCells.unshift(jSCell);
-
-					//attach col to td
-					td.col = col;
-					td.type = 'cell';
-					td.barLeft = td.barLeft || tr.children[0];
-					td.barTop = td.barTop || tBody.children[0].children[colIndex];
-
-					//attach cells to tr
-					if (tr.jSCells === u) tr.jSCells = [];
-					tr.jSCells.unshift(jSCell);
-
-					//attach td's to tr
-					if (tr.tds === u) tr.tds = [];
-					tr.tds.unshift(td);
-
-					//attach cells to table
-					if (table.jSCells === u) table.jSCells = [];
-					table.jSCells.unshift(jSCell);
-
-					//attach td's to table
-					if (!table.tds) table.tds = [];
-					table.tds.unshift(td);
-
-					//attach table to td
-					td.table = table;
 				},
 
 				/**
@@ -1806,8 +1774,6 @@ $.sheet = {
 									cell.updateValue();
 
 									rowParent.insertBefore(td, rowParent.children[at]);
-
-									jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
 								});
 
 								o.setAddedFinishedFn(function(_offset) {
@@ -1902,8 +1868,6 @@ $.sheet = {
 									cell.updateValue();
 
 									rowParent.insertBefore(td, rowParent.children[at]);
-
-									jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
 								});
 
 								o.setAddedFinishedFn(function(_offset) {
@@ -5426,8 +5390,8 @@ $.sheet = {
 						if (td === null) return;
 
 						jS.highlighter
-							.setBar('left', td.barLeft)
-							.setBar('top', td.barTop);
+							.setBar('left', td.parentNode.firstChild)
+							.setBar('top', td.parentNode.parentNode.firstChild.children[td.cellIndex]);
 
 						var selectModel,
 							clearHighlightedModel;

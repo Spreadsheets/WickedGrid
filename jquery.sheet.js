@@ -43,12 +43,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	function Constructor(sheetIndex, td, jS, cellHandler) {
 		if (Constructor.prototype.thaw === null) {
 			Constructor.prototype.thaw = new Thaw([]);
-			Constructor.prototype.worker = operative(function(formula) {
-
-				return parser.Formula().parse(formula);
-			}, [
-				'http://localhost/p/jQuery.sheet/parser/formula/formula.js'
-			]);
 		}
 		this.td = (td !== undefined ? td : null);
 		this.dependencies = [];
@@ -134,7 +128,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				td = this.td,
 				calcStack,
 				formulaParser,
-				typesStack;
+				typesStack,
+				doneFn;
 
 			//detect state, if any
 			switch (this.state[0]) {
@@ -204,22 +199,26 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					formulaParser = cell.cellHandler.formulaParser(calcStack);
 					Sheet.calcStack++;
 
-					cell.worker(formula, function(parsedFormula) {
+					cell.getThread()(formula, function(parsedFormula) {
 						console.log(parsedFormula);
+
+						cell.thaw.add(function() {
+							cell.needsUpdated = false;
+
+							Sheet.calcStack--;
+
+							if (
+								value !== u
+								&& value !== null
+								&& cellType !== null
+								&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+							) {
+								value = cellTypeHandler(cell, value);
+							}
+
+							doneFn();
+						});
 					});
-
-					cell.needsUpdated = false;
-
-					Sheet.calcStack--;
-
-					if (
-						value !== u
-						&& value !== null
-						&& cellType !== null
-						&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-					) {
-						value = cellTypeHandler(this, value);
-					}
 				});
 			} else if (
 				value !== u
@@ -229,18 +228,19 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			) {
 				this.thaw.add(function() {
 					value = cellTypeHandler(cell, value);
+					doneFn();
 				});
 			} else {
 				this.thaw.add(function() {
 					switch (typeof value) {
 						case 'string':
-							operatorFn = this.startOperators[value.charAt(0)];
+							operatorFn = cell.startOperators[value.charAt(0)];
 							if (operatorFn !== u) {
-								this.valueOverride = operatorFn.call(this, value);
+								cell.valueOverride = operatorFn.call(cell, value);
 							} else {
-								operatorFn = this.endOperators[value.charAt(value.length - 1)];
+								operatorFn = cell.endOperators[value.charAt(value.length - 1)];
 								if (operatorFn !== u) {
-									this.valueOverride = operatorFn.call(this, value);
+									cell.valueOverride = operatorFn.call(cell, value);
 								}
 							}
 							break;
@@ -248,65 +248,70 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							value = '';
 							break;
 					}
+					doneFn();
 				});
 			}
 
-			this.thaw.add(function() {
-				//setup cell trace from value
-				if (
-					value === u
-					|| value === null
-				) {
-					value = new String();
-				}
-
-				if (value.cell === u) {
-					switch (typeof(value)) {
-						case 'object':
-							break;
-						case 'undefined':
-							value = new String();
-							break;
-						case 'number':
-							value = new Number(value);
-							break;
-						case 'boolean':
-							value = new Boolean(value);
-							break;
-						case 'string':
-						default:
-							value = new String(value);
-							break;
+			doneFn = function() {
+				cell.thaw.add(function () {
+					//setup cell trace from value
+					if (
+						value === u
+						|| value === null
+					) {
+						value = new String();
 					}
-					value.cell = this;
-				}
-				cell.value = value;
-			});
 
-			this.thaw.add(function() {
-				cache = cell.displayValue();
+					if (value.cell === u) {
+						switch (typeof(value)) {
+							case 'object':
+								break;
+							case 'undefined':
+								value = new String();
+								break;
+							case 'number':
+								value = new Number(value);
+								break;
+							case 'boolean':
+								value = new Boolean(value);
+								break;
+							case 'string':
+							default:
+								value = new String(value);
+								break;
+						}
+						value.cell = cell;
+					}
+					cell.value = value;
+				});
 
-				if (cell.loader !== null) {
-					cell.loader.setCellAttributes(cell.loadedFrom, {
-						'cache': cache,
-						'formula': cell.formula,
-						'value': cell.value + '',
-						'cellType': cell.cellType,
-						'uneditable': cell.uneditable
-					});
-				}
+				cell.thaw.add(function () {
+					cache = cell.displayValue();
 
-				cell.needsUpdated = false;
-				cell.state.shift();
-			});
-			this.thaw.add(function() {
-				cell.updateDependencies();
-			});
-			this.thaw.add(function() {
-				if (fn !== u) {
-					fn.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
-				}
-			});
+					if (cell.loader !== null) {
+						cell.loader.setCellAttributes(cell.loadedFrom, {
+							'cache': cache,
+							'formula': cell.formula,
+							'value': cell.value + '',
+							'cellType': cell.cellType,
+							'uneditable': cell.uneditable
+						});
+					}
+
+					cell.needsUpdated = false;
+					cell.state.shift();
+				});
+
+				cell.thaw.add(function () {
+					if (fn !== u) {
+						fn.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
+					}
+				});
+
+				cell.thaw.add(function () {
+					cell.updateDependencies();
+				});
+			};
 		},
 
 		/**
@@ -488,7 +493,29 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		type: Constructor,
 		typeName: 'Sheet.Cell',
 		thaw: null,
-		worker: null
+		threads: [],
+		threadLimit: 20,
+		threadIndex: 0,
+		getThread: function() {
+			var i = this.threadIndex,
+				thread = this.threads[i];
+			if (typeof thread === 'undefined') {
+				thread = this.threads[i] = operative(function(formula) {
+					if (typeof formula === 'string') {
+						return parser.Formula().parse(formula);
+					} else {
+						return null;
+					}
+				}, [
+					'http://localhost/p/jQuery.sheet/parser/formula/formula.js'
+				]);
+			}
+			this.threadIndex++;
+			if (this.threadIndex > this.threadLimit) {
+				this.threadIndex = 0;
+			}
+			return thread;
+		}
 	};
 
 	return Constructor;
@@ -4773,8 +4800,6 @@ $.sheet = {
 						colGroup.appendChild(col);
 					}
 
-					jS.shortenCellLookupTime(colIndex, jSCell, td, col, tr, tBody, table);
-
 					//now create row
 					if ((tdsY = jS.controls.bar.y.th[sheetIndex]) === u) {
 						tdsY = jS.controls.bar.y.th[sheetIndex] = [];
@@ -4792,36 +4817,6 @@ $.sheet = {
 
 					//return cell
 					return jSCell;
-				},
-				shortenCellLookupTime: function(colIndex, jSCell, td, col, tr, tBody, table) {
-					var jSCells;
-					if ((jSCells = col.jSCells) === u) jSCells = col.jSCells = [];
-					jSCells.unshift(jSCell);
-
-					//attach col to td
-					td.col = col;
-					td.type = 'cell';
-					td.barLeft = td.barLeft || tr.children[0];
-					td.barTop = td.barTop || tBody.children[0].children[colIndex];
-
-					//attach cells to tr
-					if (tr.jSCells === u) tr.jSCells = [];
-					tr.jSCells.unshift(jSCell);
-
-					//attach td's to tr
-					if (tr.tds === u) tr.tds = [];
-					tr.tds.unshift(td);
-
-					//attach cells to table
-					if (table.jSCells === u) table.jSCells = [];
-					table.jSCells.unshift(jSCell);
-
-					//attach td's to table
-					if (!table.tds) table.tds = [];
-					table.tds.unshift(td);
-
-					//attach table to td
-					td.table = table;
 				},
 
 				/**
@@ -5050,8 +5045,6 @@ $.sheet = {
 									cell.updateValue();
 
 									rowParent.insertBefore(td, rowParent.children[at]);
-
-									jS.shortenCellLookupTime(at, cell, td, colGroup.children[at], rowParent, tBody, table);
 								});
 
 								o.setAddedFinishedFn(function(_offset) {
@@ -5146,8 +5139,6 @@ $.sheet = {
 									cell.updateValue();
 
 									rowParent.insertBefore(td, rowParent.children[at]);
-
-									jS.shortenCellLookupTime(at, cell, td, createdBar.col, rowParent, tBody, table);
 								});
 
 								o.setAddedFinishedFn(function(_offset) {
@@ -8670,8 +8661,8 @@ $.sheet = {
 						if (td === null) return;
 
 						jS.highlighter
-							.setBar('left', td.barLeft)
-							.setBar('top', td.barTop);
+							.setBar('left', td.parentNode.firstChild)
+							.setBar('top', td.parentNode.parentNode.firstChild.children[td.cellIndex]);
 
 						var selectModel,
 							clearHighlightedModel;
