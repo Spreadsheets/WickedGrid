@@ -209,7 +209,7 @@ Sheet.Cell = (function() {
 
 			if (this.loader !== null) {
 				this.loader.setCellAttributes(this.loadedFrom, {
-					'cache': cache,
+					'cache': cache.valueOf(),
 					'formula': this.formula,
 					'value': this.value + '',
 					'cellType': this.cellType,

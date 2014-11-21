@@ -66,8 +66,11 @@ tf.test('Formula: Dependencies from JSON', function() {
 	sheet1A1.setNeedsUpdated();
 	sheet1A1.updateValue();
 
-	tf.assertSame(sheet1B1.value.valueOf(), 101, 'A1 is a dependency of B1');
-	tf.assertSame(sheet2B1.value.valueOf(), 200, 'A2 is a dependency of B1');
-	tf.assertSame(sheet3B1.value.valueOf(), 200, 'B1 is a dependency of C1');
+	tf.assertSame(sheet1B1.value.valueOf(), 101, 'value is correct');
+	tf.assertSame(sheet1B1.loadedFrom.cache, 101, 'cache is correct');
+	tf.assertSame(sheet2B1.value.valueOf(), 200, 'value is correct');
+	tf.assertSame(sheet2B1.loadedFrom.cache, 200, 'cache is correct');
+	tf.assertSame(sheet3B1.value.valueOf(), 200, 'value is correct');
+	tf.assertSame(sheet3B1.loadedFrom.cache, 200, 'cache is correct');
 	div.getSheet().kill();
 });
