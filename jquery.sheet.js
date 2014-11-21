@@ -100,6 +100,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					this.value = new String(this.value);
 					this.value.cell = this;
 					this.updateDependencies();
+					this.needsUpdated = false;
 					return this.value;
 				}
 			}
@@ -149,6 +150,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				}
 				value.cell = this;
 				this.updateDependencies();
+				this.needsUpdated = false;
 				return value;
 			}
 
@@ -176,8 +178,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				} catch (e) {
 					value = e.toString();
 				}
-
-				this.needsUpdated = false;
 
 				Sheet.calcStack--;
 
@@ -244,11 +244,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				value.cell = this;
 			}
 			this.value = value;
-			cache = this.displayValue();
+			cache = this.displayValue().valueOf();
 
 			if (this.loader !== null) {
 				this.loader.setCellAttributes(this.loadedFrom, {
-					'cache': cache.valueOf(),
+					'cache': (typeof cache !== 'object' ? cache : null),
 					'formula': this.formula,
 					'value': this.value + '',
 					'cellType': this.cellType,
@@ -256,10 +256,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				});
 			}
 
-			this.needsUpdated = false;
 			this.state.shift();
 			this.updateDependencies();
-
+			this.needsUpdated = false;
 			return (this.valueOverride !== u ? this.valueOverride : this.value);
 		},
 
@@ -14849,7 +14848,6 @@ if (typeof(window) !== 'undefined') {
 
 		var formulaParser = function () {
 			this.lexer = new formulaLexer();
-			console.log(this.lexer);
 			this.yy = {
 				escape: function(value) {
 					return value

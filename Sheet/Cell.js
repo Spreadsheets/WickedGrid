@@ -61,6 +61,7 @@ Sheet.Cell = (function() {
 					this.value = new String(this.value);
 					this.value.cell = this;
 					this.updateDependencies();
+					this.needsUpdated = false;
 					return this.value;
 				}
 			}
@@ -110,6 +111,7 @@ Sheet.Cell = (function() {
 				}
 				value.cell = this;
 				this.updateDependencies();
+				this.needsUpdated = false;
 				return value;
 			}
 
@@ -137,8 +139,6 @@ Sheet.Cell = (function() {
 				} catch (e) {
 					value = e.toString();
 				}
-
-				this.needsUpdated = false;
 
 				Sheet.calcStack--;
 
@@ -205,11 +205,11 @@ Sheet.Cell = (function() {
 				value.cell = this;
 			}
 			this.value = value;
-			cache = this.displayValue();
+			cache = this.displayValue().valueOf();
 
 			if (this.loader !== null) {
 				this.loader.setCellAttributes(this.loadedFrom, {
-					'cache': cache.valueOf(),
+					'cache': (typeof cache !== 'object' ? cache : null),
 					'formula': this.formula,
 					'value': this.value + '',
 					'cellType': this.cellType,
@@ -217,10 +217,9 @@ Sheet.Cell = (function() {
 				});
 			}
 
-			this.needsUpdated = false;
 			this.state.shift();
 			this.updateDependencies();
-
+			this.needsUpdated = false;
 			return (this.valueOverride !== u ? this.valueOverride : this.value);
 		},
 

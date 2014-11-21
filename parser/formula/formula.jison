@@ -490,7 +490,6 @@ if (typeof(window) !== 'undefined') {
 
 		var formulaParser = function () {
 			this.lexer = new formulaLexer();
-			console.log(this.lexer);
 			this.yy = {
 				escape: function(value) {
 					return value
