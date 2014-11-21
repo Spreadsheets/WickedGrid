@@ -66,7 +66,6 @@ STRING                              [A-Za-z0-9]+
 ")" 								{return ')';}
 ">" 								{return '>';}
 "<" 								{return '<';}
-"NOT"								{return 'NOT';}
 "PI"								{return 'PI';}
 "E"									{return 'E';}
 '"'									{return '"';}
@@ -85,7 +84,7 @@ STRING                              [A-Za-z0-9]+
 
 /* operator associations and precedence (low-top, high- bottom) */
 %left '='
-%left '<=' '>=' '<>' 'NOT' '||'
+%left '<=' '>=' '<>' '||'
 %left '>' '<'
 %left '+' '-'
 %left '*' '/'
@@ -221,10 +220,6 @@ expression
 			    $$ = 0;
 			}
         //
-    }
-	| expression NOT expression {
-		
-        $$ = $1 != $3;
     }
 	| expression '>' expression {
 	    //js
@@ -495,6 +490,7 @@ if (typeof(window) !== 'undefined') {
 
 		var formulaParser = function () {
 			this.lexer = new formulaLexer();
+			console.log(this.lexer);
 			this.yy = {
 				escape: function(value) {
 					return value
@@ -511,13 +507,6 @@ if (typeof(window) !== 'undefined') {
 					result.html = '<pre>' + msg + '</pre>';
 					result.hash = hash;
 					return result;
-				},
-				lexerError: function(msg, hash) {
-					this.done = true;
-					var result = new String();
-					result.html = '<pre>' + msg + '</pre>';
-                    result.hash = hash;
-                    return result;
 				}
 			};
 		};

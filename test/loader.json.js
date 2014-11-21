@@ -11,7 +11,10 @@ tf.test('Loader (json) : Cache updating', function() {
 		},{
 			title: 'Inputs Sheet',
 			rows: [{
-				columns: [{},
+				columns: [{
+						cellType: 'currency',
+						value: '1'
+					},
 					{
 						cellType: 'currency',
 						formula: 'IF(1<>0, 1000, 0)',
@@ -36,7 +39,10 @@ tf.test('Loader (json) : Cache updating', function() {
 	cell = loader.getCell(1, 1, 2);
 	tf.assertEquals(cell.cache, '$1,000.00', 'loader cell cache');
 	tf.assertEquals(cell.value, "1000", 'leader cell value');
-
+	loader.jitCell(1, 1, 1, jS, jS.cellHandler).updateValue();
+	cell = loader.getCell(1, 1, 1);
+	tf.assertEquals(cell.cache, '$1.00', 'loader cell cache');
+	tf.assertEquals(cell.value, "1", 'leader cell value');
 	div.getSheet().kill();
 
 
