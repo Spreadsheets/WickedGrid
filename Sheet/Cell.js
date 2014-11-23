@@ -2,7 +2,10 @@ Sheet.Cell = (function() {
 	var u = undefined;
 
 	function Constructor(sheetIndex, td, jS, cellHandler) {
-		this.td = (td !== undefined ? td : null);
+		if (td !== undefined && td !== null) {
+			this.td = td;
+			td.jSCell = this;
+		}
 		this.dependencies = [];
 		this.formula = '';
 		this.cellType = null;
@@ -208,13 +211,15 @@ Sheet.Cell = (function() {
 			cache = this.displayValue().valueOf();
 
 			if (this.loader !== null) {
-				this.loader.setCellAttributes(this.loadedFrom, {
-					'cache': (typeof cache !== 'object' ? cache : null),
-					'formula': this.formula,
-					'value': this.value + '',
-					'cellType': this.cellType,
-					'uneditable': this.uneditable
-				});
+				this.loader
+					.setCellAttributes(this.loadedFrom, {
+						'cache': (typeof cache !== 'object' ? cache : null),
+						'formula': this.formula,
+						'value': this.value + '',
+						'cellType': this.cellType,
+						'uneditable': this.uneditable
+					})
+					.setDependencies(this);
 			}
 
 			this.state.shift();
@@ -288,7 +293,7 @@ Sheet.Cell = (function() {
 			}
 
 			//if the td is from a loader, and the td has not yet been created, just return it's values
-			if (td === null) {
+			if (td === u || td === null) {
 				return html;
 			}
 
