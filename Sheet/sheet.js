@@ -1733,9 +1733,8 @@ $.sheet = {
 							getWidth = (loader !== null ? function(i, col) { return loader.getWidth(i, col); } : function() { return s.newColumnWidth; }),
 							getHeight = (loader !== null ? function (i, row) { return loader.getHeight(i, row); } : function() { return s.colMargin; }),
 							setupCell = (loader !== null ? loader.setupCell : function (sheetIndex, rowIndex, columnIndex, createCellFn) {
-								var td = document.createElement('td'),
-									cell = createCellFn(td);
-								return cell;
+								var td = document.createElement('td');
+								return new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
 							}),
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
@@ -1792,11 +1791,11 @@ $.sheet = {
 								});
 
 								o.setCreateCellFn(function (row, at, rowParent) {
-									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-										}),
+									var cell = setupCell.call(loader, jS.i, row, at, jS),
 										td = cell.td,
 										spreadsheetRow = spreadsheet[row];
+
+									td.jSCell = cell;
 
 									if (spreadsheetRow.length === 0) {
 										spreadsheetRow[at] = cell;
@@ -1883,9 +1882,7 @@ $.sheet = {
 								});
 
 								o.setCreateCellFn(function (row, at, createdBar) {
-									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-										}),
+									var cell = setupCell.call(loader, jS.i, row, at, jS),
 										td = cell.td,
 										rowParent = tBody.children[row],
 										spreadsheetRow = spreadsheet[row];
