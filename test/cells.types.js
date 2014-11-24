@@ -12,6 +12,21 @@ tf.test('Cell Types: None', function() {
 });
 
 
+tf.test('Cell Types: Currency & rounding', function() {
+	var div = $('<div>')
+			.append('<table><tr><td data-celltype="currency">100.123</td></tr></table>')
+			.sheet(),
+		jS = div.getSheet(),
+		td;
+
+	td = div.find('table.jS td');
+
+	tf.assertEquals(td.html(), '$100.12');
+	tf.assertEquals(td[0].jSCell.value, 100.123);
+	div.getSheet().kill();
+});
+
+
 tf.test('Cell Types: Currency', function() {
 	var div = $('<div>')
 			.append('<table><tr><td data-celltype="currency">100</td></tr></table>')

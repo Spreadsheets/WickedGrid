@@ -201,3 +201,33 @@ tf.test('Loader (json) : Calc All cell cache', function() {
 	tf.assertEquals(cell2.cache, 5, 'Expected value');
 	div.getSheet().kill();
 });
+
+tf.test('Loader (json) : html non transference', function() {
+	var loader = new Sheet.JSONLoader([{
+			rows: [{
+				columns: [{value: 100},{value:200},{value:300},{value:400},{value:500}]
+			},{
+				columns: [{formula: 'dropdown(A1:E1)'},{},{},{},{}]
+			},{
+				columns: [{formula: 'A2'},{},{},{},{}]
+			}]
+		}]),
+		div = $('<div>')
+			.sheet({
+				loader: loader,
+				minSize: {
+					rows: 3,
+					cols: 5
+				}
+			}),
+		jS = div.getSheet(),
+		cell;
+
+	jS.calcAll(true);
+
+	jS.getCell(0,3,1).updateValue();
+	cell = jS.getCell(0,2,1);
+	cell.updateValue();
+	tf.assertEquals(cell.td.innerHTML, '<select class="jSDropdown" id="dropdown0_2_1_0" name="dropdown0_2_1_0"><option value="100">100</option><option value="200">200</option><option value="300">300</option><option value="400">400</option><option value="500">500</option></select>', 'Expected value');
+	jS.kill();
+});

@@ -41,3 +41,17 @@ tf.test('Value Behaviour: Parenthesis', function() {
 	tf.assertEquals(td[0].jSCell.updateValue(), true);
 	div.getSheet().kill();
 });
+
+
+tf.test('Value Behaviour: html non-transference', function() {
+	var div = $('<div>')
+			.append('<table><tr><td data-formula="dropdown(1,2,3,4,5,6,7,8)">8</td><td data-formula="A1"></tr></table>')
+			.sheet(),
+		jS = div.getSheet(),
+		td;
+
+	td = div.find('table.jS td');
+
+	tf.assertEquals(td.eq(1)[0].innerHTML, '8', 'html stayed where it was supposed to');
+	div.getSheet().kill();
+});
