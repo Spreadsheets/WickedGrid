@@ -5731,18 +5731,23 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				calc:function (sheetIndex, refreshCalculations) {
-					sheetIndex = sheetIndex || jS.i;
+					sheetIndex = (sheetIndex === u ? jS.i : sheetIndex);
 					if (
 						jS.readOnly[sheetIndex]
 						|| jS.isChanged(sheetIndex) === false
 						&& !refreshCalculations
-						|| !jS.formulaParser
 					) {
 						return false;
 					} //readonly is no calc at all
 
-					if (s.loader !== null) {
-						s.loader.cycleCells(sheetIndex);
+					var loader = s.loader,
+						cell;
+
+					if (loader !== null) {
+						loader.cycleCells(sheetIndex, function(sheetIndex, rowIndex, columnIndex) {
+							cell = loader.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler);
+							cell.updateValue();
+						});
 					} else {
 						var sheet = jS.spreadsheetToArray(null, sheetIndex);
 						jSE.calc(sheetIndex, sheet);
@@ -5762,7 +5767,7 @@ $.sheet = {
 				calcAll: function(refreshCalculations) {
 					var sheetIndex = 0,
 						max;
-					if (s.loader) {
+					if (s.loader !== null) {
 						max = s.loader.count;
 
 						for(;sheetIndex < max; sheetIndex++) {

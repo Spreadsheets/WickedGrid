@@ -371,7 +371,7 @@
 				do
 				{
 					jsonCell = columns[columnIndex];
-					fn.call(this.jitCell(sheetIndex, rowIndex, columnIndex, jsonCell), sheetIndex, rowIndex, columnIndex);
+					fn.call(jsonCell, sheetIndex, rowIndex + 1, columnIndex + 1);
 				}
 				while (columnIndex-- > 0);
 			}

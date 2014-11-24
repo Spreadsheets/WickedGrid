@@ -138,3 +138,66 @@ tf.test('Loader (json) : Dependency reading with cell type', function() {
 	tf.assertEquals(cell.loadedFrom.cache, '$200.00', 'dependency was tracked correctly in json');
 	div.getSheet().kill();
 });
+
+tf.test('Loader (json) : Calc cell cache', function() {
+	var loader = new Sheet.JSONLoader([{
+			rows: [{
+				columns: [{value: 100},{value:100},{value:100},{value:100},{value:100}]
+			},{
+				columns: [{formula: 'sum(A1:E1)'},{},{},{},{}]
+			}]
+		}]),
+		div = $('<div>')
+			.sheet({
+				loader: loader,
+				minSize: {
+					rows: 1,
+					cols: 1
+				}
+			}),
+		jS = div.getSheet(),
+		cell;
+
+	jS.calc(0, true);
+
+
+	cell = jS.getCell(0,2,1).loadedFrom;
+	tf.assertEquals(cell.cache, 500, 'Expected value');
+	div.getSheet().kill();
+});
+
+tf.test('Loader (json) : Calc All cell cache', function() {
+	var loader = new Sheet.JSONLoader([{
+			rows: [{
+				columns: [{value: 100},{value:100},{value:100},{value:100},{value:100}]
+			},{
+				columns: [{formula: 'sum(A1:E1)'},{},{},{},{}]
+			}]
+		},{
+			rows: [{
+				columns: [{value: 1},{value:1},{value:1},{value:1},{value:1}]
+			},{
+				columns: [{formula: 'sum(A1:E1)'},{},{},{},{}]
+			}]
+		}]),
+		div = $('<div>')
+			.sheet({
+				loader: loader,
+				minSize: {
+					rows: 1,
+					cols: 1
+				}
+			}),
+		jS = div.getSheet(),
+		cell1,
+		cell2;
+
+	jS.calcAll(true);
+
+
+	cell1 = jS.getCell(0,2,1).loadedFrom;
+	cell2 = jS.getCell(1,2,1).loadedFrom;
+	tf.assertEquals(cell1.cache, 500, 'Expected value');
+	tf.assertEquals(cell2.cache, 5, 'Expected value');
+	div.getSheet().kill();
+});
