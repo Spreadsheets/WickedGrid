@@ -84,7 +84,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				!this.needsUpdated
 				&& this.value.cell !== u
 			) {
-				return (this.valueOverride !== u ? this.valueOverride : this.value);
+				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
+				if (this.td !== u && this.td.innerHTML.length < 1) {
+					this.displayValue();
+				}
+				return result;
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
@@ -9010,7 +9014,7 @@ $.sheet = {
 				calcAll: function(refreshCalculations) {
 					var sheetIndex = 0,
 						max;
-					if (s.loader) {
+					if (s.loader !== null) {
 						max = s.loader.count;
 
 						for(;sheetIndex < max; sheetIndex++) {
@@ -13058,7 +13062,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-dropdown';
 			} else if (td !== null) {
-				id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+				id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			select = document.createElement('select');
@@ -13142,7 +13146,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-radio';
 			} else if (td !== null) {
-				id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+				id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			html = document.createElement('span');
@@ -13237,7 +13241,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-checkbox';
 			} else if (td !== null) {
-				id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+				id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			checkbox = document.createElement('input');
@@ -13576,7 +13580,7 @@ var jFN = $.sheet.fn = {
 	THISCOLCELL:function (row) {
 		var jS = this.jS;
 
-		return jS.getCell(this.sheetIndex, row, this.colIndex).updateValue();
+		return jS.getCell(this.sheetIndex, row, this.columnIndex).updateValue();
 	}
 };var key = { /* key objects, makes it easier to develop */
 	BACKSPACE: 			8,

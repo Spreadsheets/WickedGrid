@@ -45,7 +45,11 @@ Sheet.Cell = (function() {
 				!this.needsUpdated
 				&& this.value.cell !== u
 			) {
-				return (this.valueOverride !== u ? this.valueOverride : this.value);
+				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
+				if (this.td !== u && this.td.innerHTML.length < 1) {
+					this.displayValue();
+				}
+				return result;
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
