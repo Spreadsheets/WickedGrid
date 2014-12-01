@@ -1401,7 +1401,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-dropdown';
 			} else if (td !== null) {
-				id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+				id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			select = document.createElement('select');
@@ -1485,7 +1485,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-radio';
 			} else if (td !== null) {
-				id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+				id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			html = document.createElement('span');
@@ -1580,7 +1580,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-checkbox';
 			} else if (td !== null) {
-				id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+				id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			checkbox = document.createElement('input');
@@ -1919,6 +1919,6 @@ var jFN = $.sheet.fn = {
 	THISCOLCELL:function (row) {
 		var jS = this.jS;
 
-		return jS.getCell(this.sheetIndex, row, this.colIndex).updateValue();
+		return jS.getCell(this.sheetIndex, row, this.columnIndex).updateValue();
 	}
 };

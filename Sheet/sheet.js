@@ -1459,6 +1459,7 @@ $.sheet = {
 						tdsY,
 						formula,
 						cellType,
+						hasCellType,
 						uneditable,
 						id;
 
@@ -1484,8 +1485,10 @@ $.sheet = {
 
 					if (formula !== null)
 						jSCell.formula = formula;
-					if (cellType !== null)
+					if (cellType !== null) {
 						jSCell.cellType = cellType;
+						hasCellType = true;
+					}
 					if (uneditable !== null)
 						jSCell.uneditable = uneditable;
 					if (id !== null)
@@ -1511,7 +1514,7 @@ $.sheet = {
 					}
 					jSCell.value.cell = jSCell;
 					jSCell.calcCount = calcCount || 0;
-					jSCell.needsUpdated = jSCell.formula.length > 0;
+					jSCell.needsUpdated = jSCell.formula.length > 0 || hasCellType;
 
 
 
@@ -1700,9 +1703,8 @@ $.sheet = {
 							getWidth = (loader !== null ? function(i, col) { return loader.getWidth(i, col); } : function() { return s.newColumnWidth; }),
 							getHeight = (loader !== null ? function (i, row) { return loader.getHeight(i, row); } : function() { return s.colMargin; }),
 							setupCell = (loader !== null ? loader.setupCell : function (sheetIndex, rowIndex, columnIndex, createCellFn) {
-								var td = document.createElement('td'),
-									cell = createCellFn(td);
-								return cell;
+								var td = document.createElement('td');
+								return new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
 							}),
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
@@ -1759,11 +1761,11 @@ $.sheet = {
 								});
 
 								o.setCreateCellFn(function (row, at, rowParent) {
-									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-										}),
+									var cell = setupCell.call(loader, jS.i, row, at, jS),
 										td = cell.td,
 										spreadsheetRow = spreadsheet[row];
+
+									td.jSCell = cell;
 
 									if (spreadsheetRow.length === 0) {
 										spreadsheetRow[at] = cell;
@@ -1848,9 +1850,7 @@ $.sheet = {
 								});
 
 								o.setCreateCellFn(function (row, at, createdBar) {
-									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-										}),
+									var cell = setupCell.call(loader, jS.i, row, at, jS),
 										td = cell.td,
 										rowParent = tBody.children[row],
 										spreadsheetRow = spreadsheet[row];
@@ -5697,18 +5697,23 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				calc:function (sheetIndex, refreshCalculations) {
-					sheetIndex = sheetIndex || jS.i;
+					sheetIndex = (sheetIndex === u ? jS.i : sheetIndex);
 					if (
 						jS.readOnly[sheetIndex]
 						|| jS.isChanged(sheetIndex) === false
 						&& !refreshCalculations
-						|| !jS.formulaParser
 					) {
 						return false;
 					} //readonly is no calc at all
 
-					if (s.loader !== null) {
-						s.loader.cycleCells(sheetIndex);
+					var loader = s.loader,
+						cell;
+
+					if (loader !== null) {
+						loader.cycleCells(sheetIndex, function(sheetIndex, rowIndex, columnIndex) {
+							cell = loader.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler);
+							cell.updateValue();
+						});
 					} else {
 						var sheet = jS.spreadsheetToArray(null, sheetIndex);
 						jSE.calc(sheetIndex, sheet);
@@ -5728,7 +5733,7 @@ $.sheet = {
 				calcAll: function(refreshCalculations) {
 					var sheetIndex = 0,
 						max;
-					if (s.loader) {
+					if (s.loader !== null) {
 						max = s.loader.count;
 
 						for(;sheetIndex < max; sheetIndex++) {

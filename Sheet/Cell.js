@@ -5,7 +5,10 @@ Sheet.Cell = (function() {
 		if (Constructor.prototype.thaw === null) {
 			Constructor.prototype.thaw = new Thaw([]);
 		}
-		this.td = (td !== undefined ? td : null);
+		if (td !== undefined && td !== null) {
+			this.td = td;
+			td.jSCell = this;
+		}
 		this.dependencies = [];
 		this.formula = '';
 		this.cellType = null;
@@ -47,6 +50,10 @@ Sheet.Cell = (function() {
 				&& this.value.cell !== u
 				&& this.cellType === null
 			) {
+				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
+				if (this.td !== u && this.td.innerHTML.length < 1) {
+					this.displayValue();
+				}
 				if (fn !== u) {
 					fn.call(this, this.value);
 				}
@@ -69,7 +76,8 @@ Sheet.Cell = (function() {
 					this.value = new String(this.value);
 					this.value.cell = this;
 					this.updateDependencies();
-
+					this.needsUpdated = false;
+					
 					if (fn !== u) {
 						fn.call(this, this.value);
 					}
@@ -113,7 +121,7 @@ Sheet.Cell = (function() {
 			if (defer !== u) {
 				defer.updateValue(function(value) {
 					value = value.valueOf();
-
+	
 					switch (typeof(value)) {
 						case 'object':
 							break;
@@ -131,9 +139,10 @@ Sheet.Cell = (function() {
 							value = new String(value);
 							break;
 					}
-					value.cell = cell;
-					cell.updateDependencies();
-
+					value.cell = this;
+					this.updateDependencies();
+					this.needsUpdated = false;
+					
 					if (fn !== u) {
 						fn.call(cell, value);
 					}
@@ -164,8 +173,6 @@ Sheet.Cell = (function() {
 						console.log(parsedFormula);
 
 						cell.thaw.add(function() {
-							cell.needsUpdated = false;
-
 							Sheet.calcStack--;
 
 							if (
@@ -244,19 +251,22 @@ Sheet.Cell = (function() {
 						value.cell = cell;
 					}
 					cell.value = value;
+					cache = cell.displayValue().valueOf();
 				});
 
 				cell.thaw.add(function () {
 					cache = cell.displayValue();
 
 					if (cell.loader !== null) {
-						cell.loader.setCellAttributes(cell.loadedFrom, {
-							'cache': cache,
-							'formula': cell.formula,
-							'value': cell.value + '',
-							'cellType': cell.cellType,
-							'uneditable': cell.uneditable
-						});
+						cell.loader
+							.setCellAttributes(cell.loadedFrom, {
+								'cache': (typeof cache !== 'object' ? cache : null),
+								'formula': cell.formula,
+								'value': cell.value + '',
+								'cellType': cell.cellType,
+								'uneditable': cell.uneditable
+							})
+							.setDependencies(this);
 					}
 
 					cell.needsUpdated = false;
@@ -340,7 +350,7 @@ Sheet.Cell = (function() {
 			}
 
 			//if the td is from a loader, and the td has not yet been created, just return it's values
-			if (td === null) {
+			if (td === u || td === null) {
 				return html;
 			}
 
