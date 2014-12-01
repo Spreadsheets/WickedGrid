@@ -57,7 +57,6 @@ STRING                              [A-Za-z0-9]+
 ")" 								{return ')';}
 ">" 								{return '>';}
 "<" 								{return '<';}
-"NOT"								{return 'NOT';}
 "PI"								{return 'PI';}
 "E"									{return 'E';}
 '"'									{return '"';}
@@ -76,7 +75,7 @@ STRING                              [A-Za-z0-9]+
 
 /* operator associations and precedence (low-top, high- bottom) */
 %left '='
-%left '<=' '>=' '<>' 'NOT' '||'
+%left '<=' '>=' '<>' '||'
 %left '>' '<'
 %left '+' '-'
 %left '*' '/'
@@ -102,6 +101,8 @@ expressions
 expression
     : variableSequence {
         //js
+            
+		    $$ = yy.handler.variable.apply(yy.obj, $1);
 
 			var type = {
 		    	type: 'm',
@@ -289,21 +290,6 @@ expression
         	$$ = ($1) != ($4);
 		*/
     }
-	| expression NOT expression {
-		//js
-
-			var type = {
-				type: 'm',
-				method: 'callFunction',
-				args: ['NOT', [$1, $4]]
-			};
-			$$ = yy.types.length;
-			yy.types.push(type);
-
-		/*php
-        	$$ = $1 != $3;
-		*/
-    }
 	| expression '>' expression {
 	    //js
 	        
@@ -381,6 +367,9 @@ expression
     }
 	| expression '^' expression {
         //js
+            
+            var n1 = yy.handler.number($1),
+                n2 = yy.handler.number($3);
 
             var type = {
             	type: 'm',
@@ -396,6 +385,12 @@ expression
     }
 	| '-' expression {
 		//js
+			
+			var n1 = yy.handler.numberInverted(yy.obj, $2);
+			$$ = n1;
+			if (isNaN($$)) {
+			    $$ = 0;
+			}
 
 			var type = {
 				type: 'm',
@@ -411,6 +406,12 @@ expression
 	}
 	| '+' expression {
 	    //js
+	        
+			var n1 = yy.handler.number(yy.obj, $2);
+			$$ = n1;
+			if (isNaN($$)) {
+			    $$ = 0;
+			}
 
 	        var type = {
 	        	type: 'm',
@@ -652,7 +653,6 @@ number :
 ;
 
 %%
-
 var Formula = function(handler) {
 	var formulaLexer = function () {};
 	formulaLexer.prototype = parser.lexer;
@@ -671,13 +671,6 @@ var Formula = function(handler) {
 					.replace(/  /g, '&nbsp; ');
 			},
 			parseError: function(msg, hash) {
-				this.done = true;
-				var result = new String();
-				result.html = '<pre>' + msg + '</pre>';
-				result.hash = hash;
-				return result;
-			},
-			lexerError: function(msg, hash) {
 				this.done = true;
 				var result = new String();
 				result.html = '<pre>' + msg + '</pre>';
