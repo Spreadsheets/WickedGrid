@@ -101,8 +101,6 @@ expressions
 expression
     : variableSequence {
         //js
-            
-		    $$ = yy.handler.variable.apply(yy.obj, $1);
 
 			var type = {
 		    	type: 'm',

@@ -170,8 +170,6 @@ Sheet.Cell = (function() {
 					Sheet.calcStack++;
 
 					cell.getThread()(formula, function(parsedFormula) {
-						console.log(parsedFormula);
-
 						cell.thaw.add(function() {
 							Sheet.calcStack--;
 
@@ -266,7 +264,7 @@ Sheet.Cell = (function() {
 								'cellType': cell.cellType,
 								'uneditable': cell.uneditable
 							})
-							.setDependencies(this);
+							.setDependencies(cell);
 					}
 
 					cell.needsUpdated = false;

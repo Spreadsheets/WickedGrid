@@ -44,7 +44,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		if (Constructor.prototype.thaw === null) {
 			Constructor.prototype.thaw = new Thaw([]);
 		}
-		this.td = (td !== undefined ? td : null);
+		if (td !== undefined && td !== null) {
+			this.td = td;
+			td.jSCell = this;
+		}
 		this.dependencies = [];
 		this.formula = '';
 		this.cellType = null;
@@ -86,6 +89,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				&& this.value.cell !== u
 				&& this.cellType === null
 			) {
+				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
+				if (this.td !== u && this.td.innerHTML.length < 1) {
+					this.displayValue();
+				}
 				if (fn !== u) {
 					fn.call(this, this.value);
 				}
@@ -108,7 +115,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					this.value = new String(this.value);
 					this.value.cell = this;
 					this.updateDependencies();
-
+					this.needsUpdated = false;
+					
 					if (fn !== u) {
 						fn.call(this, this.value);
 					}
@@ -152,7 +160,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			if (defer !== u) {
 				defer.updateValue(function(value) {
 					value = value.valueOf();
-
+	
 					switch (typeof(value)) {
 						case 'object':
 							break;
@@ -170,9 +178,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							value = new String(value);
 							break;
 					}
-					value.cell = cell;
-					cell.updateDependencies();
-
+					value.cell = this;
+					this.updateDependencies();
+					this.needsUpdated = false;
+					
 					if (fn !== u) {
 						fn.call(cell, value);
 					}
@@ -200,11 +209,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					Sheet.calcStack++;
 
 					cell.getThread()(formula, function(parsedFormula) {
-						console.log(parsedFormula);
-
 						cell.thaw.add(function() {
-							cell.needsUpdated = false;
-
 							Sheet.calcStack--;
 
 							if (
@@ -283,19 +288,22 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						value.cell = cell;
 					}
 					cell.value = value;
+					cache = cell.displayValue().valueOf();
 				});
 
 				cell.thaw.add(function () {
 					cache = cell.displayValue();
 
 					if (cell.loader !== null) {
-						cell.loader.setCellAttributes(cell.loadedFrom, {
-							'cache': cache,
-							'formula': cell.formula,
-							'value': cell.value + '',
-							'cellType': cell.cellType,
-							'uneditable': cell.uneditable
-						});
+						cell.loader
+							.setCellAttributes(cell.loadedFrom, {
+								'cache': (typeof cache !== 'object' ? cache : null),
+								'formula': cell.formula,
+								'value': cell.value + '',
+								'cellType': cell.cellType,
+								'uneditable': cell.uneditable
+							})
+							.setDependencies(cell);
 					}
 
 					cell.needsUpdated = false;
@@ -379,7 +387,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 
 			//if the td is from a loader, and the td has not yet been created, just return it's values
-			if (td === null) {
+			if (td === u || td === null) {
 				return html;
 			}
 
@@ -2246,70 +2254,60 @@ Sheet.StyleUpdater = (function(document) {
 			for (i in metadata) if (metadata.hasOwnProperty(i)) {
 				jsonMetadata[i] = metadata[i];
 			}
+
+			return this;
 		},
-		setupCell: function(sheetIndex, rowIndex, columnIndex, createCellFn) {
+		setupCell: function(sheetIndex, rowIndex, columnIndex, jS) {
 			var td = document.createElement('td'),
-				jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex),
-				cell,
+				cell = this.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler),
+				jsonCell,
 				html;
 
-			if (jsonCell !== null) {
+			if (cell === null) return cell;
+			jsonCell = cell.loadedFrom;
+			if (jsonCell === null) return null;
 
-				if (jsonCell.getCell !== undefined) {
-					cell = jsonCell.getCell();
 
-					if (cell['formula'] !== undefined) {
-						td.setAttribute('data-formula', cell['formula'] || '');
-						if (cell.hasOwnProperty('value') && cell.value !== null) {
-							html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
-							switch (typeof html) {
-								case 'object':
-									if (html.appendChild !== undefined) {
-										td.appendChild(html);
-										break;
-									}
-								case 'string':
-								default:
-									td.innerHTML = html;
-									break;
+			if (cell.hasOwnProperty('formula')) {
+				td.setAttribute('data-formula', cell['formula'] || '');
+				if (cell.hasOwnProperty('value') && cell.value !== null) {
+					html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
+					switch (typeof html) {
+						case 'object':
+							if (html.appendChild !== undefined) {
+								td.appendChild(html);
+								break;
 							}
-						}
-					} else {
-						td.innerHTML = cell['value'];
-					}
-				} else {
-					cell = createCellFn(td);
-					if (jsonCell['formula'] !== undefined) {
-						cell.formula = jsonCell['formula'] || '';
-						td.setAttribute('data-formula', jsonCell['formula'] || '');
-						if (jsonCell['value'] !== undefined) {
-							cell.value = jsonCell['value'];
-						}
-					} else if (jsonCell['value'] !== undefined) {
-						td.innerHTML = cell.value = jsonCell['value'];
+						case 'string':
+						default:
+							td.innerHTML = html;
+							break;
 					}
 				}
+				if (jsonCell.hasOwnProperty('cache')) {
+					td.innerHTML = jsonCell['cache'];
+				}
+			} else if (jsonCell['cellType'] !== undefined) {
+				td.setAttribute('data-celltype', jsonCell['cellType']);
+				cell.cellType = jsonCell['cellType'];
+				if (jsonCell.hasOwnProperty('cache')) {
+					td.innerHTML = jsonCell['cache'];
+				}
+			}
+			else {
+				td.innerHTML = cell['value'];
+			}
 
-				if (cell.loadedFrom === null) {
-					cell.loadedFrom = jsonCell;
-					cell.loader = this;
-				}
 
-				if (jsonCell['class'] !== undefined) td.className = jsonCell['class'];
-				if (jsonCell['style'] !== undefined) td.setAttribute('style', jsonCell['style']);
-				if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan']);
-				if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan']);
-				if (jsonCell['uneditable'] !== undefined) td.setAttribute('data-uneditable', jsonCell['uneditable']);
-				if (jsonCell['cellType'] !== undefined) {
-					td.setAttribute('data-celltype', jsonCell['cellType']);
-					cell.cellType = jsonCell['cellType'];
-				}
-				if (jsonCell['id'] !== undefined) {
-					td.setAttribute('id', jsonCell['id']);
-					cell.id = jsonCell['id'];
-				}
-			} else {
-				cell = createCellFn(td);
+			if (jsonCell['class'] !== undefined) td.className = jsonCell['class'];
+			if (jsonCell['style'] !== undefined) td.setAttribute('style', jsonCell['style']);
+			if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan']);
+			if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan']);
+			if (jsonCell['uneditable'] !== undefined) td.setAttribute('data-uneditable', jsonCell['uneditable']);
+
+			if (jsonCell['id'] !== undefined) {
+				td.setAttribute('id', jsonCell['id']);
+				cell.id = jsonCell['id'];
 			}
 
 			td.jSCell = cell;
@@ -2317,6 +2315,7 @@ Sheet.StyleUpdater = (function(document) {
 			cell.sheetIndex = sheetIndex;
 			cell.rowIndex = rowIndex;
 			cell.columnIndex = columnIndex;
+
 			return cell;
 		},
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
@@ -2343,46 +2342,78 @@ Sheet.StyleUpdater = (function(document) {
 			}
 
 			var jitCell,
+				i,
 				id,
+				max,
 				value,
+				cache,
 				formula,
 				cellType,
 				uneditable,
+				dependency,
+				dependencies,
+				jsonDependency,
 				hasId,
+				hasTd,
 				hasValue,
+				hasCache,
 				hasFormula,
 				hasCellType,
-				hasUneditable;
+				hasUneditable,
+				hasDependencies;
 
 			id = jsonCell['id'];
 			value = jsonCell['value'];
+			cache = jsonCell['cache'];
 			formula = jsonCell['formula'];
 			cellType = jsonCell['cellType'];
 			uneditable = jsonCell['uneditable'];
+			dependencies = jsonCell['dependencies'];
 
 			hasId = (id !== undefined && id !== null);
 			hasValue = (value !== undefined && value !== null);
+			hasCache = (cache !== undefined && cache !== null);
 			hasFormula = (formula !== undefined && formula !== null);
 			hasCellType = (cellType !== undefined && cellType !== null);
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
+			hasDependencies = (dependencies !== undefined && dependencies !== null);
 
 			jitCell = new Sheet.Cell(sheetIndex, null, jS, cellHandler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = jsonCell;
 			jitCell.loader = this;
-			jitCell.needsUpdated = hasFormula;
 
-			if (hasCellType) jitCell.cellType = cellType;
-			if (hasFormula) jitCell.formula = formula;
-			if (hasUneditable) jitCell.uneditable = uneditable;
 			if (hasId) jitCell.id = id;
+
+			if (hasCache) {
+				jitCell.html = cache;
+				jitCell.needsUpdated = false;
+			} else {
+				jitCell.needsUpdated = (hasFormula || hasCellType);
+			}
+
+			if (hasFormula) jitCell.formula = formula;
+			if (hasCellType) jitCell.cellType = cellType;
+			if (hasUneditable) jitCell.uneditable = uneditable;
+
 
 			if (hasValue) {
 				jitCell.value = new String(value);
 			}
 			else {
 				jitCell.value = new String();
+			}
+
+			if (hasDependencies) {
+				max = dependencies.length;
+				for (i = 0; i < max; i++) {
+					jsonDependency = dependencies[i];
+					dependency = this.jitCell(jsonDependency['sheet'], jsonDependency['row'], jsonDependency['column'], jS, cellHandler);
+					if (dependency !== null) {
+						jitCell.dependencies.push(dependency);
+					}
+				}
 			}
 
 			jitCell.value.cell = jitCell;
@@ -2430,12 +2461,14 @@ Sheet.StyleUpdater = (function(document) {
 		getSpreadsheetIndexByTitle: function(title) {
 			var json = this.json,
 				max = this.count,
-				i = 0;
+				i = 0,
+				jsonTitle;
 
 			title = title.toLowerCase();
 
 			for(;i < max; i++) {
-				if (json[i].title.toLowerCase() == title) {
+				jsonTitle = json[i].title;
+				if (jsonTitle !== undefined && jsonTitle !== null && jsonTitle.toLowerCase() == title) {
 					return i;
 				}
 			}
@@ -2463,7 +2496,35 @@ Sheet.StyleUpdater = (function(document) {
 					cell[i] = attributes[i];
 				}
 			}
+
+			return this;
 		},
+
+
+		/**
+		 *
+		 * @param {Sheet.Cell} cell
+		 */
+		setDependencies: function(cell) {
+			var i = 0,
+				loadedFrom = cell.loadedFrom,
+				dependencies = cell.dependencies,
+				dependency,
+				max = dependencies.length,
+				jsonDependencies = loadedFrom.dependencies = [];
+
+			for(;i<max;i++) {
+				dependency = dependencies[i];
+				jsonDependencies.push({
+					sheet: dependency.sheetIndex,
+					row: dependency.rowIndex,
+					column: dependency.columnIndex
+				})
+			}
+
+			return this;
+		},
+
 		cycleCells: function(sheetIndex, fn) {
 			var json = this.json,
 				jsonSpreadsheet,
@@ -2487,12 +2548,13 @@ Sheet.StyleUpdater = (function(document) {
 				do
 				{
 					jsonCell = columns[columnIndex];
-					fn.call(this.jitCell(sheetIndex, rowIndex, columnIndex, jsonCell), sheetIndex, rowIndex, columnIndex);
+					fn.call(jsonCell, sheetIndex, rowIndex + 1, columnIndex + 1);
 				}
 				while (columnIndex-- > 0);
 			}
 			while (rowIndex-- > 0);
 
+			return this;
 		},
 		cycleCellsAll: function(fn) {
 			var json = this.json,
@@ -2505,6 +2567,8 @@ Sheet.StyleUpdater = (function(document) {
 				this.cycleCells(sheetIndex, fn);
 			}
 			while (sheetIndex-- > 0);
+
+			return this;
 		},
 		/**
 		 * Create a table from json
@@ -4730,6 +4794,7 @@ $.sheet = {
 						tdsY,
 						formula,
 						cellType,
+						hasCellType,
 						uneditable,
 						id;
 
@@ -4755,8 +4820,10 @@ $.sheet = {
 
 					if (formula !== null)
 						jSCell.formula = formula;
-					if (cellType !== null)
+					if (cellType !== null) {
 						jSCell.cellType = cellType;
+						hasCellType = true;
+					}
 					if (uneditable !== null)
 						jSCell.uneditable = uneditable;
 					if (id !== null)
@@ -4782,7 +4849,7 @@ $.sheet = {
 					}
 					jSCell.value.cell = jSCell;
 					jSCell.calcCount = calcCount || 0;
-					jSCell.needsUpdated = jSCell.formula.length > 0;
+					jSCell.needsUpdated = jSCell.formula.length > 0 || hasCellType;
 
 
 
@@ -4971,9 +5038,8 @@ $.sheet = {
 							getWidth = (loader !== null ? function(i, col) { return loader.getWidth(i, col); } : function() { return s.newColumnWidth; }),
 							getHeight = (loader !== null ? function (i, row) { return loader.getHeight(i, row); } : function() { return s.colMargin; }),
 							setupCell = (loader !== null ? loader.setupCell : function (sheetIndex, rowIndex, columnIndex, createCellFn) {
-								var td = document.createElement('td'),
-									cell = createCellFn(td);
-								return cell;
+								var td = document.createElement('td');
+								return new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
 							}),
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
@@ -5030,11 +5096,11 @@ $.sheet = {
 								});
 
 								o.setCreateCellFn(function (row, at, rowParent) {
-									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-										}),
+									var cell = setupCell.call(loader, jS.i, row, at, jS),
 										td = cell.td,
 										spreadsheetRow = spreadsheet[row];
+
+									td.jSCell = cell;
 
 									if (spreadsheetRow.length === 0) {
 										spreadsheetRow[at] = cell;
@@ -5119,9 +5185,7 @@ $.sheet = {
 								});
 
 								o.setCreateCellFn(function (row, at, createdBar) {
-									var cell = setupCell.call(loader, jS.i, row, at, function(td) {
-											return td.jSCell = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-										}),
+									var cell = setupCell.call(loader, jS.i, row, at, jS),
 										td = cell.td,
 										rowParent = tBody.children[row],
 										spreadsheetRow = spreadsheet[row];
@@ -8968,18 +9032,23 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				calc:function (sheetIndex, refreshCalculations) {
-					sheetIndex = sheetIndex || jS.i;
+					sheetIndex = (sheetIndex === u ? jS.i : sheetIndex);
 					if (
 						jS.readOnly[sheetIndex]
 						|| jS.isChanged(sheetIndex) === false
 						&& !refreshCalculations
-						|| !jS.formulaParser
 					) {
 						return false;
 					} //readonly is no calc at all
 
-					if (s.loader !== null) {
-						s.loader.cycleCells(sheetIndex);
+					var loader = s.loader,
+						cell;
+
+					if (loader !== null) {
+						loader.cycleCells(sheetIndex, function(sheetIndex, rowIndex, columnIndex) {
+							cell = loader.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler);
+							cell.updateValue();
+						});
 					} else {
 						var sheet = jS.spreadsheetToArray(null, sheetIndex);
 						jSE.calc(sheetIndex, sheet);
@@ -8999,7 +9068,7 @@ $.sheet = {
 				calcAll: function(refreshCalculations) {
 					var sheetIndex = 0,
 						max;
-					if (s.loader) {
+					if (s.loader !== null) {
 						max = s.loader.count;
 
 						for(;sheetIndex < max; sheetIndex++) {
@@ -13053,7 +13122,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-dropdown';
 			} else if (td !== null) {
-				id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+				id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			select = document.createElement('select');
@@ -13137,7 +13206,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-radio';
 			} else if (td !== null) {
-				id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+				id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			html = document.createElement('span');
@@ -13232,7 +13301,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-checkbox';
 			} else if (td !== null) {
-				id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.colIndex + '_' + jS.I;
+				id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			checkbox = document.createElement('input');
@@ -13571,7 +13640,7 @@ var jFN = $.sheet.fn = {
 	THISCOLCELL:function (row) {
 		var jS = this.jS;
 
-		return jS.getCell(this.sheetIndex, row, this.colIndex).updateValue();
+		return jS.getCell(this.sheetIndex, row, this.columnIndex).updateValue();
 	}
 };var key = { /* key objects, makes it easier to develop */
 	BACKSPACE: 			8,
@@ -14224,12 +14293,12 @@ if (!Array.prototype.indexOf) {
   }
 */
 var parser = (function(){
-var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,5],$V1=[1,6],$V2=[1,8],$V3=[1,9],$V4=[1,10],$V5=[1,13],$V6=[1,11],$V7=[1,12],$V8=[1,14],$V9=[1,15],$Va=[1,20],$Vb=[1,18],$Vc=[1,21],$Vd=[1,22],$Ve=[1,17],$Vf=[1,24],$Vg=[1,25],$Vh=[1,26],$Vi=[1,27],$Vj=[1,28],$Vk=[1,29],$Vl=[1,30],$Vm=[1,31],$Vn=[1,32],$Vo=[1,33],$Vp=[4,13,14,15,17,18,19,20,21,22,23,24,36,37],$Vq=[1,36],$Vr=[1,37],$Vs=[1,38],$Vt=[4,13,14,15,17,18,19,20,21,22,23,24,36,37,39],$Vu=[4,13,14,15,17,18,19,20,21,22,23,24,36,37,40],$Vv=[4,13,14,15,17,18,19,20,21,22,23,24,30,36,37],$Vw=[4,14,15,17,18,19,20,21,36,37],$Vx=[1,73],$Vy=[4,14,17,18,19,20,36,37],$Vz=[4,14,15,17,18,19,20,21,22,23,36,37],$VA=[17,36,37];
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[1,5],$V1=[1,6],$V2=[1,8],$V3=[1,9],$V4=[1,10],$V5=[1,13],$V6=[1,11],$V7=[1,12],$V8=[1,14],$V9=[1,15],$Va=[1,20],$Vb=[1,18],$Vc=[1,21],$Vd=[1,22],$Ve=[1,17],$Vf=[1,24],$Vg=[1,25],$Vh=[1,26],$Vi=[1,27],$Vj=[1,28],$Vk=[1,29],$Vl=[1,30],$Vm=[1,31],$Vn=[1,32],$Vo=[4,13,14,15,17,18,19,20,21,22,23,35,36],$Vp=[1,35],$Vq=[1,36],$Vr=[1,37],$Vs=[4,13,14,15,17,18,19,20,21,22,23,35,36,38],$Vt=[4,13,14,15,17,18,19,20,21,22,23,35,36,39],$Vu=[4,13,14,15,17,18,19,20,21,22,23,29,35,36],$Vv=[4,14,15,17,18,19,20,35,36],$Vw=[1,71],$Vx=[4,14,17,18,19,35,36],$Vy=[4,14,15,17,18,19,20,21,22,35,36],$Vz=[17,35,36];
 var parser = {trace: function trace() { },
 yy: {},
-symbols_: {"error":2,"expressions":3,"EOF":4,"expression":5,"variableSequence":6,"TIME_AMPM":7,"TIME_24":8,"number":9,"STRING":10,"ESCAPED_STRING":11,"LETTERS":12,"&":13,"=":14,"+":15,"(":16,")":17,"<":18,">":19,"NOT":20,"-":21,"*":22,"/":23,"^":24,"E":25,"FUNCTION":26,"expseq":27,"cellRange":28,"cell":29,":":30,"SHEET":31,"!":32,"NUMBER":33,"$":34,"REF":35,";":36,",":37,"VARIABLE":38,"DECIMAL":39,"%":40,"$accept":0,"$end":1},
-terminals_: {2:"error",4:"EOF",7:"TIME_AMPM",8:"TIME_24",10:"STRING",11:"ESCAPED_STRING",12:"LETTERS",13:"&",14:"=",15:"+",16:"(",17:")",18:"<",19:">",20:"NOT",21:"-",22:"*",23:"/",24:"^",25:"E",26:"FUNCTION",30:":",31:"SHEET",32:"!",33:"NUMBER",34:"$",35:"REF",36:";",37:",",38:"VARIABLE",39:"DECIMAL",40:"%"},
-productions_: [0,[3,1],[3,2],[5,1],[5,1],[5,1],[5,1],[5,1],[5,1],[5,1],[5,3],[5,3],[5,3],[5,3],[5,4],[5,4],[5,4],[5,3],[5,3],[5,3],[5,3],[5,3],[5,3],[5,3],[5,2],[5,2],[5,1],[5,3],[5,4],[5,1],[28,1],[28,3],[28,3],[28,5],[29,2],[29,3],[29,3],[29,4],[29,1],[29,2],[29,2],[29,2],[29,3],[29,3],[29,3],[29,3],[29,3],[29,3],[29,4],[29,4],[29,4],[27,1],[27,2],[27,2],[27,3],[27,3],[6,1],[6,3],[9,1],[9,3],[9,2]],
+symbols_: {"error":2,"expressions":3,"EOF":4,"expression":5,"variableSequence":6,"TIME_AMPM":7,"TIME_24":8,"number":9,"STRING":10,"ESCAPED_STRING":11,"LETTERS":12,"&":13,"=":14,"+":15,"(":16,")":17,"<":18,">":19,"-":20,"*":21,"/":22,"^":23,"E":24,"FUNCTION":25,"expseq":26,"cellRange":27,"cell":28,":":29,"SHEET":30,"!":31,"NUMBER":32,"$":33,"REF":34,";":35,",":36,"VARIABLE":37,"DECIMAL":38,"%":39,"$accept":0,"$end":1},
+terminals_: {2:"error",4:"EOF",7:"TIME_AMPM",8:"TIME_24",10:"STRING",11:"ESCAPED_STRING",12:"LETTERS",13:"&",14:"=",15:"+",16:"(",17:")",18:"<",19:">",20:"-",21:"*",22:"/",23:"^",24:"E",25:"FUNCTION",29:":",30:"SHEET",31:"!",32:"NUMBER",33:"$",34:"REF",35:";",36:",",37:"VARIABLE",38:"DECIMAL",39:"%"},
+productions_: [0,[3,1],[3,2],[5,1],[5,1],[5,1],[5,1],[5,1],[5,1],[5,1],[5,3],[5,3],[5,3],[5,3],[5,4],[5,4],[5,4],[5,3],[5,3],[5,3],[5,3],[5,3],[5,3],[5,2],[5,2],[5,1],[5,3],[5,4],[5,1],[27,1],[27,3],[27,3],[27,5],[28,2],[28,3],[28,3],[28,4],[28,1],[28,2],[28,2],[28,2],[28,3],[28,3],[28,3],[28,3],[28,3],[28,3],[28,4],[28,4],[28,4],[26,1],[26,2],[26,2],[26,3],[26,3],[6,1],[6,3],[9,1],[9,3],[9,2]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
@@ -14466,23 +14535,6 @@ case 16:
 break;
 case 17:
 
-		//js
-
-			var type = {
-				type: 'm',
-				method: 'callFunction',
-				args: ['NOT', [$$[$0-2], $$[$01]]]
-			};
-			this.$ = yy.types.length;
-			yy.types.push(type);
-
-		/*php
-        	this.$ = $$[$0-2] != $$[$0];
-		*/
-    
-break;
-case 18:
-
 	    //js
 	        
 			var type = {
@@ -14498,7 +14550,7 @@ case 18:
         */
     
 break;
-case 19:
+case 18:
 
         //js
             
@@ -14515,7 +14567,7 @@ case 19:
         */
     
 break;
-case 20:
+case 19:
 
         //js
             
@@ -14532,7 +14584,7 @@ case 20:
         */
     
 break;
-case 21:
+case 20:
 
 	    //js
 	        
@@ -14549,7 +14601,7 @@ case 21:
         */
     
 break;
-case 22:
+case 21:
 
 	    //js
 	        
@@ -14566,9 +14618,12 @@ case 22:
         */
     
 break;
-case 23:
+case 22:
 
         //js
+            
+            var n1 = yy.handler.number($$[$0-2]),
+                n2 = yy.handler.number($$[$0]);
 
             var type = {
             	type: 'm',
@@ -14583,9 +14638,15 @@ case 23:
         */
     
 break;
-case 24:
+case 23:
 
 		//js
+			
+			var n1 = yy.handler.numberInverted(yy.obj, $$[$0]);
+			this.$ = n1;
+			if (isNaN(this.$)) {
+			    this.$ = 0;
+			}
 
 			var type = {
 				type: 'm',
@@ -14600,9 +14661,15 @@ case 24:
         */
 	
 break;
-case 25:
+case 24:
 
 	    //js
+	        
+			var n1 = yy.handler.number(yy.obj, $$[$0]);
+			this.$ = n1;
+			if (isNaN(this.$)) {
+			    this.$ = 0;
+			}
 
 	        var type = {
 	        	type: 'm',
@@ -14617,10 +14684,10 @@ case 25:
         */
 	
 break;
-case 26:
+case 25:
 /*this.$ = Math.E;*/;
 break;
-case 27:
+case 26:
 
 	    //js
 	        
@@ -14637,7 +14704,7 @@ case 27:
         */
     
 break;
-case 28:
+case 27:
 
 	    //js
 	        
@@ -14654,7 +14721,7 @@ case 28:
         */
     
 break;
-case 30:
+case 29:
 
 	    //js
 	        
@@ -14671,7 +14738,7 @@ case 30:
         */
     
 break;
-case 31:
+case 30:
 
 	    //js
 
@@ -14688,7 +14755,7 @@ case 31:
         */
     
 break;
-case 32:
+case 31:
 
 	    //js
 			var type = {
@@ -14704,7 +14771,7 @@ case 32:
         */
     
 break;
-case 33:
+case 32:
 
 	    //js
             var type = {
@@ -14720,7 +14787,7 @@ case 33:
         */
     
 break;
-case 34:
+case 33:
 
 		//js
 			var type = {
@@ -14732,7 +14799,7 @@ case 34:
 			yy.types.push(type);
 	
 break;
-case 35:
+case 34:
 
 		//js
             var type = {
@@ -14744,7 +14811,7 @@ case 35:
             yy.types.push(type);
 	
 break;
-case 36: case 37:
+case 35: case 36:
 
         //js
             var type = {
@@ -14756,10 +14823,10 @@ case 36: case 37:
             yy.types.push(type);
     
 break;
-case 38: case 39: case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47: case 48: case 49: case 50:
+case 37: case 38: case 39: case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47: case 48: case 49:
 return '#REF!';
 break;
-case 51:
+case 50:
 
 	    //js
             this.$ = [$$[$0]];
@@ -14769,7 +14836,7 @@ case 51:
         */
     
 break;
-case 54:
+case 53:
 
 	    //js
 	        $$[$0-2].push($$[$0]);
@@ -14781,7 +14848,7 @@ case 54:
         */
     
 break;
-case 55:
+case 54:
 
  	    //js
 	        $$[$0-2].push($$[$0]);
@@ -14793,12 +14860,12 @@ case 55:
         */
     
 break;
-case 56:
+case 55:
 
         this.$ = [$$[$0]];
     
 break;
-case 57:
+case 56:
 
         //js
             this.$ = ($.isArray($$[$0-2]) ? $$[$0-2] : [$$[$0-2]]);
@@ -14810,12 +14877,12 @@ case 57:
         */
     
 break;
-case 58:
+case 57:
 
         this.$ = $$[$0];
     
 break;
-case 59:
+case 58:
 
         //js
             this.$ = ($$[$0-2] + '.' + $$[$0]) * 1;
@@ -14825,14 +14892,14 @@ case 59:
         */
     
 break;
-case 60:
+case 59:
 
         this.$ = $$[$0-1] * 0.01;
     
 break;
 }
 },
-table: [{3:1,4:[1,2],5:3,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{1:[3]},{1:[2,1]},{4:[1,23],13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo},o($Vp,[2,3],{39:[1,34]}),o($Vp,[2,4]),o($Vp,[2,5]),o($Vp,[2,6],{40:[1,35]}),o($Vp,[2,7]),o($Vp,[2,8]),o($Vp,[2,9],{33:$Vq,34:$Vr,35:$Vs}),{5:39,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:40,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:41,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},o($Vp,[2,26]),{16:[1,42]},o($Vp,[2,29]),o($Vt,[2,56]),o($Vu,[2,58],{39:[1,43]}),o($Vp,[2,30],{30:[1,44]}),{32:[1,45]},{12:[1,46],35:[1,47]},o($Vv,[2,38],{33:[1,48],34:[1,50],35:[1,49]}),{1:[2,2]},{5:51,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:52,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:53,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:56,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,14:[1,54],15:$V5,16:$V6,19:[1,55],21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:58,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,14:[1,57],15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:59,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:60,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:61,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:62,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:63,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{38:[1,64]},o($Vu,[2,60]),o($Vv,[2,34]),{33:[1,65],35:[1,66]},o($Vv,[2,40]),{13:$Vf,14:$Vg,15:$Vh,17:[1,67],18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo},o($Vw,[2,24],{13:$Vf,22:$Vm,23:$Vn,24:$Vo}),o($Vw,[2,25],{13:$Vf,22:$Vm,23:$Vn,24:$Vo}),{5:70,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,17:[1,68],21:$V7,25:$V8,26:$V9,27:69,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{33:[1,71]},{12:$Vx,29:72,34:$Vc,35:$Vd},{12:$Vx,29:74,34:$Vc,35:$Vd},{33:[1,75],34:[1,76],35:[1,77]},{33:[1,78],34:[1,80],35:[1,79]},o($Vv,[2,39]),o($Vv,[2,41]),{33:[1,81],35:[1,82]},o([4,17,36,37],[2,10],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o([4,14,17,36,37],[2,11],{13:$Vf,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vw,[2,12],{13:$Vf,22:$Vm,23:$Vn,24:$Vo}),{5:83,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},{5:84,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},o($Vy,[2,19],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),{5:85,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,28:16,29:19,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve},o($Vy,[2,18],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o([4,14,17,20,36,37],[2,17],{13:$Vf,15:$Vh,18:$Vi,19:$Vj,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vw,[2,20],{13:$Vf,22:$Vm,23:$Vn,24:$Vo}),o($Vz,[2,21],{13:$Vf,24:$Vo}),o($Vz,[2,22],{13:$Vf,24:$Vo}),o([4,14,15,17,18,19,20,21,22,23,24,36,37],[2,23],{13:$Vf}),o($Vt,[2,57]),o($Vv,[2,36]),o($Vv,[2,46]),o($Vp,[2,13]),o($Vp,[2,27]),{17:[1,86],36:[1,87],37:[1,88]},o($VA,[2,51],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vu,[2,59]),o($Vp,[2,31]),{33:$Vq,34:$Vr,35:$Vs},o($Vp,[2,32],{30:[1,89]}),o($Vv,[2,35]),{33:[1,90]},o($Vv,[2,43]),o($Vv,[2,42]),o($Vv,[2,44]),{33:[1,91],35:[1,92]},o($Vv,[2,45]),o($Vv,[2,47]),o($Vy,[2,14],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vy,[2,16],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vy,[2,15],{13:$Vf,15:$Vh,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vp,[2,28]),o($VA,[2,52],{6:4,9:7,28:16,29:19,5:93,7:$V0,8:$V1,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve}),o($VA,[2,53],{6:4,9:7,28:16,29:19,5:94,7:$V0,8:$V1,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,21:$V7,25:$V8,26:$V9,31:$Va,33:$Vb,34:$Vc,35:$Vd,38:$Ve}),{12:$Vx,29:95,34:$Vc,35:$Vd},o($Vv,[2,37]),o($Vv,[2,48]),o($Vv,[2,50]),o($VA,[2,54],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($VA,[2,55],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn,24:$Vo}),o($Vp,[2,33])],
+table: [{3:1,4:[1,2],5:3,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{1:[3]},{1:[2,1]},{4:[1,23],13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn},o($Vo,[2,3],{38:[1,33]}),o($Vo,[2,4]),o($Vo,[2,5]),o($Vo,[2,6],{39:[1,34]}),o($Vo,[2,7]),o($Vo,[2,8]),o($Vo,[2,9],{32:$Vp,33:$Vq,34:$Vr}),{5:38,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:39,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:40,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},o($Vo,[2,25]),{16:[1,41]},o($Vo,[2,28]),o($Vs,[2,55]),o($Vt,[2,57],{38:[1,42]}),o($Vo,[2,29],{29:[1,43]}),{31:[1,44]},{12:[1,45],34:[1,46]},o($Vu,[2,37],{32:[1,47],33:[1,49],34:[1,48]}),{1:[2,2]},{5:50,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:51,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:52,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:55,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,14:[1,53],15:$V5,16:$V6,19:[1,54],20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:57,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,14:[1,56],15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:58,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:59,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:60,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:61,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{37:[1,62]},o($Vt,[2,59]),o($Vu,[2,33]),{32:[1,63],34:[1,64]},o($Vu,[2,39]),{13:$Vf,14:$Vg,15:$Vh,17:[1,65],18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn},o($Vv,[2,23],{13:$Vf,21:$Vl,22:$Vm,23:$Vn}),o($Vv,[2,24],{13:$Vf,21:$Vl,22:$Vm,23:$Vn}),{5:68,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,17:[1,66],20:$V7,24:$V8,25:$V9,26:67,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{32:[1,69]},{12:$Vw,28:70,33:$Vc,34:$Vd},{12:$Vw,28:72,33:$Vc,34:$Vd},{32:[1,73],33:[1,74],34:[1,75]},{32:[1,76],33:[1,78],34:[1,77]},o($Vu,[2,38]),o($Vu,[2,40]),{32:[1,79],34:[1,80]},o([4,17,35,36],[2,10],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),o([4,14,17,35,36],[2,11],{13:$Vf,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),o($Vv,[2,12],{13:$Vf,21:$Vl,22:$Vm,23:$Vn}),{5:81,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},{5:82,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},o($Vx,[2,18],{13:$Vf,15:$Vh,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),{5:83,6:4,7:$V0,8:$V1,9:7,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,27:16,28:19,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve},o($Vx,[2,17],{13:$Vf,15:$Vh,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),o($Vv,[2,19],{13:$Vf,21:$Vl,22:$Vm,23:$Vn}),o($Vy,[2,20],{13:$Vf,23:$Vn}),o($Vy,[2,21],{13:$Vf,23:$Vn}),o([4,14,15,17,18,19,20,21,22,23,35,36],[2,22],{13:$Vf}),o($Vs,[2,56]),o($Vu,[2,35]),o($Vu,[2,45]),o($Vo,[2,13]),o($Vo,[2,26]),{17:[1,84],35:[1,85],36:[1,86]},o($Vz,[2,50],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),o($Vt,[2,58]),o($Vo,[2,30]),{32:$Vp,33:$Vq,34:$Vr},o($Vo,[2,31],{29:[1,87]}),o($Vu,[2,34]),{32:[1,88]},o($Vu,[2,42]),o($Vu,[2,41]),o($Vu,[2,43]),{32:[1,89],34:[1,90]},o($Vu,[2,44]),o($Vu,[2,46]),o($Vx,[2,14],{13:$Vf,15:$Vh,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),o($Vx,[2,16],{13:$Vf,15:$Vh,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),o($Vx,[2,15],{13:$Vf,15:$Vh,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),o($Vo,[2,27]),o($Vz,[2,51],{6:4,9:7,27:16,28:19,5:91,7:$V0,8:$V1,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve}),o($Vz,[2,52],{6:4,9:7,27:16,28:19,5:92,7:$V0,8:$V1,10:$V2,11:$V3,12:$V4,15:$V5,16:$V6,20:$V7,24:$V8,25:$V9,30:$Va,32:$Vb,33:$Vc,34:$Vd,37:$Ve}),{12:$Vw,28:93,33:$Vc,34:$Vd},o($Vu,[2,36]),o($Vu,[2,47]),o($Vu,[2,49]),o($Vz,[2,53],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),o($Vz,[2,54],{13:$Vf,14:$Vg,15:$Vh,18:$Vi,19:$Vj,20:$Vk,21:$Vl,22:$Vm,23:$Vn}),o($Vo,[2,32])],
 defaultActions: {2:[2,1],23:[2,2]},
 parseError: function parseError(str, hash) {
     if (hash.recoverable) {
@@ -15080,7 +15147,6 @@ _handle_error:
     return true;
 }};
 
-
 var Formula = function(handler) {
 	var formulaLexer = function () {};
 	formulaLexer.prototype = parser.lexer;
@@ -15099,13 +15165,6 @@ var Formula = function(handler) {
 					.replace(/  /g, '&nbsp; ');
 			},
 			parseError: function(msg, hash) {
-				this.done = true;
-				var result = new String();
-				result.html = '<pre>' + msg + '</pre>';
-				result.hash = hash;
-				return result;
-			},
-			lexerError: function(msg, hash) {
 				this.done = true;
 				var result = new String();
 				result.html = '<pre>' + msg + '</pre>';
@@ -15249,14 +15308,8 @@ pastInput:function () {
 
 // displays upcoming input, i.e. for error messages
 upcomingInput:function () {
-        if (!this.done) {
-            var next = this.match;
-            if (next.length < 20) {
-                next += this._input.toString().substr(0, 20 - next.length);
-            }
-            return (next.substr(0, 20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
-        }
-        return '';
+        var next = this._input.input.substr(this._input.position, this._input.input.length - 1);
+        return (next.substr(0, 20) + (next.length > 20 ? '...' : '')).replace(/\n/g, "");
     },
 
 // displays the character position where the lexing error occurred, i.e. for error messages
@@ -15453,24 +15506,24 @@ var YYSTATE=YY_START;
 switch($avoiding_name_collisions) {
 case 0:/* skip whitespace */
 break;
-case 1:return 26;
+case 1:return 25;
 break;
 case 2:return 7;
 break;
 case 3:return 8;
 break;
 case 4:
-	return 31;
+	return 30;
 
 break;
 case 5:
     //js
         yy_.yytext = yy_.yytext.substring(1, yy_.yytext.length - 1);
-        return 31;
+        return 30;
 
     /*php
         $yy_.yytext = substr($yy_.yytext, 1, -1);
-        return 31;
+        return 30;
     */
 
 break;
@@ -15484,35 +15537,35 @@ case 9:return 11;
 break;
 case 10:return 12;
 break;
-case 11:return 38;
+case 11:return 37;
 break;
-case 12:return 38;
+case 12:return 37;
 break;
-case 13:return 33;
+case 13:return 32;
 break;
-case 14:return 34;
+case 14:return 33;
 break;
 case 15:return 13;
 break;
 case 16:return ' ';
 break;
-case 17:return 39;
+case 17:return 38;
 break;
-case 18:return 30;
+case 18:return 29;
 break;
-case 19:return 36;
+case 19:return 35;
 break;
-case 20:return 37;
+case 20:return 36;
 break;
-case 21:return 22;
+case 21:return 21;
 break;
-case 22:return 23;
+case 22:return 22;
 break;
-case 23:return 21;
+case 23:return 20;
 break;
 case 24:return 15;
 break;
-case 25:return 24;
+case 25:return 23;
 break;
 case 26:return 16;
 break;
@@ -15522,36 +15575,34 @@ case 28:return 19;
 break;
 case 29:return 18;
 break;
-case 30:return 20;
+case 30:return 'PI';
 break;
-case 31:return 'PI';
+case 31:return 24;
 break;
-case 32:return 25;
+case 32:return '"';
 break;
-case 33:return '"';
+case 33:return "'";
 break;
-case 34:return "'";
+case 34:return '\"';
 break;
-case 35:return '\"';
+case 35:return "\'";
 break;
-case 36:return "\'";
+case 36:return "!";
 break;
-case 37:return "!";
+case 37:return 14;
 break;
-case 38:return 14;
+case 38:return 39;
 break;
-case 39:return 40;
+case 39:return 34;
 break;
-case 40:return 35;
+case 40:return '#';
 break;
-case 41:return '#';
-break;
-case 42:return 4;
+case 41:return 4;
 break;
 }
 },
-rules: [/^(?:\s+)/,/^(?:([A-Za-z]{1,})([A-Za-z_0-9]+)?(?=[(]))/,/^(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/,/^(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/,/^(?:(([A-Za-z0-9]+))(?=[!]))/,/^(?:((['](\\[']|[^'])*['])|(["](\\["]|[^"])*["]))(?=[!]))/,/^(?:((['](\\[']|[^'])*['])))/,/^(?:((["](\\["]|[^"])*["])))/,/^(?:(([\\]['].+?[\\]['])))/,/^(?:(([\\]["].+?[\\]["])))/,/^(?:[A-Z]+(?=[0-9$]))/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/,/^(?:[A-Za-z_]+)/,/^(?:[0-9]+)/,/^(?:\$)/,/^(?:&)/,/^(?: )/,/^(?:[.])/,/^(?::)/,/^(?:;)/,/^(?:,)/,/^(?:\*)/,/^(?:\/)/,/^(?:-)/,/^(?:\+)/,/^(?:\^)/,/^(?:\()/,/^(?:\))/,/^(?:>)/,/^(?:<)/,/^(?:NOT\b)/,/^(?:PI\b)/,/^(?:E\b)/,/^(?:")/,/^(?:')/,/^(?:\\")/,/^(?:\\')/,/^(?:!)/,/^(?:=)/,/^(?:%)/,/^(?:#REF!)/,/^(?:[#])/,/^(?:$)/],
-conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42],"inclusive":true}}
+rules: [/^(?:\s+)/,/^(?:([A-Za-z]{1,})([A-Za-z_0-9]+)?(?=[(]))/,/^(?:([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm))/,/^(?:([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?)/,/^(?:(([A-Za-z0-9]+))(?=[!]))/,/^(?:((['](\\[']|[^'])*['])|(["](\\["]|[^"])*["]))(?=[!]))/,/^(?:((['](\\[']|[^'])*['])))/,/^(?:((["](\\["]|[^"])*["])))/,/^(?:(([\\]['].+?[\\]['])))/,/^(?:(([\\]["].+?[\\]["])))/,/^(?:[A-Z]+(?=[0-9$]))/,/^(?:[A-Za-z]{1,}[A-Za-z_0-9]+)/,/^(?:[A-Za-z_]+)/,/^(?:[0-9]+)/,/^(?:\$)/,/^(?:&)/,/^(?: )/,/^(?:[.])/,/^(?::)/,/^(?:;)/,/^(?:,)/,/^(?:\*)/,/^(?:\/)/,/^(?:-)/,/^(?:\+)/,/^(?:\^)/,/^(?:\()/,/^(?:\))/,/^(?:>)/,/^(?:<)/,/^(?:PI\b)/,/^(?:E\b)/,/^(?:")/,/^(?:')/,/^(?:\\")/,/^(?:\\')/,/^(?:!)/,/^(?:=)/,/^(?:%)/,/^(?:#REF!)/,/^(?:[#])/,/^(?:$)/],
+conditions: {"INITIAL":{"rules":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41],"inclusive":true}}
 });
 return lexer;
 })();
