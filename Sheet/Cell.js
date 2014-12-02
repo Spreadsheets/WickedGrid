@@ -170,7 +170,7 @@ Sheet.Cell = (function() {
 			) {
 				value = cellTypeHandler(this, value);
 			} else {
-				switch (typeof value) {
+				switch (typeof value.valueOf()) {
 					case 'string':
 						fn = this.startOperators[value.charAt(0)];
 						if (fn !== u) {

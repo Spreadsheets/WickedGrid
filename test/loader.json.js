@@ -245,3 +245,25 @@ tf.test('Loader (json) : html non transference', function() {
 	tf.assertEquals(select.children[4].innerHTML, '500', 'Expected child html');
 	jS.kill();
 });
+
+tf.test('Cell Operator: Percent Addition', function() {
+	var loader = new Sheet.JSONLoader([{
+			rows: [{
+				columns: [{formula: 'Sheet1!B1 + 1'},{value: '60 %'}]
+			}]
+		}]),
+		div = $('<div>')
+			.sheet({
+				loader: loader
+			}),
+		jS = div.getSheet(),
+		td;
+
+	jS.getCell(0,1,1).updateValue();
+
+	td = div.find('table.jS td').first();
+
+	tf.assertEquals(td.html(), '1.6', 'html is properly displayed');
+	tf.assertEquals(td[0].jSCell.value.valueOf(), 1.6, 'value remains a number');
+	div.getSheet().kill();
+});
