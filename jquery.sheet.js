@@ -87,7 +87,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
-				&& this.cellType === null
+				&& this.defer === u
 			) {
 				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
 				if (this.td !== u && this.td.innerHTML.length < 1) {
@@ -210,6 +210,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 					cell.getThread()(formula, function(parsedFormula) {
 						cell.thaw.add(function() {
+							if (value.cell !== u && value.cell !== this) {
+								value = value.valueOf();
+							}
+							
 							Sheet.calcStack--;
 
 							if (
@@ -237,7 +241,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				});
 			} else {
 				this.thaw.add(function() {
-					switch (typeof value) {
+					switch (typeof value.valueOf()) {
 						case 'string':
 							operatorFn = cell.startOperators[value.charAt(0)];
 							if (operatorFn !== u) {
@@ -2390,7 +2394,7 @@ Sheet.StyleUpdater = (function(document) {
 				jitCell.html = cache;
 				jitCell.needsUpdated = false;
 			} else {
-				jitCell.needsUpdated = (hasFormula || hasCellType);
+				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
 			}
 
 			if (hasFormula) jitCell.formula = formula;
@@ -6463,7 +6467,7 @@ $.sheet = {
 						firstValue = val;
 
 					//at this point we need to check if there is even a cell selected, if not, we can't save the information, so clear formula editor
-					if (loc.row == 0 && loc.col == 0) {
+					if ((loc.row == 0 && loc.col == 0) || val.length === 0) {
 						return false;
 					}
 
@@ -7673,6 +7677,8 @@ $.sheet = {
 					}
 
 					th = tr.children[0];
+
+					if (th.label === u) return;
 
 					text = th.label + '';
 
@@ -13616,6 +13622,68 @@ var jFN = $.sheet.fn = {
 		}
 
 		return result;
+	},
+	/* Gets the adjucent value for the reference array. Ip- reference array*/
+	TRANSPOSE: function (range) {
+		var i = 0,
+			jS = this.jS,
+			sheetIndex = this.sheetIndex,
+			firstValue = range[0],
+			firstCell = firstValue.cell,
+			lastValue = range[range.length - 1],
+			lastCell = lastValue.cell,
+			startRow = firstCell.rowIndex,
+			startColumn = firstCell.columnIndex,
+			rowIndex,
+			columnIndex,
+			cell,
+			cells = [],
+			cellValue,
+			transposedCell,
+			transposedCells = [],
+			value,
+			max = range.length,
+			error,
+			isOverwrite = false;
+
+		for(;i<max;i++) {
+			value = range[i];
+			cell = value.cell;
+			rowIndex = this.rowIndex + (cell.columnIndex - startColumn);
+			columnIndex = this.columnIndex + (cell.rowIndex - startRow);
+
+			transposedCell = jS.getCell(this.sheetIndex, rowIndex, columnIndex);
+			if (transposedCell !== null && transposedCell !== this) {
+				if (transposedCell.value != '') {
+					isOverwrite = true;
+				}
+				transposedCells.push(transposedCell);
+				cells.push(cell);
+			}
+		}
+
+		if (isOverwrite) {
+			error = new String('');
+			error.html = '#REF!';
+			return error;
+		}
+
+		i = 0;
+		max = transposedCells.length;
+		for(;i<max;i++) {
+			transposedCell = transposedCells[i];
+			if (transposedCell !== this) {
+				cell = cells[i];
+				transposedCell.defer = cell;
+				transposedCell.setNeedsUpdated();
+				cellValue = transposedCell.updateValue();
+				transposedCell.addDependency(this);
+				transposedCell.td.innerHTML = cellValue;
+
+			}
+		}
+
+		return firstValue;
 	},
 	/**
 	 * cell function
