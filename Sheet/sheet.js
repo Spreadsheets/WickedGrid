@@ -4373,6 +4373,8 @@ $.sheet = {
 
 					th = tr.children[0];
 
+					if (th.label === u) return;
+
 					text = th.label + '';
 
 					newWidth = window.defaultCharSize.width * text.length;

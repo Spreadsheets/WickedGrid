@@ -11,8 +11,8 @@ original7\toriginal8\toriginal9'))
 
 	td = div.find('table.jS td:contains("original1")');
 
-	tf.assert(test.assertEquals(td.length, 0), 'correct row deleted');
-	tf.assert(test.assertEquals(div.find('table.jS td').length, 2 * 3), 'cell count is correct');
+	tf.assertEquals(td.length, 0, 'correct row deleted');
+	tf.assertEquals(div.find('table.jS td').length, 2 * 3, 'cell count is correct');
 	div.getSheet().kill();
 });
 
@@ -29,8 +29,8 @@ original7\toriginal8\toriginal9'))
 
 	td = div.find('table.jS td:contains("original4")');
 
-	tf.assert(test.assertEquals(td.length, 0), 'correct row deleted');
-	tf.assert(test.assertEquals(div.find('table.jS td').length, 2 * 3), 'cell count is correct');
+	tf.assertEquals(td.length, 0, 'correct row deleted');
+	tf.assertEquals(div.find('table.jS td').length, 2 * 3, 'cell count is correct');
 	div.getSheet().kill();
 });
 
@@ -47,8 +47,8 @@ original7\toriginal8\toriginal9'))
 
 	td = div.find('table.jS td:contains("original9")');
 
-	tf.assert(test.assertEquals(td.length, 0), 'correct row deleted');
-	tf.assert(test.assertEquals(div.find('table.jS td').length, 2 * 3), 'cell count is correct');
+	tf.assertEquals(td.length, 0, 'correct row deleted');
+	tf.assertEquals(div.find('table.jS td').length, 2 * 3, 'cell count is correct');
 	div.getSheet().kill();
 });
 
@@ -65,8 +65,8 @@ original7\toriginal8\toriginal9'))
 
 	td = div.find('table.jS td:contains("original1")');
 
-	tf.assert(test.assertEquals(td.length, 0), 'correct column deleted');
-	tf.assert(test.assertEquals(div.find('table.jS td').length, 2 * 3), 'cell count is correct');
+	tf.assertEquals(td.length, 0, 'correct column deleted');
+	tf.assertEquals(div.find('table.jS td').length, 2 * 3, 'cell count is correct');
 	div.getSheet().kill();
 
 });
@@ -84,8 +84,8 @@ original7\toriginal8\toriginal9'))
 
 	td = div.find('table.jS td:contains("original5")');
 
-	tf.assert(test.assertEquals(td.length, 0), 'correct column deleted');
-	tf.assert(test.assertEquals(div.find('table.jS td').length, 2 * 3), 'cell count is correct');
+	tf.assertEquals(td.length, 0, 'correct column deleted');
+	tf.assertEquals(div.find('table.jS td').length, 2 * 3, 'cell count is correct');
 	div.getSheet().kill();
 
 });

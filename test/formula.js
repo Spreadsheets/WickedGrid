@@ -17,9 +17,9 @@ tf.test('Formula: Dependencies', function() {
 	C1.updateValue();
 	C2.updateValue();
 
-	tf.assert(test.assertEqual(A1.dependencies[0], B1), 'A1 is a dependency of B1');
-	tf.assert(test.assertEqual(A2.dependencies[0], B1), 'A2 is a dependency of B1');
-	tf.assert(test.assertEqual(B1.dependencies[0], C1), 'B1 is a dependency of C1');
+	tf.assertEquals(A1.dependencies[0], B1, 'A1 is a dependency of B1');
+	tf.assertEquals(A2.dependencies[0], B1, 'A2 is a dependency of B1');
+	tf.assertEquals(B1.dependencies[0], C1, 'B1 is a dependency of C1');
 	div.getSheet().kill();
 });
 

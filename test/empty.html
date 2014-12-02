@@ -6,25 +6,37 @@
 	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
 	<script src="../jquery.sheet.js"></script>
 	<script src="../utilities/tableify.js"></script>
-	<script src="../examples/customFormula.js"></script>
 	<script>
 		$.sheet.preLoad('../');
-
 
 	</script>
 
 	<script>
 		$(function() {
-			var div = $('<div>')
-							.append(tableify('original1\toriginal2'
-							))
-							.appendTo('body')
-							.sheet(),
-					jS = div.getSheet(),
-					td,
-					headers;
 
-			jS.controlFactory.addColumn(2, true);
+			var div = $('<div>')
+							.appendTo('body')
+							.append(tableify("=TRANSPOSE(SHEET2!A2:A10)\t\t\t\t\t\t\t\t\t\n\
+=TRANSPOSE(A1:I1)\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t\n\
+\t\t\t\t\t\t\t\t\t\t"))
+							.append(tableify("Density	Viscosity	Temperature\n\
+0.457	3.55	500\n\
+0.525	3.25	400\n\
+0.616	2.93	300\n\
+0.675	2.75	250\n\
+0.746	2.57	200\n\
+0.835	2.38	150\n\
+0.946	2.17	100\n\
+1.09	1.95	50\n\
+1.29	1.71	0"))
+							.sheet();
 		});
 	</script>
 </head>
