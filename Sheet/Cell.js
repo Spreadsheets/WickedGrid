@@ -48,7 +48,7 @@ Sheet.Cell = (function() {
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
-				&& this.cellType === null
+				&& this.defer === u
 			) {
 				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
 				if (this.td !== u && this.td.innerHTML.length < 1) {
@@ -171,6 +171,10 @@ Sheet.Cell = (function() {
 
 					cell.getThread()(formula, function(parsedFormula) {
 						cell.thaw.add(function() {
+							if (value.cell !== u && value.cell !== this) {
+								value = value.valueOf();
+							}
+							
 							Sheet.calcStack--;
 
 							if (
@@ -198,7 +202,7 @@ Sheet.Cell = (function() {
 				});
 			} else {
 				this.thaw.add(function() {
-					switch (typeof value) {
+					switch (typeof value.valueOf()) {
 						case 'string':
 							operatorFn = cell.startOperators[value.charAt(0)];
 							if (operatorFn !== u) {
