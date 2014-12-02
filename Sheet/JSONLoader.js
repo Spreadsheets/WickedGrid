@@ -213,7 +213,7 @@
 				jitCell.html = cache;
 				jitCell.needsUpdated = false;
 			} else {
-				jitCell.needsUpdated = (hasFormula || hasCellType);
+				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
 			}
 
 			if (hasFormula) jitCell.formula = formula;

@@ -6,25 +6,24 @@
 	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
 	<script src="../jquery.sheet.js"></script>
 	<script src="../utilities/tableify.js"></script>
-	<script src="../examples/customFormula.js"></script>
 	<script>
 		$.sheet.preLoad('../');
-
 
 	</script>
 
 	<script>
 		$(function() {
+
 			var div = $('<div>')
-							.append(tableify('original1\toriginal2'
-							))
 							.appendTo('body')
+							.append('<table><tr><td data-formula="Sheet1!B1 + 1"></td><td data-celltype="percent">.1</td></tr></table>')
 							.sheet(),
 					jS = div.getSheet(),
-					td,
-					headers;
+					td;
 
-			jS.controlFactory.addColumn(2, true);
+			jS.getCell(0,1,1).updateValue();
+
+			td = div.find('table.jS td').first();
 		});
 	</script>
 </head>

@@ -3128,7 +3128,7 @@ $.sheet = {
 						firstValue = val;
 
 					//at this point we need to check if there is even a cell selected, if not, we can't save the information, so clear formula editor
-					if (loc.row == 0 && loc.col == 0) {
+					if ((loc.row == 0 && loc.col == 0) || val.length === 0) {
 						return false;
 					}
 
@@ -4338,6 +4338,8 @@ $.sheet = {
 					}
 
 					th = tr.children[0];
+
+					if (th.label === u) return;
 
 					text = th.label + '';
 
