@@ -209,7 +209,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			) {
 				value = cellTypeHandler(this, value);
 			} else {
-				switch (typeof value) {
+				switch (typeof value.valueOf()) {
 					case 'string':
 						fn = this.startOperators[value.charAt(0)];
 						if (fn !== u) {
@@ -2307,7 +2307,7 @@ Sheet.StyleUpdater = (function(document) {
 				jitCell.html = cache;
 				jitCell.needsUpdated = false;
 			} else {
-				jitCell.needsUpdated = (hasFormula || hasCellType);
+				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
 			}
 
 			if (hasFormula) jitCell.formula = formula;
@@ -6414,7 +6414,7 @@ $.sheet = {
 						firstValue = val;
 
 					//at this point we need to check if there is even a cell selected, if not, we can't save the information, so clear formula editor
-					if (loc.row == 0 && loc.col == 0) {
+					if ((loc.row == 0 && loc.col == 0) || val.length === 0) {
 						return false;
 					}
 

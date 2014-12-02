@@ -84,3 +84,19 @@ tf.test('Cell Types: Percent', function() {
 	tf.assertEquals(td[0].jSCell.value.valueOf(), 0.1, 'value remains a number');
 	div.getSheet().kill();
 });
+
+tf.test('Cell Types: Percent Addition', function() {
+	var div = $('<div>')
+			.append('<table><tr><td data-formula="Sheet1!B1 + 1"></td><td data-celltype="percent">.1</td></tr></table>')
+			.sheet(),
+		jS = div.getSheet(),
+		td;
+
+	jS.getCell(0,1,1).updateValue();
+
+	td = div.find('table.jS td').first();
+
+	tf.assertEquals(td.html(), '1.1', 'html is properly displayed');
+	tf.assertEquals(td[0].jSCell.value.valueOf(), 1.1, 'value remains a number');
+	div.getSheet().kill();
+});
