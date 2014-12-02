@@ -221,13 +221,27 @@ tf.test('Loader (json) : html non transference', function() {
 				}
 			}),
 		jS = div.getSheet(),
-		cell;
+		cell,
+		select;
 
 	jS.calcAll(true);
 
 	jS.getCell(0,3,1).updateValue();
 	cell = jS.getCell(0,2,1);
 	cell.updateValue();
-	tf.assertEquals(cell.td.innerHTML, '<select class="jSDropdown" id="dropdown0_2_1_0" name="dropdown0_2_1_0"><option value="100">100</option><option value="200">200</option><option value="300">300</option><option value="400">400</option><option value="500">500</option></select>', 'Expected value');
+	select = cell.td.children[0];
+	tf.assertEquals(select.getAttribute('class'), 'jSDropdown', 'Expected class');
+	tf.assertEquals(select.getAttribute('id'), 'dropdown0_2_1_0', 'Expected id');
+	tf.assertEquals(select.getAttribute('name'), 'dropdown0_2_1_0', 'Expected name');
+	tf.assertEquals(select.children[0].getAttribute('value'), '100', 'Expected child value');
+	tf.assertEquals(select.children[1].getAttribute('value'), '200', 'Expected child value');
+	tf.assertEquals(select.children[2].getAttribute('value'), '300', 'Expected child value');
+	tf.assertEquals(select.children[3].getAttribute('value'), '400', 'Expected child value');
+	tf.assertEquals(select.children[4].getAttribute('value'), '500', 'Expected child value');
+	tf.assertEquals(select.children[0].innerHTML, '100', 'Expected child html');
+	tf.assertEquals(select.children[1].innerHTML, '200', 'Expected child html');
+	tf.assertEquals(select.children[2].innerHTML, '300', 'Expected child html');
+	tf.assertEquals(select.children[3].innerHTML, '400', 'Expected child html');
+	tf.assertEquals(select.children[4].innerHTML, '500', 'Expected child html');
 	jS.kill();
 });

@@ -1896,6 +1896,68 @@ var jFN = $.sheet.fn = {
 
 		return result;
 	},
+	/* Gets the adjucent value for the reference array. Ip- reference array*/
+	TRANSPOSE: function (range) {
+		var i = 0,
+			jS = this.jS,
+			sheetIndex = this.sheetIndex,
+			firstValue = range[0],
+			firstCell = firstValue.cell,
+			lastValue = range[range.length - 1],
+			lastCell = lastValue.cell,
+			startRow = firstCell.rowIndex,
+			startColumn = firstCell.columnIndex,
+			rowIndex,
+			columnIndex,
+			cell,
+			cells = [],
+			cellValue,
+			transposedCell,
+			transposedCells = [],
+			value,
+			max = range.length,
+			error,
+			isOverwrite = false;
+
+		for(;i<max;i++) {
+			value = range[i];
+			cell = value.cell;
+			rowIndex = this.rowIndex + (cell.columnIndex - startColumn);
+			columnIndex = this.columnIndex + (cell.rowIndex - startRow);
+
+			transposedCell = jS.getCell(this.sheetIndex, rowIndex, columnIndex);
+			if (transposedCell !== null && transposedCell !== this) {
+				if (transposedCell.value != '') {
+					isOverwrite = true;
+				}
+				transposedCells.push(transposedCell);
+				cells.push(cell);
+			}
+		}
+
+		if (isOverwrite) {
+			error = new String('');
+			error.html = '#REF!';
+			return error;
+		}
+
+		i = 0;
+		max = transposedCells.length;
+		for(;i<max;i++) {
+			transposedCell = transposedCells[i];
+			if (transposedCell !== this) {
+				cell = cells[i];
+				transposedCell.defer = cell;
+				transposedCell.setNeedsUpdated();
+				cellValue = transposedCell.updateValue();
+				transposedCell.addDependency(this);
+				transposedCell.td.innerHTML = cellValue;
+
+			}
+		}
+
+		return firstValue;
+	},
 	/**
 	 * cell function
 	 * @param col

@@ -44,6 +44,7 @@ Sheet.Cell = (function() {
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
+				&& this.defer === u
 			) {
 				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
 				if (this.td !== u && this.td.innerHTML.length < 1) {
@@ -145,6 +146,10 @@ Sheet.Cell = (function() {
 					value = formulaParser.parse(formula);
 				} catch (e) {
 					value = e.toString();
+				}
+
+				if (value.cell !== u && value.cell !== this) {
+					value = value.valueOf();
 				}
 
 				Sheet.calcStack--;
