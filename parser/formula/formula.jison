@@ -447,7 +447,7 @@ cellRange :
 	    //js
 	        
 			var type = {
-				type: 'm',
+				type: 'l',
 				method: 'cellValue',
 				args: [$1]
 			};
@@ -462,7 +462,7 @@ cellRange :
 	    //js
 
 			var type = {
-				type: 'm',
+				type: 'l',
 				method: 'cellRangeValue',
 				args: [$1, $3]
 			};
@@ -476,7 +476,7 @@ cellRange :
 	| SHEET '!' cell {
 	    //js
 			var type = {
-				type: 'm',
+				type: 'l',
 				method: 'remoteCellValue',
 				args: [$1, $3]
 			};
@@ -490,7 +490,7 @@ cellRange :
 	| SHEET '!' cell ':' cell {
 	    //js
             var type = {
-            	type: 'm',
+            	type: 'l',
             	method: 'remoteCellRangeValue',
             	args: [$1, $3, $5]
             };

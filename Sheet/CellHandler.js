@@ -231,9 +231,10 @@ Sheet.CellHandler = (function(Math) {
 		 * Get cell value
 		 * @param {Sheet.Cell} parentCell
 		 * @param {Object} cellRef
-		 * @returns {*}
+		 * @param {Function} [callback]
+		 * @returns {Sheet.CellHandler}
 		 */
-		cellValue:function (parentCell, cellRef, fn) {
+		cellValue:function (parentCell, cellRef, callback) {
 			var jS = this.jS,
 				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
 				cell,
@@ -242,10 +243,12 @@ Sheet.CellHandler = (function(Math) {
 			cell = jS.getCell(parentCell.sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
-				cell.updateValue(fn);
-			} else if (fn !== u) {
-				fn('');
+				cell.updateValue(callback);
+			} else if (callback !== u) {
+				callback.call(parentCell, null);
 			}
+
+			return this;
 		},
 
 
@@ -254,9 +257,10 @@ Sheet.CellHandler = (function(Math) {
 		 * @param {Sheet.Cell} parentCell
 		 * @param {Object} start
 		 * @param {Object} end
-		 * @returns {Array}
+		 * @param {Function} [callback]
+		 * @returns {Sheet.CellHandler}
 		 */
-		cellRangeValue:function (parentCell, start, end, fn) {
+		cellRangeValue:function (parentCell, start, end, callback) {
 			var sheetIndex = parentCell.sheetIndex,
 				_start = jSE.parseLocation(start.colString, start.rowString),
 				_end = jSE.parseLocation(end.colString, end.rowString),
@@ -269,7 +273,8 @@ Sheet.CellHandler = (function(Math) {
 				result = [],
 				colIndex,
 				cell,
-				row;
+				row,
+				stack = [];
 
 			if (sheet === u) {
 				jS.spreadsheets[sheetIndex] = sheet = {};
@@ -293,53 +298,38 @@ Sheet.CellHandler = (function(Math) {
 
 						if (cell !== null) {
 							cell.addDependency(parentCell);
-							result.unshift(cell.updateValue());
+							stack.push((function(cell) {
+								result.unshift(cell.updateValue());
+							})(cell));
 						}
 					} while(colIndex-- > colIndexEnd);
 				} while (rowIndex-- > rowIndexEnd);
 
-				return result;
+				stack.push(function() {
+					callback.call(parentCell, result);
+				});
 			}
 
-			return result;
+			parentCell.thaw.insertArray(stack);
+
+			return this;
 		},
 
-		/**
-		 * Get cell value
-		 * @param {Sheet.Cell} parentCell
-		 * @param {Object} start
-		 * @returns {*}
-		 */
-		fixedCellValue:function (parentCell, start) {
-			return this.cellValue(parentCell, start);
-		},
-
-		/**
-		 * Get cell values as an array
-		 * @param {Sheet.Cell} parentCell
-		 * @param {Object} start
-		 * @param {Object} end
-		 * @returns {Array}
-		 */
-		fixedCellRangeValue:function (parentCell, start, end) {
-			return this.cellRangeValue(parentCell, start, end);
-		},
 
 		/**
 		 * Get cell value from a different sheet within an instance
 		 * @param {Sheet.Cell} parentCell
 		 * @param {String} sheet example "SHEET1"
 		 * @param {Object} cellRef
-		 * @param {Function} [fn]
-		 * @returns {*}
+		 * @param {Function} [callback]
+		 * @returns {Sheet.CellHandler}
 		 */
-		remoteCellValue:function (parentCell, sheet, cellRef, fn) {
+		remoteCellValue:function (parentCell, sheet, cellRef, callback) {
 			var jSE = this.jSE,
 				jS = this.jS,
 				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
 				sheetIndex = jSE.parseSheetLocation(sheet),
-				cell,
-				value;
+				cell;
 
 			if (sheetIndex < 0) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
@@ -348,10 +338,12 @@ Sheet.CellHandler = (function(Math) {
 			cell = jS.getCell(sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
-				cell.updateValue(fn);
-			} else {
-				fn('');
+				cell.updateValue(callback);
+			} else if (callback !== u) {
+				callback.call(parentCell, null);
 			}
+
+			return this;
 		},
 
 		/**
@@ -360,9 +352,10 @@ Sheet.CellHandler = (function(Math) {
 		 * @param {String} sheet example "SHEET1"
 		 * @param {Object} start
 		 * @param {Object} end
+		 * @param {Function} [callback]
 		 * @returns {Array}
 		 */
-		remoteCellRangeValue:function (parentCell, sheet, start, end) {
+		remoteCellRangeValue:function (parentCell, sheet, start, end, callback) {
 			var jS = this.jS,
 				jSE = this.jSE,
 				_start = jSE.parseLocation(start.colString, start.rowString),
@@ -373,7 +366,8 @@ Sheet.CellHandler = (function(Math) {
 				rowIndex,
 				maxRowIndex = _end.row,
 				result = [],
-				cell;
+				cell,
+				stack = [];
 
 			if (sheetIndex < 0) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);

@@ -80,18 +80,18 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		},
 		/**
 		 * Ignites calculation with cell, is recursively called if cell uses value from another cell, can be sent indexes, or be called via .call(cell)
-		 * @param {Function} [fn] callback
+		 * @param {Function} [callback]
 		 * @returns {*} cell value after calculated
 		 */
-		updateValue:function (fn) {
+		updateValue:function (callback) {
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
 				&& this.defer === u
 			) {
 				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
-				if (fn !== u) {
-					fn.call(this, result);
+				if (callback !== u) {
+					callback.call(this, result);
 				}
 				return;
 			}
@@ -114,8 +114,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					this.updateDependencies();
 					this.needsUpdated = false;
 					
-					if (fn !== u) {
-						fn.call(this, this.value);
+					if (callback !== u) {
+						callback.call(this, this.value);
 					}
 					return;
 				}
@@ -142,13 +142,13 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					value = new String();
 					value.cell = this;
 					value.html = '#VAL!';
-					if (fn !== u) {
-						fn.call(this, value);
+					if (callback !== u) {
+						callback.call(this, value);
 					}
 					return;
 				case 'updatingDependencies':
-					if (fn !== u) {
-						fn.call(this, this.valueOverride != u ? this.valueOverride : this.value);
+					if (callback !== u) {
+						callback.call(this, this.valueOverride != u ? this.valueOverride : this.value);
 					}
 					return;
 			}
@@ -179,8 +179,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					this.updateDependencies();
 					this.needsUpdated = false;
 					
-					if (fn !== u) {
-						fn.call(cell, value);
+					if (callback !== u) {
+						callback.call(cell, value);
 					}
 				});
 				return;
@@ -206,10 +206,12 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					Sheet.calcStack++;
 
 					cell.getThread()(formula, function(parsedFormula) {
-						cell.resolveFormula(parsedFormula, function() {
+						cell.resolveFormula(parsedFormula, function(resolvedValue) {
 							cell.thaw.add(function() {
-								if (value.cell !== u && value.cell !== this) {
-									value = value.valueOf();
+								if (resolvedValue.cell !== u && resolvedValue.cell !== cell) {
+									value = resolvedValue.valueOf();
+								} else {
+									value = resolvedValue;
 								}
 
 								Sheet.calcStack--;
@@ -314,8 +316,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				});
 
 				cell.thaw.add(function () {
-					if (fn !== u) {
-						fn.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
+					if (callback !== u) {
+						callback.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
 					}
 				});
 
@@ -423,10 +425,26 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			var cell = this,
 				steps = [],
 				values = [],
+				value,
 				i = 0,
 				max = parsedFormula.length,
 				parsed,
-				remaining = max - 1;
+				remaining = max - 1,
+				bindArgs = function(cell, args) {
+					var boundArgs = [],
+						arg,
+						j = 0,
+						jMax = args.length;
+
+					for (;j < jMax; j++) {
+						arg = args[j];
+						boundArgs[j] = (typeof(arg) === 'number' ? parsedFormula[arg] : arg);
+					}
+
+					boundArgs.unshift(cell);
+
+					return boundArgs;
+				};
 
 			for (; i < max; i++) {
 				parsed = parsedFormula[i];
@@ -435,45 +453,52 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					case 'm':
 						(function(parsed, handler, i) {
 							steps.push(function() {
-								var args = parsed.args,
-									arg,
-									j = 0,
-									max = args.length;
-
-								for (;j < max; j++) {
-									arg = args[j];
-									if (!isNaN(arg)) {
-										args[j] = parsedFormula[arg];
-									}
-								}
-
-								parsed.args.unshift(cell);
-								values[i] = handler[parsed.method].apply(handler, parsed.args);
+								value = values[i] = handler[parsed.method].apply(handler, bindArgs(cell, parsed.args));
 								remaining--;
 
-								if (remaining === 0) {
-									callback(values);
+								if (remaining < 1) {
+									this.value = value;
+									callback(value);
 								}
 							});
 						})(parsed, this.cellHandler, i);
 						break;
 
+					//lookup
+					case 'l':
+						(function(parsed, handler, i) {
+							steps.push(function() {
+								//setup callback
+								parsed.args.push(function(value) {
+									values[i] = value;
+									remaining--;
+									if (remaining < 1) {
+										this.value = value;
+										callback(value);
+									}
+								});
+
+								handler[parsed.method].apply(handler, bindArgs(cell, parsed.args));
+							});
+						})(parsed, this.cellHandler, i);
+						break;
 					//value
 					case 'v':
 						(function(parsed, i) {
 							steps.push(function() {
-								values[i] = parsed.value;
+								value = values[i] = parsed.value;
 								remaining--;
 
-								if (remaining === 0) {
-									callback(values);
+								if (remaining < 1) {
+									this.value = value;
+									callback(value);
 								}
 							});
 						})(parsed, i);
 						break;
 
 					case 'cell':
-						parsedFormula[i] = parsed;
+						values[i] = parsed;
 				}
 			}
 
@@ -825,9 +850,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 * Get cell value
 		 * @param {Sheet.Cell} parentCell
 		 * @param {Object} cellRef
-		 * @returns {*}
+		 * @param {Function} [callback]
+		 * @returns {Sheet.CellHandler}
 		 */
-		cellValue:function (parentCell, cellRef) {
+		cellValue:function (parentCell, cellRef, callback) {
 			var jS = this.jS,
 				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
 				cell,
@@ -836,11 +862,12 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			cell = jS.getCell(parentCell.sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
-				value = cell.updateValue();
-				return value;
-			} else {
-				return '';
+				cell.updateValue(callback);
+			} else if (callback !== u) {
+				callback.call(parentCell, null);
 			}
+
+			return this;
 		},
 
 
@@ -849,9 +876,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 * @param {Sheet.Cell} parentCell
 		 * @param {Object} start
 		 * @param {Object} end
-		 * @returns {Array}
+		 * @param {Function} [callback]
+		 * @returns {Sheet.CellHandler}
 		 */
-		cellRangeValue:function (parentCell, start, end) {
+		cellRangeValue:function (parentCell, start, end, callback) {
 			var sheetIndex = parentCell.sheetIndex,
 				_start = jSE.parseLocation(start.colString, start.rowString),
 				_end = jSE.parseLocation(end.colString, end.rowString),
@@ -864,7 +892,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				result = [],
 				colIndex,
 				cell,
-				row;
+				row,
+				stack = [];
 
 			if (sheet === u) {
 				jS.spreadsheets[sheetIndex] = sheet = {};
@@ -888,52 +917,38 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 						if (cell !== null) {
 							cell.addDependency(parentCell);
-							result.unshift(cell.updateValue());
+							stack.push((function(cell) {
+								result.unshift(cell.updateValue());
+							})(cell));
 						}
 					} while(colIndex-- > colIndexEnd);
 				} while (rowIndex-- > rowIndexEnd);
 
-				return result;
+				stack.push(function() {
+					callback.call(parentCell, result);
+				});
 			}
 
-			return result;
+			parentCell.thaw.insertArray(stack);
+
+			return this;
 		},
 
-		/**
-		 * Get cell value
-		 * @param {Sheet.Cell} parentCell
-		 * @param {Object} start
-		 * @returns {*}
-		 */
-		fixedCellValue:function (parentCell, start) {
-			return this.cellValue(parentCell, start);
-		},
-
-		/**
-		 * Get cell values as an array
-		 * @param {Sheet.Cell} parentCell
-		 * @param {Object} start
-		 * @param {Object} end
-		 * @returns {Array}
-		 */
-		fixedCellRangeValue:function (parentCell, start, end) {
-			return this.cellRangeValue(parentCell, start, end);
-		},
 
 		/**
 		 * Get cell value from a different sheet within an instance
 		 * @param {Sheet.Cell} parentCell
 		 * @param {String} sheet example "SHEET1"
 		 * @param {Object} cellRef
-		 * @returns {*}
+		 * @param {Function} [callback]
+		 * @returns {Sheet.CellHandler}
 		 */
-		remoteCellValue:function (parentCell, sheet, cellRef) {
+		remoteCellValue:function (parentCell, sheet, cellRef, callback) {
 			var jSE = this.jSE,
 				jS = this.jS,
 				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
 				sheetIndex = jSE.parseSheetLocation(sheet),
-				cell,
-				value;
+				cell;
 
 			if (sheetIndex < 0) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
@@ -942,12 +957,12 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			cell = jS.getCell(sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
-				value = cell.updateValue();
-
-				return value;
-			} else {
-				return '';
+				cell.updateValue(callback);
+			} else if (callback !== u) {
+				callback.call(parentCell, null);
 			}
+
+			return this;
 		},
 
 		/**
@@ -956,9 +971,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 * @param {String} sheet example "SHEET1"
 		 * @param {Object} start
 		 * @param {Object} end
+		 * @param {Function} [callback]
 		 * @returns {Array}
 		 */
-		remoteCellRangeValue:function (parentCell, sheet, start, end) {
+		remoteCellRangeValue:function (parentCell, sheet, start, end, callback) {
 			var jS = this.jS,
 				jSE = this.jSE,
 				_start = jSE.parseLocation(start.colString, start.rowString),
@@ -969,7 +985,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				rowIndex,
 				maxRowIndex = _end.row,
 				result = [],
-				cell;
+				cell,
+				stack = [];
 
 			if (sheetIndex < 0) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
@@ -3851,9 +3868,10 @@ $.fn.extend({
 	 * @param {Number} sheetIndex
 	 * @param {Number} rowIndex
 	 * @param {Number} colIndex
-	 * @returns {String|Date|Number|Boolean|Null}
+	 * @param {Function} callback
+	 * @returns {jQuery}
 	 */
-	getCellValue:function (sheetIndex, rowIndex, colIndex) {
+	getCellValue:function (sheetIndex, rowIndex, colIndex, callback) {
 		var me = this[0],
 			jS = (me.jS || {}),
 			cell;
@@ -3861,10 +3879,11 @@ $.fn.extend({
 		if (jS.getCell) {
 			cell = jS.getCell(sheetIndex, rowIndex, colIndex);
 			if (cell !== null) {
-				return cell.updateValue();
+				cell.updateValue(callback);
 			}
 		}
-		return null;
+
+		return this;
 	},
 
 	/**
@@ -3874,9 +3893,10 @@ $.fn.extend({
 	 * @param {Number} rowIndex
 	 * @param {Number} colIndex
 	 * @param {Number} [sheetIndex] defaults to 0
-	 * @returns {Boolean}
+	 * @param {Function} [callback]
+	 * @returns {jQuery}
 	 */
-	setCellValue:function (value, rowIndex, colIndex, sheetIndex) {
+	setCellValue:function (value, rowIndex, colIndex, sheetIndex, callback) {
 		var me = this[0],
 			jS = (me.jS || {}),
 			cell;
@@ -3895,11 +3915,10 @@ $.fn.extend({
 					cell.value = value;
 					cell.valueOverride = cell.formula = '';
 				}
-				cell.updateValue();
-				return true;
+				cell.updateValue(callback);
 			} catch (e) {}
 		}
-		return false;
+		return this;
 	},
 
 	/**
@@ -3909,9 +3928,10 @@ $.fn.extend({
 	 * @param {Number} rowIndex
 	 * @param {Number} colIndex
 	 * @param {Number} [sheetIndex] defaults to 0
-	 * @returns {Object}
+	 * @param {Function} [callback]
+	 * @returns {jQuery}
 	 */
-	setCellFormula:function (formula, rowIndex, colIndex, sheetIndex) {
+	setCellFormula:function (formula, rowIndex, colIndex, sheetIndex, callback) {
 		var me = this[0],
 			jS = (me.jS || {}),
 			cell;
@@ -3924,7 +3944,7 @@ $.fn.extend({
 				if (cell !== null) {
 					cell.formula = formula;
 					cell.valueOverride = cell.value = '';
-					cell.updateValue();
+					cell.updateValue(callback);
 				}
 			} catch (e) {}
 		}
@@ -5162,9 +5182,12 @@ $.sheet = {
 
 								o.setCreateCellFn(function (row, at, rowParent) {
 									var cell = setupCell.call(loader, jS.i, row, at, jS),
-										td = cell.td,
+										td,
 										spreadsheetRow = spreadsheet[row];
 
+									if (cell === null) return;
+
+									td = cell.td;
 									td.jSCell = cell;
 
 									if (spreadsheetRow.length === 0) {
@@ -5251,10 +5274,13 @@ $.sheet = {
 
 								o.setCreateCellFn(function (row, at, createdBar) {
 									var cell = setupCell.call(loader, jS.i, row, at, jS),
-										td = cell.td,
+										td,
 										rowParent = tBody.children[row],
 										spreadsheetRow = spreadsheet[row];
 
+									if (cell === null) return;
+
+									td = cell.td;
 									if (spreadsheetRow === undefined) {
 										spreadsheet[row] = spreadsheetRow = [];
 									}
@@ -7430,7 +7456,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				isCell:function (o) {
-					if (o && o.tagName && o.tagName == 'TD' && o.type && o.type == 'cell') {
+					if (o && o.jSCell !== u) {
 						return true;
 					}
 					return false;
@@ -12362,6 +12388,7 @@ var jFN = $.sheet.fn = {
 	 * @memberOf jFN
 	 */
 	LEFT:function (v, numberOfChars) {
+		v = v.valueOf().toString();
 		numberOfChars = numberOfChars || 1;
 		return v.substring(0, numberOfChars);
 	},
@@ -14840,7 +14867,7 @@ case 29:
 	    //js
 	        
 			var type = {
-				type: 'm',
+				type: 'l',
 				method: 'cellValue',
 				args: [$$[$0]]
 			};
@@ -14857,7 +14884,7 @@ case 30:
 	    //js
 
 			var type = {
-				type: 'm',
+				type: 'l',
 				method: 'cellRangeValue',
 				args: [$$[$0-2], $$[$0]]
 			};
@@ -14873,7 +14900,7 @@ case 31:
 
 	    //js
 			var type = {
-				type: 'm',
+				type: 'l',
 				method: 'remoteCellValue',
 				args: [$$[$0-2], $$[$0]]
 			};
@@ -14889,7 +14916,7 @@ case 32:
 
 	    //js
             var type = {
-            	type: 'm',
+            	type: 'l',
             	method: 'remoteCellRangeValue',
             	args: [$$[$0-4], $$[$0-2], $$[$0]]
             };

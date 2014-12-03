@@ -451,9 +451,10 @@ $.fn.extend({
 	 * @param {Number} sheetIndex
 	 * @param {Number} rowIndex
 	 * @param {Number} colIndex
-	 * @returns {String|Date|Number|Boolean|Null}
+	 * @param {Function} callback
+	 * @returns {jQuery}
 	 */
-	getCellValue:function (sheetIndex, rowIndex, colIndex) {
+	getCellValue:function (sheetIndex, rowIndex, colIndex, callback) {
 		var me = this[0],
 			jS = (me.jS || {}),
 			cell;
@@ -461,10 +462,11 @@ $.fn.extend({
 		if (jS.getCell) {
 			cell = jS.getCell(sheetIndex, rowIndex, colIndex);
 			if (cell !== null) {
-				return cell.updateValue();
+				cell.updateValue(callback);
 			}
 		}
-		return null;
+
+		return this;
 	},
 
 	/**
@@ -474,9 +476,10 @@ $.fn.extend({
 	 * @param {Number} rowIndex
 	 * @param {Number} colIndex
 	 * @param {Number} [sheetIndex] defaults to 0
-	 * @returns {Boolean}
+	 * @param {Function} [callback]
+	 * @returns {jQuery}
 	 */
-	setCellValue:function (value, rowIndex, colIndex, sheetIndex) {
+	setCellValue:function (value, rowIndex, colIndex, sheetIndex, callback) {
 		var me = this[0],
 			jS = (me.jS || {}),
 			cell;
@@ -495,11 +498,10 @@ $.fn.extend({
 					cell.value = value;
 					cell.valueOverride = cell.formula = '';
 				}
-				cell.updateValue();
-				return true;
+				cell.updateValue(callback);
 			} catch (e) {}
 		}
-		return false;
+		return this;
 	},
 
 	/**
@@ -509,9 +511,10 @@ $.fn.extend({
 	 * @param {Number} rowIndex
 	 * @param {Number} colIndex
 	 * @param {Number} [sheetIndex] defaults to 0
-	 * @returns {Object}
+	 * @param {Function} [callback]
+	 * @returns {jQuery}
 	 */
-	setCellFormula:function (formula, rowIndex, colIndex, sheetIndex) {
+	setCellFormula:function (formula, rowIndex, colIndex, sheetIndex, callback) {
 		var me = this[0],
 			jS = (me.jS || {}),
 			cell;
@@ -524,7 +527,7 @@ $.fn.extend({
 				if (cell !== null) {
 					cell.formula = formula;
 					cell.valueOverride = cell.value = '';
-					cell.updateValue();
+					cell.updateValue(callback);
 				}
 			} catch (e) {}
 		}
@@ -1762,9 +1765,12 @@ $.sheet = {
 
 								o.setCreateCellFn(function (row, at, rowParent) {
 									var cell = setupCell.call(loader, jS.i, row, at, jS),
-										td = cell.td,
+										td,
 										spreadsheetRow = spreadsheet[row];
 
+									if (cell === null) return;
+
+									td = cell.td;
 									td.jSCell = cell;
 
 									if (spreadsheetRow.length === 0) {
@@ -1851,10 +1857,13 @@ $.sheet = {
 
 								o.setCreateCellFn(function (row, at, createdBar) {
 									var cell = setupCell.call(loader, jS.i, row, at, jS),
-										td = cell.td,
+										td,
 										rowParent = tBody.children[row],
 										spreadsheetRow = spreadsheet[row];
 
+									if (cell === null) return;
+
+									td = cell.td;
 									if (spreadsheetRow === undefined) {
 										spreadsheet[row] = spreadsheetRow = [];
 									}
@@ -4030,7 +4039,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				isCell:function (o) {
-					if (o && o.tagName && o.tagName == 'TD' && o.type && o.type == 'cell') {
+					if (o && o.jSCell !== u) {
 						return true;
 					}
 					return false;

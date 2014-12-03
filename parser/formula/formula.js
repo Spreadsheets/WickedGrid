@@ -490,7 +490,7 @@ case 29:
 	    //js
 	        
 			var type = {
-				type: 'm',
+				type: 'l',
 				method: 'cellValue',
 				args: [$$[$0]]
 			};
@@ -507,7 +507,7 @@ case 30:
 	    //js
 
 			var type = {
-				type: 'm',
+				type: 'l',
 				method: 'cellRangeValue',
 				args: [$$[$0-2], $$[$0]]
 			};
@@ -523,7 +523,7 @@ case 31:
 
 	    //js
 			var type = {
-				type: 'm',
+				type: 'l',
 				method: 'remoteCellValue',
 				args: [$$[$0-2], $$[$0]]
 			};
@@ -539,7 +539,7 @@ case 32:
 
 	    //js
             var type = {
-            	type: 'm',
+            	type: 'l',
             	method: 'remoteCellRangeValue',
             	args: [$$[$0-4], $$[$0-2], $$[$0]]
             };
