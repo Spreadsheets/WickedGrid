@@ -365,9 +365,6 @@ expression
     }
 	| expression '^' expression {
         //js
-            
-            var n1 = yy.handler.number($1),
-                n2 = yy.handler.number($3);
 
             var type = {
             	type: 'm',
@@ -383,12 +380,6 @@ expression
     }
 	| '-' expression {
 		//js
-			
-			var n1 = yy.handler.numberInverted(yy.obj, $2);
-			$$ = n1;
-			if (isNaN($$)) {
-			    $$ = 0;
-			}
 
 			var type = {
 				type: 'm',
@@ -404,12 +395,6 @@ expression
 	}
 	| '+' expression {
 	    //js
-	        
-			var n1 = yy.handler.number(yy.obj, $2);
-			$$ = n1;
-			if (isNaN($$)) {
-			    $$ = 0;
-			}
 
 	        var type = {
 	        	type: 'm',
@@ -680,7 +665,6 @@ var Formula = function(handler) {
 
 	formulaParser.prototype = parser;
 	var newParser = new formulaParser();
-	newParser.yy.handler = handler;
 	return newParser;
 };
 if (typeof(window) !== 'undefined') {

@@ -90,11 +90,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				&& this.defer === u
 			) {
 				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
-				if (this.td !== u && this.td.innerHTML.length < 1) {
-					this.displayValue();
-				}
 				if (fn !== u) {
-					fn.call(this, this.value);
+					fn.call(this, result);
 				}
 				return;
 			}
@@ -209,23 +206,25 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					Sheet.calcStack++;
 
 					cell.getThread()(formula, function(parsedFormula) {
-						cell.thaw.add(function() {
-							if (value.cell !== u && value.cell !== this) {
-								value = value.valueOf();
-							}
-							
-							Sheet.calcStack--;
+						cell.resolveFormula(parsedFormula, function() {
+							cell.thaw.add(function() {
+								if (value.cell !== u && value.cell !== this) {
+									value = value.valueOf();
+								}
 
-							if (
-								value !== u
-								&& value !== null
-								&& cellType !== null
-								&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-							) {
-								value = cellTypeHandler(cell, value);
-							}
+								Sheet.calcStack--;
 
-							doneFn();
+								if (
+									value !== u
+									&& value !== null
+									&& cellType !== null
+									&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+								) {
+									value = cellTypeHandler(cell, value);
+								}
+
+								doneFn();
+							});
 						});
 					});
 				});
@@ -420,6 +419,68 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			return td.innerHTML;
 		},
 
+		resolveFormula: function(parsedFormula, callback) {
+			var cell = this,
+				steps = [],
+				values = [],
+				i = 0,
+				max = parsedFormula.length,
+				parsed,
+				remaining = max - 1;
+
+			for (; i < max; i++) {
+				parsed = parsedFormula[i];
+				switch (parsed.type) {
+					//method
+					case 'm':
+						(function(parsed, handler, i) {
+							steps.push(function() {
+								var args = parsed.args,
+									arg,
+									j = 0,
+									max = args.length;
+
+								for (;j < max; j++) {
+									arg = args[j];
+									if (!isNaN(arg)) {
+										args[j] = parsedFormula[arg];
+									}
+								}
+
+								parsed.args.unshift(cell);
+								values[i] = handler[parsed.method].apply(handler, parsed.args);
+								remaining--;
+
+								if (remaining === 0) {
+									callback(values);
+								}
+							});
+						})(parsed, this.cellHandler, i);
+						break;
+
+					//value
+					case 'v':
+						(function(parsed, i) {
+							steps.push(function() {
+								values[i] = parsed.value;
+								remaining--;
+
+								if (remaining === 0) {
+									callback(values);
+								}
+							});
+						})(parsed, i);
+						break;
+
+					case 'cell':
+						parsedFormula[i] = parsed;
+				}
+			}
+
+			if (steps.length > 0) {
+				this.thaw.addArray(steps);
+			}
+		},
 		recurseDependencies: function (fn) {
 			var i = 0,
 				dependencies = this.dependencies,
@@ -555,8 +616,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 */
 		variable:function (parentCell, variable) {
 			if (arguments.length) {
-				var name = arguments[0],
-					attr = arguments[1],
+				var name = variable[0],
+					attr = variable[1],
 					formulaVariables = this.jS.s.formulaVariables,
 					formulaVariable,
 					result;
@@ -14689,9 +14750,6 @@ break;
 case 22:
 
         //js
-            
-            var n1 = yy.handler.number($$[$0-2]),
-                n2 = yy.handler.number($$[$0]);
 
             var type = {
             	type: 'm',
@@ -14709,12 +14767,6 @@ break;
 case 23:
 
 		//js
-			
-			var n1 = yy.handler.numberInverted(yy.obj, $$[$0]);
-			this.$ = n1;
-			if (isNaN(this.$)) {
-			    this.$ = 0;
-			}
 
 			var type = {
 				type: 'm',
@@ -14732,12 +14784,6 @@ break;
 case 24:
 
 	    //js
-	        
-			var n1 = yy.handler.number(yy.obj, $$[$0]);
-			this.$ = n1;
-			if (isNaN(this.$)) {
-			    this.$ = 0;
-			}
 
 	        var type = {
 	        	type: 'm',
@@ -15244,7 +15290,6 @@ var Formula = function(handler) {
 
 	formulaParser.prototype = parser;
 	var newParser = new formulaParser();
-	newParser.yy.handler = handler;
 	return newParser;
 };
 if (typeof(window) !== 'undefined') {
