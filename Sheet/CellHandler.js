@@ -22,8 +22,8 @@ Sheet.CellHandler = (function(Math) {
 		 */
 		variable:function (parentCell, variable) {
 			if (arguments.length) {
-				var name = arguments[0],
-					attr = arguments[1],
+				var name = variable[0],
+					attr = variable[1],
 					formulaVariables = this.jS.s.formulaVariables,
 					formulaVariable,
 					result;
@@ -233,7 +233,7 @@ Sheet.CellHandler = (function(Math) {
 		 * @param {Object} cellRef
 		 * @returns {*}
 		 */
-		cellValue:function (parentCell, cellRef) {
+		cellValue:function (parentCell, cellRef, fn) {
 			var jS = this.jS,
 				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
 				cell,
@@ -242,10 +242,9 @@ Sheet.CellHandler = (function(Math) {
 			cell = jS.getCell(parentCell.sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
-				value = cell.updateValue();
-				return value;
-			} else {
-				return '';
+				cell.updateValue(fn);
+			} else if (fn !== u) {
+				fn('');
 			}
 		},
 
@@ -257,7 +256,7 @@ Sheet.CellHandler = (function(Math) {
 		 * @param {Object} end
 		 * @returns {Array}
 		 */
-		cellRangeValue:function (parentCell, start, end) {
+		cellRangeValue:function (parentCell, start, end, fn) {
 			var sheetIndex = parentCell.sheetIndex,
 				_start = jSE.parseLocation(start.colString, start.rowString),
 				_end = jSE.parseLocation(end.colString, end.rowString),
@@ -331,9 +330,10 @@ Sheet.CellHandler = (function(Math) {
 		 * @param {Sheet.Cell} parentCell
 		 * @param {String} sheet example "SHEET1"
 		 * @param {Object} cellRef
+		 * @param {Function} [fn]
 		 * @returns {*}
 		 */
-		remoteCellValue:function (parentCell, sheet, cellRef) {
+		remoteCellValue:function (parentCell, sheet, cellRef, fn) {
 			var jSE = this.jSE,
 				jS = this.jS,
 				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
@@ -348,11 +348,9 @@ Sheet.CellHandler = (function(Math) {
 			cell = jS.getCell(sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
-				value = cell.updateValue();
-
-				return value;
+				cell.updateValue(fn);
 			} else {
-				return '';
+				fn('');
 			}
 		},
 

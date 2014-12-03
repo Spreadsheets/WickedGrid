@@ -400,9 +400,6 @@ break;
 case 22:
 
         //js
-            
-            var n1 = yy.handler.number($$[$0-2]),
-                n2 = yy.handler.number($$[$0]);
 
             var type = {
             	type: 'm',
@@ -420,12 +417,6 @@ break;
 case 23:
 
 		//js
-			
-			var n1 = yy.handler.numberInverted(yy.obj, $$[$0]);
-			this.$ = n1;
-			if (isNaN(this.$)) {
-			    this.$ = 0;
-			}
 
 			var type = {
 				type: 'm',
@@ -443,12 +434,6 @@ break;
 case 24:
 
 	    //js
-	        
-			var n1 = yy.handler.number(yy.obj, $$[$0]);
-			this.$ = n1;
-			if (isNaN(this.$)) {
-			    this.$ = 0;
-			}
 
 	        var type = {
 	        	type: 'm',
@@ -955,7 +940,6 @@ var Formula = function(handler) {
 
 	formulaParser.prototype = parser;
 	var newParser = new formulaParser();
-	newParser.yy.handler = handler;
 	return newParser;
 };
 if (typeof(window) !== 'undefined') {

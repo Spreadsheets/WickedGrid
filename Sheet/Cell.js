@@ -51,11 +51,8 @@ Sheet.Cell = (function() {
 				&& this.defer === u
 			) {
 				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
-				if (this.td !== u && this.td.innerHTML.length < 1) {
-					this.displayValue();
-				}
 				if (fn !== u) {
-					fn.call(this, this.value);
+					fn.call(this, result);
 				}
 				return;
 			}
@@ -170,23 +167,25 @@ Sheet.Cell = (function() {
 					Sheet.calcStack++;
 
 					cell.getThread()(formula, function(parsedFormula) {
-						cell.thaw.add(function() {
-							if (value.cell !== u && value.cell !== this) {
-								value = value.valueOf();
-							}
-							
-							Sheet.calcStack--;
+						cell.resolveFormula(parsedFormula, function() {
+							cell.thaw.add(function() {
+								if (value.cell !== u && value.cell !== this) {
+									value = value.valueOf();
+								}
 
-							if (
-								value !== u
-								&& value !== null
-								&& cellType !== null
-								&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-							) {
-								value = cellTypeHandler(cell, value);
-							}
+								Sheet.calcStack--;
 
-							doneFn();
+								if (
+									value !== u
+									&& value !== null
+									&& cellType !== null
+									&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+								) {
+									value = cellTypeHandler(cell, value);
+								}
+
+								doneFn();
+							});
 						});
 					});
 				});
@@ -381,6 +380,68 @@ Sheet.Cell = (function() {
 			return td.innerHTML;
 		},
 
+		resolveFormula: function(parsedFormula, callback) {
+			var cell = this,
+				steps = [],
+				values = [],
+				i = 0,
+				max = parsedFormula.length,
+				parsed,
+				remaining = max - 1;
+
+			for (; i < max; i++) {
+				parsed = parsedFormula[i];
+				switch (parsed.type) {
+					//method
+					case 'm':
+						(function(parsed, handler, i) {
+							steps.push(function() {
+								var args = parsed.args,
+									arg,
+									j = 0,
+									max = args.length;
+
+								for (;j < max; j++) {
+									arg = args[j];
+									if (!isNaN(arg)) {
+										args[j] = parsedFormula[arg];
+									}
+								}
+
+								parsed.args.unshift(cell);
+								values[i] = handler[parsed.method].apply(handler, parsed.args);
+								remaining--;
+
+								if (remaining === 0) {
+									callback(values);
+								}
+							});
+						})(parsed, this.cellHandler, i);
+						break;
+
+					//value
+					case 'v':
+						(function(parsed, i) {
+							steps.push(function() {
+								values[i] = parsed.value;
+								remaining--;
+
+								if (remaining === 0) {
+									callback(values);
+								}
+							});
+						})(parsed, i);
+						break;
+
+					case 'cell':
+						parsedFormula[i] = parsed;
+				}
+			}
+
+			if (steps.length > 0) {
+				this.thaw.addArray(steps);
+			}
+		},
 		recurseDependencies: function (fn) {
 			var i = 0,
 				dependencies = this.dependencies,
