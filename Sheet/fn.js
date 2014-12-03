@@ -574,6 +574,7 @@ var jFN = $.sheet.fn = {
 	 * @memberOf jFN
 	 */
 	LEFT:function (v, numberOfChars) {
+		v = v.valueOf().toString();
 		numberOfChars = numberOfChars || 1;
 		return v.substring(0, numberOfChars);
 	},
