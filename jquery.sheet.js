@@ -1241,7 +1241,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			cssId = '#' + table.getAttribute('id'),
 			scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
 			scrollInner = pane.scrollInner = document.createElement('div'),
-			scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(index, style) {
+			scrollStyleX = this.scrollAxis.x.scrollStyle = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(index, style) {
 				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
 				if (that.xIndex === index) return false;
 
@@ -1268,7 +1268,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				that.scrolledArea.col = Math.max(index || 1, 1);
 				return true;
 			}, max),
-			scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
+			scrollStyleY = this.scrollAxis.y.scrollStyle = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
 				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
 				if (that.yIndex === index) return false;
 
@@ -1298,54 +1298,20 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		$(scrollOuter)
 			.disableSelectionSpecial();
 
+		scrollOuter.addEventListener('scroll', function() {
+			var total = scrollOuter.scrollTop + scrollOuter.clientHeight;
+			if (total >= (scrollInner.clientHeight - (scrollOuter.clientHeight / 2))) {
+				scrollInner.style.height = (scrollInner.clientHeight + (scrollOuter.clientHeight * 2)) + 'px';
+			}
+
+			total = scrollOuter.scrollLeft + scrollOuter.clientWidth;
+			if (total >= (scrollInner.clientWidth - (scrollOuter.clientWidth / 2))) {
+				scrollInner.style.width = (scrollInner.clientWidth + (scrollOuter.clientWidth * 2)) + 'px';
+			}
+		});
+
 		pane.appendChild(scrollStyleX.styleElement);
 		pane.appendChild(scrollStyleY.styleElement);
-
-		var xStyle,
-			yStyle,
-			tableWidth,
-			tableHeight,
-			enclosureWidth,
-			enclosureHeight,
-			firstRow = table.tBody.children[0];
-
-		pane.resizeScroll = function (justTouch) {
-			if (justTouch) {
-				xStyle = scrollStyleX.getStyle();
-				yStyle = scrollStyleY.getStyle();
-			} else {
-				xStyle = (table.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.getStyle());
-				yStyle = (table.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.getStyle());
-			}
-
-			scrollStyleX.update(null, ' ');
-			scrollStyleY.update(null, ' ');
-
-			if (firstRow === undefined) {
-				firstRow = table.tBody.children[0];
-			}
-
-			tableWidth = (firstRow.clientWidth || table.clientWidth) + 'px';
-			tableHeight = table.clientHeight + 'px';
-			enclosureWidth = enclosure.clientWidth + 'px';
-			enclosureHeight = enclosure.clientHeight + 'px';
-
-			scrollInner.style.width = tableWidth;
-			scrollInner.style.height = tableHeight;
-
-			scrollOuter.style.width = enclosureWidth;
-			scrollOuter.style.height = enclosureHeight;
-
-			that.scrollStart('x', justTouch);
-			that.scrollStart('y', justTouch);
-
-			scrollStyleX.update(null, xStyle);
-			scrollStyleY.update(null, yStyle);
-
-			if (pane.inPlaceEdit) {
-				pane.inPlaceEdit.goToTd();
-			}
-		};
 
 		new MouseWheel(pane, scrollOuter);
 	};
@@ -1624,84 +1590,27 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		},
 
-		/**
-		 * prepare everything needed for a scroll, needs activated every time spreadsheet changes in size
-		 * @param {String} axisName x or y
-		 * @param {Boolean} justTouch
-		 */
-		scrollStart:function (axisName, justTouch) {
-			var pane = this.pane,
-				outer = pane.scrollOuter,
-				axis = this.scrollAxis[axisName],
-				size = this.scrollSize = pane.size();
-
-			axis.v = [];
-			axis.name = axisName;
-
-			switch (axisName || 'x') {
-				case 'x':
-					axis.value = 0;
-					axis.max = size.cols;
-					axis.min = 0;
-					axis.size = size.cols;
-					if (!justTouch) {
-						pane.scrollStyleX.update();
-					}
-					axis.scrollStyle = pane.scrollStyleX;
-					axis.area = outer.scrollWidth - outer.clientWidth;
-					axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
-					axis.scrollUpdate = function () {
-						outer.scrollLeft = (axis.value) * (axis.area / axis.size);
-					};
-					axis.gridSize = 100 / axis.size;
-					break;
-				case 'y':
-					axis.value = 0;
-					axis.max = size.rows;
-					axis.min = 0;
-					axis.size = size.rows;
-					if (!justTouch) {
-						pane.scrollStyleY.update();
-					}
-					axis.scrollStyle = pane.scrollStyleY;
-					axis.area = outer.scrollHeight - outer.clientHeight;
-					axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
-					axis.scrollUpdate = function () {
-						outer.scrollTop = (axis.value) * (axis.area / axis.size);
-					};
-					axis.gridSize = 100 / axis.size;
-					break;
-			}
-
-			var i = axis.max;
-
-			do {
-				var position = new Number(axis.gridSize * i);
-				position.index = i + 1;
-				axis.v.unshift(position);
-			} while(i--);
-		},
 
 		/**
 		 * Scrolls to a position within the spreadsheet
 		 * @param {String} axisType
-		 * @param {Number} [pixel]scrollTO
-		 * @param {Number} [value]
+		 * @param {Number} [pixel] scrollTO
 		 */
-		scrollTo:function (axisType, pixel, value) {
+		scrollToPixel:function (axisType, pixel) {
 			var axis = this.scrollAxis[axisType],
 				max,
-				i;
-
-			if (value === undefined) {
-				value = arrHelpers.closest(axis.v, Math.abs(pixel / axis.area) * 100, axis.min).index;
-			}
+				i,
+				value = Math.round(pixel / this.pixelScrollDensity);
 
 			max = axis.max;
 			axis.value = value;
 
 			i = value > max ? max : value;
 			return axis.scrollStyle.update(i);
+		},
+
+		scrollToCell: function(axis, value) {
+			throw new Error('Not yet implemented');
 		},
 
 		/**
@@ -1724,7 +1633,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		/**
 		 * @type Sheet.StyleUpdater
 		 */
-		toggleHideStyleY: null
+		toggleHideStyleY: null,
+
+		pixelScrollDensity: 20
 	};
 
 	return Constructor;
@@ -5125,6 +5036,7 @@ $.sheet = {
 
 						var $table = jS.obj.table(),
 							table = $table[0],
+							pane = table.pane,
 							tBody = table.tBody,
 							colGroup = table.colGroup,
 							isLast = false,
@@ -5326,8 +5238,9 @@ $.sheet = {
 							jS.offsetFormulas(loc, offset, isBefore);
 						}
 
-						jS.obj.pane().resizeScroll(true);
-
+						if (pane.inPlaceEdit) {
+							pane.inPlaceEdit.goToTd();
+						}
 						if (activeCell && activeCell[0] && activeCell[0].cellIndex && activeCell[0].parentNode) {
 							jS.colLast = activeCell[0].cellIndex;
 							jS.rowLast = activeCell[0].parentNode.rowIndex;
@@ -5518,7 +5431,6 @@ $.sheet = {
 									jS.obj.barHelper().remove();
 									scrolledArea.col = actionUI.frozenAt.col = jS.getTdLocation(target[0]).col - 1;
 									jS.autoFillerHide();
-									actionUI.scrollStart('x', jS.sheetSize(pane.table));
 								},
 								containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - window.scrollBarSize.width), offset.top]
 							});
@@ -5591,7 +5503,6 @@ $.sheet = {
 									jS.obj.barHelper().remove();
 									scrolledArea.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)[0]).row - 1, 0);
 									jS.autoFillerHide();
-									pane.actionUI.scrollStart('y', jS.sheetSize(pane.table));
 								},
 								containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - window.scrollBarSize.height)]
 							});
@@ -6263,7 +6174,7 @@ $.sheet = {
 									scrollLeft = scrollUI.scrollLeft;
 									if (lastScrollLeft != scrollLeft) {
 										lastScrollLeft = scrollLeft;
-										xUpdated = actionUI.scrollTo('x', scrollLeft);
+										xUpdated = actionUI.scrollToPixel('x', scrollLeft);
 									}
 								},
 
@@ -6272,19 +6183,17 @@ $.sheet = {
 									scrollTop = scrollUI.scrollTop;
 									if (lastScrollTop != scrollTop) {
 										lastScrollTop = scrollTop;
-										yUpdated = actionUI.scrollTo('y', scrollTop);
+										yUpdated = actionUI.scrollToPixel('y', scrollTop);
 									}
 								},
 								function () {
-									if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
+									if (xUpdated) {
 										jS.calcVisibleCol(actionUI);
 									}
 								},
 								function () {
 									if (yUpdated) {
-										if (actionUI.scrollAxis.y.size >= (rows.length - 1)) {
-											jS.calcVisibleRow(actionUI);
-										}
+										jS.calcVisibleRow(actionUI);
 										jS.updateYBarWidthToCorner(actionUI);
 									}
 								},
@@ -6304,7 +6213,7 @@ $.sheet = {
 									scrollLeft = scrollUI.scrollLeft;
 									if (lastScrollLeft !== scrollLeft) {
 										lastScrollLeft = scrollLeft;
-										xUpdated = actionUI.scrollTo('x', scrollLeft);
+										xUpdated = actionUI.scrollToPixel('x', scrollLeft);
 									}
 								},
 
@@ -6312,7 +6221,7 @@ $.sheet = {
 									scrollTop = scrollUI.scrollTop;
 									if (lastScrollTop !== scrollTop) {
 										lastScrollTop = scrollTop;
-										yUpdated = actionUI.scrollTo('y', scrollTop);
+										yUpdated = actionUI.scrollToPixel('y', scrollTop);
 									}
 								},
 								function () {
@@ -7544,7 +7453,9 @@ $.sheet = {
 						fullScreen.remove();
 
 						jS.sheetSyncSize();
-						pane.resizeScroll();
+						if (pane.inPlaceEdit) {
+							pane.inPlaceEdit.goToTd();
+						}
 						jS.trigger('sheetFullScreen', [false]);
 					} else { //here we make a full screen
 						$body.addClass('bodyNoScroll');
@@ -7572,7 +7483,9 @@ $.sheet = {
 									.height(this.h);
 
 								jS.sheetSyncSize();
-								pane.resizeScroll();
+								if (pane.inPlaceEdit) {
+									pane.inPlaceEdit.goToTd();
+								}
 							})
 							.trigger('jSResize');
 
@@ -8639,7 +8552,9 @@ $.sheet = {
 							},
 							stop:function (e, ui) {
 								jS.setBusy(false);
-								pane.resizeScroll();
+								if (pane.inPlaceEdit) {
+									pane.inPlaceEdit.goToTd();
+								}
 								jS.followMe();
 								jS.setDirty(true);
 							},
@@ -8707,7 +8622,9 @@ $.sheet = {
 							},
 							stop:function (e, ui) {
 								jS.setBusy(false);
-								pane.resizeScroll();
+								if (pane.inPlaceEdit) {
+									pane.inPlaceEdit.goToTd();
+								}
 								jS.followMe();
 								jS.setDirty(true);
 							},
@@ -9436,7 +9353,10 @@ $.sheet = {
 
 					jS.sheetSyncSize();
 
-					jS.obj.pane().resizeScroll();
+					var pane = jS.obj.pane();
+					if (pane.inPlaceEdit) {
+						pane.inPlaceEdit.goToTd();
+					}
 
 					jS.trigger('sheetAdd', [jS.i]);
 				},
@@ -9589,7 +9509,9 @@ $.sheet = {
 
 					jS.evt.cellEditAbandon();
 
-					jS.obj.pane().resizeScroll();
+					if (pane.inPlaceEdit) {
+						pane.inPlaceEdit.goToTd();
+					}
 
 					jS.trigger('sheetDeleteRow', i);
 				},
@@ -9600,7 +9522,14 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				deleteColumn:function (i) {
-					var j, start, end, qty, size = jS.sheetSize(), cells, k;
+					var j,
+						start,
+						end,
+						qty,
+						size = jS.sheetSize(),
+						cells,
+						k,
+						pane = jS.obj.pane();
 
 					if (i) {
 						start = end = i;
@@ -9665,7 +9594,9 @@ $.sheet = {
 
 					jS.evt.cellEditAbandon();
 
-					jS.obj.pane().resizeScroll();
+					if (pane.inPlaceEdit) {
+						pane.inPlaceEdit.goToTd();
+					}
 
 					jS.trigger('sheetDeleteColumn', j);
 				},
@@ -9800,7 +9731,8 @@ $.sheet = {
 					//IE, stop flossin' me
 					var enclosures = jS.obj.enclosures(),
 						j = enclosures.length - 1,
-						enclosure;
+						enclosure,
+						pane;
 
 					jS.autoFillerHide();
 
@@ -9829,7 +9761,10 @@ $.sheet = {
 
 					jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/i) != null;
 
-					enclosure.pane.resizeScroll(true);
+					pane = enclosure.pane;
+					if (pane.inPlaceEdit) {
+						pane.inPlaceEdit.goToTd();
+					}
 
 					enclosure.scrollUI.scrollLeft = enclosure._scrollLeft || enclosure.scrollUI.scrollLeft;
 					enclosure.scrollUI.scrollTop = enclosure._scrollTop || enclosure.scrollUI.scrollTop;
@@ -9945,7 +9880,10 @@ $.sheet = {
 									ui.tabContainer.show();
 									jS.setBusy(false);
 									jS.sheetSyncSize();
-									jS.obj.pane().resizeScroll();
+									var pane = jS.obj.pane();
+									if (pane.inPlaceEdit) {
+										pane.inPlaceEdit.goToTd();
+									}
 								}
 							});
 

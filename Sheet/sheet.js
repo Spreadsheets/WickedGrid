@@ -1692,6 +1692,7 @@ $.sheet = {
 
 						var $table = jS.obj.table(),
 							table = $table[0],
+							pane = table.pane,
 							tBody = table.tBody,
 							colGroup = table.colGroup,
 							isLast = false,
@@ -1893,8 +1894,9 @@ $.sheet = {
 							jS.offsetFormulas(loc, offset, isBefore);
 						}
 
-						jS.obj.pane().resizeScroll(true);
-
+						if (pane.inPlaceEdit) {
+							pane.inPlaceEdit.goToTd();
+						}
 						if (activeCell && activeCell[0] && activeCell[0].cellIndex && activeCell[0].parentNode) {
 							jS.colLast = activeCell[0].cellIndex;
 							jS.rowLast = activeCell[0].parentNode.rowIndex;
@@ -2085,7 +2087,6 @@ $.sheet = {
 									jS.obj.barHelper().remove();
 									scrolledArea.col = actionUI.frozenAt.col = jS.getTdLocation(target[0]).col - 1;
 									jS.autoFillerHide();
-									actionUI.scrollStart('x', jS.sheetSize(pane.table));
 								},
 								containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - window.scrollBarSize.width), offset.top]
 							});
@@ -2158,7 +2159,6 @@ $.sheet = {
 									jS.obj.barHelper().remove();
 									scrolledArea.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)[0]).row - 1, 0);
 									jS.autoFillerHide();
-									pane.actionUI.scrollStart('y', jS.sheetSize(pane.table));
 								},
 								containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - window.scrollBarSize.height)]
 							});
@@ -2830,7 +2830,7 @@ $.sheet = {
 									scrollLeft = scrollUI.scrollLeft;
 									if (lastScrollLeft != scrollLeft) {
 										lastScrollLeft = scrollLeft;
-										xUpdated = actionUI.scrollTo('x', scrollLeft);
+										xUpdated = actionUI.scrollToPixel('x', scrollLeft);
 									}
 								},
 
@@ -2839,19 +2839,17 @@ $.sheet = {
 									scrollTop = scrollUI.scrollTop;
 									if (lastScrollTop != scrollTop) {
 										lastScrollTop = scrollTop;
-										yUpdated = actionUI.scrollTo('y', scrollTop);
+										yUpdated = actionUI.scrollToPixel('y', scrollTop);
 									}
 								},
 								function () {
-									if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
+									if (xUpdated) {
 										jS.calcVisibleCol(actionUI);
 									}
 								},
 								function () {
 									if (yUpdated) {
-										if (actionUI.scrollAxis.y.size >= (rows.length - 1)) {
-											jS.calcVisibleRow(actionUI);
-										}
+										jS.calcVisibleRow(actionUI);
 										jS.updateYBarWidthToCorner(actionUI);
 									}
 								},
@@ -2871,7 +2869,7 @@ $.sheet = {
 									scrollLeft = scrollUI.scrollLeft;
 									if (lastScrollLeft !== scrollLeft) {
 										lastScrollLeft = scrollLeft;
-										xUpdated = actionUI.scrollTo('x', scrollLeft);
+										xUpdated = actionUI.scrollToPixel('x', scrollLeft);
 									}
 								},
 
@@ -2879,7 +2877,7 @@ $.sheet = {
 									scrollTop = scrollUI.scrollTop;
 									if (lastScrollTop !== scrollTop) {
 										lastScrollTop = scrollTop;
-										yUpdated = actionUI.scrollTo('y', scrollTop);
+										yUpdated = actionUI.scrollToPixel('y', scrollTop);
 									}
 								},
 								function () {
@@ -4111,7 +4109,9 @@ $.sheet = {
 						fullScreen.remove();
 
 						jS.sheetSyncSize();
-						pane.resizeScroll();
+						if (pane.inPlaceEdit) {
+							pane.inPlaceEdit.goToTd();
+						}
 						jS.trigger('sheetFullScreen', [false]);
 					} else { //here we make a full screen
 						$body.addClass('bodyNoScroll');
@@ -4139,7 +4139,9 @@ $.sheet = {
 									.height(this.h);
 
 								jS.sheetSyncSize();
-								pane.resizeScroll();
+								if (pane.inPlaceEdit) {
+									pane.inPlaceEdit.goToTd();
+								}
 							})
 							.trigger('jSResize');
 
@@ -5206,7 +5208,9 @@ $.sheet = {
 							},
 							stop:function (e, ui) {
 								jS.setBusy(false);
-								pane.resizeScroll();
+								if (pane.inPlaceEdit) {
+									pane.inPlaceEdit.goToTd();
+								}
 								jS.followMe();
 								jS.setDirty(true);
 							},
@@ -5274,7 +5278,9 @@ $.sheet = {
 							},
 							stop:function (e, ui) {
 								jS.setBusy(false);
-								pane.resizeScroll();
+								if (pane.inPlaceEdit) {
+									pane.inPlaceEdit.goToTd();
+								}
 								jS.followMe();
 								jS.setDirty(true);
 							},
@@ -6003,7 +6009,10 @@ $.sheet = {
 
 					jS.sheetSyncSize();
 
-					jS.obj.pane().resizeScroll();
+					var pane = jS.obj.pane();
+					if (pane.inPlaceEdit) {
+						pane.inPlaceEdit.goToTd();
+					}
 
 					jS.trigger('sheetAdd', [jS.i]);
 				},
@@ -6156,7 +6165,9 @@ $.sheet = {
 
 					jS.evt.cellEditAbandon();
 
-					jS.obj.pane().resizeScroll();
+					if (pane.inPlaceEdit) {
+						pane.inPlaceEdit.goToTd();
+					}
 
 					jS.trigger('sheetDeleteRow', i);
 				},
@@ -6167,7 +6178,14 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				deleteColumn:function (i) {
-					var j, start, end, qty, size = jS.sheetSize(), cells, k;
+					var j,
+						start,
+						end,
+						qty,
+						size = jS.sheetSize(),
+						cells,
+						k,
+						pane = jS.obj.pane();
 
 					if (i) {
 						start = end = i;
@@ -6232,7 +6250,9 @@ $.sheet = {
 
 					jS.evt.cellEditAbandon();
 
-					jS.obj.pane().resizeScroll();
+					if (pane.inPlaceEdit) {
+						pane.inPlaceEdit.goToTd();
+					}
 
 					jS.trigger('sheetDeleteColumn', j);
 				},
@@ -6367,7 +6387,8 @@ $.sheet = {
 					//IE, stop flossin' me
 					var enclosures = jS.obj.enclosures(),
 						j = enclosures.length - 1,
-						enclosure;
+						enclosure,
+						pane;
 
 					jS.autoFillerHide();
 
@@ -6396,7 +6417,10 @@ $.sheet = {
 
 					jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/i) != null;
 
-					enclosure.pane.resizeScroll(true);
+					pane = enclosure.pane;
+					if (pane.inPlaceEdit) {
+						pane.inPlaceEdit.goToTd();
+					}
 
 					enclosure.scrollUI.scrollLeft = enclosure._scrollLeft || enclosure.scrollUI.scrollLeft;
 					enclosure.scrollUI.scrollTop = enclosure._scrollTop || enclosure.scrollUI.scrollTop;
@@ -6512,7 +6536,10 @@ $.sheet = {
 									ui.tabContainer.show();
 									jS.setBusy(false);
 									jS.sheetSyncSize();
-									jS.obj.pane().resizeScroll();
+									var pane = jS.obj.pane();
+									if (pane.inPlaceEdit) {
+										pane.inPlaceEdit.goToTd();
+									}
 								}
 							});
 
