@@ -1383,6 +1383,7 @@ var jFN = $.sheet.fn = {
 		var cell = this,
 			jS = this.jS,
 			td = this.td,
+			value,
 			v,
 			html,
 			select,
@@ -1417,11 +1418,12 @@ var jFN = $.sheet.fn = {
 				}
 			};
 			select.onchange = function () {
-				cell.value = new String(this.value);
-				cell.value.cell = cell;
-				cell.setNeedsUpdated();
-				//cell.needsUpdated = false;
-				jS.calcDependencies.call(cell);
+				value = new String(this.value);
+				value.html = select;
+				value.cell = cell;
+				cell.value = value;
+				cell.setNeedsUpdated(false);
+				jS.resolveCell(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
 
@@ -1511,8 +1513,8 @@ var jFN = $.sheet.fn = {
 					input.value = v[i];
 					input.onchange = function() {
 						cell.value = jQuery(this).val();
-						jS.setCellNeedsUpdated(cell);
-						jS.calcDependencies.call(cell);
+						cell.setNeedsUpdated(false);
+						jS.resolveCell(cell);
 						jS.trigger('sheetCellEdited', [cell]);
 					};
 
@@ -1596,8 +1598,8 @@ var jFN = $.sheet.fn = {
 				} else {
 					cell.value = '';
 				}
-				jS.setCellNeedsUpdated(cell);
-				jS.calcDependencies.call(cell);
+				cell.setNeedsUpdated(false);
+				jS.resolveCell(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
 

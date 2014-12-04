@@ -90,6 +90,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				&& this.defer === u
 			) {
 				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
+				this.displayValue();
 				if (callback !== u) {
 					callback.call(this, result);
 				}
@@ -206,27 +207,25 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					Sheet.calcStack++;
 
 					cell.getThread()(formula, function(parsedFormula) {
-						cell.resolveFormula(parsedFormula, function(resolvedValue) {
-							cell.thaw.add(function() {
-								if (resolvedValue.cell !== u && resolvedValue.cell !== cell) {
-									value = resolvedValue.valueOf();
-								} else {
-									value = resolvedValue;
-								}
+						cell.resolveFormula(parsedFormula, function(value) {
+							if (value.cell !== u && value.cell !== cell) {
+								value = value.valueOf();
+							} else {
+								value = value;
+							}
 
-								Sheet.calcStack--;
+							Sheet.calcStack--;
 
-								if (
-									value !== u
-									&& value !== null
-									&& cellType !== null
-									&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-								) {
-									value = cellTypeHandler(cell, value);
-								}
+							if (
+								value !== u
+								&& value !== null
+								&& cellType !== null
+								&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+							) {
+								value = cellTypeHandler(cell, value);
+							}
 
-								doneFn();
-							});
+							doneFn(value);
 						});
 					});
 				});
@@ -238,7 +237,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			) {
 				this.thaw.add(function() {
 					value = cellTypeHandler(cell, value);
-					doneFn();
+					doneFn(value);
 				});
 			} else {
 				this.thaw.add(function() {
@@ -258,11 +257,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							value = '';
 							break;
 					}
-					doneFn();
+					doneFn(value);
 				});
 			}
 
-			doneFn = function() {
+			doneFn = function(value) {
 				cell.thaw.add(function () {
 					//setup cell trace from value
 					if (
@@ -297,8 +296,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				});
 
 				cell.thaw.add(function () {
-					cache = cell.displayValue();
-
 					if (cell.loader !== null) {
 						cell.loader
 							.setCellAttributes(cell.loadedFrom, {
@@ -367,25 +364,20 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		displayValue:function () {
 			var value = this.value,
 				td = this.td,
-				encodedValue,
 				valType = typeof value,
 				html = value.html;
 
-			if (
-				valType === 'string'
-				|| (
-				value !== null
-				&& valType === 'object'
-				&& value.toUpperCase !== u
-				)
-				&& value.length > 0
-			) {
-				encodedValue = this.encode(value);
-			}
-
 			if (html === u) {
-				if (encodedValue !== u) {
-					html = encodedValue;
+				if (
+					valType === 'string'
+					|| (
+					value !== null
+					&& valType === 'object'
+					&& value.toUpperCase !== u
+					)
+					&& value.length > 0
+				) {
+					html = this.encode(value);
 				} else {
 					html = value;
 				}
@@ -402,9 +394,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						td.innerHTML = '';
 					} else if (html.appendChild !== u) {
 
-						//if html already belongs to another element, just return nothing for it's cache.
+						//if html already belongs to another element, just return nothing for it's cache, formula function is probably managing it
 						if (html.parentNode !== null) {
-							td.innerHTML = value.valueOf();
 							return '';
 						}
 
@@ -424,13 +415,12 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		resolveFormula: function(parsedFormula, callback) {
 			var cell = this,
 				steps = [],
-				values = [],
 				value,
 				i = 0,
 				max = parsedFormula.length,
 				parsed,
 				remaining = max - 1,
-				bindArgs = function(cell, args) {
+				addCell = function(cell, args) {
 					var boundArgs = [],
 						arg,
 						j = 0,
@@ -438,12 +428,37 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 					for (;j < jMax; j++) {
 						arg = args[j];
-						boundArgs[j] = (typeof(arg) === 'number' ? parsedFormula[arg] : arg);
+						if (typeof(arg) == 'number') {
+							arg = parsedFormula[arg];
+						} else if (arg instanceof Array) {
+							arg = argBinder(arg);
+						}
+						boundArgs[j] = arg;
 					}
 
 					boundArgs.unshift(cell);
 
 					return boundArgs;
+				},
+				argBinder = function(args) {
+					var i = args.length - 1,
+						arg;
+					if (i < 0) return;
+					do {
+						arg = args[i];
+						if (typeof(arg) === 'number') {
+							args[i] = parsedFormula[arg];
+						}
+
+						else if (arg.hasOwnProperty('args')) {
+							args[i].args = argBinder(arg.args);
+						}
+						else if (arg instanceof Array) {
+							args[i] = argBinder(arg);
+						}
+					} while (i-- > 0);
+
+					return args;
 				};
 
 			for (; i < max; i++) {
@@ -453,7 +468,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					case 'm':
 						(function(parsed, handler, i) {
 							steps.push(function() {
-								value = values[i] = handler[parsed.method].apply(handler, bindArgs(cell, parsed.args));
+								value = parsedFormula[i] = handler[parsed.method].apply(handler, addCell(cell, parsed.args));
 								remaining--;
 
 								if (remaining < 1) {
@@ -470,7 +485,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							steps.push(function() {
 								//setup callback
 								parsed.args.push(function(value) {
-									values[i] = value;
+									parsedFormula[i] = value;
 									remaining--;
 									if (remaining < 1) {
 										this.value = value;
@@ -478,7 +493,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 									}
 								});
 
-								handler[parsed.method].apply(handler, bindArgs(cell, parsed.args));
+								handler[parsed.method].apply(handler, addCell(cell, parsed.args));
 							});
 						})(parsed, this.cellHandler, i);
 						break;
@@ -486,7 +501,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					case 'v':
 						(function(parsed, i) {
 							steps.push(function() {
-								value = values[i] = parsed.value;
+								parsedFormula[i] = parsed.value;
 								remaining--;
 
 								if (remaining < 1) {
@@ -498,7 +513,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						break;
 
 					case 'cell':
-						values[i] = parsed;
+						//parsedFormula[i] = parsed;
 				}
 			}
 
@@ -534,10 +549,15 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		},
 
 		/**
-		 *
+		 * @param {Boolean} [parentNeedsUpdated] default true
 		 */
-		setNeedsUpdated: function() {
-			this.needsUpdated = true;
+		setNeedsUpdated: function(parentNeedsUpdated) {
+			if (parentNeedsUpdated !== u) {
+				this.needsUpdated = parentNeedsUpdated;
+			} else {
+				this.needsUpdated = true;
+			}
+
 			this.recurseDependencies(function() {
 				this.needsUpdated = true;
 			});
@@ -3082,8 +3102,6 @@ Sheet.StyleUpdater = (function(document) {
 			if ((jitCell = cell.jitCell) !== undefined) {
 				blankCell.html = jitCell.html;
 				blankCell.state = jitCell.state;
-				blankCell.calcLast = jitCell.calcLast;
-				blankCell.calcDependenciesLast = jitCell.calcDependenciesLast;
 				blankCell.cellType = jitCell.cellType;
 				blankCell.value = jitCell.value;
 				blankCell.uneditable = jitCell.uneditable;
@@ -3130,8 +3148,6 @@ Sheet.StyleUpdater = (function(document) {
 				},
 				html: [],
 				state: [],
-				calcLast: -1,
-				calcDependenciesLast: -1,
 				cellType: cell.attributes['cellType'].nodeValue || '',
 				formula: cell.attributes['formula'].nodeValue || '',
 				value: cell.attributes['value'].nodeValue || '',
@@ -6593,7 +6609,7 @@ $.sheet = {
 											td.removeData('formula');
 										}
 									});
-									jS.calcDependencies.call(cell);
+									jS.resolveCell(cell);
 
 									if (i == 0 && j == 0) { //we have to finish the current edit
 										firstValue = col[j];
@@ -7047,7 +7063,7 @@ $.sheet = {
 
 										cell.setNeedsUpdated();
 									});
-									jS.calcDependencies.call(cell);
+									jS.resolveCell(cell);
 
 									//formula.focus().select();
 									jS.cellLast.isEdit = false;
@@ -7890,7 +7906,7 @@ $.sheet = {
 								}
 							});
 
-							jS.calcDependencies.call(cell);
+							jS.resolveCell(cell);
 						} while(i--);
 
 						td.jSCell.value = cellsValue.join(' ');
@@ -7900,7 +7916,7 @@ $.sheet = {
 						td.setAttribute('rowSpan', rowSpan);
 						td.setAttribute('colSpan', colSpan);
 
-						jS.calcDependencies.call(td.jSCell);
+						jS.resolveCell(td.jSCell);
 						jS.evt.cellEditDone();
 						jS.autoFillerGoToTd(td);
 						jS.cellSetActive(td, loc);
@@ -7940,7 +7956,7 @@ $.sheet = {
 							_td.removeAttribute('rowSpan');
 							delete _td.jSCell.defer;
 
-							jS.calcDependencies.call(_td.jSCell, last);
+							jS.resolveCell(_td.jSCell, last);
 
 							tds.push(_td);
 						} while (j-- > loc.col);
@@ -8009,7 +8025,7 @@ $.sheet = {
 										cells[i].td.setAttribute('data-formula', newV);
 									});
 
-									jS.calcDependencies.call(cells[i]);
+									jS.resolveCell(cells[i]);
 								} while (i--);
 								return true;
 							}
@@ -8034,7 +8050,7 @@ $.sheet = {
 									cells[i].td.removeAttribute('data-formula');
 								});
 
-								jS.calcDependencies.call(cells[i]);
+								jS.resolveCell(cells[i]);
 
 								fn();
 							} while (i--);
@@ -8064,7 +8080,7 @@ $.sheet = {
 								cell.formula = '';
 								cell.value = '';
 							});
-							jS.calcDependencies.call(cell);
+							jS.resolveCell(cell);
 						}
 					};
 					var cellValues = [],
@@ -8143,7 +8159,7 @@ $.sheet = {
 						}
 
 						cellStack.push(function() {
-							jS.calcDependencies.call(cell, true);
+							jS.resolveCell(cell, true);
 						});
 
 					}, affectedRange.first, affectedRange.last);
@@ -8995,7 +9011,7 @@ $.sheet = {
 						cells = jS.obj.cellsEdited(),
 						hasClass;
 
-					//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
+					//TODO: use resolveCell and sheetPreCalculation to set undo redo data
 
 					if (i >= 0) {
 						hasClass = tds[0].className.match(setClass); //go by first element in set
@@ -9090,7 +9106,7 @@ $.sheet = {
 						size,
 						cells = jS.obj.cellsEdited();
 
-					//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
+					//TODO: use resolveCell and sheetPreCalculation to set undo redo data
 
 					if (i >= 0) {
 						do {
@@ -9361,15 +9377,14 @@ $.sheet = {
 
 				/**
 				 * Calculates just the dependencies of a single cell, and their dependencies recursively
-				 * @param {Boolean} skipUndoable
+				 * @param {Sheet.Cell} cell
+				 * @param {Boolean} [skipUndoable]
 				 * @memberOf jS
-				 * @this Sheet.Cell
 				 */
-				calcDependencies:function (skipUndoable) {
-
+				resolveCell:function (cell, skipUndoable) {
+					var willUpdateDependencies = !cell.needsUpdated;
 					if (!skipUndoable) {
-						var cell = this;
-						jS.undo.createCells([this], function(cells) {
+						jS.undo.createCells([cell], function(cells) {
 							jS.trigger('sheetPreCalculation', [
 								{which:'cell', cell:cell}
 							]);
@@ -9377,6 +9392,9 @@ $.sheet = {
 							jS.setDirty(true);
 							jS.setChanged(true);
 							cell.updateValue();
+							if (willUpdateDependencies) {
+								cell.updateDependencies();
+							}
 							jS.trigger('sheetCalculation', [
 								{which:'cell', cell: cell}
 							]);
@@ -9385,12 +9403,15 @@ $.sheet = {
 						});
 					} else {
 						jS.trigger('sheetPreCalculation', [
-							{which:'cell', cell:this}
+							{which:'cell', cell:cell}
 						]);
 
 						jS.setDirty(true);
 						jS.setChanged(true);
-						this.updateValue();
+						cell.updateValue();
+						if (willUpdateDependencies) {
+							cell.updateDependencies();
+						}
 						jS.trigger('sheetCalculation', [
 							{which:'cell', cell: this}
 						]);
@@ -10939,7 +10960,7 @@ $.sheet = {
 						trSibling.after(val.row);
 						val.row.children[0].innerHTML = trSibling[0].rowIndex + offset;
 						jS.spreadsheets[jS.i].splice(trSibling[0].rowIndex + 1, 0, row[0]);
-						jS.calcDependencies.call(cell, true);
+						jS.track.call(cell, true);
 					}
 
 					jS.undo.createCells(selected);
@@ -11071,7 +11092,7 @@ $.sheet = {
 							td.barTop = td.col.bar;
 							cell.value = td.jSCell.value;
 							jS.spreadsheets[jS.i][tr.rowIndex].splice(td.cellIndex, 0, cell[0]);
-							jS.calcDependencies.call(cell, true);
+							jS.resolveCell(cell, true);
 						}
 					}
 					jS.undo.createCells(selected);
@@ -13197,6 +13218,7 @@ var jFN = $.sheet.fn = {
 		var cell = this,
 			jS = this.jS,
 			td = this.td,
+			value,
 			v,
 			html,
 			select,
@@ -13231,11 +13253,12 @@ var jFN = $.sheet.fn = {
 				}
 			};
 			select.onchange = function () {
-				cell.value = new String(this.value);
-				cell.value.cell = cell;
-				cell.setNeedsUpdated();
-				//cell.needsUpdated = false;
-				jS.calcDependencies.call(cell);
+				value = new String(this.value);
+				value.html = select;
+				value.cell = cell;
+				cell.value = value;
+				cell.setNeedsUpdated(false);
+				jS.resolveCell(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
 
@@ -13325,8 +13348,8 @@ var jFN = $.sheet.fn = {
 					input.value = v[i];
 					input.onchange = function() {
 						cell.value = jQuery(this).val();
-						jS.setCellNeedsUpdated(cell);
-						jS.calcDependencies.call(cell);
+						cell.setNeedsUpdated(false);
+						jS.resolveCell(cell);
 						jS.trigger('sheetCellEdited', [cell]);
 					};
 
@@ -13410,8 +13433,8 @@ var jFN = $.sheet.fn = {
 				} else {
 					cell.value = '';
 				}
-				jS.setCellNeedsUpdated(cell);
-				jS.calcDependencies.call(cell);
+				cell.setNeedsUpdated(false);
+				jS.resolveCell(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
 
@@ -15009,7 +15032,7 @@ break;
 case 56:
 
         //js
-            this.$ = ($.isArray($$[$0-2]) ? $$[$0-2] : [$$[$0-2]]);
+            this.$ = ($$[$0-2] instanceof Array ? $$[$0-2] : [$$[$0-2]]);
             this.$.push($$[$0]);
 
         /*php

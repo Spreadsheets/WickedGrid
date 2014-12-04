@@ -51,6 +51,7 @@ Sheet.Cell = (function() {
 				&& this.defer === u
 			) {
 				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
+				this.displayValue();
 				if (callback !== u) {
 					callback.call(this, result);
 				}
@@ -167,27 +168,25 @@ Sheet.Cell = (function() {
 					Sheet.calcStack++;
 
 					cell.getThread()(formula, function(parsedFormula) {
-						cell.resolveFormula(parsedFormula, function(resolvedValue) {
-							cell.thaw.add(function() {
-								if (resolvedValue.cell !== u && resolvedValue.cell !== cell) {
-									value = resolvedValue.valueOf();
-								} else {
-									value = resolvedValue;
-								}
+						cell.resolveFormula(parsedFormula, function(value) {
+							if (value.cell !== u && value.cell !== cell) {
+								value = value.valueOf();
+							} else {
+								value = value;
+							}
 
-								Sheet.calcStack--;
+							Sheet.calcStack--;
 
-								if (
-									value !== u
-									&& value !== null
-									&& cellType !== null
-									&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-								) {
-									value = cellTypeHandler(cell, value);
-								}
+							if (
+								value !== u
+								&& value !== null
+								&& cellType !== null
+								&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+							) {
+								value = cellTypeHandler(cell, value);
+							}
 
-								doneFn();
-							});
+							doneFn(value);
 						});
 					});
 				});
@@ -199,7 +198,7 @@ Sheet.Cell = (function() {
 			) {
 				this.thaw.add(function() {
 					value = cellTypeHandler(cell, value);
-					doneFn();
+					doneFn(value);
 				});
 			} else {
 				this.thaw.add(function() {
@@ -219,11 +218,11 @@ Sheet.Cell = (function() {
 							value = '';
 							break;
 					}
-					doneFn();
+					doneFn(value);
 				});
 			}
 
-			doneFn = function() {
+			doneFn = function(value) {
 				cell.thaw.add(function () {
 					//setup cell trace from value
 					if (
@@ -258,8 +257,6 @@ Sheet.Cell = (function() {
 				});
 
 				cell.thaw.add(function () {
-					cache = cell.displayValue();
-
 					if (cell.loader !== null) {
 						cell.loader
 							.setCellAttributes(cell.loadedFrom, {
@@ -328,25 +325,20 @@ Sheet.Cell = (function() {
 		displayValue:function () {
 			var value = this.value,
 				td = this.td,
-				encodedValue,
 				valType = typeof value,
 				html = value.html;
 
-			if (
-				valType === 'string'
-				|| (
-				value !== null
-				&& valType === 'object'
-				&& value.toUpperCase !== u
-				)
-				&& value.length > 0
-			) {
-				encodedValue = this.encode(value);
-			}
-
 			if (html === u) {
-				if (encodedValue !== u) {
-					html = encodedValue;
+				if (
+					valType === 'string'
+					|| (
+					value !== null
+					&& valType === 'object'
+					&& value.toUpperCase !== u
+					)
+					&& value.length > 0
+				) {
+					html = this.encode(value);
 				} else {
 					html = value;
 				}
@@ -363,9 +355,8 @@ Sheet.Cell = (function() {
 						td.innerHTML = '';
 					} else if (html.appendChild !== u) {
 
-						//if html already belongs to another element, just return nothing for it's cache.
+						//if html already belongs to another element, just return nothing for it's cache, formula function is probably managing it
 						if (html.parentNode !== null) {
-							td.innerHTML = value.valueOf();
 							return '';
 						}
 
@@ -385,13 +376,12 @@ Sheet.Cell = (function() {
 		resolveFormula: function(parsedFormula, callback) {
 			var cell = this,
 				steps = [],
-				values = [],
 				value,
 				i = 0,
 				max = parsedFormula.length,
 				parsed,
 				remaining = max - 1,
-				bindArgs = function(cell, args) {
+				addCell = function(cell, args) {
 					var boundArgs = [],
 						arg,
 						j = 0,
@@ -399,12 +389,37 @@ Sheet.Cell = (function() {
 
 					for (;j < jMax; j++) {
 						arg = args[j];
-						boundArgs[j] = (typeof(arg) === 'number' ? parsedFormula[arg] : arg);
+						if (typeof(arg) == 'number') {
+							arg = parsedFormula[arg];
+						} else if (arg instanceof Array) {
+							arg = argBinder(arg);
+						}
+						boundArgs[j] = arg;
 					}
 
 					boundArgs.unshift(cell);
 
 					return boundArgs;
+				},
+				argBinder = function(args) {
+					var i = args.length - 1,
+						arg;
+					if (i < 0) return;
+					do {
+						arg = args[i];
+						if (typeof(arg) === 'number') {
+							args[i] = parsedFormula[arg];
+						}
+
+						else if (arg.hasOwnProperty('args')) {
+							args[i].args = argBinder(arg.args);
+						}
+						else if (arg instanceof Array) {
+							args[i] = argBinder(arg);
+						}
+					} while (i-- > 0);
+
+					return args;
 				};
 
 			for (; i < max; i++) {
@@ -414,7 +429,7 @@ Sheet.Cell = (function() {
 					case 'm':
 						(function(parsed, handler, i) {
 							steps.push(function() {
-								value = values[i] = handler[parsed.method].apply(handler, bindArgs(cell, parsed.args));
+								value = parsedFormula[i] = handler[parsed.method].apply(handler, addCell(cell, parsed.args));
 								remaining--;
 
 								if (remaining < 1) {
@@ -431,7 +446,7 @@ Sheet.Cell = (function() {
 							steps.push(function() {
 								//setup callback
 								parsed.args.push(function(value) {
-									values[i] = value;
+									parsedFormula[i] = value;
 									remaining--;
 									if (remaining < 1) {
 										this.value = value;
@@ -439,7 +454,7 @@ Sheet.Cell = (function() {
 									}
 								});
 
-								handler[parsed.method].apply(handler, bindArgs(cell, parsed.args));
+								handler[parsed.method].apply(handler, addCell(cell, parsed.args));
 							});
 						})(parsed, this.cellHandler, i);
 						break;
@@ -447,7 +462,7 @@ Sheet.Cell = (function() {
 					case 'v':
 						(function(parsed, i) {
 							steps.push(function() {
-								value = values[i] = parsed.value;
+								parsedFormula[i] = parsed.value;
 								remaining--;
 
 								if (remaining < 1) {
@@ -459,7 +474,7 @@ Sheet.Cell = (function() {
 						break;
 
 					case 'cell':
-						values[i] = parsed;
+						//parsedFormula[i] = parsed;
 				}
 			}
 
@@ -495,10 +510,15 @@ Sheet.Cell = (function() {
 		},
 
 		/**
-		 *
+		 * @param {Boolean} [parentNeedsUpdated] default true
 		 */
-		setNeedsUpdated: function() {
-			this.needsUpdated = true;
+		setNeedsUpdated: function(parentNeedsUpdated) {
+			if (parentNeedsUpdated !== u) {
+				this.needsUpdated = parentNeedsUpdated;
+			} else {
+				this.needsUpdated = true;
+			}
+
 			this.recurseDependencies(function() {
 				this.needsUpdated = true;
 			});
