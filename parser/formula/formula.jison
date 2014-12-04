@@ -608,7 +608,7 @@ variableSequence :
     }
 	| variableSequence DECIMAL VARIABLE {
         //js
-            $$ = ($.isArray($1) ? $1 : [$1]);
+            $$ = ($1 instanceof Array ? $1 : [$1]);
             $$.push($3);
 
         /*php

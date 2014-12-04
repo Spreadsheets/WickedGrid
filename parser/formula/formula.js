@@ -632,7 +632,7 @@ break;
 case 56:
 
         //js
-            this.$ = ($.isArray($$[$0-2]) ? $$[$0-2] : [$$[$0-2]]);
+            this.$ = ($$[$0-2] instanceof Array ? $$[$0-2] : [$$[$0-2]]);
             this.$.push($$[$0]);
 
         /*php

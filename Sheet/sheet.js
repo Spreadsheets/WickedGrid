@@ -3176,7 +3176,7 @@ $.sheet = {
 											td.removeData('formula');
 										}
 									});
-									jS.calcDependencies.call(cell);
+									jS.resolveCell(cell);
 
 									if (i == 0 && j == 0) { //we have to finish the current edit
 										firstValue = col[j];
@@ -3630,7 +3630,7 @@ $.sheet = {
 
 										cell.setNeedsUpdated();
 									});
-									jS.calcDependencies.call(cell);
+									jS.resolveCell(cell);
 
 									//formula.focus().select();
 									jS.cellLast.isEdit = false;
@@ -4473,7 +4473,7 @@ $.sheet = {
 								}
 							});
 
-							jS.calcDependencies.call(cell);
+							jS.resolveCell(cell);
 						} while(i--);
 
 						td.jSCell.value = cellsValue.join(' ');
@@ -4483,7 +4483,7 @@ $.sheet = {
 						td.setAttribute('rowSpan', rowSpan);
 						td.setAttribute('colSpan', colSpan);
 
-						jS.calcDependencies.call(td.jSCell);
+						jS.resolveCell(td.jSCell);
 						jS.evt.cellEditDone();
 						jS.autoFillerGoToTd(td);
 						jS.cellSetActive(td, loc);
@@ -4523,7 +4523,7 @@ $.sheet = {
 							_td.removeAttribute('rowSpan');
 							delete _td.jSCell.defer;
 
-							jS.calcDependencies.call(_td.jSCell, last);
+							jS.resolveCell(_td.jSCell, last);
 
 							tds.push(_td);
 						} while (j-- > loc.col);
@@ -4592,7 +4592,7 @@ $.sheet = {
 										cells[i].td.setAttribute('data-formula', newV);
 									});
 
-									jS.calcDependencies.call(cells[i]);
+									jS.resolveCell(cells[i]);
 								} while (i--);
 								return true;
 							}
@@ -4617,7 +4617,7 @@ $.sheet = {
 									cells[i].td.removeAttribute('data-formula');
 								});
 
-								jS.calcDependencies.call(cells[i]);
+								jS.resolveCell(cells[i]);
 
 								fn();
 							} while (i--);
@@ -4647,7 +4647,7 @@ $.sheet = {
 								cell.formula = '';
 								cell.value = '';
 							});
-							jS.calcDependencies.call(cell);
+							jS.resolveCell(cell);
 						}
 					};
 					var cellValues = [],
@@ -4726,7 +4726,7 @@ $.sheet = {
 						}
 
 						cellStack.push(function() {
-							jS.calcDependencies.call(cell, true);
+							jS.resolveCell(cell, true);
 						});
 
 					}, affectedRange.first, affectedRange.last);
@@ -5578,7 +5578,7 @@ $.sheet = {
 						cells = jS.obj.cellsEdited(),
 						hasClass;
 
-					//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
+					//TODO: use resolveCell and sheetPreCalculation to set undo redo data
 
 					if (i >= 0) {
 						hasClass = tds[0].className.match(setClass); //go by first element in set
@@ -5673,7 +5673,7 @@ $.sheet = {
 						size,
 						cells = jS.obj.cellsEdited();
 
-					//TODO: use calcDependencies and sheetPreCalculation to set undo redo data
+					//TODO: use resolveCell and sheetPreCalculation to set undo redo data
 
 					if (i >= 0) {
 						do {
@@ -5944,15 +5944,14 @@ $.sheet = {
 
 				/**
 				 * Calculates just the dependencies of a single cell, and their dependencies recursively
-				 * @param {Boolean} skipUndoable
+				 * @param {Sheet.Cell} cell
+				 * @param {Boolean} [skipUndoable]
 				 * @memberOf jS
-				 * @this Sheet.Cell
 				 */
-				calcDependencies:function (skipUndoable) {
-
+				resolveCell:function (cell, skipUndoable) {
+					var willUpdateDependencies = !cell.needsUpdated;
 					if (!skipUndoable) {
-						var cell = this;
-						jS.undo.createCells([this], function(cells) {
+						jS.undo.createCells([cell], function(cells) {
 							jS.trigger('sheetPreCalculation', [
 								{which:'cell', cell:cell}
 							]);
@@ -5960,6 +5959,9 @@ $.sheet = {
 							jS.setDirty(true);
 							jS.setChanged(true);
 							cell.updateValue();
+							if (willUpdateDependencies) {
+								cell.updateDependencies();
+							}
 							jS.trigger('sheetCalculation', [
 								{which:'cell', cell: cell}
 							]);
@@ -5968,12 +5970,15 @@ $.sheet = {
 						});
 					} else {
 						jS.trigger('sheetPreCalculation', [
-							{which:'cell', cell:this}
+							{which:'cell', cell:cell}
 						]);
 
 						jS.setDirty(true);
 						jS.setChanged(true);
-						this.updateValue();
+						cell.updateValue();
+						if (willUpdateDependencies) {
+							cell.updateDependencies();
+						}
 						jS.trigger('sheetCalculation', [
 							{which:'cell', cell: this}
 						]);
@@ -7522,7 +7527,7 @@ $.sheet = {
 						trSibling.after(val.row);
 						val.row.children[0].innerHTML = trSibling[0].rowIndex + offset;
 						jS.spreadsheets[jS.i].splice(trSibling[0].rowIndex + 1, 0, row[0]);
-						jS.calcDependencies.call(cell, true);
+						jS.track.call(cell, true);
 					}
 
 					jS.undo.createCells(selected);
@@ -7654,7 +7659,7 @@ $.sheet = {
 							td.barTop = td.col.bar;
 							cell.value = td.jSCell.value;
 							jS.spreadsheets[jS.i][tr.rowIndex].splice(td.cellIndex, 0, cell[0]);
-							jS.calcDependencies.call(cell, true);
+							jS.resolveCell(cell, true);
 						}
 					}
 					jS.undo.createCells(selected);

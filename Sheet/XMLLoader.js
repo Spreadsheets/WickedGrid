@@ -120,8 +120,6 @@
 			if ((jitCell = cell.jitCell) !== undefined) {
 				blankCell.html = jitCell.html;
 				blankCell.state = jitCell.state;
-				blankCell.calcLast = jitCell.calcLast;
-				blankCell.calcDependenciesLast = jitCell.calcDependenciesLast;
 				blankCell.cellType = jitCell.cellType;
 				blankCell.value = jitCell.value;
 				blankCell.uneditable = jitCell.uneditable;
@@ -168,8 +166,6 @@
 				},
 				html: [],
 				state: [],
-				calcLast: -1,
-				calcDependenciesLast: -1,
 				cellType: cell.attributes['cellType'].nodeValue || '',
 				formula: cell.attributes['formula'].nodeValue || '',
 				value: cell.attributes['value'].nodeValue || '',
