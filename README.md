@@ -2,6 +2,8 @@
 jQuery.sheet
 ============
 
+#faster than native spreadsheets?... coming soon :)
+
 the ajax spreadsheet
 
 [Demo](http://visop-dev.com/jQuery.sheet/jquery.sheet.html)
