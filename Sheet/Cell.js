@@ -466,8 +466,7 @@ Sheet.Cell = (function() {
 								remaining--;
 
 								if (remaining < 1) {
-									this.value = value;
-									callback(value);
+									callback(this.value = parsed.value);
 								}
 							});
 						})(parsed, i);
