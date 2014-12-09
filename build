@@ -34,6 +34,7 @@ JS_FILES=(
 	Highlighter.js
 	ColumnAdder.js
 	RowAdder.js
+	Detacher.js
 	StyleUpdater.js
 	JSONLoader.js
 	XMLLoader.js

@@ -2809,7 +2809,9 @@ $.sheet = {
 							actionUI = new Sheet.ActionUI(enclosure, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
 							scrollUI = actionUI.scrollUI,
 							pane = actionUI.pane,
-							rows = table.tBody.children,
+							tBody = table.tBody,
+							rows = tBody.children,
+							detacher = new Sheet.Detacher(tBody, rows),
 							columns = table.colGroup.children,
 							usingLoader = (s.loader !== null),
 							scrollAction,
@@ -2838,8 +2840,13 @@ $.sheet = {
 									yUpdated = false;
 									scrollTop = scrollUI.scrollTop;
 									if (lastScrollTop != scrollTop) {
-										lastScrollTop = scrollTop;
 										yUpdated = actionUI.scrollToPixel('y', scrollTop);
+										/*if (lastScrollTop > scrollTop) {
+											yUpdated = detacher.reattachBefore(Math.round(scrollTop / 20));
+										} else {
+											yUpdated = detacher.detachBefore(Math.round(scrollTop / 20));
+										}*/
+										lastScrollTop = scrollTop;
 									}
 								},
 								function () {
