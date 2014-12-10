@@ -5920,6 +5920,9 @@ $.sheet = {
 							}
 
 							cell = this.row[this.colIndex];
+							if (cell === u) {
+								return;
+							}
 							cell.updateValue();
 						};
 
