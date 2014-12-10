@@ -214,9 +214,9 @@
 }
 .jSParent .jSScroll > div {
 	min-height: 1000%;
-	min-width: 1000%;
+	min-width: 500%;
 	height: 1000%;
-	width: 1000%;
+	width: 500%;
 	-webkit-transition: 0.2s; /* For Safari 3.1 to 6.0 */
 	transition: 0.2s;
 }
