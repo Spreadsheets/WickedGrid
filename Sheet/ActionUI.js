@@ -11,10 +11,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.xIndex = 0;
 		this.yIndex = 0;
 
-		this.scrollAxis = {
-			x:{},
-			y:{}
-		};
+		this.scrollAxisX = {};
+		this.scrollAxisY = {};
 
 		this.scrollSize = {};
 
@@ -39,10 +37,11 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		var that = this,
 			pane = this.pane,
+			tBody = table.tBody,
 			cssId = '#' + table.getAttribute('id'),
 			scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
 			scrollInner = pane.scrollInner = document.createElement('div'),
-			scrollStyleX = this.scrollAxis.x.scrollStyle = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(index, style) {
+			scrollStyleX = this.scrollAxisX.scrollStyle = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(index, style) {
 				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
 				if (that.xIndex === index) return false;
 
@@ -60,8 +59,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						 cssId + ' col:nth-child(-n+' + (col + 1) + ') {display: table-column;}' +
 
 						 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						 cssId + ' tr > *:nth-child(' + (index + 20) + ') ~ * {display: none;}' +
-						 cssId + ' col:nth-child(' + (index + 20) + ') ~ col {display: none;}';
+						 cssId + ' tr > *:nth-child(' + (index + that.maximumVisibleColumns) + ') ~ * {display: none;}' +
+						 cssId + ' col:nth-child(' + (index + that.maximumVisibleColumns) + ') ~ col {display: none;}';
 
 				}
 
@@ -69,7 +68,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				that.scrolledArea.col = Math.max(index || 1, 1);
 				return true;
 			}, max),
-			scrollStyleY = this.scrollAxis.y.scrollStyle = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
+			yDetacher = this.yDetacher = new Sheet.Detacher(tBody, tBody.children),
+			scrollStyleY = this.scrollAxisY.scrollStyle = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
 				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
 				if (that.yIndex === index) return false;
 
@@ -85,7 +85,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
 
 						//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						cssId + ' tr:nth-child(' + (index + 70) + ') ~ tr {display: none;}';
+						cssId + ' tr:nth-child(' + (index + that.maximumVisibleRows) + ') ~ tr {display: none;}';
 				}
 
 				this.setStyle(style);
@@ -171,8 +171,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				if (i < 25) {
 					break;
 				}
-
-				this.scrollStop();
 			}
 		},
 
@@ -394,11 +392,48 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		/**
 		 * Scrolls to a position within the spreadsheet
-		 * @param {String} axisType
-		 * @param {Number} [pixel] scrollTO
+		 * @param {Number} pixel scrollTO
 		 */
-		scrollToPixel:function (axisType, pixel) {
-			var axis = this.scrollAxis[axisType],
+		scrollToPixelX:function (pixel) {
+			var axis = this.scrollAxisX,
+				max,
+				i,
+				value = Math.round(pixel / this.pixelScrollDensity);
+
+			max = axis.max;
+			axis.value = value;
+
+			i = value > max ? max : value;
+			return axis.scrollStyle.update(i);
+		},
+
+		useDetach: false,
+		/**
+		 * Scrolls to a position within the spreadsheet
+		 * @param {Number} pixel
+		 * @param {Boolean} [isUp]
+		 */
+		scrollToPixelY: function(pixel, isUp) {
+			if (this.useDetach) {
+				var i = Math.round(pixel / this.pixelScrollDensity),
+					detacher = this.yDetacher,
+					result;
+
+				this.yIndex = i;
+				this.scrolledArea.row = Math.max(i || 1, 1);
+
+				if (isUp === true) {
+					result = detacher.reattachBefore(i);
+					detacher.detachAfter(i + this.maximumVisibleRows);
+				} else {
+					result = detacher.detachBefore(i);
+					detacher.reattachAfter(i + this.maximumVisibleRows);
+				}
+
+				return result;
+			}
+
+			var axis = this.scrollAxisY,
 				max,
 				i,
 				value = Math.round(pixel / this.pixelScrollDensity);
@@ -415,18 +450,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		},
 
 		/**
-		 * Called after scroll is done
-		 */
-		scrollStop:function () {
-			if (this.scrollAxis.x.scrollUpdate) {
-				this.scrollAxis.x.scrollUpdate();
-			}
-			if (this.scrollAxis.y.scrollUpdate) {
-				this.scrollAxis.y.scrollUpdate();
-			}
-		},
-
-		/**
 		 * @type Sheet.StyleUpdater
 		 */
 		toggleHideStyleX: null,
@@ -436,7 +459,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 */
 		toggleHideStyleY: null,
 
-		pixelScrollDensity: 20
+		pixelScrollDensity: 20,
+		maximumVisibleRows: 70,
+		maximumVisibleColumns: 20
 	};
 
 	return Constructor;

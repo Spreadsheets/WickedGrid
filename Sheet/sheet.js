@@ -2811,7 +2811,6 @@ $.sheet = {
 							pane = actionUI.pane,
 							tBody = table.tBody,
 							rows = tBody.children,
-							detacher = new Sheet.Detacher(tBody, rows),
 							columns = table.colGroup.children,
 							usingLoader = (s.loader !== null),
 							scrollAction,
@@ -2832,7 +2831,7 @@ $.sheet = {
 									scrollLeft = scrollUI.scrollLeft;
 									if (lastScrollLeft != scrollLeft) {
 										lastScrollLeft = scrollLeft;
-										xUpdated = actionUI.scrollToPixel('x', scrollLeft);
+										xUpdated = actionUI.scrollToPixelX(scrollLeft);
 									}
 								},
 
@@ -2840,12 +2839,7 @@ $.sheet = {
 									yUpdated = false;
 									scrollTop = scrollUI.scrollTop;
 									if (lastScrollTop != scrollTop) {
-										yUpdated = actionUI.scrollToPixel('y', scrollTop);
-										/*if (lastScrollTop > scrollTop) {
-											yUpdated = detacher.reattachBefore(Math.round(scrollTop / 20));
-										} else {
-											yUpdated = detacher.detachBefore(Math.round(scrollTop / 20));
-										}*/
+										yUpdated = actionUI.scrollToPixelY(scrollTop, lastScrollTop > scrollTop);
 										lastScrollTop = scrollTop;
 									}
 								},
@@ -2876,15 +2870,15 @@ $.sheet = {
 									scrollLeft = scrollUI.scrollLeft;
 									if (lastScrollLeft !== scrollLeft) {
 										lastScrollLeft = scrollLeft;
-										xUpdated = actionUI.scrollToPixel('x', scrollLeft);
+										xUpdated = actionUI.scrollToPixelX(scrollLeft);
 									}
 								},
 
 								function () {
 									scrollTop = scrollUI.scrollTop;
 									if (lastScrollTop !== scrollTop) {
+										yUpdated = actionUI.scrollToPixelY(scrollTop, lastScrollTop > scrollTop);
 										lastScrollTop = scrollTop;
-										yUpdated = actionUI.scrollToPixel('y', scrollTop);
 									}
 								},
 								function () {
@@ -4310,6 +4304,9 @@ $.sheet = {
 							}
 
 							if (row > 0 && col > 0) {
+								if (td === u) {
+									return;
+								}
 								if (!td.jSCell) {
 									jS.createCell(i, row, col);
 								}

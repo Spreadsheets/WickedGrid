@@ -433,7 +433,7 @@ Sheet.Cell = (function() {
 								remaining--;
 
 								if (remaining < 1) {
-									this.value = value;
+									cell.value = value;
 									callback(value);
 								}
 							});
@@ -449,7 +449,7 @@ Sheet.Cell = (function() {
 									parsedFormula[i] = value;
 									remaining--;
 									if (remaining < 1) {
-										this.value = value;
+										cell.value = value;
 										callback(value);
 									}
 								});
@@ -466,7 +466,7 @@ Sheet.Cell = (function() {
 								remaining--;
 
 								if (remaining < 1) {
-									callback(this.value = parsed.value);
+									callback(cell.value = parsed.value);
 								}
 							});
 						})(parsed, i);

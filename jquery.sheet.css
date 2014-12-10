@@ -217,12 +217,14 @@
 	min-width: 1000%;
 	height: 1000%;
 	width: 1000%;
-	-webkit-transition: 1s; /* For Safari 3.1 to 6.0 */
-	transition: 1s;
+	-webkit-transition: 0.2s; /* For Safari 3.1 to 6.0 */
+	transition: 0.2s;
 }
 /* Sheet styling */
 .jSParent .jS
 {
+	left: 0;
+	top: 0;
 	position: absolute;
     table-layout: fixed;
     empty-cells: show;
