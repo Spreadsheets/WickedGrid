@@ -235,22 +235,22 @@ Sheet.Cell = (function() {
 
 					cell.getThread()(formula, function (parsedFormula) {
 						cell.resolveFormula(parsedFormula, function (value) {
-							if (value.cell !== u && value.cell !== cell) {
-								value = value.valueOf();
+							if (value !== u && value !== null) {
+								if (value.cell !== u && value.cell !== cell) {
+									value = value.valueOf();
+								}
+
+								Sheet.calcStack--;
+
+								if (
+									cellType !== null
+									&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+								) {
+									value = cellTypeHandler(cell, value);
+								}
+
+								doneFn(value);
 							}
-
-							Sheet.calcStack--;
-
-							if (
-								value !== u
-								&& value !== null
-								&& cellType !== null
-								&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-							) {
-								value = cellTypeHandler(cell, value);
-							}
-
-							doneFn(value);
 						}, formula);
 					});
 				//});
