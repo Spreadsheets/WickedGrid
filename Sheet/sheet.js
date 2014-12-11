@@ -1025,7 +1025,6 @@ $.sheet = {
 			n = isNaN,
 			nAN = NaN,
 			thaw = window.thaw,
-			Formula = window.Formula,
 
 			/**
 			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index].
@@ -1363,7 +1362,8 @@ $.sheet = {
 					sheetTitleDefault:"Spreadsheet {index}",
 					maxRowsBrowserLimitation:"You've reached the maximum amount of rows this browser supports. Try using Chrome, FireFox, or Internet Explorer 9+",
 					maxColsBrowserLimitation:"You've reached the maximum amount of columns this browser supports. Try using Chrome, FireFox, or Internet Explorer 9+",
-					maxSizeBrowserLimitationOnOpen:"The spreadsheet you are loading is larger than the maximum size of cells this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+. You can an proceed, but the spreadsheet may not work as intended."
+					maxSizeBrowserLimitationOnOpen:"The spreadsheet you are loading is larger than the maximum size of cells this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+. You can an proceed, but the spreadsheet may not work as intended.",
+					cellLoading: "Loading..."
 				},
 
 				/**
