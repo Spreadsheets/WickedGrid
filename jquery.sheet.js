@@ -274,22 +274,22 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 					cell.getThread()(formula, function (parsedFormula) {
 						cell.resolveFormula(parsedFormula, function (value) {
-							if (value.cell !== u && value.cell !== cell) {
-								value = value.valueOf();
+							if (value !== u && value !== null) {
+								if (value.cell !== u && value.cell !== cell) {
+									value = value.valueOf();
+								}
+
+								Sheet.calcStack--;
+
+								if (
+									cellType !== null
+									&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+								) {
+									value = cellTypeHandler(cell, value);
+								}
+
+								doneFn(value);
 							}
-
-							Sheet.calcStack--;
-
-							if (
-								value !== u
-								&& value !== null
-								&& cellType !== null
-								&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-							) {
-								value = cellTypeHandler(cell, value);
-							}
-
-							doneFn(value);
 						}, formula);
 					});
 				//});
@@ -2649,9 +2649,11 @@ Sheet.StyleUpdater = (function(document) {
 			title = title.toLowerCase();
 
 			for(;i < max; i++) {
-				jsonTitle = json[i].title;
-				if (jsonTitle !== undefined && jsonTitle !== null && jsonTitle.toLowerCase() == title) {
-					return i;
+				if (json[i] !== undefined) {
+					jsonTitle = json[i].title;
+					if (jsonTitle !== undefined && jsonTitle !== null && jsonTitle.toLowerCase() == title) {
+						return i;
+					}
 				}
 			}
 

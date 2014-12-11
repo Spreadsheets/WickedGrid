@@ -290,9 +290,11 @@
 			title = title.toLowerCase();
 
 			for(;i < max; i++) {
-				jsonTitle = json[i].title;
-				if (jsonTitle !== undefined && jsonTitle !== null && jsonTitle.toLowerCase() == title) {
-					return i;
+				if (json[i] !== undefined) {
+					jsonTitle = json[i].title;
+					if (jsonTitle !== undefined && jsonTitle !== null && jsonTitle.toLowerCase() == title) {
+						return i;
+					}
 				}
 			}
 
