@@ -43,6 +43,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	function Constructor(sheetIndex, td, jS, cellHandler) {
 		if (Constructor.prototype.thaw === null) {
 			Constructor.prototype.thaw = new Thaw([]);
+			Constructor.cellLoading = jS.msg.cellLoading;
 		}
 		if (td !== undefined && td !== null) {
 			this.td = td;
@@ -135,7 +136,69 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				calcStack,
 				formulaParser,
 				typesStack,
-				doneFn;
+				doneFn = function(value) {
+					//cell.thaw
+						//.add(function() {
+							//setup cell trace from value
+							if (
+								value === u
+								|| value === null
+							) {
+								value = new String();
+							}
+
+							if (value.cell === u) {
+								switch (typeof(value)) {
+									case 'object':
+										break;
+									case 'undefined':
+										value = new String();
+										break;
+									case 'number':
+										value = new Number(value);
+										break;
+									case 'boolean':
+										value = new Boolean(value);
+										break;
+									case 'string':
+									default:
+										value = new String(value);
+										break;
+								}
+								value.cell = cell;
+							}
+							cell.value = value;
+							cache = cell.displayValue().valueOf();
+						//})
+
+						//.add(function() {
+							if (cell.loader !== null) {
+								cell.loader
+									.setCellAttributes(cell.loadedFrom, {
+										'cache': (typeof cache !== 'object' ? cache : null),
+										'formula': cell.formula,
+										'value': cell.value + '',
+										'cellType': cell.cellType,
+										'uneditable': cell.uneditable
+									})
+									.setDependencies(cell);
+							}
+
+							cell.needsUpdated = false;
+							cell.state.shift();
+						//})
+
+						//.add(function() {
+							if (callback !== u) {
+								callback.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
+							}
+						//})
+
+						//cell.thaw.add(function() {
+
+							cell.updateDependencies();
+						//});
+				};
 
 			//detect state, if any
 			switch (this.state[0]) {
@@ -197,21 +260,22 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			//increment times this cell has been calculated
 			this.calcCount++;
 			if (formula.length > 0) {
-				this.thaw.add(function() {
+				//this.thaw.add(function() {
 					if (formula.charAt(0) === '=') {
 						cell.formula = formula = formula.substring(1);
 					}
 
 					calcStack = Sheet.calcStack;
-					formulaParser = cell.cellHandler.formulaParser(calcStack);
+					//visual feedback
+					if (cell.td !== u) {
+						cell.td.innerHTML = Constructor.cellLoading;
+					}
 					Sheet.calcStack++;
 
-					cell.getThread()(formula, function(parsedFormula) {
-						cell.resolveFormula(parsedFormula, function(value) {
+					cell.getThread()(formula, function (parsedFormula) {
+						cell.resolveFormula(parsedFormula, function (value) {
 							if (value.cell !== u && value.cell !== cell) {
 								value = value.valueOf();
-							} else {
-								value = value;
 							}
 
 							Sheet.calcStack--;
@@ -226,21 +290,22 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							}
 
 							doneFn(value);
-						});
+						}, formula);
 					});
-				});
+				//});
+
 			} else if (
 				value !== u
 				&& value !== null
 				&& cellType !== null
 				&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
 			) {
-				this.thaw.add(function() {
+				//this.thaw.add(function() {
 					value = cellTypeHandler(cell, value);
 					doneFn(value);
-				});
+				//});
 			} else {
-				this.thaw.add(function() {
+				//this.thaw.add(function () {
 					switch (typeof value.valueOf()) {
 						case 'string':
 							operatorFn = cell.startOperators[value.charAt(0)];
@@ -258,70 +323,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							break;
 					}
 					doneFn(value);
-				});
+				//});
 			}
-
-			doneFn = function(value) {
-				cell.thaw.add(function () {
-					//setup cell trace from value
-					if (
-						value === u
-						|| value === null
-					) {
-						value = new String();
-					}
-
-					if (value.cell === u) {
-						switch (typeof(value)) {
-							case 'object':
-								break;
-							case 'undefined':
-								value = new String();
-								break;
-							case 'number':
-								value = new Number(value);
-								break;
-							case 'boolean':
-								value = new Boolean(value);
-								break;
-							case 'string':
-							default:
-								value = new String(value);
-								break;
-						}
-						value.cell = cell;
-					}
-					cell.value = value;
-					cache = cell.displayValue().valueOf();
-				});
-
-				cell.thaw.add(function () {
-					if (cell.loader !== null) {
-						cell.loader
-							.setCellAttributes(cell.loadedFrom, {
-								'cache': (typeof cache !== 'object' ? cache : null),
-								'formula': cell.formula,
-								'value': cell.value + '',
-								'cellType': cell.cellType,
-								'uneditable': cell.uneditable
-							})
-							.setDependencies(cell);
-					}
-
-					cell.needsUpdated = false;
-					cell.state.shift();
-				});
-
-				cell.thaw.add(function () {
-					if (callback !== u) {
-						callback.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
-					}
-				});
-
-				cell.thaw.add(function () {
-					cell.updateDependencies();
-				});
-			};
 		},
 
 		/**
@@ -412,7 +415,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			return td.innerHTML;
 		},
 
-		resolveFormula: function(parsedFormula, callback) {
+		resolveFormula: function(parsedFormula, callback, formula) {
 			var cell = this,
 				steps = [],
 				value,
@@ -420,6 +423,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				max = parsedFormula.length,
 				parsed,
 				remaining = max - 1,
+				handler = this.cellHandler,
 				addCell = function(cell, args) {
 					var boundArgs = [],
 						arg,
@@ -459,60 +463,51 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					} while (i-- > 0);
 
 					return args;
+				},
+				doneFn = function(value) {
+					remaining--;
+					if (remaining < 1 && value !== u) {
+						callback(cell.value = value);
+					}
 				};
+
 
 			for (; i < max; i++) {
 				parsed = parsedFormula[i];
 				switch (parsed.type) {
 					//method
 					case 'm':
-						(function(parsed, handler, i) {
+						(function(parsed, i) {
 							steps.push(function() {
-								value = parsedFormula[i] = handler[parsed.method].apply(handler, addCell(cell, parsed.args));
-								remaining--;
-
-								if (remaining < 1) {
-									cell.value = value;
-									callback(value);
-								}
+								doneFn(parsedFormula[i] = handler[parsed.method].apply(handler, addCell(cell, parsed.args)));
 							});
-						})(parsed, this.cellHandler, i);
+						})(parsed, i);
 						break;
 
 					//lookup
 					case 'l':
-						(function(parsed, handler, i) {
+						(function(parsed, i) {
 							steps.push(function() {
 								//setup callback
-								parsed.args.push(function(value) {
-									parsedFormula[i] = value;
-									remaining--;
-									if (remaining < 1) {
-										cell.value = value;
-										callback(value);
-									}
+								parsed.args.push(function (value) {
+									doneFn(parsedFormula[i] = value);
 								});
 
 								handler[parsed.method].apply(handler, addCell(cell, parsed.args));
 							});
-						})(parsed, this.cellHandler, i);
+						})(parsed, i);
 						break;
 					//value
 					case 'v':
 						(function(parsed, i) {
 							steps.push(function() {
-								parsedFormula[i] = parsed.value;
-								remaining--;
-
-								if (remaining < 1) {
-									callback(cell.value = parsed.value);
-								}
+								doneFn(parsedFormula[i] = parsed.value);
 							});
 						})(parsed, i);
 						break;
 
 					case 'cell':
-						//parsedFormula[i] = parsed;
+						doneFn();
 				}
 			}
 
@@ -634,6 +629,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			return thread;
 		}
 	};
+
+	Constructor.cellLoading = null;
 
 	return Constructor;
 })();Sheet.CellHandler = (function(Math) {
@@ -912,7 +909,28 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				colIndex,
 				cell,
 				row,
-				stack = [];
+				stack = [],
+				key = sheetIndex + '!' + start.colString + start.rowString + ':' + end.colString + end.rowString,
+				cachedRange = this.cellRangeCache[key],
+				i,
+				max,
+				useCache,
+				that = this;
+
+			if (cachedRange !== u) {
+				useCache = true;
+				max = cachedRange.length;
+				for (i = 0; i < max; i++) {
+					if (cachedRange[i].needsUpdated) {
+						useCache = false
+					}
+				}
+
+				if (useCache) {
+					callback.call(parentCell, that.cellRangeCache[key]);
+					return this;
+				}
+			}
 
 			if (sheet === u) {
 				jS.spreadsheets[sheetIndex] = sheet = {};
@@ -936,22 +954,30 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 						if (cell !== null) {
 							cell.addDependency(parentCell);
-							stack.push((function(cell) {
-								result.unshift(cell.updateValue());
-							})(cell));
+							//stack.push((function(cell) {
+							//	return function() {
+									cell.updateValue(function(value) {
+										result.unshift(value);
+									});
+							//	};
+							//})(cell));
 						}
 					} while(colIndex-- > colIndexEnd);
 				} while (rowIndex-- > rowIndexEnd);
 
-				stack.push(function() {
+				//stack.push(function() {
+				//	that.cellRangeCache[key] = result;
 					callback.call(parentCell, result);
-				});
+				//});
 			}
 
-			parentCell.thaw.insertArray(stack);
+			that.cellRangeCache[key] = result;
+			//parentCell.thaw.insertArray(stack);
 
 			return this;
 		},
+
+		cellRangeCache: {},
 
 
 		/**
@@ -4512,7 +4538,6 @@ $.sheet = {
 			n = isNaN,
 			nAN = NaN,
 			thaw = window.thaw,
-			Formula = window.Formula,
 
 			/**
 			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index].
@@ -4850,7 +4875,8 @@ $.sheet = {
 					sheetTitleDefault:"Spreadsheet {index}",
 					maxRowsBrowserLimitation:"You've reached the maximum amount of rows this browser supports. Try using Chrome, FireFox, or Internet Explorer 9+",
 					maxColsBrowserLimitation:"You've reached the maximum amount of columns this browser supports. Try using Chrome, FireFox, or Internet Explorer 9+",
-					maxSizeBrowserLimitationOnOpen:"The spreadsheet you are loading is larger than the maximum size of cells this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+. You can an proceed, but the spreadsheet may not work as intended."
+					maxSizeBrowserLimitationOnOpen:"The spreadsheet you are loading is larger than the maximum size of cells this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+. You can an proceed, but the spreadsheet may not work as intended.",
+					cellLoading: "Loading..."
 				},
 
 				/**

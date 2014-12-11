@@ -274,7 +274,28 @@ Sheet.CellHandler = (function(Math) {
 				colIndex,
 				cell,
 				row,
-				stack = [];
+				stack = [],
+				key = sheetIndex + '!' + start.colString + start.rowString + ':' + end.colString + end.rowString,
+				cachedRange = this.cellRangeCache[key],
+				i,
+				max,
+				useCache,
+				that = this;
+
+			if (cachedRange !== u) {
+				useCache = true;
+				max = cachedRange.length;
+				for (i = 0; i < max; i++) {
+					if (cachedRange[i].needsUpdated) {
+						useCache = false
+					}
+				}
+
+				if (useCache) {
+					callback.call(parentCell, that.cellRangeCache[key]);
+					return this;
+				}
+			}
 
 			if (sheet === u) {
 				jS.spreadsheets[sheetIndex] = sheet = {};
@@ -298,22 +319,30 @@ Sheet.CellHandler = (function(Math) {
 
 						if (cell !== null) {
 							cell.addDependency(parentCell);
-							stack.push((function(cell) {
-								result.unshift(cell.updateValue());
-							})(cell));
+							//stack.push((function(cell) {
+							//	return function() {
+									cell.updateValue(function(value) {
+										result.unshift(value);
+									});
+							//	};
+							//})(cell));
 						}
 					} while(colIndex-- > colIndexEnd);
 				} while (rowIndex-- > rowIndexEnd);
 
-				stack.push(function() {
+				//stack.push(function() {
+				//	that.cellRangeCache[key] = result;
 					callback.call(parentCell, result);
-				});
+				//});
 			}
 
-			parentCell.thaw.insertArray(stack);
+			that.cellRangeCache[key] = result;
+			//parentCell.thaw.insertArray(stack);
 
 			return this;
 		},
+
+		cellRangeCache: {},
 
 
 		/**
