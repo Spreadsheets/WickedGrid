@@ -273,13 +273,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					Sheet.calcStack++;
 
 					cell.getThread()(formula, function (parsedFormula) {
-						if (formula === 'IF($C$27>=1,IF(C11>0,1,0),0)') {
-							console.log(1);
-						}
 						cell.resolveFormula(parsedFormula, function (value) {
-							if (formula === 'IF($C$27>=1,IF(C11>0,1,0),0)') {
-								console.log(2);
-							}
 							if (value !== u && value !== null) {
 								if (value.cell !== u && value.cell !== cell) {
 									value = value.valueOf();
@@ -621,7 +615,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		typeName: 'Sheet.Cell',
 		thaw: null,
 		threads: [],
-		threadLimit: 24,
+		threadLimit: 20,
 		threadIndex: 0,
 		getThread: function() {
 			var i = this.threadIndex,
