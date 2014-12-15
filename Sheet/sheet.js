@@ -4332,6 +4332,9 @@ $.sheet = {
 							}
 
 							if (row > 0 && col > 0) {
+								if (td === u) {
+									return;
+								}
 								if (!td.jSCell) {
 									jS.createCell(i, row, col);
 								}
