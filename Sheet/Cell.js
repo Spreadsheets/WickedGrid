@@ -162,7 +162,7 @@ Sheet.Cell = (function() {
 				};
 
 			//detect state, if any
-			switch (this.state[0]) {
+			/*switch (this.state[0]) {
 				case 'updating':
 					value = new String();
 					value.cell = this;
@@ -176,7 +176,7 @@ Sheet.Cell = (function() {
 						callback.call(this, this.valueOverride != u ? this.valueOverride : this.value);
 					}
 					return;
-			}
+			}*/
 
 			//merging creates a defer property, which points the cell to another location to get the other value
 			if (defer !== u) {
@@ -249,7 +249,9 @@ Sheet.Cell = (function() {
 									value = cellTypeHandler(cell, value);
 								}
 
-								doneFn(value);
+								doneFn.call(cell, value);
+							} else {
+								doneFn.call(cell, null);
 							}
 						}, formula);
 					});
@@ -383,8 +385,8 @@ Sheet.Cell = (function() {
 				i = 0,
 				max = parsedFormula.length,
 				parsed,
-				remaining = max - 1,
 				handler = this.cellHandler,
+				thaw = this.thaw,
 				addCell = function(cell, args) {
 					var boundArgs = [],
 						arg,
@@ -426,9 +428,16 @@ Sheet.Cell = (function() {
 					return args;
 				},
 				doneFn = function(value) {
-					remaining--;
-					if (remaining < 1 && value !== u) {
-						callback(cell.value = value);
+					if (steps.length > 0) {
+						//thaw.add(
+							steps.shift()();
+						//);
+					} else {
+						if (value !== u) {
+							//thaw.add(function() {
+								callback(cell.value = value);
+							//});
+						}
 					}
 				};
 
@@ -468,13 +477,13 @@ Sheet.Cell = (function() {
 						break;
 
 					case 'cell':
-						doneFn();
+						steps.push(function() {
+							doneFn();
+						});
 				}
 			}
 
-			if (steps.length > 0) {
-				this.thaw.addArray(steps);
-			}
+			doneFn();
 		},
 		recurseDependencies: function (fn) {
 			var i = 0,
@@ -580,7 +589,7 @@ Sheet.Cell = (function() {
 						return null;
 					}
 				}, [
-					'http://localhost/p/jQuery.sheet/parser/formula/formula.js'
+					Constructor.formulaParserUrl
 				]);
 			}
 			this.threadIndex++;
@@ -592,6 +601,7 @@ Sheet.Cell = (function() {
 	};
 
 	Constructor.cellLoading = null;
+	Constructor.formulaParserUrl = '../parser/formula/formula.js';
 
 	return Constructor;
 })();

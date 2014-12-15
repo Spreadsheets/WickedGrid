@@ -1280,7 +1280,10 @@ var jFN = $.sheet.fn = {
 	EQUAL: function(left, right) {
 		var result;
 
-		if (left.toString() === right.toString()) {
+		if (left === undefined || left === null) left = '';
+		if (right === undefined || right === null) right = '';
+
+		if (left.valueOf() === right.valueOf()) {
 			result = new Boolean(true);
 			result.html = 'TRUE';
 		} else {
