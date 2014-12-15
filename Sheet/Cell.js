@@ -233,7 +233,7 @@ Sheet.Cell = (function() {
 					}
 					Sheet.calcStack++;
 
-					cell.getThread()(formula, function (parsedFormula) {
+					cell.parseFormula(formula, function (parsedFormula) {
 						cell.resolveFormula(parsedFormula, function (value) {
 							if (value !== u && value !== null) {
 								if (value.cell !== u && value.cell !== cell) {
@@ -576,27 +576,38 @@ Sheet.Cell = (function() {
 		typeName: 'Sheet.Cell',
 		thaw: null,
 		threads: [],
-		threadLimit: 20,
+		threadLimit: 1,
 		threadIndex: 0,
-		getThread: function() {
+		parseFormula: function(rawFormula, callback) {
 			var i = this.threadIndex,
-				thread = this.threads[i];
-			if (typeof thread === 'undefined') {
+				threads = this.threads,
+				thread,
+				isThreadAbsent = (typeof threads[i] === 'undefined'),
+				promise;
+
+			if (isThreadAbsent) {
 				thread = this.threads[i] = operative(function(formula) {
-					if (typeof formula === 'string') {
-						return parser.Formula().parse(formula);
-					} else {
-						return null;
-					}
+					var deferred = this.deferred();
+					deferred.fulfill(
+						typeof formula === 'string'
+							? parser.Formula().parse(formula)
+							: null
+					);
 				}, [
 					Constructor.formulaParserUrl
 				]);
+			} else {
+				thread = threads[i];
 			}
+
 			this.threadIndex++;
 			if (this.threadIndex > this.threadLimit) {
 				this.threadIndex = 0;
 			}
-			return thread;
+
+			promise = thread(rawFormula);
+
+			promise.then(callback);
 		}
 	};
 
