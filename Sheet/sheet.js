@@ -1792,9 +1792,12 @@ $.sheet = {
 
 								o.setCreateCellFn(function (row, at, rowParent) {
 									var cell = setupCell.call(loader, jS.i, row, at, jS),
-										td = cell.td,
+										td,
 										spreadsheetRow = spreadsheet[row];
 
+									if (cell === null) return;
+
+									td = cell.td;
 									td.jSCell = cell;
 
 									if (spreadsheetRow.length === 0) {
@@ -1883,10 +1886,13 @@ $.sheet = {
 
 								o.setCreateCellFn(function (row, at, createdBar) {
 									var cell = setupCell.call(loader, jS.i, row, at, jS),
-										td = cell.td,
+										td,
 										rowParent = tBody.children[row],
 										spreadsheetRow = spreadsheet[row];
 
+									if (cell === null) return;
+
+									td = cell.td;
 									if (spreadsheetRow === undefined) {
 										spreadsheet[row] = spreadsheetRow = [];
 									}
