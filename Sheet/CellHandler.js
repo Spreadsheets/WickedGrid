@@ -92,7 +92,7 @@ Sheet.CellHandler = (function(Math) {
 		 * @param {*} _num
 		 * @returns {Number}
 		 */
-		numberInverted: function(parentCell, _num) {
+		invertNumber: function(parentCell, _num) {
 			if (isNaN(_num)) {
 				_num = 0;
 			}
@@ -224,6 +224,9 @@ Sheet.CellHandler = (function(Math) {
 		},
 
 		concatenate: function(parentCell, value1, value2) {
+			if (value1 === null) value1 = '';
+			if (value2 === null) value2 = '';
+
 			return value1.toString() + value2.toString();
 		},
 
@@ -282,7 +285,7 @@ Sheet.CellHandler = (function(Math) {
 				useCache,
 				that = this;
 
-			if (cachedRange !== u) {
+			/*if (cachedRange !== u) {
 				useCache = true;
 				max = cachedRange.length;
 				for (i = 0; i < max; i++) {
@@ -295,7 +298,7 @@ Sheet.CellHandler = (function(Math) {
 					callback.call(parentCell, that.cellRangeCache[key]);
 					return this;
 				}
-			}
+			}*/
 
 			if (sheet === u) {
 				jS.spreadsheets[sheetIndex] = sheet = {};
@@ -319,25 +322,25 @@ Sheet.CellHandler = (function(Math) {
 
 						if (cell !== null) {
 							cell.addDependency(parentCell);
-							//stack.push((function(cell) {
-							//	return function() {
+							stack.push((function(cell) {
+								return function() {
 									cell.updateValue(function(value) {
 										result.unshift(value);
 									});
-							//	};
-							//})(cell));
+								};
+							})(cell));
 						}
 					} while(colIndex-- > colIndexEnd);
 				} while (rowIndex-- > rowIndexEnd);
 
-				//stack.push(function() {
-				//	that.cellRangeCache[key] = result;
+				stack.push(function() {
+					that.cellRangeCache[key] = result;
 					callback.call(parentCell, result);
-				//});
+				});
 			}
 
-			that.cellRangeCache[key] = result;
-			//parentCell.thaw.insertArray(stack);
+			//that.cellRangeCache[key] = result;
+			parentCell.thaw.addArray(stack);
 
 			return this;
 		},

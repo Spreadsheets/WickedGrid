@@ -201,7 +201,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				};
 
 			//detect state, if any
-			switch (this.state[0]) {
+			/*switch (this.state[0]) {
 				case 'updating':
 					value = new String();
 					value.cell = this;
@@ -215,7 +215,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						callback.call(this, this.valueOverride != u ? this.valueOverride : this.value);
 					}
 					return;
-			}
+			}*/
 
 			//merging creates a defer property, which points the cell to another location to get the other value
 			if (defer !== u) {
@@ -273,7 +273,13 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					Sheet.calcStack++;
 
 					cell.getThread()(formula, function (parsedFormula) {
+						if (formula === 'IF($C$27>=1,IF(C11>0,1,0),0)') {
+							console.log(1);
+						}
 						cell.resolveFormula(parsedFormula, function (value) {
+							if (formula === 'IF($C$27>=1,IF(C11>0,1,0),0)') {
+								console.log(2);
+							}
 							if (value !== u && value !== null) {
 								if (value.cell !== u && value.cell !== cell) {
 									value = value.valueOf();
@@ -288,7 +294,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 									value = cellTypeHandler(cell, value);
 								}
 
-								doneFn(value);
+								doneFn.call(cell, value);
+							} else {
+								doneFn.call(cell, null);
 							}
 						}, formula);
 					});
@@ -422,8 +430,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				i = 0,
 				max = parsedFormula.length,
 				parsed,
-				remaining = max - 1,
 				handler = this.cellHandler,
+				thaw = this.thaw,
 				addCell = function(cell, args) {
 					var boundArgs = [],
 						arg,
@@ -465,9 +473,16 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					return args;
 				},
 				doneFn = function(value) {
-					remaining--;
-					if (remaining < 1 && value !== u) {
-						callback(cell.value = value);
+					if (steps.length > 0) {
+						//thaw.add(
+							steps.shift()();
+						//);
+					} else {
+						if (value !== u) {
+							//thaw.add(function() {
+								callback(cell.value = value);
+							//});
+						}
 					}
 				};
 
@@ -507,13 +522,13 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						break;
 
 					case 'cell':
-						doneFn();
+						steps.push(function() {
+							doneFn();
+						});
 				}
 			}
 
-			if (steps.length > 0) {
-				this.thaw.addArray(steps);
-			}
+			doneFn();
 		},
 		recurseDependencies: function (fn) {
 			var i = 0,
@@ -606,7 +621,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		typeName: 'Sheet.Cell',
 		thaw: null,
 		threads: [],
-		threadLimit: 20,
+		threadLimit: 24,
 		threadIndex: 0,
 		getThread: function() {
 			var i = this.threadIndex,
@@ -619,7 +634,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						return null;
 					}
 				}, [
-					'http://localhost/p/jQuery.sheet/parser/formula/formula.js'
+					Constructor.formulaParserUrl
 				]);
 			}
 			this.threadIndex++;
@@ -631,6 +646,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	};
 
 	Constructor.cellLoading = null;
+	Constructor.formulaParserUrl = '../parser/formula/formula.js';
 
 	return Constructor;
 })();Sheet.CellHandler = (function(Math) {
@@ -727,7 +743,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 * @param {*} _num
 		 * @returns {Number}
 		 */
-		numberInverted: function(parentCell, _num) {
+		invertNumber: function(parentCell, _num) {
 			if (isNaN(_num)) {
 				_num = 0;
 			}
@@ -859,6 +875,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		},
 
 		concatenate: function(parentCell, value1, value2) {
+			if (value1 === null) value1 = '';
+			if (value2 === null) value2 = '';
+
 			return value1.toString() + value2.toString();
 		},
 
@@ -917,7 +936,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				useCache,
 				that = this;
 
-			if (cachedRange !== u) {
+			/*if (cachedRange !== u) {
 				useCache = true;
 				max = cachedRange.length;
 				for (i = 0; i < max; i++) {
@@ -930,7 +949,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					callback.call(parentCell, that.cellRangeCache[key]);
 					return this;
 				}
-			}
+			}*/
 
 			if (sheet === u) {
 				jS.spreadsheets[sheetIndex] = sheet = {};
@@ -954,25 +973,25 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 						if (cell !== null) {
 							cell.addDependency(parentCell);
-							//stack.push((function(cell) {
-							//	return function() {
+							stack.push((function(cell) {
+								return function() {
 									cell.updateValue(function(value) {
 										result.unshift(value);
 									});
-							//	};
-							//})(cell));
+								};
+							})(cell));
 						}
 					} while(colIndex-- > colIndexEnd);
 				} while (rowIndex-- > rowIndexEnd);
 
-				//stack.push(function() {
-				//	that.cellRangeCache[key] = result;
+				stack.push(function() {
+					that.cellRangeCache[key] = result;
 					callback.call(parentCell, result);
-				//});
+				});
 			}
 
-			that.cellRangeCache[key] = result;
-			//parentCell.thaw.insertArray(stack);
+			//that.cellRangeCache[key] = result;
+			parentCell.thaw.addArray(stack);
 
 			return this;
 		},
@@ -13231,7 +13250,10 @@ var jFN = $.sheet.fn = {
 	EQUAL: function(left, right) {
 		var result;
 
-		if (left.toString() === right.toString()) {
+		if (left === undefined || left === null) left = '';
+		if (right === undefined || right === null) right = '';
+
+		if (left.valueOf() === right.valueOf()) {
 			result = new Boolean(true);
 			result.html = 'TRUE';
 		} else {
