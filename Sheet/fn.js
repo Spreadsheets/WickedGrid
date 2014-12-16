@@ -1356,7 +1356,7 @@ var jFN = $.sheet.fn = {
 	},
 	/**
 	 * html function
-	 * @param link
+	 * @param href
 	 * @param [name]
 	 * @returns {String}
 	 * @memberOf jFN
@@ -1416,10 +1416,8 @@ var jFN = $.sheet.fn = {
 				}
 			};
 			select.onchange = function () {
-				cell.value = new String(this.value);
-				cell.value.cell = cell;
+				cell.value = this.value;
 				cell.setNeedsUpdated();
-				//cell.needsUpdated = false;
 				jS.calcDependencies.call(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
@@ -1509,8 +1507,8 @@ var jFN = $.sheet.fn = {
 					input.className = id;
 					input.value = v[i];
 					input.onchange = function() {
-						cell.value = jQuery(this).val();
-						jS.setCellNeedsUpdated(cell);
+						cell.value = this.value;
+						cell.setNeedsUpdated();
 						jS.calcDependencies.call(cell);
 						jS.trigger('sheetCellEdited', [cell]);
 					};
@@ -1595,7 +1593,7 @@ var jFN = $.sheet.fn = {
 				} else {
 					cell.value = '';
 				}
-				jS.setCellNeedsUpdated(cell);
+				cell.setNeedsUpdated();
 				jS.calcDependencies.call(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
