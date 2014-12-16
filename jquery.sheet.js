@@ -614,16 +614,14 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		type: Constructor,
 		typeName: 'Sheet.Cell',
 		thaw: null,
-		threads: [],
-		threadLimit: 8,
 		parseFormula: function(rawFormula, callback) {
 			var i = Constructor.threadIndex,
-				threads = this.threads,
+				threads = Constructor.threads ,
 				thread,
 				isThreadAbsent = (typeof threads[i] === 'undefined');
 
 			if (isThreadAbsent) {
-				thread = this.threads[i] = operative(function(formula) {
+				thread = Constructor.threads[i] = operative(function(formula) {
 					if (typeof formula === 'string') {
 						return parser.Formula().parse(formula);
 					}
@@ -636,7 +634,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 
 			Constructor.threadIndex++;
-			if (Constructor.threadIndex > this.threadLimit) {
+			if (Constructor.threadIndex > Constructor.threadLimit) {
 				Constructor.threadIndex = 0;
 			}
 
@@ -644,6 +642,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		}
 	};
 
+	Constructor.threads = [];
+	Constructor.threadLimit = 24;
 	Constructor.threadIndex = 0;
 	Constructor.cellLoading = null;
 	Constructor.formulaParserUrl = '../parser/formula/formula.js';
