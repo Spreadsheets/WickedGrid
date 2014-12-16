@@ -7143,7 +7143,9 @@ $.sheet = {
 									//This should return either a val from textbox or formula, but if fails it tries once more from formula.
 									var v = formula.val(),
 										cell = td.jSCell,
-										i = 0;
+										i = 0,
+										loader = s.loader,
+										loadedFrom;
 
 									if (!cell.edited) {
 										cell.edited = true;
@@ -7159,6 +7161,14 @@ $.sheet = {
 											td.removeAttribute('data-formula');
 											cell.value = v;
 											cell.formula = '';
+
+											if ((loadedFrom = cell.loadedFrom) !== u) {
+												loader.setCellAttributes(loadedFrom, {
+													'cache': u,
+													'formula': '',
+													'value': v
+												});
+											}
 										}
 
 										cell.setNeedsUpdated();
