@@ -272,27 +272,30 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					}
 					Sheet.calcStack++;
 
-					cell.parseFormula(formula, function (parsedFormula) {
-						cell.resolveFormula(parsedFormula, function (value) {
-							if (value !== u && value !== null) {
-								if (value.cell !== u && value.cell !== cell) {
-									value = value.valueOf();
+					cell.parseFormula({
+						formula: formula,
+						callback: function (parsedFormula) {
+							cell.resolveFormula(parsedFormula, function (value) {
+								if (value !== u && value !== null) {
+									if (value.cell !== u && value.cell !== cell) {
+										value = value.valueOf();
+									}
+
+									Sheet.calcStack--;
+
+									if (
+										cellType !== null
+										&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+									) {
+										value = cellTypeHandler(cell, value);
+									}
+
+									doneFn.call(cell, value);
+								} else {
+									doneFn.call(cell, null);
 								}
-
-								Sheet.calcStack--;
-
-								if (
-									cellType !== null
-									&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-								) {
-									value = cellTypeHandler(cell, value);
-								}
-
-								doneFn.call(cell, value);
-							} else {
-								doneFn.call(cell, null);
-							}
-						}, formula);
+							}, formula);
+						}
 					});
 				//});
 
@@ -418,6 +421,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		},
 
 		resolveFormula: function(parsedFormula, callback, formula) {
+			//if error, return it
+			if (typeof parsedFormula === 'string') {
+				callback(parsedFormula);
+			}
+
 			var cell = this,
 				steps = [],
 				value,
@@ -614,10 +622,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		type: Constructor,
 		typeName: 'Sheet.Cell',
 		thaw: null,
-		parseFormula: function(rawFormula, callback) {
+		parseFormula: function(item) {
 			var i = Constructor.threadIndex,
 				threads = Constructor.threads ,
 				thread,
+				thaw = this.thaw,
 				isThreadAbsent = (typeof threads[i] === 'undefined');
 
 			if (isThreadAbsent) {
@@ -638,10 +647,33 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				Constructor.threadIndex = 0;
 			}
 
-			thread(rawFormula, callback);
+			if (thread.stash === u) thread.stash = [];
+
+			if (thread.busy) {
+				thread.stash.push(function() {
+					thread.busy = true;
+					thread(item.formula, function(parsedFormula) {
+						thread.busy = false;
+						item.callback(parsedFormula);
+						if (thread.stash.length > 0) {
+							thaw.add(thread.stash.shift());
+						}
+					});
+				});
+			} else {
+				thread.busy = true;
+				thread(item.formula, function(parsedFormula) {
+					thread.busy = false;
+					item.callback(parsedFormula);
+					if (thread.stash.length > 0) {
+						thaw.add(thread.stash.shift());
+					}
+				});
+			}
 		}
 	};
 
+	Constructor.remainingItems = [];
 	Constructor.threads = [];
 	Constructor.threadLimit = 24;
 	Constructor.threadIndex = 0;
