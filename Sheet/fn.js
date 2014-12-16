@@ -1396,7 +1396,8 @@ var jFN = $.sheet.fn = {
 			max;
 
 		if (td !== null) {
-			html = $(td).children().detach();
+			$(td).children().detach();
+			html = cell.value.html;
 		}
 
 		if (html === undefined || cell.needsUpdated || html.length < 1) {
@@ -1429,8 +1430,6 @@ var jFN = $.sheet.fn = {
 				jS.resolveCell(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
-
-			jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
 
 			max = (v.length <= 50 ? v.length : 50);
 			for (; i < max; i++) {
@@ -1472,6 +1471,7 @@ var jFN = $.sheet.fn = {
 			jS = this.jS,
 			td = this.td,
 			v,
+			value,
 			html,
 			inputs,
 			$inputs,
@@ -1480,7 +1480,8 @@ var jFN = $.sheet.fn = {
 			result;
 
 		if (td !== null) {
-			html = $(td).children().detach();
+			html = cell.value.html;
+			$(td).children().detach();
 		}
 
 		if (html === undefined || html.length < 1 || cell.needsUpdated) {
@@ -1503,8 +1504,6 @@ var jFN = $.sheet.fn = {
 			};
 			html.cell = cell;
 
-			jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
-
 			for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
 				if (v[i]) {
 					var input = document.createElement('input'),
@@ -1515,7 +1514,10 @@ var jFN = $.sheet.fn = {
 					input.className = id;
 					input.value = v[i];
 					input.onchange = function() {
-						cell.value = jQuery(this).val();
+						value = new String(this.value);
+						value.html = html;
+						value.cell = cell;
+						cell.value = value;
 						cell.setNeedsUpdated(false);
 						jS.resolveCell(cell);
 						jS.trigger('sheetCellEdited', [cell]);
@@ -1576,10 +1578,12 @@ var jFN = $.sheet.fn = {
 			label,
 			checkbox,
 			id,
+			value,
 			result;
 
 		if (td !== null) {
-			html = $(td).children().detach();
+			html = cell.value.html;
+			$(td).children().detach();
 		}
 
 		if (html === undefined || html.length < 1 || cell.needsUpdated) {
@@ -1597,10 +1601,13 @@ var jFN = $.sheet.fn = {
 			checkbox.value = v;
 			checkbox.onchange = function () {
 				if ($(this).is(':checked')) {
-					cell.value = v;
+					value = new String(v);
 				} else {
-					cell.value = '';
+					value = new String('');
 				}
+				value.html = html;
+				value.cell = cell;
+				cell.value = value;
 				cell.setNeedsUpdated(false);
 				jS.resolveCell(cell);
 				jS.trigger('sheetCellEdited', [cell]);
@@ -1630,8 +1637,6 @@ var jFN = $.sheet.fn = {
 				}
 			};
 			html.cell = cell;
-
-			jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 
 			if (v == cell.value || cell.value === 'true') {
 				checkbox.checked =  true;
