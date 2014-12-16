@@ -576,23 +576,19 @@ Sheet.Cell = (function() {
 		typeName: 'Sheet.Cell',
 		thaw: null,
 		threads: [],
-		threadLimit: 1,
-		threadIndex: 0,
+		threadLimit: 8,
 		parseFormula: function(rawFormula, callback) {
-			var i = this.threadIndex,
+			var i = Constructor.threadIndex,
 				threads = this.threads,
 				thread,
-				isThreadAbsent = (typeof threads[i] === 'undefined'),
-				promise;
+				isThreadAbsent = (typeof threads[i] === 'undefined');
 
 			if (isThreadAbsent) {
 				thread = this.threads[i] = operative(function(formula) {
-					var deferred = this.deferred();
-					deferred.fulfill(
-						typeof formula === 'string'
-							? parser.Formula().parse(formula)
-							: null
-					);
+					if (typeof formula === 'string') {
+						return parser.Formula().parse(formula);
+					}
+					return null;
 				}, [
 					Constructor.formulaParserUrl
 				]);
@@ -600,17 +596,16 @@ Sheet.Cell = (function() {
 				thread = threads[i];
 			}
 
-			this.threadIndex++;
-			if (this.threadIndex > this.threadLimit) {
-				this.threadIndex = 0;
+			Constructor.threadIndex++;
+			if (Constructor.threadIndex > this.threadLimit) {
+				Constructor.threadIndex = 0;
 			}
 
-			promise = thread(rawFormula);
-
-			promise.then(callback);
+			thread(rawFormula, callback);
 		}
 	};
 
+	Constructor.threadIndex = 0;
 	Constructor.cellLoading = null;
 	Constructor.formulaParserUrl = '../parser/formula/formula.js';
 
