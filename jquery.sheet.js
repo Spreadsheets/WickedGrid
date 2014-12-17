@@ -258,6 +258,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			this.value = value;
 			cache = this.displayValue().valueOf();
 
+			this.state.shift();
+			this.updateDependencies();
+
 			if (this.loader !== null) {
 				this.loader
 					.setCellAttributes(this.loadedFrom, {
@@ -270,8 +273,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					.setDependencies(this);
 			}
 
-			this.state.shift();
-			this.updateDependencies();
 			this.needsUpdated = false;
 			return (this.valueOverride !== u ? this.valueOverride : this.value);
 		},
