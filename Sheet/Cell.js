@@ -219,6 +219,9 @@ Sheet.Cell = (function() {
 			this.value = value;
 			cache = this.displayValue().valueOf();
 
+			this.state.shift();
+			this.updateDependencies();
+
 			if (this.loader !== null) {
 				this.loader
 					.setCellAttributes(this.loadedFrom, {
@@ -231,8 +234,6 @@ Sheet.Cell = (function() {
 					.setDependencies(this);
 			}
 
-			this.state.shift();
-			this.updateDependencies();
 			this.needsUpdated = false;
 			return (this.valueOverride !== u ? this.valueOverride : this.value);
 		},
