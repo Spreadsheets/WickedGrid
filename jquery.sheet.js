@@ -171,6 +171,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							cache = cell.displayValue().valueOf();
 						//})
 
+						//cell.thaw.add(function() {
+							cell.state.shift();
+							cell.updateDependencies();
+						//});
+
 						//.add(function() {
 							if (cell.loader !== null) {
 								cell.loader
@@ -185,7 +190,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							}
 
 							cell.needsUpdated = false;
-							cell.state.shift();
 						//})
 
 						//.add(function() {
@@ -193,11 +197,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 								callback.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
 							}
 						//})
-
-						//cell.thaw.add(function() {
-
-							cell.updateDependencies();
-						//});
 				};
 
 			//detect state, if any
