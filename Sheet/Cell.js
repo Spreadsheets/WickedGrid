@@ -132,6 +132,11 @@ Sheet.Cell = (function() {
 							cache = cell.displayValue().valueOf();
 						//})
 
+						//cell.thaw.add(function() {
+							cell.state.shift();
+							cell.updateDependencies();
+						//});
+
 						//.add(function() {
 							if (cell.loader !== null) {
 								cell.loader
@@ -146,7 +151,6 @@ Sheet.Cell = (function() {
 							}
 
 							cell.needsUpdated = false;
-							cell.state.shift();
 						//})
 
 						//.add(function() {
@@ -154,11 +158,6 @@ Sheet.Cell = (function() {
 								callback.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
 							}
 						//})
-
-						//cell.thaw.add(function() {
-
-							cell.updateDependencies();
-						//});
 				};
 
 			//detect state, if any
