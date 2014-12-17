@@ -342,8 +342,24 @@
 					sheet: dependency.sheetIndex,
 					row: dependency.rowIndex,
 					column: dependency.columnIndex
-				})
+				});
 			}
+
+			return this;
+		},
+
+		addDependency: function(parentCell, dependencyCell) {
+			var loadedFrom = parentCell.loadedFrom;
+
+			if (loadedFrom.dependencies === undefined) {
+				loadedFrom.dependencies = [];
+			}
+
+			loadedFrom.dependencies.push({
+				sheet: dependencyCell.sheetIndex,
+				row: dependencyCell.rowIndex,
+				column: dependencyCell.columnIndex
+			});
 
 			return this;
 		},

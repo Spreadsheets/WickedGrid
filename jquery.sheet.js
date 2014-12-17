@@ -73,6 +73,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			if (this.dependencies.indexOf(cell) < 0 && this !== cell) {
 				this.dependencies.push(cell);
+				if (this.loader !== null) {
+					this.loader.addDependency(this, cell);
+				}
 			}
 		},
 		/**
@@ -2439,8 +2442,24 @@ Sheet.StyleUpdater = (function(document) {
 					sheet: dependency.sheetIndex,
 					row: dependency.rowIndex,
 					column: dependency.columnIndex
-				})
+				});
 			}
+
+			return this;
+		},
+
+		addDependency: function(parentCell, dependencyCell) {
+			var loadedFrom = parentCell.loadedFrom;
+
+			if (loadedFrom.dependencies === undefined) {
+				loadedFrom.dependencies = [];
+			}
+
+			loadedFrom.dependencies.push({
+				sheet: dependencyCell.sheetIndex,
+				row: dependencyCell.rowIndex,
+				column: dependencyCell.columnIndex
+			});
 
 			return this;
 		},

@@ -14,16 +14,6 @@
 	<script>
 		$(function() {
 
-			var div = $('<div>')
-							.appendTo('body')
-							.append('<table><tr><td data-formula="Sheet1!B1 + 1"></td><td data-celltype="percent">.1</td></tr></table>')
-							.sheet(),
-					jS = div.getSheet(),
-					td;
-
-			jS.getCell(0,1,1).updateValue();
-
-			td = div.find('table.jS td').first();
 		});
 	</script>
 </head>

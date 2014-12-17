@@ -267,3 +267,33 @@ tf.test('Cell Operator: Percent Addition', function() {
 	tf.assertEquals(td[0].jSCell.value.valueOf(), 1.6, 'value remains a number');
 	div.getSheet().kill();
 });
+
+tf.test('Calc All', function() {
+	var loader = new Sheet.JSONLoader([{
+			rows: [{
+				columns: [{value:900}]
+			}]
+		},{
+			rows: [{
+				columns: [{formula:'SHEET1!A1'}]
+			}]
+		}]),
+		div = $('<div>')
+			.sheet({
+				loader: loader
+			}),
+		jS = div.getSheet(),
+		cell,
+		dependencies,
+		dependency;
+
+	jS.calcAll(true);
+
+	cell = jS.getCell(0,1,1);
+	cell.updateValue();
+	dependencies = cell.loadedFrom.dependencies;
+	dependency = dependencies[0];
+	tf.assertEquals(dependencies.length, 1, 'Expected dependency count');
+	tf.assertEquals([dependency.sheet, dependency.row, dependency.column].join(','), '1,1,1', 'Expected dependency');
+	jS.kill();
+});
