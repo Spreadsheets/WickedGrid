@@ -34,6 +34,9 @@ Sheet.Cell = (function() {
 
 			if (this.dependencies.indexOf(cell) < 0 && this !== cell) {
 				this.dependencies.push(cell);
+				if (this.loader !== null) {
+					this.loader.addDependency(this, cell);
+				}
 			}
 		},
 		/**
