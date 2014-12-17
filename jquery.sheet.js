@@ -355,12 +355,14 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						//if html already belongs to another element, just return nothing for it's cache.
 						if (html.parentNode !== null) {
 							td.innerHTML = value.valueOf();
-							return '';
+						} else {
+							//otherwise, append it to this td
+							td.innerHTML = '';
+							td.appendChild(html);
 						}
 
-						//otherwise, append it to this td
-						td.innerHTML = '';
-						td.appendChild(html);
+						return '';
+
 						break;
 					}
 				case 'string':
