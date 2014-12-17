@@ -403,13 +403,14 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 						//if html already belongs to another element, just return nothing for it's cache, formula function is probably managing it
 						if (html.parentNode !== null) {
-							return '';
+							td.innerHTML = value.valueOf();
+						} else {
+							//otherwise, append it to this td
+							td.innerHTML = '';
+							td.appendChild(html);
 						}
 
-						//otherwise, append it to this td
-						td.innerHTML = '';
-						td.appendChild(html);
-						break;
+						return '';
 					}
 				case 'string':
 				default:
