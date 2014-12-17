@@ -1618,7 +1618,7 @@ var jFN = $.sheet.fn = {
 			html.appendChild(document.createElement('br'));
 			html.onmousedown = function () {
 				if (this.cell.td !== null) {
-					jS.cellEdit(td);
+					jS.cellEdit(this.cell.td);
 				}
 			};
 			html.cell = cell;
