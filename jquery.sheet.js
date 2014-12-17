@@ -2289,7 +2289,7 @@ Sheet.StyleUpdater = (function(document) {
 
 			hasId = (id !== undefined && id !== null);
 			hasValue = (value !== undefined && value !== null);
-			hasCache = (cache !== undefined && cache !== null);
+			hasCache = (cache !== undefined && cache !== null && cache !== '');
 			hasFormula = (formula !== undefined && formula !== null);
 			hasCellType = (cellType !== undefined && cellType !== null);
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
