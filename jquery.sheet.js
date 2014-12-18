@@ -77,6 +77,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			if (this.dependencies.indexOf(cell) < 0 && this !== cell) {
 				this.dependencies.push(cell);
+				if (this.loader !== null) {
+					this.loader.addDependency(this, cell);
+				}
 			}
 		},
 		/**
@@ -402,9 +405,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					} else if (html.appendChild !== u) {
 
 						//if html already belongs to another element, just return nothing for it's cache, formula function is probably managing it
-						if (html.parentNode !== null) {
-							td.innerHTML = value.valueOf();
-						} else {
+						if (html.parentNode === null) {
 							//otherwise, append it to this td
 							td.innerHTML = '';
 							td.appendChild(html);
@@ -2754,10 +2755,26 @@ Sheet.StyleUpdater = (function(document) {
 					sheet: dependency.sheetIndex,
 					row: dependency.rowIndex,
 					column: dependency.columnIndex
-				})
+				});
 			}
 
 			return this;
+		},
+
+		addDependency: function(parentCell, dependencyCell) {
+			var loadedFrom = parentCell.loadedFrom;
+
+			if (loadedFrom.dependencies === undefined) {
+				loadedFrom.dependencies = [];
+			}
+
+			loadedFrom.dependencies.push({
+				sheet: dependencyCell.sheetIndex,
+				row: dependencyCell.rowIndex,
+				column: dependencyCell.columnIndex
+			});
+
+		    return this;
 		},
 
 		cycleCells: function(sheetIndex, fn) {
@@ -13645,7 +13662,7 @@ var jFN = $.sheet.fn = {
 			html.appendChild(document.createElement('br'));
 			html.onmousedown = function () {
 				if (this.cell.td !== null) {
-					jS.cellEdit(td);
+					jS.cellEdit(this.cell.td);
 				}
 			};
 			html.cell = cell;

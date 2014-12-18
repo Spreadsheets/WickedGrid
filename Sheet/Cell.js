@@ -38,6 +38,9 @@ Sheet.Cell = (function() {
 
 			if (this.dependencies.indexOf(cell) < 0 && this !== cell) {
 				this.dependencies.push(cell);
+				if (this.loader !== null) {
+					this.loader.addDependency(this, cell);
+				}
 			}
 		},
 		/**
@@ -363,9 +366,7 @@ Sheet.Cell = (function() {
 					} else if (html.appendChild !== u) {
 
 						//if html already belongs to another element, just return nothing for it's cache, formula function is probably managing it
-						if (html.parentNode !== null) {
-							td.innerHTML = value.valueOf();
-						} else {
+						if (html.parentNode === null) {
 							//otherwise, append it to this td
 							td.innerHTML = '';
 							td.appendChild(html);
