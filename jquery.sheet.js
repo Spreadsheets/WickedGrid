@@ -6128,87 +6128,68 @@ $.sheet = {
 						table.size = function() { return jS.tableSize(table); };
 						pane.size = function() { return jS.sheetSize(table); };
 
+						pane.scrollToX = function () {
+							xUpdated = false;
+							scrollLeft = scrollUI.scrollLeft;
+							if (lastScrollLeft != scrollLeft) {
+								lastScrollLeft = scrollLeft;
+								xUpdated = actionUI.scrollTo('x', scrollLeft);
+							}
+						};
+						pane.scrollToY = function () {
+							yUpdated = false;
+							scrollTop = scrollUI.scrollTop;
+							if (lastScrollTop != scrollTop) {
+								lastScrollTop = scrollTop;
+								yUpdated = actionUI.scrollTo('y', scrollTop);
+							}
+						};
+
 						if (usingLoader) {
-							scrollAction = [
-								function () {
-									xUpdated = false;
-									scrollLeft = scrollUI.scrollLeft;
-									if (lastScrollLeft != scrollLeft) {
-										lastScrollLeft = scrollLeft;
-										xUpdated = actionUI.scrollTo('x', scrollLeft);
-									}
-								},
-
-								function () {
-									yUpdated = false;
-									scrollTop = scrollUI.scrollTop;
-									if (lastScrollTop != scrollTop) {
-										lastScrollTop = scrollTop;
-										yUpdated = actionUI.scrollTo('y', scrollTop);
-									}
-								},
-								function () {
-									if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
-										jS.calcVisibleCol(actionUI);
-									}
-								},
-								function () {
-									if (yUpdated) {
-										if (actionUI.scrollAxis.y.size >= (rows.length - 1)) {
-											jS.calcVisibleRow(actionUI);
-										}
-										jS.updateYBarWidthToCorner(actionUI);
-									}
-								},
-								function () {
-									if (xUpdated && yUpdated) {
-										jS.obj.barHelper().remove();
-										jS.autoFillerGoToTd();
-										if (pane.inPlaceEdit) {
-											pane.inPlaceEdit.goToTd();
-										}
-									}
+							pane.updateX = function () {
+								if (xUpdated && actionUI.scrollAxis.x.size >= (columns.length - 1)) {
+									jS.calcVisibleCol(actionUI);
 								}
-							];
-						} else {
-							scrollAction = [
-								function () {
-									scrollLeft = scrollUI.scrollLeft;
-									if (lastScrollLeft !== scrollLeft) {
-										lastScrollLeft = scrollLeft;
-										xUpdated = actionUI.scrollTo('x', scrollLeft);
-									}
-								},
-
-								function () {
-									scrollTop = scrollUI.scrollTop;
-									if (lastScrollTop !== scrollTop) {
-										lastScrollTop = scrollTop;
-										yUpdated = actionUI.scrollTo('y', scrollTop);
-									}
-								},
-								function () {
-									if (xUpdated) {
-										jS.calcVisibleCol(actionUI);
-									}
-								},
-								function () {
-									if (yUpdated) {
+							};
+							pane.updateY = function () {
+								if (yUpdated) {
+									if (actionUI.scrollAxis.y.size >= (rows.length - 1)) {
 										jS.calcVisibleRow(actionUI);
-										jS.updateYBarWidthToCorner(actionUI);
 									}
-								},
-								function () {
-									if (xUpdated && yUpdated) {
-										jS.obj.barHelper().remove();
-										jS.autoFillerGoToTd();
-										if (pane.inPlaceEdit) {
-											pane.inPlaceEdit.goToTd();
-										}
-									}
+									jS.updateYBarWidthToCorner(actionUI);
 								}
-							];
+							};
+						} else {
+							pane.updateX = function () {
+								if (xUpdated) {
+									jS.calcVisibleCol(actionUI);
+								}
+							};
+							pane.updateY = function () {
+								if (yUpdated) {
+									jS.calcVisibleRow(actionUI);
+									jS.updateYBarWidthToCorner(actionUI);
+								}
+							};
 						}
+
+						pane.finishScroll = function () {
+							if (xUpdated && yUpdated) {
+								jS.obj.barHelper().remove();
+								jS.autoFillerGoToTd();
+								if (pane.inPlaceEdit) {
+									pane.inPlaceEdit.goToTd();
+								}
+							}
+						};
+
+						scrollAction = [
+							pane.scrollToX,
+							pane.scrollToY,
+							pane.updateX,
+							pane.updateY,
+							pane.finishScroll
+						];
 
 						//here we have two different types of functionality to cut down on logic between behaviours.
 						scrollUI.onscroll = function () {
@@ -6462,6 +6443,8 @@ $.sheet = {
 						for (var j = 0; j < col.length; j++) {
 							newValCount++;
 							var td = jS.getTd(-1, i + loc.row, j + loc.col);
+
+							if (td === null) continue;
 
 							td.row = loc.row;
 							td.col = loc.col;
@@ -6747,12 +6730,13 @@ $.sheet = {
 							if (reverse) { //go up
 								for (i = jS.cellLast.row; i > 0 && prevRowsHeights < paneHeight; i--) {
 									td = jS.getTd(-1, i, 1);
-									if (!td.getAttribute('data-hidden') && td.is(':hidden')) td.show();
+									if (td !== null && !td.getAttribute('data-hidden') && $(td).is(':hidden')) $(td).show();
 									prevRowsHeights += td.parent().height();
 								}
 							} else { //go down
 								for (i = jS.cellLast.row; i < size.rows && prevRowsHeights < paneHeight; i++) {
 									td = jS.getTd(-1, i, 1);
+									if (td === null) continue;
 									prevRowsHeights += td.parent().height();
 								}
 							}
@@ -7083,13 +7067,12 @@ $.sheet = {
 					 * @memberOf jS.evt
 					 */
 					cellSetActiveFromKeyCode:function (e, skipMove) {
-						var loc = {
-								row: jS.cellLast.row,
-								col: jS.cellLast.col
-							},
+						//jS.obj.pane().scrollUI.onscroll();
+						var loc = jS.cellLast,
 							overrideIsEdit = false,
 							highlighted,
-							doNotClearHighlighted = false;
+							doNotClearHighlighted = false,
+							loader;
 
 						switch (e.keyCode) {
 							case key.UP:
@@ -7138,7 +7121,7 @@ $.sheet = {
 								loc.col = 1;
 								break;
 							case key.END:
-								loc.col = jS.obj.tdActive().parent().children('td').length - 1;
+								loc.col = jS.obj.tdActive().parentNode.childNodes.length - 2;
 								break;
 						}
 
@@ -7152,9 +7135,11 @@ $.sheet = {
 							var td = jS.getTd(-1, loc.row, loc.col);
 
 							//if the td exists, lets go to it
-							if (td) {
+							if (td !== null) {
 								jS.cellEdit(td, null, doNotClearHighlighted);
 								return false;
+							} else {
+								//TODO: loader needs to auto add cells and then navigate to them here
 							}
 						}
 						//default, can be overridden above
@@ -7836,6 +7821,8 @@ $.sheet = {
 						j = loc.col + col;
 						do {
 							_td = jS.getTd(-1, i, j);
+							if (_td === null) continue;
+
 							_td.style.display = '';
 							_td.removeAttribute('colSpan');
 							_td.removeAttribute('rowSpan');
@@ -9222,7 +9209,10 @@ $.sheet = {
 							}
 
 							cell = this.row[this.colIndex];
-							cell.updateValue();
+
+							if (cell !== u) {
+								cell.updateValue();
+							}
 						};
 
 					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
@@ -9415,7 +9405,8 @@ $.sheet = {
 						size = jS.sheetSize(),
 						row,
 						pane = jS.obj.pane(),
-						tBody = pane.table.tBody;
+						tBody = pane.table.tBody,
+						td;
 
 					if (rowIndex) {
 						start = end = rowIndex;
@@ -9434,7 +9425,9 @@ $.sheet = {
 
 					do {
 						//remove tr's first
-						row = jS.getTd(-1, i, 1).parentNode;
+						td = jS.getTd(-1, i, 1);
+						if (td === null) continue;
+						row = td.parentNode;
 						tBody.removeChild(row);
 					} while (start < i--);
 
@@ -10113,7 +10106,7 @@ $.sheet = {
 									this.row = (before ? start.row : stop.row);
 									this.col = (before ? start.col : stop.col);
 									this.td = jS.getTd(-1, this.row, this.col);
-									if (this.td !== jS.cellLast.td) {
+									if (this.td !== null && this.td !== jS.cellLast.td) {
 										jS.cellEdit(this.td, false, true);
 									}
 									break;
@@ -10121,7 +10114,7 @@ $.sheet = {
 									this.row = (before ? stop.row : start.row);
 									this.col = (before ? stop.col : start.col);
 									this.td = jS.getTd(-1, this.row, this.col);
-									if (this.td !== jS.cellLast.td) {
+									if (this.td !== null && this.td !== jS.cellLast.td) {
 										jS.cellEdit(this.td, false, true);
 									}
 									break;
@@ -10131,7 +10124,8 @@ $.sheet = {
 						scrolledArea  = jS.obj.pane().actionUI.scrolledArea,
 						sheet = jS.obj.table(),
 						col,
-						row;
+						row,
+						td;
 
 					switch (type) {
 						case 'top':
@@ -10165,7 +10159,9 @@ $.sheet = {
 							row = last;
 
 							do {
-								obj.push(jS.getTd(-1, row, 1).parentNode);
+								td = jS.getTd(-1, row, 1);
+								if (td === null) continue;
+								obj.push(td.parentNode);
 							} while(row-- > first);
 							break;
 						case 'corner': //all
@@ -10287,7 +10283,7 @@ $.sheet = {
 				 * @param {Number} tableIndex table index
 				 * @param {Number} rowIndex row index
 				 * @param {Number} colIndex column index
-				 * @returns {HTMLElement}
+				 * @returns {HTMLElement|null}
 				 * @memberOf jS
 				 */
 				getTd:function (tableIndex, rowIndex, colIndex) {
@@ -10302,7 +10298,7 @@ $.sheet = {
 							|| !(row = tBody.children[rowIndex])
 							|| !(td = row.children[colIndex])
 						) {
-						td = document.createElement('td');
+						return null;
 					}
 
 					return td;
