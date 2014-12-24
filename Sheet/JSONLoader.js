@@ -232,7 +232,7 @@
 				max = dependencies.length;
 				for (i = 0; i < max; i++) {
 					jsonDependency = dependencies[i];
-					dependency = this.jitCell(jsonDependency['sheet'], jsonDependency['row'], jsonDependency['column'], jS, cellHandler);
+					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c'], jS, cellHandler);
 					if (dependency !== null) {
 						jitCell.dependencies.push(dependency);
 					}
@@ -341,9 +341,9 @@
 			for(;i<max;i++) {
 				dependency = dependencies[i];
 				jsonDependencies.push({
-					sheet: dependency.sheetIndex,
-					row: dependency.rowIndex,
-					column: dependency.columnIndex
+					s: dependency.sheetIndex,
+					r: dependency.rowIndex,
+					c: dependency.columnIndex
 				});
 			}
 
@@ -358,9 +358,9 @@
 			}
 
 			loadedFrom.dependencies.push({
-				sheet: dependencyCell.sheetIndex,
-				row: dependencyCell.rowIndex,
-				column: dependencyCell.columnIndex
+				s: dependencyCell.sheetIndex,
+				r: dependencyCell.rowIndex,
+				c: dependencyCell.columnIndex
 			});
 
 		    return this;
