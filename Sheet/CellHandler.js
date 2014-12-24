@@ -279,11 +279,14 @@ Sheet.CellHandler = (function(Math) {
 				row,
 				stack = [],
 				key = sheetIndex + '!' + start.colString + start.rowString + ':' + end.colString + end.rowString,
-				cachedRange = this.cellRangeCache[key],
+				cachedRange = Constructor.cellRangeCache[key],
 				i,
 				max,
 				useCache,
-				that = this;
+				that = this,
+				remaining = ((colIndexEnd - 1) - colIndexStart) * ((rowIndexEnd - 1) - rowIndex),
+				detected = remaining + 0,
+				count = 0;
 
 			/*if (cachedRange !== u) {
 				useCache = true;
@@ -295,7 +298,7 @@ Sheet.CellHandler = (function(Math) {
 				}
 
 				if (useCache) {
-					callback.call(parentCell, that.cellRangeCache[key]);
+					callback.call(parentCell, Constructor.cellRangeCache[key]);
 					return this;
 				}
 			}*/
@@ -322,30 +325,22 @@ Sheet.CellHandler = (function(Math) {
 
 						if (cell !== null) {
 							cell.addDependency(parentCell);
-							stack.push((function(cell) {
-								return function() {
-									cell.updateValue(function(value) {
-										result.unshift(value);
-									});
-								};
-							})(cell));
+							cell.updateValue(function(value) {
+								result.unshift(value);
+								remaining--;
+								if (remaining < 1) {
+									Constructor.cellRangeCache[key] = result;
+									callback.call(parentCell, result);
+								}
+							});
+							count++;
 						}
 					} while(colIndex-- > colIndexEnd);
 				} while (rowIndex-- > rowIndexEnd);
-
-				stack.push(function() {
-					that.cellRangeCache[key] = result;
-					callback.call(parentCell, result);
-				});
 			}
-
-			//that.cellRangeCache[key] = result;
-			parentCell.thaw.addArray(stack);
 
 			return this;
 		},
-
-		cellRangeCache: {},
 
 
 		/**
@@ -466,6 +461,8 @@ Sheet.CellHandler = (function(Math) {
 			return formulaParser;
 		}
 	};
+
+	Constructor.cellRangeCache = {};
 
 	return Constructor;
 })(Math);

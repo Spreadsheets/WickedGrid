@@ -65,6 +65,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		this.loader = null;
 		this.loadedFrom = null;
 		this.cellHandler = cellHandler;
+		this.waitingCallbacks = [];
 	}
 
 	Constructor.prototype = {
@@ -98,6 +99,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				if (callback !== u) {
 					callback.call(this, result);
 				}
+				if (this.waitingCallbacks.length > 0) while (this.waitingCallbacks.length > 0) this.waitingCallbacks.pop().call(this, result);
 				return;
 			}
 
@@ -122,6 +124,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					if (callback !== u) {
 						callback.call(this, this.value);
 					}
+					if (this.waitingCallbacks.length > 0) while (this.waitingCallbacks.length > 0) this.waitingCallbacks.pop().call(this, this.value);
 					return;
 				}
 			}
@@ -139,69 +142,72 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				calcStack,
 				formulaParser,
 				typesStack,
+				callbackValue,
 				doneFn = function(value) {
-					//cell.thaw
-						//.add(function() {
-							//setup cell trace from value
-							if (
-								value === u
-								|| value === null
-							) {
+					//setup cell trace from value
+					if (
+						value === u
+						|| value === null
+					) {
+						value = new String();
+					}
+
+					if (value.cell === u) {
+						switch (typeof(value)) {
+							case 'object':
+								break;
+							case 'undefined':
 								value = new String();
-							}
+								break;
+							case 'number':
+								value = new Number(value);
+								break;
+							case 'boolean':
+								value = new Boolean(value);
+								break;
+							case 'string':
+							default:
+								value = new String(value);
+								break;
+						}
+						value.cell = cell;
+					}
+					cell.value = value;
+					cache = cell.displayValue().valueOf();
 
-							if (value.cell === u) {
-								switch (typeof(value)) {
-									case 'object':
-										break;
-									case 'undefined':
-										value = new String();
-										break;
-									case 'number':
-										value = new Number(value);
-										break;
-									case 'boolean':
-										value = new Boolean(value);
-										break;
-									case 'string':
-									default:
-										value = new String(value);
-										break;
-								}
-								value.cell = cell;
-							}
-							cell.value = value;
-							cache = cell.displayValue().valueOf();
-						//})
+					cell.state.shift();
 
-						//cell.thaw.add(function() {
-							cell.state.shift();
-							cell.updateDependencies();
-						//});
+					if (cell.loader !== null) {
+						cell.loader
+							.setCellAttributes(cell.loadedFrom, {
+								'cache': (typeof cache !== 'object' ? cache : null),
+								'formula': cell.formula,
+								'value': cell.value + '',
+								'cellType': cell.cellType,
+								'uneditable': cell.uneditable
+							})
+							.setDependencies(cell);
+					}
 
-						//.add(function() {
-							if (cell.loader !== null) {
-								cell.loader
-									.setCellAttributes(cell.loadedFrom, {
-										'cache': (typeof cache !== 'object' ? cache : null),
-										'formula': cell.formula,
-										'value': cell.value + '',
-										'cellType': cell.cellType,
-										'uneditable': cell.uneditable
-									})
-									.setDependencies(cell);
-							}
+					cell.needsUpdated = false;
 
-							cell.needsUpdated = false;
-						//})
+					callbackValue = cell.valueOverride !== u ? cell.valueOverride : cell.value;
+					if (callback !== u) {
+						callback.call(cell, callbackValue);
+					}
+					if (cell.waitingCallbacks.length > 0) while (cell.waitingCallbacks.length > 0) cell.waitingCallbacks.pop().call(cell, callbackValue);
 
-						//.add(function() {
-							if (callback !== u) {
-								callback.call(cell, cell.valueOverride !== u ? cell.valueOverride : cell.value);
-							}
-						//})
+					cell.updateDependencies();
 				};
 
+			if (this.state.length > 0) {
+				if (callback !== u) {
+					this.waitingCallbacks.push(callback);
+				}
+				return;
+			}
+
+			//TODO: Detect reciprocal dependency
 			//detect state, if any
 			/*switch (this.state[0]) {
 				case 'updating':
@@ -248,6 +254,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					if (callback !== u) {
 						callback.call(cell, value);
 					}
+					if (cell.waitingCallbacks.length > 0) while (cell.waitingCallbacks.length > 0) cell.waitingCallbacks.pop().call(cell, value);
 				});
 				return;
 			}
@@ -262,44 +269,42 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			//increment times this cell has been calculated
 			this.calcCount++;
 			if (formula.length > 0) {
-				//this.thaw.add(function() {
-					if (formula.charAt(0) === '=') {
-						cell.formula = formula = formula.substring(1);
-					}
+				if (formula.charAt(0) === '=') {
+					cell.formula = formula = formula.substring(1);
+				}
 
-					calcStack = Sheet.calcStack;
-					//visual feedback
-					if (cell.td !== u) {
-						cell.td.innerHTML = Constructor.cellLoading;
-					}
-					Sheet.calcStack++;
+				calcStack = Sheet.calcStack;
+				//visual feedback
+				if (cell.td !== u) {
+					cell.td.innerHTML = Constructor.cellLoading;
+				}
+				Sheet.calcStack++;
 
-					cell.parseFormula({
-						formula: formula,
-						callback: function (parsedFormula) {
-							cell.resolveFormula(parsedFormula, function (value) {
-								if (value !== u && value !== null) {
-									if (value.cell !== u && value.cell !== cell) {
-										value = value.valueOf();
-									}
-
-									Sheet.calcStack--;
-
-									if (
-										cellType !== null
-										&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-									) {
-										value = cellTypeHandler(cell, value);
-									}
-
-									doneFn.call(cell, value);
-								} else {
-									doneFn.call(cell, null);
+				cell.parseFormula({
+					formula: formula,
+					callback: function (parsedFormula) {
+						cell.resolveFormula(parsedFormula, function (value) {
+							if (value !== u && value !== null) {
+								if (value.cell !== u && value.cell !== cell) {
+									value = value.valueOf();
 								}
-							}, formula);
-						}
-					});
-				//});
+
+								Sheet.calcStack--;
+
+								if (
+									cellType !== null
+									&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+								) {
+									value = cellTypeHandler(cell, value);
+								}
+
+								doneFn.call(cell, value);
+							} else {
+								doneFn.call(cell, null);
+							}
+						}, formula);
+					}
+				});
 
 			} else if (
 				value !== u
@@ -307,30 +312,26 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				&& cellType !== null
 				&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
 			) {
-				//this.thaw.add(function() {
-					value = cellTypeHandler(cell, value);
-					doneFn(value);
-				//});
+				value = cellTypeHandler(cell, value);
+				doneFn(value);
 			} else {
-				//this.thaw.add(function () {
-					switch (typeof value.valueOf()) {
-						case 'string':
-							operatorFn = cell.startOperators[value.charAt(0)];
+				switch (typeof value.valueOf()) {
+					case 'string':
+						operatorFn = cell.startOperators[value.charAt(0)];
+						if (operatorFn !== u) {
+							cell.valueOverride = operatorFn.call(cell, value);
+						} else {
+							operatorFn = cell.endOperators[value.charAt(value.length - 1)];
 							if (operatorFn !== u) {
 								cell.valueOverride = operatorFn.call(cell, value);
-							} else {
-								operatorFn = cell.endOperators[value.charAt(value.length - 1)];
-								if (operatorFn !== u) {
-									cell.valueOverride = operatorFn.call(cell, value);
-								}
 							}
-							break;
-						case 'undefined':
-							value = '';
-							break;
-					}
-					doneFn(value);
-				//});
+						}
+						break;
+					case 'undefined':
+						value = '';
+						break;
+				}
+				doneFn(value);
 			}
 		},
 
@@ -435,6 +436,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				parsed,
 				handler = this.cellHandler,
 				thaw = this.thaw,
+				resolved = [],
 				addCell = function(cell, args) {
 					var boundArgs = [],
 						arg,
@@ -477,18 +479,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				},
 				doneFn = function(value) {
 					if (steps.length > 0) {
-						//thaw.add(
-							steps.shift()();
-						//);
+						steps.shift()();
 					} else {
-						if (value !== u) {
-							//thaw.add(function() {
-								callback(cell.value = value);
-							//});
-						}
+						callback(cell.value = (value !== u ? value : null));
 					}
 				};
-
 
 			for (; i < max; i++) {
 				parsed = parsedFormula[i];
@@ -497,6 +492,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					case 'm':
 						(function(parsed, i) {
 							steps.push(function() {
+								resolved.push(i);
 								doneFn(parsedFormula[i] = handler[parsed.method].apply(handler, addCell(cell, parsed.args)));
 							});
 						})(parsed, i);
@@ -508,6 +504,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							steps.push(function() {
 								//setup callback
 								parsed.args.push(function (value) {
+									resolved.push(i);
 									doneFn(parsedFormula[i] = value);
 								});
 
@@ -519,6 +516,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					case 'v':
 						(function(parsed, i) {
 							steps.push(function() {
+								resolved.push(i);
 								doneFn(parsedFormula[i] = parsed.value);
 							});
 						})(parsed, i);
@@ -526,8 +524,19 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 					case 'cell':
 						steps.push(function() {
+							resolved.push(i);
 							doneFn();
 						});
+
+						break;
+					case u:
+						resolved.push(i);
+						doneFn();
+						break;
+					default:
+						resolved.push(i);
+						throw new Error('Not implemented:' + parsed.type);
+						break;
 				}
 			}
 
@@ -625,9 +634,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		thaw: null,
 		parseFormula: function(item) {
 			var i = Constructor.threadIndex,
-				threads = Constructor.threads ,
+				threads = Constructor.threads,
 				thread,
-				thaw = this.thaw,
 				isThreadAbsent = (typeof threads[i] === 'undefined');
 
 			if (isThreadAbsent) {
@@ -639,6 +647,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				}, [
 					Constructor.formulaParserUrl
 				]);
+				thread.busy = false;
+				thread.stash = [];
 			} else {
 				thread = threads[i];
 			}
@@ -648,8 +658,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				Constructor.threadIndex = 0;
 			}
 
-			if (thread.stash === u) thread.stash = [];
-
 			if (thread.busy) {
 				thread.stash.push(function() {
 					thread.busy = true;
@@ -657,7 +665,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						thread.busy = false;
 						item.callback(parsedFormula);
 						if (thread.stash.length > 0) {
-							thaw.add(thread.stash.shift());
+							thread.stash.shift()();
 						}
 					});
 				});
@@ -667,7 +675,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					thread.busy = false;
 					item.callback(parsedFormula);
 					if (thread.stash.length > 0) {
-						thaw.add(thread.stash.shift());
+						thread.stash.shift()();
 					}
 				});
 			}
@@ -676,7 +684,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 	Constructor.remainingItems = [];
 	Constructor.threads = [];
-	Constructor.threadLimit = 24;
+	Constructor.threadLimit = 10;
 	Constructor.threadIndex = 0;
 	Constructor.cellLoading = null;
 	Constructor.formulaParserUrl = '../parser/formula/formula.js';
@@ -963,11 +971,14 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				row,
 				stack = [],
 				key = sheetIndex + '!' + start.colString + start.rowString + ':' + end.colString + end.rowString,
-				cachedRange = this.cellRangeCache[key],
+				cachedRange = Constructor.cellRangeCache[key],
 				i,
 				max,
 				useCache,
-				that = this;
+				that = this,
+				remaining = ((colIndexEnd - 1) - colIndexStart) * ((rowIndexEnd - 1) - rowIndex),
+				detected = remaining + 0,
+				count = 0;
 
 			/*if (cachedRange !== u) {
 				useCache = true;
@@ -979,7 +990,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				}
 
 				if (useCache) {
-					callback.call(parentCell, that.cellRangeCache[key]);
+					callback.call(parentCell, Constructor.cellRangeCache[key]);
 					return this;
 				}
 			}*/
@@ -1006,30 +1017,22 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 						if (cell !== null) {
 							cell.addDependency(parentCell);
-							stack.push((function(cell) {
-								return function() {
-									cell.updateValue(function(value) {
-										result.unshift(value);
-									});
-								};
-							})(cell));
+							cell.updateValue(function(value) {
+								result.unshift(value);
+								remaining--;
+								if (remaining < 1) {
+									Constructor.cellRangeCache[key] = result;
+									callback.call(parentCell, result);
+								}
+							});
+							count++;
 						}
 					} while(colIndex-- > colIndexEnd);
 				} while (rowIndex-- > rowIndexEnd);
-
-				stack.push(function() {
-					that.cellRangeCache[key] = result;
-					callback.call(parentCell, result);
-				});
 			}
-
-			//that.cellRangeCache[key] = result;
-			parentCell.thaw.addArray(stack);
 
 			return this;
 		},
-
-		cellRangeCache: {},
 
 
 		/**
@@ -1150,6 +1153,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			return formulaParser;
 		}
 	};
+
+	Constructor.cellRangeCache = {};
 
 	return Constructor;
 })(Math);Sheet.CellTypeHandlers = (function() {
@@ -2643,7 +2648,7 @@ Sheet.StyleUpdater = (function(document) {
 				max = dependencies.length;
 				for (i = 0; i < max; i++) {
 					jsonDependency = dependencies[i];
-					dependency = this.jitCell(jsonDependency['sheet'], jsonDependency['row'], jsonDependency['column'], jS, cellHandler);
+					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c'], jS, cellHandler);
 					if (dependency !== null) {
 						jitCell.dependencies.push(dependency);
 					}
@@ -2752,9 +2757,9 @@ Sheet.StyleUpdater = (function(document) {
 			for(;i<max;i++) {
 				dependency = dependencies[i];
 				jsonDependencies.push({
-					sheet: dependency.sheetIndex,
-					row: dependency.rowIndex,
-					column: dependency.columnIndex
+					s: dependency.sheetIndex,
+					r: dependency.rowIndex,
+					c: dependency.columnIndex
 				});
 			}
 
@@ -2769,9 +2774,9 @@ Sheet.StyleUpdater = (function(document) {
 			}
 
 			loadedFrom.dependencies.push({
-				sheet: dependencyCell.sheetIndex,
-				row: dependencyCell.rowIndex,
-				column: dependencyCell.columnIndex
+				s: dependencyCell.sheetIndex,
+				r: dependencyCell.rowIndex,
+				c: dependencyCell.columnIndex
 			});
 
 		    return this;
