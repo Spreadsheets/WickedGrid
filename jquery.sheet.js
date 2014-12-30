@@ -611,7 +611,61 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
 				.replace(/  /g, '&nbsp; ');
 		},
+		addClass: function(_class) {
+			var td = this.td,
+				classes,
+				index,
+				loadedFrom = this.loadedFrom;
 
+			if (td !== u) {
+				if (td.classList) {
+					td.classList.add(_class);
+				} else {
+					td.className += ' ' + _class;
+				}
+			}
+
+			if (loadedFrom !== u) {
+				classes = (this.loader.getCellAttribute(loadedFrom, 'class') || '');
+				index = classes.split(' ').indexOf(_class);
+				if (index < 0) {
+					classes += ' ' + _class;
+					this.loader.setCellAttribute(loadedFrom, 'class', classes);
+				}
+			}
+
+			return this;
+		},
+		removeClass: function(_class) {
+			var td = this.td,
+				classes,
+				index,
+				loadedFrom = this.loadedFrom;
+
+			if (td !== u) {
+				if (td.classList) {
+					td.classList.remove(_class);
+				} else {
+					classes = (td.className + '').split(' ');
+					index = classes.indexOf(_class);
+					if (index > -1) {
+						classes.splice(index, 1);
+						td.className = classes.join(' ');
+					}
+				}
+			}
+
+			if (loadedFrom !== u) {
+				classes = (this.loader.getCellAttribute(loadedFrom, 'class') || '').split(' ');
+				index = classes.indexOf(_class);
+				if (index > -1) {
+					classes.splice(index, 1);
+					this.loader.setCellAttribute(loadedFrom, 'class', classes.join(' '));
+				}
+			}
+
+			return this;
+		},
 		hasOperator: /(^[$£])|([%]$)/,
 
 		startOperators: {
@@ -2435,9 +2489,21 @@ Sheet.StyleUpdater = (function(document) {
 			this.json = [];
 			this.count = 0;
 		}
+
+		this.cellIds = {};
+		this.jS = null;
+		this.handler = null;
 	}
 
 	Constructor.prototype = {
+		bindJS: function(jS) {
+			this.jS = jS;
+			return this;
+		},
+		bindHandler: function(handler) {
+			this.handler = handler;
+			return this;
+		},
 		size: function(spreadsheetIndex) {
 			var size = {
 					cols: 0,
@@ -2496,9 +2562,9 @@ Sheet.StyleUpdater = (function(document) {
 
 			return this;
 		},
-		setupCell: function(sheetIndex, rowIndex, columnIndex, jS) {
+		setupCell: function(sheetIndex, rowIndex, columnIndex) {
 			var td = document.createElement('td'),
-				cell = this.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler),
+				cell = this.jitCell(sheetIndex, rowIndex, columnIndex),
 				jsonCell,
 				html;
 
@@ -2571,7 +2637,7 @@ Sheet.StyleUpdater = (function(document) {
 
 			return cell;
 		},
-		jitCell: function(sheetIndex, rowIndex, columnIndex, jS, cellHandler) {
+		jitCell: function(sheetIndex, rowIndex, columnIndex) {
 			var jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
 
 			if (jsonCell === null) return null;
@@ -2593,7 +2659,6 @@ Sheet.StyleUpdater = (function(document) {
 				dependencies,
 				jsonDependency,
 				hasId,
-				hasTd,
 				hasValue,
 				hasCache,
 				hasFormula,
@@ -2617,7 +2682,7 @@ Sheet.StyleUpdater = (function(document) {
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
 			hasDependencies = (dependencies !== undefined && dependencies !== null);
 
-			jitCell = new Sheet.Cell(sheetIndex, null, jS, cellHandler);
+			jitCell = new Sheet.Cell(sheetIndex, null, this.jS, this.handler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = jsonCell;
@@ -2648,7 +2713,7 @@ Sheet.StyleUpdater = (function(document) {
 				max = dependencies.length;
 				for (i = 0; i < max; i++) {
 					jsonDependency = dependencies[i];
-					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c'], jS, cellHandler);
+					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c']);
 					if (dependency !== null) {
 						jitCell.dependencies.push(dependency);
 					}
@@ -2663,6 +2728,55 @@ Sheet.StyleUpdater = (function(document) {
 			};
 
 			return jitCell;
+		},
+		jitCellById: function(id) {
+			if (this.cellIds[id] !== undefined) {
+				return this.cellIds[id].requestCell();
+			}
+
+			var loader = this,
+				json = this.json,
+				sheetIndex = json.length - 1,
+				sheet,
+				rowIndex,
+				rows,
+				row,
+				columnIndex,
+				columns,
+				column;
+
+			if (sheetIndex < 0) return null;
+
+			do {
+				sheet = json[sheetIndex];
+				rows = sheet.rows;
+				rowIndex = rows.length - 1;
+				do {
+					row = rows[rowIndex];
+					columns = row.columns;
+					columnIndex = columns.length - 1;
+
+					do {
+						column = columns[columnIndex];
+						if (typeof column['id'] == 'string') {
+							this.cellIds[id] = {
+								cell: column,
+								sheetIndex: sheetIndex,
+								rowIndex: rowIndex,
+								columnIndex: columnIndex,
+								requestCell: function() {
+									return loader.jitCell(this.sheetIndex, this.rowIndex, this.columnIndex);
+								}
+							};
+						}
+					} while(columnIndex-- > 0);
+				} while(rowIndex-- > 0);
+			} while(sheetIndex-- > 0);
+
+			if (this.cellIds[id] !== undefined) {
+				return this.cellIds[id].requestCell();
+			}
+			return this.cellIds[id] = null;
 		},
 		title: function(sheetIndex) {
 			var json = this.json,
@@ -2972,7 +3086,6 @@ Sheet.StyleUpdater = (function(document) {
 
 		/**
 		 * Create json from jQuery.sheet Sheet instance
-		 * @param {Object} jS required, the jQuery.sheet instance
 		 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
 		 * @returns {Array}  - schema:<pre>
 		 * [{ // sheet 1, can repeat
@@ -3023,10 +3136,11 @@ Sheet.StyleUpdater = (function(document) {
 				 * }]</pre>
 		 * @memberOf Sheet.JSONLoader
 		 */
-		fromSheet: function(jS, doNotTrim) {
+		fromSheet: function(doNotTrim) {
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
 
 			var output = [],
+				jS = this.jS,
 				i = 1 * jS.i,
 				pane,
 				sheet = jS.spreadsheets.length - 1,
@@ -5158,7 +5272,7 @@ $.sheet = {
 						|| (cell = row[columnIndex]) === u
 					) {
 						if (s.loader !== null) {
-							cell = s.loader.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler);
+							cell = s.loader.jitCell(sheetIndex, rowIndex, columnIndex);
 						}
 					}
 
@@ -5171,7 +5285,86 @@ $.sheet = {
 					cell.columnIndex = columnIndex;
 					return cell;
 				},
+				getCellById: function(cellId, callback) {
+					var hasLoader = s.loader !== null,
+						cell;
 
+					if (hasLoader) {
+						cell = s.loader.jitCellById(cellId);
+
+						if (callback !== u && cell !== null) {
+							callback.call(cell);
+							return this;
+						}
+
+						return cell;
+					}
+
+					return null;
+				},
+				getCells: function(cellReferences, callback) {
+					var i = 0,
+						max = cellReferences.length,
+						remaining = max - 1,
+						cellReference,
+						cellLocation,
+						cell,
+						cells = [];
+
+					for(;i < max; i++) {
+						cellReference = cellReferences[i];
+						if (typeof cellReference === 'string') {
+							//TODO: get cellLocation from string here
+							cell = jS.getCellById(cellReference);
+						} else {
+							cellLocation = cellReference;
+							cell = jS.getCell(cellLocation.sheet, cellLocation.rowIndex, cellLocation.columnIndex);
+						}
+
+						if (cell !== null) {
+							cells.push(cell);
+						}
+					}
+
+					return cells;
+				},
+
+				updateCells: function(cellReferences, callback) {
+					var i = 0,
+						max = cellReferences.length,
+						remaining = max - 1,
+						cellReference,
+						cellLocation,
+						cell,
+						values = [];
+
+					for(;i < max; i++) {
+						cellReference = cellReferences[i];
+						if (typeof cellReference === 'string') {
+							cell = jS.getCellById(cellReference);
+						} else {
+							cellLocation = cellReference;
+							cell = jS.getCell(cellLocation.sheet, cellLocation.rowIndex, cellLocation.columnIndex);
+						}
+
+						if (cell !== null) {
+
+							if (callback !== u) {
+								(function(cell, i) {
+									cell.updateValue(function (value) {
+										remaining--;
+										values[i] = value;
+										if (remaining < 0) {
+											callback.apply(jS, values);
+										}
+									});
+								})(cell, i);
+							}
+						} else {
+							remaining--;
+						}
+					}
+				},
 				/**
 				 * Tracks which spreadsheet is active to intercept keystrokes for navigation
 				 * @type {Boolean}
@@ -9302,7 +9495,7 @@ $.sheet = {
 
 					if (loader !== null) {
 						loader.cycleCells(sheetIndex, function(sheetIndex, rowIndex, columnIndex) {
-							cell = loader.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler);
+							cell = loader.jitCell(sheetIndex, rowIndex, columnIndex);
 							cell.updateValue();
 						});
 					} else {
@@ -11529,6 +11722,10 @@ $.sheet = {
 			jS.openSheet(s.origHtml);
 		} else {
 			if (s.loader !== null) {
+				s.loader
+					.bindJS(jS)
+					.bindHandler(jS.cellHandler);
+
 				while(loaderTables.length < s.loader.count) {
 					loaderTable = document.createElement('table');
 					loaderTable.setAttribute('title', s.loader.title(loaderTables.length) || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, loaderTables.length + 1));
