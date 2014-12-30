@@ -572,7 +572,61 @@ Sheet.Cell = (function() {
 				.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
 				.replace(/  /g, '&nbsp; ');
 		},
+		addClass: function(_class) {
+			var td = this.td,
+				classes,
+				index,
+				loadedFrom = this.loadedFrom;
 
+			if (td !== u) {
+				if (td.classList) {
+					td.classList.add(_class);
+				} else {
+					td.className += ' ' + _class;
+				}
+			}
+
+			if (loadedFrom !== u) {
+				classes = (this.loader.getCellAttribute(loadedFrom, 'class') || '');
+				index = classes.split(' ').indexOf(_class);
+				if (index < 0) {
+					classes += ' ' + _class;
+					this.loader.setCellAttribute(loadedFrom, 'class', classes);
+				}
+			}
+
+			return this;
+		},
+		removeClass: function(_class) {
+			var td = this.td,
+				classes,
+				index,
+				loadedFrom = this.loadedFrom;
+
+			if (td !== u) {
+				if (td.classList) {
+					td.classList.remove(_class);
+				} else {
+					classes = (td.className + '').split(' ');
+					index = classes.indexOf(_class);
+					if (index > -1) {
+						classes.splice(index, 1);
+						td.className = classes.join(' ');
+					}
+				}
+			}
+
+			if (loadedFrom !== u) {
+				classes = (this.loader.getCellAttribute(loadedFrom, 'class') || '').split(' ');
+				index = classes.indexOf(_class);
+				if (index > -1) {
+					classes.splice(index, 1);
+					this.loader.setCellAttribute(loadedFrom, 'class', classes.join(' '));
+				}
+			}
+
+			return this;
+		},
 		hasOperator: /(^[$£])|([%]$)/,
 
 		startOperators: {

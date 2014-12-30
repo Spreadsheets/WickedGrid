@@ -19,9 +19,21 @@
 			this.json = [];
 			this.count = 0;
 		}
+
+		this.cellIds = {};
+		this.jS = null;
+		this.handler = null;
 	}
 
 	Constructor.prototype = {
+		bindJS: function(jS) {
+			this.jS = jS;
+			return this;
+		},
+		bindHandler: function(handler) {
+			this.handler = handler;
+			return this;
+		},
 		size: function(spreadsheetIndex) {
 			var size = {
 					cols: 0,
@@ -80,9 +92,9 @@
 
 			return this;
 		},
-		setupCell: function(sheetIndex, rowIndex, columnIndex, jS) {
+		setupCell: function(sheetIndex, rowIndex, columnIndex) {
 			var td = document.createElement('td'),
-				cell = this.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler),
+				cell = this.jitCell(sheetIndex, rowIndex, columnIndex),
 				jsonCell,
 				html;
 
@@ -155,7 +167,7 @@
 
 			return cell;
 		},
-		jitCell: function(sheetIndex, rowIndex, columnIndex, jS, cellHandler) {
+		jitCell: function(sheetIndex, rowIndex, columnIndex) {
 			var jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
 
 			if (jsonCell === null) return null;
@@ -177,7 +189,6 @@
 				dependencies,
 				jsonDependency,
 				hasId,
-				hasTd,
 				hasValue,
 				hasCache,
 				hasFormula,
@@ -201,7 +212,7 @@
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
 			hasDependencies = (dependencies !== undefined && dependencies !== null);
 
-			jitCell = new Sheet.Cell(sheetIndex, null, jS, cellHandler);
+			jitCell = new Sheet.Cell(sheetIndex, null, this.jS, this.handler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = jsonCell;
@@ -232,7 +243,7 @@
 				max = dependencies.length;
 				for (i = 0; i < max; i++) {
 					jsonDependency = dependencies[i];
-					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c'], jS, cellHandler);
+					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c']);
 					if (dependency !== null) {
 						jitCell.dependencies.push(dependency);
 					}
@@ -247,6 +258,55 @@
 			};
 
 			return jitCell;
+		},
+		jitCellById: function(id) {
+			if (this.cellIds[id] !== undefined) {
+				return this.cellIds[id].requestCell();
+			}
+
+			var loader = this,
+				json = this.json,
+				sheetIndex = json.length - 1,
+				sheet,
+				rowIndex,
+				rows,
+				row,
+				columnIndex,
+				columns,
+				column;
+
+			if (sheetIndex < 0) return null;
+
+			do {
+				sheet = json[sheetIndex];
+				rows = sheet.rows;
+				rowIndex = rows.length - 1;
+				do {
+					row = rows[rowIndex];
+					columns = row.columns;
+					columnIndex = columns.length - 1;
+
+					do {
+						column = columns[columnIndex];
+						if (typeof column['id'] == 'string') {
+							this.cellIds[id] = {
+								cell: column,
+								sheetIndex: sheetIndex,
+								rowIndex: rowIndex,
+								columnIndex: columnIndex,
+								requestCell: function() {
+									return loader.jitCell(this.sheetIndex, this.rowIndex, this.columnIndex);
+								}
+							};
+						}
+					} while(columnIndex-- > 0);
+				} while(rowIndex-- > 0);
+			} while(sheetIndex-- > 0);
+
+			if (this.cellIds[id] !== undefined) {
+				return this.cellIds[id].requestCell();
+			}
+			return this.cellIds[id] = null;
 		},
 		title: function(sheetIndex) {
 			var json = this.json,
@@ -556,7 +616,6 @@
 
 		/**
 		 * Create json from jQuery.sheet Sheet instance
-		 * @param {Object} jS required, the jQuery.sheet instance
 		 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
 		 * @returns {Array}  - schema:<pre>
 		 * [{ // sheet 1, can repeat
@@ -607,10 +666,11 @@
 				 * }]</pre>
 		 * @memberOf Sheet.JSONLoader
 		 */
-		fromSheet: function(jS, doNotTrim) {
+		fromSheet: function(doNotTrim) {
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
 
 			var output = [],
+				jS = this.jS,
 				i = 1 * jS.i,
 				pane,
 				sheet = jS.spreadsheets.length - 1,

@@ -1570,7 +1570,7 @@ $.sheet = {
 						|| (cell = row[columnIndex]) === u
 					) {
 						if (s.loader !== null) {
-							cell = s.loader.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler);
+							cell = s.loader.jitCell(sheetIndex, rowIndex, columnIndex);
 						}
 					}
 
@@ -1583,7 +1583,86 @@ $.sheet = {
 					cell.columnIndex = columnIndex;
 					return cell;
 				},
+				getCellById: function(cellId, callback) {
+					var hasLoader = s.loader !== null,
+						cell;
 
+					if (hasLoader) {
+						cell = s.loader.jitCellById(cellId);
+
+						if (callback !== u && cell !== null) {
+							callback.call(cell);
+							return this;
+						}
+
+						return cell;
+					}
+
+					return null;
+				},
+				getCells: function(cellReferences, callback) {
+					var i = 0,
+						max = cellReferences.length,
+						remaining = max - 1,
+						cellReference,
+						cellLocation,
+						cell,
+						cells = [];
+
+					for(;i < max; i++) {
+						cellReference = cellReferences[i];
+						if (typeof cellReference === 'string') {
+							//TODO: get cellLocation from string here
+							cell = jS.getCellById(cellReference);
+						} else {
+							cellLocation = cellReference;
+							cell = jS.getCell(cellLocation.sheet, cellLocation.rowIndex, cellLocation.columnIndex);
+						}
+
+						if (cell !== null) {
+							cells.push(cell);
+						}
+					}
+
+					return cells;
+				},
+
+				updateCells: function(cellReferences, callback) {
+					var i = 0,
+						max = cellReferences.length,
+						remaining = max - 1,
+						cellReference,
+						cellLocation,
+						cell,
+						values = [];
+
+					for(;i < max; i++) {
+						cellReference = cellReferences[i];
+						if (typeof cellReference === 'string') {
+							cell = jS.getCellById(cellReference);
+						} else {
+							cellLocation = cellReference;
+							cell = jS.getCell(cellLocation.sheet, cellLocation.rowIndex, cellLocation.columnIndex);
+						}
+
+						if (cell !== null) {
+
+							if (callback !== u) {
+								(function(cell, i) {
+									cell.updateValue(function (value) {
+										remaining--;
+										values[i] = value;
+										if (remaining < 0) {
+											callback.apply(jS, values);
+										}
+									});
+								})(cell, i);
+							}
+						} else {
+							remaining--;
+						}
+					}
+				},
 				/**
 				 * Tracks which spreadsheet is active to intercept keystrokes for navigation
 				 * @type {Boolean}
@@ -5714,7 +5793,7 @@ $.sheet = {
 
 					if (loader !== null) {
 						loader.cycleCells(sheetIndex, function(sheetIndex, rowIndex, columnIndex) {
-							cell = loader.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler);
+							cell = loader.jitCell(sheetIndex, rowIndex, columnIndex);
 							cell.updateValue();
 						});
 					} else {
@@ -7941,6 +8020,10 @@ $.sheet = {
 			jS.openSheet(s.origHtml);
 		} else {
 			if (s.loader !== null) {
+				s.loader
+					.bindJS(jS)
+					.bindHandler(jS.cellHandler);
+
 				while(loaderTables.length < s.loader.count) {
 					loaderTable = document.createElement('table');
 					loaderTable.setAttribute('title', s.loader.title(loaderTables.length) || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, loaderTables.length + 1));
