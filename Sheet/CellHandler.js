@@ -264,82 +264,7 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Sheet.CellHandler}
 		 */
 		cellRangeValue:function (parentCell, start, end, callback) {
-			var sheetIndex = parentCell.sheetIndex,
-				_start = jSE.parseLocation(start.colString, start.rowString),
-				_end = jSE.parseLocation(end.colString, end.rowString),
-				rowIndex = Math.max(_start.row, _end.row),
-				rowIndexEnd = Math.min(_start.row, _end.row),
-				colIndexStart = Math.max(_start.col, _end.col),
-				colIndexEnd = Math.min(_start.col, _end.col),
-				jS = this.jS,
-				sheet = jS.spreadsheets[sheetIndex],
-				result = [],
-				colIndex,
-				cell,
-				row,
-				stack = [],
-				key = sheetIndex + '!' + start.colString + start.rowString + ':' + end.colString + end.rowString,
-				cachedRange = Constructor.cellRangeCache[key],
-				i,
-				max,
-				useCache,
-				that = this,
-				remaining = ((colIndexEnd - 1) - colIndexStart) * ((rowIndexEnd - 1) - rowIndex),
-				detected = remaining + 0,
-				count = 0;
-
-			/*if (cachedRange !== u) {
-				useCache = true;
-				max = cachedRange.length;
-				for (i = 0; i < max; i++) {
-					if (cachedRange[i].needsUpdated) {
-						useCache = false
-					}
-				}
-
-				if (useCache) {
-					callback.call(parentCell, Constructor.cellRangeCache[key]);
-					return this;
-				}
-			}*/
-
-			if (sheet === u) {
-				jS.spreadsheets[sheetIndex] = sheet = {};
-			}
-
-			if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
-				result.rowCount = (rowIndexEnd - rowIndex) + 1;
-				result.columnCount = (colIndexEnd - colIndexStart) + 1;
-
-				do {
-					colIndex = colIndexStart;
-					row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
-					do {
-						if (row === null || (cell = row[colIndex]) === u) {
-							cell = jS.getCell(sheetIndex, rowIndex, colIndex);
-						} else {
-							cell.sheetIndex = sheetIndex;
-							cell.rowIndex = rowIndex;
-							cell.columnIndex = colIndex;
-						}
-
-						if (cell !== null) {
-							cell.addDependency(parentCell);
-							cell.updateValue(function(value) {
-								result.unshift(value);
-								remaining--;
-								if (remaining < 1) {
-									Constructor.cellRangeCache[key] = result;
-									callback.call(parentCell, result);
-								}
-							});
-							count++;
-						}
-					} while(colIndex-- > colIndexEnd);
-				} while (rowIndex-- > rowIndexEnd);
-			}
-
-			return this;
+			return this.remoteCellRangeValue(parentCell, parentCell.sheetIndex, start, end, callback);
 		},
 
 
@@ -383,36 +308,85 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Array}
 		 */
 		remoteCellRangeValue:function (parentCell, sheet, start, end, callback) {
-			var jS = this.jS,
-				jSE = this.jSE,
+			var sheetIndex = (typeof sheet === 'string' ? jSE.parseSheetLocation(sheet) : sheet),
 				_start = jSE.parseLocation(start.colString, start.rowString),
 				_end = jSE.parseLocation(end.colString, end.rowString),
-				sheetIndex = jSE.parseSheetLocation(sheet),
-				colIndex,
-				maxColIndex = _end.col,
-				rowIndex,
-				maxRowIndex = _end.row,
+				rowIndex = Math.max(_start.row, _end.row),
+				rowIndexEnd = Math.min(_start.row, _end.row),
+				colIndexStart = Math.max(_start.col, _end.col),
+				colIndexEnd = Math.min(_start.col, _end.col),
+				jS = this.jS,
 				result = [],
+				colIndex,
 				cell,
-				stack = [];
+				row,
+				stack = [],
+				key = sheetIndex + '!' + start.colString + start.rowString + ':' + end.colString + end.rowString,
+				cachedRange = Constructor.cellRangeCache[key],
+				i,
+				max,
+				useCache,
+				that = this,
+				remaining = ((colIndexEnd - 1) - colIndexStart) * ((rowIndexEnd - 1) - rowIndex),
+				detected = remaining + 0,
+				count = 0;
 
 			if (sheetIndex < 0) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
 			}
 
-			result.rowCount = (maxRowIndex - _start.row) + 1;
-			result.columnCount = (maxColIndex - _start.col) + 1;
-			for (colIndex = _start.col; colIndex <= maxColIndex; colIndex++) {
-				for (rowIndex = _start.row; rowIndex <= maxRowIndex; rowIndex++) {
-					cell = jS.getCell(sheetIndex, rowIndex, colIndex);
-					if (cell !== null) {
-						result.push(cell.updateValue());
-						cell.addDependency(parentCell);
-					}
-				}
+			/*if (cachedRange !== u) {
+			 useCache = true;
+			 max = cachedRange.length;
+			 for (i = 0; i < max; i++) {
+			 if (cachedRange[i].needsUpdated) {
+			 useCache = false
+			 }
+			 }
+
+			 if (useCache) {
+			 callback.call(parentCell, Constructor.cellRangeCache[key]);
+			 return this;
+			 }
+			 }*/
+
+			if (sheet === u) {
+				jS.spreadsheets[sheetIndex] = sheet = {};
 			}
 
-			return result;
+			if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
+				result.rowCount = (rowIndexEnd - rowIndex) + 1;
+				result.columnCount = (colIndexEnd - colIndexStart) + 1;
+
+				do {
+					colIndex = colIndexStart;
+					row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
+					do {
+						if (row === null || (cell = row[colIndex]) === u) {
+							cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+						} else {
+							cell.sheetIndex = sheetIndex;
+							cell.rowIndex = rowIndex;
+							cell.columnIndex = colIndex;
+						}
+
+						if (cell !== null) {
+							cell.addDependency(parentCell);
+							cell.updateValue(function(value) {
+								result.unshift(value);
+								remaining--;
+								if (remaining < 1) {
+									Constructor.cellRangeCache[key] = result;
+									callback.call(parentCell, result);
+								}
+							});
+							count++;
+						}
+					} while(colIndex-- > colIndexEnd);
+				} while (rowIndex-- > rowIndexEnd);
+			}
+
+			return this;
 		},
 
 		/**
