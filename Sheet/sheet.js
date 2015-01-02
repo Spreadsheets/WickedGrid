@@ -862,7 +862,8 @@ $.sheet = {
 		initCalcCols: 10,
 		initScrollRows: 0,
 		initScrollCols: 0,
-		loader: null
+		loader: null,
+		useStack: false
 	},
 
 	/**

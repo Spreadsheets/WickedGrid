@@ -438,13 +438,27 @@ Sheet.Cell = (function() {
 
 					return args;
 				},
+				doneFn;
+
+			if (cell.jS.s.useStack) {
+				doneFn = function(value) {
+					cell.thaw.add(function() {
+						if (steps.length > 0) {
+							steps.shift()();
+						} else {
+							callback(cell.value = (value !== u ? value : null));
+						}
+					});
+				};
+			} else {
 				doneFn = function(value) {
 					if (steps.length > 0) {
 						steps.shift()();
 					} else {
 						callback(cell.value = (value !== u ? value : null));
 					}
-				};
+				}
+			}
 
 			for (; i < max; i++) {
 				parsed = parsedFormula[i];
