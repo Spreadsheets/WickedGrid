@@ -120,7 +120,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					this.value.cell = this;
 					this.updateDependencies();
 					this.needsUpdated = false;
-					
+
 					if (callback !== u) {
 						callback.call(this, this.value);
 					}
@@ -9708,7 +9708,6 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				resolveCell:function (cell, skipUndoable) {
-					var willUpdateDependencies = !cell.needsUpdated;
 					if (!skipUndoable) {
 						jS.undo.createCells([cell], function(cells) {
 							jS.trigger('sheetPreCalculation', [
@@ -9717,14 +9716,11 @@ $.sheet = {
 
 							jS.setDirty(true);
 							jS.setChanged(true);
-							cell.updateValue();
-							if (willUpdateDependencies) {
-								cell.updateDependencies();
-							}
-							jS.trigger('sheetCalculation', [
-								{which:'cell', cell: cell}
-							]);
-
+							cell.updateValue(function() {
+								jS.trigger('sheetCalculation', [
+									{which:'cell', cell: cell}
+								]);
+							});
 							return cells;
 						});
 					} else {
@@ -9734,13 +9730,11 @@ $.sheet = {
 
 						jS.setDirty(true);
 						jS.setChanged(true);
-						cell.updateValue();
-						if (willUpdateDependencies) {
-							cell.updateDependencies();
-						}
-						jS.trigger('sheetCalculation', [
-							{which:'cell', cell: this}
-						]);
+						cell.updateValue(function() {
+							jS.trigger('sheetCalculation', [
+								{which:'cell', cell: cell}
+							]);
+						});
 					}
 				},
 
@@ -13470,12 +13464,18 @@ var jFN = $.sheet.fn = {
 	 * @memberOf jFN
 	 */
 	EQUAL: function(left, right) {
-		var result;
+		var result,
+			leftAsString,
+			rightAsString;
 
 		if (left === undefined || left === null) left = '';
 		if (right === undefined || right === null) right = '';
 
-		if (left.valueOf() === right.valueOf()) {
+		//We need to cast, because an internal value may just be a primitive
+		leftAsString = left + '';
+		rightAsString = right + '';
+
+		if (leftAsString == rightAsString) {
 			result = new Boolean(true);
 			result.html = 'TRUE';
 		} else {
