@@ -335,6 +335,15 @@ Sheet.CellHandler = (function(Math) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
 			}
 
+			//can't find spreadsheet here
+			if (sheetIndex < 0) {
+				result = new String('');
+				result.html = '#NAME?';
+				callback.call(parentCell, result);
+
+				return this;
+			}
+
 			/*if (cachedRange !== u) {
 			 useCache = true;
 			 max = cachedRange.length;
