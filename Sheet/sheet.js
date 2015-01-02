@@ -6023,7 +6023,6 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				resolveCell:function (cell, skipUndoable) {
-					var willUpdateDependencies = !cell.needsUpdated;
 					if (!skipUndoable) {
 						jS.undo.createCells([cell], function(cells) {
 							jS.trigger('sheetPreCalculation', [
@@ -6032,14 +6031,11 @@ $.sheet = {
 
 							jS.setDirty(true);
 							jS.setChanged(true);
-							cell.updateValue();
-							if (willUpdateDependencies) {
-								cell.updateDependencies();
-							}
-							jS.trigger('sheetCalculation', [
-								{which:'cell', cell: cell}
-							]);
-
+							cell.updateValue(function() {
+								jS.trigger('sheetCalculation', [
+									{which:'cell', cell: cell}
+								]);
+							});
 							return cells;
 						});
 					} else {
@@ -6049,13 +6045,11 @@ $.sheet = {
 
 						jS.setDirty(true);
 						jS.setChanged(true);
-						cell.updateValue();
-						if (willUpdateDependencies) {
-							cell.updateDependencies();
-						}
-						jS.trigger('sheetCalculation', [
-							{which:'cell', cell: this}
-						]);
+						cell.updateValue(function() {
+							jS.trigger('sheetCalculation', [
+								{which:'cell', cell: cell}
+							]);
+						});
 					}
 				},
 

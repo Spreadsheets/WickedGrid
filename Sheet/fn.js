@@ -1278,12 +1278,18 @@ var jFN = $.sheet.fn = {
 	 * @memberOf jFN
 	 */
 	EQUAL: function(left, right) {
-		var result;
+		var result,
+			leftAsString,
+			rightAsString;
 
 		if (left === undefined || left === null) left = '';
 		if (right === undefined || right === null) right = '';
 
-		if (left.valueOf() === right.valueOf()) {
+		//We need to cast, because an internal value may just be a primitive
+		leftAsString = left + '';
+		rightAsString = right + '';
+
+		if (leftAsString == rightAsString) {
 			result = new Boolean(true);
 			result.html = 'TRUE';
 		} else {

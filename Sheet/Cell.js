@@ -81,7 +81,7 @@ Sheet.Cell = (function() {
 					this.value.cell = this;
 					this.updateDependencies();
 					this.needsUpdated = false;
-					
+
 					if (callback !== u) {
 						callback.call(this, this.value);
 					}
