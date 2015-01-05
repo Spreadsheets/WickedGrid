@@ -31,16 +31,19 @@ tf.test('Loader (json) : Cache updating', function() {
 				}
 			}),
 		jS = div.getSheet(),
-		cell;
+		cell = jS.getCell(1,1,2),
+		jsonCell = cell.loadedFrom;
 
+	cell.updateValue();
 
-	loader.jitCell(1, 1, 2, jS, jS.cellHandler).updateValue();
-	cell = loader.getCell(1, 1, 2);
-	tf.assertEquals(cell.cache, '$1,000.00', 'loader cell cache');
+	tf.assertEquals(jsonCell.cache, '$1,000.00', 'loader cell cache');
 	tf.assertEquals(cell.value, "1000", 'leader cell value');
-	loader.jitCell(1, 1, 1, jS, jS.cellHandler).updateValue();
-	cell = loader.getCell(1, 1, 1);
-	tf.assertEquals(cell.cache, '$1.00', 'loader cell cache');
+
+	cell = jS.getCell(1, 1, 1);
+	jsonCell = cell.loadedFrom;
+	cell.updateValue();
+
+	tf.assertEquals(jsonCell.cache, '$1.00', 'loader cell cache');
 	tf.assertEquals(cell.value, "1", 'leader cell value');
 	div.getSheet().kill();
 

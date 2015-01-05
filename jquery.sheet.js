@@ -701,6 +701,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		typeName: 'Sheet.Cell',
 		thaw: null,
 		parseFormula: function(item) {
+			if (!this.jS.s.useMultiThreads) {
+				item.callback(this.cellHandler.formulaParser(Sheet.calcStack).parse(item.formula));
+				return;
+			}
 			var i = Constructor.threadIndex,
 				threads = Constructor.threads,
 				thread,
@@ -792,10 +796,12 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					case 'true':
 						result = new Boolean(true);
 						result.html = 'TRUE';
+						result.cell = parentCell;
 						return result;
 					case 'false':
 						result = new Boolean(false);
 						result.html = 'FALSE';
+						result.cell = parentCell;
 						return result;
 				}
 
@@ -981,6 +987,22 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 
 			return output(value);
+		},
+
+		not: function(parentCell, value1, value2) {
+			var result;
+
+			if (value1.valueOf() != value2.valueOf()) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+				result.cell = parentCell;
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+				result.cell = parentCell;
+			}
+
+			return result;
 		},
 
 		concatenate: function(parentCell, value1, value2) {
@@ -4562,7 +4584,8 @@ $.sheet = {
 		initScrollRows: 0,
 		initScrollCols: 0,
 		loader: null,
-		useStack: false
+		useStack: true,
+		useMultiThreads: true
 	},
 
 	/**
@@ -5283,12 +5306,23 @@ $.sheet = {
 					cell.columnIndex = columnIndex;
 					return cell;
 				},
-				getCellById: function(cellId, callback) {
+				getCellById: function(cellId, callbackOrSheet, callback) {
 					var hasLoader = s.loader !== null,
-						cell;
+						cell,
+						sheet;
+
+					if (typeof callbackOrSheet === 'function') {
+						sheet = -1;
+						callback = callbackOrSheet;
+					} else {
+						sheet = callbackOrSheet;
+						if (typeof sheet === 'sting') {
+							sheet = s.loader.getSpreadsheetIndexByTitle(sheet);
+						}
+					}
 
 					if (hasLoader) {
-						cell = s.loader.jitCellById(cellId);
+						cell = s.loader.jitCellById(cellId, sheet);
 
 						if (callback !== u && cell !== null) {
 							callback.call(cell);
@@ -14884,6 +14918,7 @@ case 3:
 		    	method: 'variable',
 		    	args: [$$[$0]]
 		    };
+		    this.$ = yy.types.length;
 		    yy.types.push(type);
 
         /*php
@@ -15081,8 +15116,8 @@ case 16:
 
 			var type = {
 				type: 'm',
-				method: 'callFunction',
-				args: ['NOT', [$$[$0-3], $$[$0]]]
+				method: 'not',
+				args: [$$[$0-3], $$[$0]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);

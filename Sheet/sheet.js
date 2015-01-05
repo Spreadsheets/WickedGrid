@@ -863,7 +863,8 @@ $.sheet = {
 		initScrollRows: 0,
 		initScrollCols: 0,
 		loader: null,
-		useStack: false
+		useStack: true,
+		useMultiThreads: true
 	},
 
 	/**
@@ -1584,12 +1585,31 @@ $.sheet = {
 					cell.columnIndex = columnIndex;
 					return cell;
 				},
-				getCellById: function(cellId, callback) {
+
+				/**
+				 *
+				 * @param {String} cellId
+				 * @param {Number|Function} [callbackOrSheet]
+				 * @param {Function} [callback]
+				 * @returns {*}
+				 */
+				getCellById: function(cellId, callbackOrSheet, callback) {
 					var hasLoader = s.loader !== null,
-						cell;
+						cell,
+						sheet;
+
+					if (typeof callbackOrSheet === 'function') {
+						sheet = -1;
+						callback = callbackOrSheet;
+					} else {
+						sheet = callbackOrSheet;
+						if (typeof sheet === 'sting') {
+							sheet = s.loader.getSpreadsheetIndexByTitle(sheet);
+						}
+					}
 
 					if (hasLoader) {
-						cell = s.loader.jitCellById(cellId);
+						cell = s.loader.jitCellById(cellId, sheet);
 
 						if (callback !== u && cell !== null) {
 							callback.call(cell);

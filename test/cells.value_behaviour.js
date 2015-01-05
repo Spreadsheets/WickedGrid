@@ -34,11 +34,14 @@ tf.test('Value Behaviour: Parenthesis', function() {
 100\t'))
 			.sheet(),
 		jS = div.getSheet(),
-		td;
+		td,
+		cellValue;
 
 	td = div.find('table.jS td');
-
-	tf.assertEquals(td[0].jSCell.updateValue(), true);
+	td[0].jSCell.updateValue(function(_cellValue) {
+		cellValue = _cellValue;
+	});
+	tf.assertEquals(cellValue.valueOf(), true);
 	div.getSheet().kill();
 });
 

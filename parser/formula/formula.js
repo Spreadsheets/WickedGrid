@@ -104,6 +104,7 @@ case 3:
 		    	method: 'variable',
 		    	args: [$$[$0]]
 		    };
+		    this.$ = yy.types.length;
 		    yy.types.push(type);
 
         /*php
@@ -301,8 +302,8 @@ case 16:
 
 			var type = {
 				type: 'm',
-				method: 'callFunction',
-				args: ['NOT', [$$[$0-3], $$[$0]]]
+				method: 'not',
+				args: [$$[$0-3], $$[$0]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);

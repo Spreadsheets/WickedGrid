@@ -10,6 +10,8 @@
 	<script src="../utilities/tableify.js"></script>
 	<script>
 		$.sheet.preLoad('../');
+		$.sheet.defaults.useMultiThreads = false;
+		$.sheet.defaults.useStack = false;
 
 		var tf = new Testify("jQuery.sheet / Sheet");
 	</script>

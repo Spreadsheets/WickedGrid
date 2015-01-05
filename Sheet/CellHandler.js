@@ -32,10 +32,12 @@ Sheet.CellHandler = (function(Math) {
 					case 'true':
 						result = new Boolean(true);
 						result.html = 'TRUE';
+						result.cell = parentCell;
 						return result;
 					case 'false':
 						result = new Boolean(false);
 						result.html = 'FALSE';
+						result.cell = parentCell;
 						return result;
 				}
 
@@ -221,6 +223,22 @@ Sheet.CellHandler = (function(Math) {
 			}
 
 			return output(value);
+		},
+
+		not: function(parentCell, value1, value2) {
+			var result;
+
+			if (value1.valueOf() != value2.valueOf()) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+				result.cell = parentCell;
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+				result.cell = parentCell;
+			}
+
+			return result;
 		},
 
 		concatenate: function(parentCell, value1, value2) {

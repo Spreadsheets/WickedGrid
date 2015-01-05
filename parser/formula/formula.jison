@@ -107,6 +107,7 @@ expression
 		    	method: 'variable',
 		    	args: [$1]
 		    };
+		    $$ = yy.types.length;
 		    yy.types.push(type);
 
         /*php
@@ -278,8 +279,8 @@ expression
 
 			var type = {
 				type: 'm',
-				method: 'callFunction',
-				args: ['NOT', [$1, $4]]
+				method: 'not',
+				args: [$1, $4]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
