@@ -662,6 +662,10 @@ Sheet.Cell = (function() {
 		typeName: 'Sheet.Cell',
 		thaw: null,
 		parseFormula: function(item) {
+			if (!this.jS.s.useMultiThreads) {
+				item.callback(this.cellHandler.formulaParser(Sheet.calcStack).parse(item.formula));
+				return;
+			}
 			var i = Constructor.threadIndex,
 				threads = Constructor.threads,
 				thread,
