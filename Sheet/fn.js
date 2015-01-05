@@ -1171,11 +1171,41 @@ var jFN = $.sheet.fn = {
 	 * @memberOf jFN
 	 */
 	IF:function (expression, resultTrue, resultFalse) {
-		if (expression.valueOf()) {
-			return resultTrue;
-		} else {
-			return resultFalse;
+		var primitiveExpression = expression.valueOf(),
+			str;
+
+		switch (typeof primitiveExpression) {
+			case 'boolean':
+				if (primitiveExpression === true) {
+					return resultTrue;
+				} else {
+					return resultFalse;
+				}
+				break;
+			case 'number':
+				if (primitiveExpression !== 0) {
+					return resultTrue;
+				} else {
+					return resultFalse;
+				}
+				break;
+			case 'string':
+				str = primitiveExpression.toUpperCase();
+				if (str === 'TRUE') {
+					return resultTrue;
+				} else if (str === 'FALSE') {
+					return resultFalse;
+				} else if (str.replace(/ /g, '').length > 0) {
+					return resultTrue;
+				}
+				break;
 		}
+
+		if (primitiveExpression) {
+			return resultTrue;
+		}
+
+		return resultTrue;
 	},
 	/**
 	 * logical function
