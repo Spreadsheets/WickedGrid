@@ -506,13 +506,29 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			if (cell.jS.s.useStack) {
 				doneFn = function(value) {
-					thaw([function() {
+					var j = Constructor.thawIndex,
+						thaws = Constructor.thaws,
+						_thaw,
+						isThawAbsent = (typeof thaws[j] === 'undefined');
+
+					if (isThawAbsent) {
+						_thaw = Constructor.thaws[j] = new Thaw([]);
+					} else {
+						_thaw = thaws[j];
+					}
+
+					Constructor.thawIndex++;
+					if (Constructor.thawIndex > Constructor.thawLimit) {
+						Constructor.thawIndex = 0;
+					}
+
+					_thaw.add(function() {
 						if (steps.length > 0) {
 							steps.shift()();
 						} else {
 							callback(cell.value = (value !== u ? value : null));
 						}
-					}]);
+					});
 				};
 			} else {
 				doneFn = function(value) {
@@ -778,10 +794,14 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		}
 	};
 
-	Constructor.remainingItems = [];
 	Constructor.threads = [];
 	Constructor.threadLimit = 10;
 	Constructor.threadIndex = 0;
+
+	Constructor.thaws = [];
+	Constructor.thawLimit = 100;
+	Constructor.thawIndex = 0;
+
 	Constructor.cellLoading = null;
 	Constructor.formulaParserUrl = '../parser/formula/formula.js';
 
