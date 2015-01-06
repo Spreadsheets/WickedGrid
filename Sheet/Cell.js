@@ -2,8 +2,7 @@ Sheet.Cell = (function() {
 	var u = undefined;
 
 	function Constructor(sheetIndex, td, jS, cellHandler) {
-		if (Constructor.prototype.thaw === null) {
-			Constructor.prototype.thaw = new Thaw([]);
+		if (Constructor.cellLoading === null) {
 			Constructor.cellLoading = jS.msg.cellLoading;
 		}
 		if (td !== undefined && td !== null) {
@@ -27,6 +26,7 @@ Sheet.Cell = (function() {
 		this.loadedFrom = null;
 		this.cellHandler = cellHandler;
 		this.waitingCallbacks = [];
+		this.parsedFormula = null;
 	}
 
 	Constructor.prototype = {
@@ -104,6 +104,29 @@ Sheet.Cell = (function() {
 				formulaParser,
 				typesStack,
 				callbackValue,
+				resolveFormula = function (parsedFormula) {
+					cell.parsedFormula = parsedFormula;
+					cell.resolveFormula(parsedFormula, function (value) {
+						if (value !== u && value !== null) {
+							if (value.cell !== u && value.cell !== cell) {
+								value = value.valueOf();
+							}
+
+							Sheet.calcStack--;
+
+							if (
+								cellType !== null
+								&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+							) {
+								value = cellTypeHandler(cell, value);
+							}
+
+							doneFn.call(cell, value);
+						} else {
+							doneFn.call(cell, null);
+						}
+					});
+				},
 				doneFn = function(value) {
 					//setup cell trace from value
 					if (
@@ -234,38 +257,21 @@ Sheet.Cell = (function() {
 					cell.formula = formula = formula.substring(1);
 				}
 
-				calcStack = Sheet.calcStack;
 				//visual feedback
 				if (cell.td !== u) {
 					cell.td.innerHTML = Constructor.cellLoading;
 				}
+
 				Sheet.calcStack++;
 
-				cell.parseFormula({
-					formula: formula,
-					callback: function (parsedFormula) {
-						cell.resolveFormula(parsedFormula, function (value) {
-							if (value !== u && value !== null) {
-								if (value.cell !== u && value.cell !== cell) {
-									value = value.valueOf();
-								}
-
-								Sheet.calcStack--;
-
-								if (
-									cellType !== null
-									&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
-								) {
-									value = cellTypeHandler(cell, value);
-								}
-
-								doneFn.call(cell, value);
-							} else {
-								doneFn.call(cell, null);
-							}
-						}, formula);
-					}
-				});
+				if (this.parsedFormula !== null) {
+					resolveFormula(this.parsedFormula);
+				} else {
+					cell.parseFormula({
+						formula: formula,
+						callback: resolveFormula
+					});
+				}
 
 			} else if (
 				value !== u
@@ -383,7 +389,7 @@ Sheet.Cell = (function() {
 			return td.innerHTML;
 		},
 
-		resolveFormula: function(parsedFormula, callback, formula) {
+		resolveFormula: function(parsedFormula, callback) {
 			//if error, return it
 			if (typeof parsedFormula === 'string') {
 				callback(parsedFormula);
@@ -391,64 +397,83 @@ Sheet.Cell = (function() {
 
 			var cell = this,
 				steps = [],
-				value,
 				i = 0,
 				max = parsedFormula.length,
 				parsed,
 				handler = this.cellHandler,
-				thaw = this.thaw,
 				resolved = [],
 				addCell = function(cell, args) {
 					var boundArgs = [],
 						arg,
-						j = 0,
-						jMax = args.length;
+						j = args.length - 1;
 
-					for (;j < jMax; j++) {
+					if (j < 0) return;
+					do {
 						arg = args[j];
-						if (typeof(arg) == 'number') {
-							arg = parsedFormula[arg];
-						} else if (arg instanceof Array) {
-							arg = argBinder(arg);
+						switch (typeof arg) {
+							case 'number':
+								boundArgs[j] = resolved[arg];
+								break;
+							case 'string':
+								boundArgs[j] = arg;
+								break;
+							case 'object':
+								if (arg instanceof Array) {
+									boundArgs[j] = argBinder(arg);
+									break;
+								}
+							default:
+								boundArgs[j] = arg;
 						}
-						boundArgs[j] = arg;
-					}
+					} while(j-- > 0);
 
 					boundArgs.unshift(cell);
 
 					return boundArgs;
 				},
 				argBinder = function(args) {
-					var i = args.length - 1,
+					var boundArgs = [],
+						j = args.length - 1,
 						arg;
-					if (i < 0) return;
+
+					if (j < 0) return;
 					do {
-						arg = args[i];
-						if (typeof(arg) === 'number') {
-							args[i] = parsedFormula[arg];
+						arg = args[j];
+						switch (typeof arg) {
+							case 'number':
+								boundArgs[j] = resolved[arg];
+								break;
+							case 'string':
+								boundArgs[j] = arg;
+								break;
+							case 'object':
+								if (arg.hasOwnProperty('args')) {
+									boundArgs[j] = arg;
+									boundArgs[j].args = argBinder(arg.args);
+									break;
+								}
+								else if (arg instanceof Array) {
+									boundArgs[j] = argBinder(arg);
+									break;
+								}
+							default:
+								boundArgs[j] = arg;
 						}
+					} while (j-- > 0);
 
-						else if (arg.hasOwnProperty('args')) {
-							args[i].args = argBinder(arg.args);
-						}
-						else if (arg instanceof Array) {
-							args[i] = argBinder(arg);
-						}
-					} while (i-- > 0);
-
-					return args;
+					return boundArgs;
 				},
 				doneFn;
 
 			if (cell.jS.s.useStack) {
 				doneFn = function(value) {
-					cell.thaw.add(function() {
+					thaw([function() {
 						if (steps.length > 0) {
 							steps.shift()();
 						} else {
 							callback(cell.value = (value !== u ? value : null));
 						}
-					});
+					}]);
 				};
 			} else {
 				doneFn = function(value) {
@@ -467,8 +492,7 @@ Sheet.Cell = (function() {
 					case 'm':
 						(function(parsed, i) {
 							steps.push(function() {
-								resolved.push(i);
-								doneFn(parsedFormula[i] = handler[parsed.method].apply(handler, addCell(cell, parsed.args)));
+								doneFn(resolved[i] = handler[parsed.method].apply(handler, addCell(cell, parsed.args)));
 							});
 						})(parsed, i);
 						break;
@@ -478,12 +502,13 @@ Sheet.Cell = (function() {
 						(function(parsed, i) {
 							steps.push(function() {
 								//setup callback
-								parsed.args.push(function (value) {
-									resolved.push(i);
-									doneFn(parsedFormula[i] = value);
+								var lookupArgs = addCell(cell, parsed.args);
+
+								lookupArgs.push(function (value) {
+									doneFn(resolved[i] = value);
 								});
 
-								handler[parsed.method].apply(handler, addCell(cell, parsed.args));
+								handler[parsed.method].apply(handler, lookupArgs);
 							});
 						})(parsed, i);
 						break;
@@ -491,25 +516,25 @@ Sheet.Cell = (function() {
 					case 'v':
 						(function(parsed, i) {
 							steps.push(function() {
-								resolved.push(i);
-								doneFn(parsedFormula[i] = parsed.value);
+								doneFn(resolved[i] = parsed.value);
 							});
 						})(parsed, i);
 						break;
 
 					case 'cell':
-						steps.push(function() {
-							resolved.push(i);
-							doneFn();
-						});
+						(function(parsed, i) {
+							steps.push(function() {
+								resolved[i] = parsed;
+								doneFn();
+							});
+						})(parsed, i);
 
 						break;
 					case u:
-						resolved.push(i);
-						doneFn();
+						resolved[i] = parsed;
 						break;
 					default:
-						resolved.push(i);
+						resolved[i] = null;
 						throw new Error('Not implemented:' + parsed.type);
 						break;
 				}
@@ -660,7 +685,6 @@ Sheet.Cell = (function() {
 
 		type: Constructor,
 		typeName: 'Sheet.Cell',
-		thaw: null,
 		parseFormula: function(item) {
 			if (!this.jS.s.useMultiThreads) {
 				item.callback(this.cellHandler.formulaParser(Sheet.calcStack).parse(item.formula));

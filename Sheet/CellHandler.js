@@ -69,7 +69,7 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Number}
 		 */
 		number:function (parentCell, num) {
-			if (isNaN(num)) {
+			if (isNaN(num) || num === null) {
 				num = 0;
 			}
 

@@ -3690,6 +3690,8 @@ $.sheet = {
 									}
 
 									s.parent.one('sheetPreCalculation', function () {
+										//reset formula to null so it can be re-evaluated
+										cell.parsedFormula = null;
 										if (v.charAt(0) == '=') {
 											td.setAttribute('data-formula', v);
 											//change only formula, previous value will be stored and recalculated momentarily

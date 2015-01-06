@@ -319,16 +319,36 @@ var jFN = $.sheet.fn = {
 	 */
 	SUM:function () {
 		var sum = 0,
-			v = arrHelpers.toNumbers(arguments),
-			i = v.length - 1;
+			args = arguments,
+			arg,
+			v,
+			i = args.length - 1,
+			j,
+			k,
+			_isNaN = isNaN;
 
 		if (i < 0) {
 			return 0;
 		}
 
 		do {
-			sum += v[i] * 1;
-		} while (i--);
+			arg = args[i];
+			j = arg.length - 1;
+			do {
+				v = arg[j];
+				if (v === null || v === undefined) continue;
+				v = v.valueOf();
+				if (!_isNaN(v)) {
+					switch (typeof v) {
+						case 'string':
+							sum += (v * 1);
+							break;
+						default:
+							sum += v;
+					}
+				}
+			} while (j-- > 0);
+		} while (i-- > 0);
 
 		return sum;
 	},
