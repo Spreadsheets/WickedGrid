@@ -270,3 +270,31 @@ tf.test('Cell Operator: Percent Addition', function() {
 	tf.assertEquals(td[0].jSCell.value.valueOf(), 1.6, 'value remains a number');
 	div.getSheet().kill();
 });
+
+
+tf.test('Loader (json): Missing Sheet & Cell', function() {
+	var loader = new Sheet.JSONLoader([{
+			rows: [{
+				columns: [{formula: 'Sheet2!A1 + "Missing Sheet"!A1 +  + "Missing Sheet"!A2 +  + "Missing Sheet"!A3 +  + "Missing Sheet"!A4'}]
+			}]
+		},{
+			rows: [{
+				columns: [{value: '60 %'}]
+			}]
+		}]),
+		div = $('<div>')
+			.sheet({
+				loader: loader
+			}),
+		jS = div.getSheet(),
+		td,
+		cell = jS.getCell(0,1,1);
+
+	cell.updateValue();
+
+	td = cell.td;
+
+	tf.assertEquals(td.innerHTML, '0.6', 'html is properly displayed');
+	tf.assertEquals(cell.value.valueOf(), 0.6, 'value remains a number');
+	div.getSheet().kill();
+});

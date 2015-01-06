@@ -33,12 +33,12 @@ tf.test('Formula: Dependencies from JSON', function() {
 		},{
 			title: '2',
 			rows: [{
-				columns: [{},{formula:'Sheet1!A1 + 100'}]
+				columns: [{},{formula:'Sheet1!A1 + 33'}]
 			}]
 		},{
 			title: '3',
 			rows: [{
-				columns: [{},{formula:'Sheet1!A1 + 100'}]
+				columns: [{},{formula:'Sheet1!A1 + 66'}]
 			}]
 		}],
 		loader = new Sheet.JSONLoader(spreadsheets),
@@ -51,26 +51,19 @@ tf.test('Formula: Dependencies from JSON', function() {
 				}
 			}),
 		jS = div.getSheet(),
-		sheet1A1 = jS.getCell(0, 1, 1), sheet1B1 = jS.getCell(0, 1, 2),
-		sheet2A1 = jS.getCell(1, 1, 1), sheet2B1 = jS.getCell(1, 1, 2),
-		sheet3A1 = jS.getCell(2, 1, 1), sheet3B1 = jS.getCell(2, 1, 2);
+		sheet1B1 = jS.getCell(0, 1, 2),
+		sheet2B1 = jS.getCell(1, 1, 2),
+		sheet3B1 = jS.getCell(2, 1, 2);
 
-	sheet1A1.updateValue();
 	sheet1B1.updateValue();
-	sheet2A1.updateValue();
 	sheet2B1.updateValue();
-	sheet3A1.updateValue();
 	sheet3B1.updateValue();
-	//thawing, so force values to resolve
-	sheet1A1.value = 100;
-	sheet1A1.setNeedsUpdated();
-	sheet1A1.updateValue();
 
-	tf.assertSame(sheet1B1.value.valueOf(), 101, 'value is correct');
-	tf.assertSame(sheet1B1.loadedFrom.cache, 101, 'cache is correct');
-	tf.assertSame(sheet2B1.value.valueOf(), 200, 'value is correct');
-	tf.assertSame(sheet2B1.loadedFrom.cache, 200, 'cache is correct');
-	tf.assertSame(sheet3B1.value.valueOf(), 200, 'value is correct');
-	tf.assertSame(sheet3B1.loadedFrom.cache, 200, 'cache is correct');
+	tf.assertSame(sheet1B1.value.valueOf(), 1, 'sheet1B1 value is correct');
+	tf.assertSame(sheet1B1.loadedFrom.cache, 1, 'sheet1B1 cache is correct');
+	tf.assertSame(sheet2B1.value.valueOf(), 33, 'sheet2B1 value is correct');
+	tf.assertSame(sheet2B1.loadedFrom.cache, 33, 'sheet2B1 cache is correct');
+	tf.assertSame(sheet3B1.value.valueOf(), 66, 'sheet3B1 value is correct');
+	tf.assertSame(sheet3B1.loadedFrom.cache, 66, 'sheet3B1 cache is correct');
 	div.getSheet().kill();
 });
