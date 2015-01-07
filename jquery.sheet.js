@@ -52,6 +52,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		this.formula = '';
 		this.cellType = null;
 		this.value = '';
+		this.valueOverride = null;
 		this.calcCount = 0;
 		this.sheetIndex = sheetIndex;
 		this.rowIndex = null;
@@ -66,6 +67,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		this.cellHandler = cellHandler;
 		this.waitingCallbacks = [];
 		this.parsedFormula = null;
+		this.defer = null;
 	}
 
 	Constructor.prototype = {
@@ -92,9 +94,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
-				&& this.defer === u
+				&& this.defer === null
 			) {
-				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
+				var result = (this.valueOverride !== null ? this.valueOverride : this.value);
 				this.displayValue();
 				if (callback !== u) {
 					callback.call(this, result);
@@ -104,7 +106,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
-			if (this.formula.length < 1 && this.cellType === null && this.defer === u) {
+			if (this.formula.length < 1 && this.cellType === null && this.defer === null) {
 				if (
 					this.value !== undefined
 					&& (
@@ -214,7 +216,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 					cell.needsUpdated = false;
 
-					callbackValue = cell.valueOverride !== u ? cell.valueOverride : cell.value;
+					callbackValue = cell.valueOverride !== null ? cell.valueOverride : cell.value;
 					if (callback !== u) {
 						callback.call(cell, callbackValue);
 					}
@@ -249,7 +251,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}*/
 
 			//merging creates a defer property, which points the cell to another location to get the other value
-			if (defer !== u) {
+			if (defer !== null) {
 				defer.updateValue(function(value) {
 					value = value.valueOf();
 	
@@ -287,7 +289,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			this.oldValue = value;
 			this.state.unshift('updating');
 			this.fnCount = 0;
-			delete this.valueOverride;
+			this.valueOverride = null;
 
 			//increment times this cell has been calculated
 			this.calcCount++;
@@ -799,7 +801,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	Constructor.threadIndex = 0;
 
 	Constructor.thaws = [];
-	Constructor.thawLimit = 100;
+	Constructor.thawLimit = 500;
 	Constructor.thawIndex = 0;
 
 	Constructor.cellLoading = null;
@@ -1074,7 +1076,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				cell.addDependency(parentCell);
 				cell.updateValue(callback);
 			} else if (callback !== u) {
-				callback.call(parentCell, null);
+				callback.call(parentCell, 0);
 			}
 
 			return this;
@@ -1118,7 +1120,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				cell.addDependency(parentCell);
 				cell.updateValue(callback);
 			} else if (callback !== u) {
-				callback.call(parentCell, null);
+				callback.call(parentCell, 0);
 			}
 
 			return this;
@@ -5149,7 +5151,7 @@ $.sheet = {
 						.removeClass(jS.theme.parent)
 						.html('');
 
-					delete s.parent[0].jS
+					delete s.parent[0].jS;
 
 					this.obj.menus().remove();
 
@@ -8376,7 +8378,7 @@ $.sheet = {
 							_td.style.display = '';
 							_td.removeAttribute('colSpan');
 							_td.removeAttribute('rowSpan');
-							delete _td.jSCell.defer;
+							_td.jSCell.defer = null;
 
 							jS.resolveCell(_td.jSCell, last);
 
@@ -14241,7 +14243,7 @@ var jFN = $.sheet.fn = {
 			foundCell = found.cell;
 			foundCell = jS.getCell(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
 			if (foundCell !== null) {
-				result = foundCell.updateValue();
+				result = foundCell.value;
 			} else {
 				result = '';
 			}
