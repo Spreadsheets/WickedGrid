@@ -1952,7 +1952,7 @@ var jFN = $.sheet.fn = {
 			foundCell = found.cell;
 			foundCell = jS.getCell(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
 			if (foundCell !== null) {
-				result = foundCell.updateValue();
+				result = foundCell.value;
 			} else {
 				result = '';
 			}

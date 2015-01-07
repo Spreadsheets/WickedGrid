@@ -1384,7 +1384,7 @@ $.sheet = {
 						.removeClass(jS.theme.parent)
 						.html('');
 
-					delete s.parent[0].jS
+					delete s.parent[0].jS;
 
 					this.obj.menus().remove();
 
@@ -4611,7 +4611,7 @@ $.sheet = {
 							_td.style.display = '';
 							_td.removeAttribute('colSpan');
 							_td.removeAttribute('rowSpan');
-							delete _td.jSCell.defer;
+							_td.jSCell.defer = null;
 
 							jS.resolveCell(_td.jSCell, last);
 

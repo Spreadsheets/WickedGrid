@@ -266,7 +266,7 @@ Sheet.CellHandler = (function(Math) {
 				cell.addDependency(parentCell);
 				cell.updateValue(callback);
 			} else if (callback !== u) {
-				callback.call(parentCell, null);
+				callback.call(parentCell, 0);
 			}
 
 			return this;
@@ -310,7 +310,7 @@ Sheet.CellHandler = (function(Math) {
 				cell.addDependency(parentCell);
 				cell.updateValue(callback);
 			} else if (callback !== u) {
-				callback.call(parentCell, null);
+				callback.call(parentCell, 0);
 			}
 
 			return this;

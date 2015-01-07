@@ -13,6 +13,7 @@ Sheet.Cell = (function() {
 		this.formula = '';
 		this.cellType = null;
 		this.value = '';
+		this.valueOverride = null;
 		this.calcCount = 0;
 		this.sheetIndex = sheetIndex;
 		this.rowIndex = null;
@@ -27,6 +28,7 @@ Sheet.Cell = (function() {
 		this.cellHandler = cellHandler;
 		this.waitingCallbacks = [];
 		this.parsedFormula = null;
+		this.defer = null;
 	}
 
 	Constructor.prototype = {
@@ -53,9 +55,9 @@ Sheet.Cell = (function() {
 			if (
 				!this.needsUpdated
 				&& this.value.cell !== u
-				&& this.defer === u
+				&& this.defer === null
 			) {
-				var result = (this.valueOverride !== u ? this.valueOverride : this.value);
+				var result = (this.valueOverride !== null ? this.valueOverride : this.value);
 				this.displayValue();
 				if (callback !== u) {
 					callback.call(this, result);
@@ -65,7 +67,7 @@ Sheet.Cell = (function() {
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
-			if (this.formula.length < 1 && this.cellType === null && this.defer === u) {
+			if (this.formula.length < 1 && this.cellType === null && this.defer === null) {
 				if (
 					this.value !== undefined
 					&& (
@@ -175,7 +177,7 @@ Sheet.Cell = (function() {
 
 					cell.needsUpdated = false;
 
-					callbackValue = cell.valueOverride !== u ? cell.valueOverride : cell.value;
+					callbackValue = cell.valueOverride !== null ? cell.valueOverride : cell.value;
 					if (callback !== u) {
 						callback.call(cell, callbackValue);
 					}
@@ -210,7 +212,7 @@ Sheet.Cell = (function() {
 			}*/
 
 			//merging creates a defer property, which points the cell to another location to get the other value
-			if (defer !== u) {
+			if (defer !== null) {
 				defer.updateValue(function(value) {
 					value = value.valueOf();
 	
@@ -248,7 +250,7 @@ Sheet.Cell = (function() {
 			this.oldValue = value;
 			this.state.unshift('updating');
 			this.fnCount = 0;
-			delete this.valueOverride;
+			this.valueOverride = null;
 
 			//increment times this cell has been calculated
 			this.calcCount++;
@@ -760,7 +762,7 @@ Sheet.Cell = (function() {
 	Constructor.threadIndex = 0;
 
 	Constructor.thaws = [];
-	Constructor.thawLimit = 100;
+	Constructor.thawLimit = 500;
 	Constructor.thawIndex = 0;
 
 	Constructor.cellLoading = null;
