@@ -4153,6 +4153,9 @@ $.fn.extend({
 				chosenSettings = $.extend({}, $.sheet.defaults, settings || {}),
 				jS = this.jS;
 
+			chosenSettings.useStack = (window.thaw === undefined ? false : chosenSettings.useStack);
+			chosenSettings.useMultiThreads = (window.operative === undefined ? false : chosenSettings.useMultiThreads);
+
 			//destroy already existing spreadsheet
 			if (jS) {
 				var tables = me.children().detach();
