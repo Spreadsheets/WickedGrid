@@ -90,6 +90,35 @@ var arrHelpers = window.arrHelpers = {
 		});
 		return arr;
 	},
+	indexOfNearestLessThan: function (array, needle) {
+		if (array.length === 0) return -1;
+
+		var high = array.length - 1,
+			low = 0,
+			mid,
+			item,
+			target = -1;
+
+		if (array[high] < needle) {
+			return high;
+		}
+
+		while (low <= high) {
+			mid = ((low + high) / 2) >> 1;
+			item = array[mid];
+			if (item > needle) {
+				high = mid - 1;
+			} else if (item < needle) {
+				target = mid;
+				low = mid + 1;
+			} else {
+				target = low;
+				break;
+			}
+		}
+
+		return target;
+	},
 	closest:function (array, num, min, max) {
 		min = min || 0;
 		max = max || array.length - 1;
