@@ -267,6 +267,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			this.hiddenRows = (hiddenRows !== null ? hiddenRows : []);
 			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
+			this.hiddenRows.sort();
+			this.hiddenColumns.sort();
+
 			this.toggleHideStyleY.update();
 			this.toggleHideStyleX.update();
 		},
@@ -282,6 +285,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			} else {
 				this.hiddenRows.push(index);
 			}
+			this.hiddenRows.sort();
 			this.toggleHideStyleY.update();
 		},
 
@@ -318,6 +322,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				}
 			}
 
+			newHiddenRows.sort();
 			this.hiddenRows = newHiddenRows;
 			this.toggleHideStyleY.update();
 		},
@@ -342,6 +347,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			} else {
 				this.hiddenColumns.push(index);
 			}
+			this.hiddenColumns.sort();
 			this.toggleHideStyleX.update();
 		},
 		/**
@@ -377,6 +383,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				}
 			}
 
+			newHiddenColumns.sort();
 			this.hiddenColumns = newHiddenColumns;
 			this.toggleHideStyleX.update();
 		},
@@ -398,7 +405,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			var axis = this.scrollAxisX,
 				max,
 				i,
-				value = Math.round(pixel / this.pixelScrollDensity);
+				value = Math.round(pixel / this.pixelScrollDensity),
+				offset = arrHelpers.indexOfNearestLessThan(this.hiddenColumns, value) + 1;
+
+			if (offset > 0) {
+				value += offset;
+			}
 
 			max = axis.max;
 			axis.value = value;
@@ -417,7 +429,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			if (this.useDetach) {
 				var i = Math.round(pixel / this.pixelScrollDensity),
 					detacher = this.yDetacher,
-					result;
+					result,
+					offset = arrHelpers.indexOfNearestLessThan(this.hiddenRows, i) + 1;
 
 				this.yIndex = i;
 				this.scrolledArea.row = Math.max(i || 1, 1);
@@ -428,6 +441,10 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				} else {
 					result = detacher.detachBefore(i);
 					detacher.reattachAfter(i + this.maximumVisibleRows);
+				}
+
+				if (offset > 0) {
+					result += offset;
 				}
 
 				return result;

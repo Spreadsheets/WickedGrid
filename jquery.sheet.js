@@ -1667,6 +1667,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			this.hiddenRows = (hiddenRows !== null ? hiddenRows : []);
 			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
+			this.hiddenRows.sort();
+			this.hiddenColumns.sort();
+
 			this.toggleHideStyleY.update();
 			this.toggleHideStyleX.update();
 		},
@@ -1682,6 +1685,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			} else {
 				this.hiddenRows.push(index);
 			}
+			this.hiddenRows.sort();
 			this.toggleHideStyleY.update();
 		},
 
@@ -1718,6 +1722,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				}
 			}
 
+			newHiddenRows.sort();
 			this.hiddenRows = newHiddenRows;
 			this.toggleHideStyleY.update();
 		},
@@ -1742,6 +1747,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			} else {
 				this.hiddenColumns.push(index);
 			}
+			this.hiddenColumns.sort();
 			this.toggleHideStyleX.update();
 		},
 		/**
@@ -1777,6 +1783,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				}
 			}
 
+			newHiddenColumns.sort();
 			this.hiddenColumns = newHiddenColumns;
 			this.toggleHideStyleX.update();
 		},
@@ -1798,7 +1805,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			var axis = this.scrollAxisX,
 				max,
 				i,
-				value = Math.round(pixel / this.pixelScrollDensity);
+				value = Math.round(pixel / this.pixelScrollDensity),
+				offset = arrHelpers.indexOfNearestLessThan(this.hiddenColumns, value) + 1;
+
+			if (offset > 0) {
+				value += offset;
+			}
 
 			max = axis.max;
 			axis.value = value;
@@ -1817,7 +1829,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			if (this.useDetach) {
 				var i = Math.round(pixel / this.pixelScrollDensity),
 					detacher = this.yDetacher,
-					result;
+					result,
+					offset = arrHelpers.indexOfNearestLessThan(this.hiddenRows, i) + 1;
 
 				this.yIndex = i;
 				this.scrolledArea.row = Math.max(i || 1, 1);
@@ -1828,6 +1841,10 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				} else {
 					result = detacher.detachBefore(i);
 					detacher.reattachAfter(i + this.maximumVisibleRows);
+				}
+
+				if (offset > 0) {
+					result += offset;
 				}
 
 				return result;
@@ -6639,31 +6656,34 @@ $.sheet = {
 
 						jS.createSpreadsheet(table, i);
 
-						jS.checkMinSize(table);
-
-						jS.controlFactory.tab();
 						if (settings.loader !== null) {
-								hiddenRows = settings.loader.hiddenRows(i);
-								hiddenColumns = settings.loader.hiddenColumns(i);
+							hiddenRows = settings.loader.hiddenRows(i);
+							hiddenColumns = settings.loader.hiddenColumns(i);
 						}
 
 						else {
 							if (hiddenRows === u || hiddenRows.length < 1) {
 								hiddenRows = table.getAttribute('data-hiddenrows');
 
-								if (hiddenRows !== null)
+								if (hiddenRows !== null) {
 									hiddenRows = arrHelpers.toNumbers(hiddenRows.split(','));
+								}
 							}
 
 							if (hiddenColumns === u || hiddenColumns.length < 1) {
 								hiddenColumns = table.getAttribute('data-hiddencolumns');
 
-								if (hiddenColumns !== null)
+								if (hiddenColumns !== null) {
 									hiddenColumns = arrHelpers.toNumbers(hiddenColumns.split(','));
+								}
 							}
 						}
 
 						enclosure.actionUI.hide(hiddenRows, hiddenColumns);
+
+						jS.checkMinSize(table);
+
+						jS.controlFactory.tab();
 
 						jS.setChanged(true);
 					},
@@ -8927,11 +8947,16 @@ $.sheet = {
 						actionUI = jS.obj.pane().actionUI,
 						frozenAt = actionUI.frozenAt;
 
-					addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1, s.initScrollRows)
+					addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1, s.initScrollRows);
 					addCols = Math.max((frozenAt.col > addCols ? frozenAt.col + 1 : addCols), 1, s.initScrollCols);
 
 					if (size.cols < addCols) {
 						addCols -= size.cols;
+
+						if (actionUI.hiddenColumns.length > 0) {
+							addCols += arrHelpers.indexOfNearestLessThan(actionUI.hiddenColumns, addCols) + 1;
+						}
+
 						jS.controlFactory.addColumnMulti(null, addCols, false, true, true);
 					}
 
@@ -8940,6 +8965,11 @@ $.sheet = {
 
 					if (size.rows < addRows) {
 						addRows -= size.rows;
+
+						if (actionUI.hiddenRows.length > 0) {
+							addRows += arrHelpers.indexOfNearestLessThan(actionUI.hiddenRows, addRows) + 1;
+						}
+
 						jS.controlFactory.addRowMulti(null, addRows, false, true, true);
 					}
 				},
@@ -14435,6 +14465,35 @@ var arrHelpers = window.arrHelpers = {
 			}
 		});
 		return arr;
+	},
+	indexOfNearestLessThan: function (array, needle) {
+		if (array.length === 0) return -1;
+
+		var high = array.length - 1,
+			low = 0,
+			mid,
+			item,
+			target = -1;
+
+		if (array[high] < needle) {
+			return high;
+		}
+
+		while (low <= high) {
+			mid = ((low + high) / 2) >> 1;
+			item = array[mid];
+			if (item > needle) {
+				high = mid - 1;
+			} else if (item < needle) {
+				target = mid;
+				low = mid + 1;
+			} else {
+				target = low;
+				break;
+			}
+		}
+
+		return target;
 	},
 	closest:function (array, num, min, max) {
 		min = min || 0;

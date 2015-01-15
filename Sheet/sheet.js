@@ -2872,31 +2872,34 @@ $.sheet = {
 
 						jS.createSpreadsheet(table, i);
 
-						jS.checkMinSize(table);
-
-						jS.controlFactory.tab();
 						if (settings.loader !== null) {
-								hiddenRows = settings.loader.hiddenRows(i);
-								hiddenColumns = settings.loader.hiddenColumns(i);
+							hiddenRows = settings.loader.hiddenRows(i);
+							hiddenColumns = settings.loader.hiddenColumns(i);
 						}
 
 						else {
 							if (hiddenRows === u || hiddenRows.length < 1) {
 								hiddenRows = table.getAttribute('data-hiddenrows');
 
-								if (hiddenRows !== null)
+								if (hiddenRows !== null) {
 									hiddenRows = arrHelpers.toNumbers(hiddenRows.split(','));
+								}
 							}
 
 							if (hiddenColumns === u || hiddenColumns.length < 1) {
 								hiddenColumns = table.getAttribute('data-hiddencolumns');
 
-								if (hiddenColumns !== null)
+								if (hiddenColumns !== null) {
 									hiddenColumns = arrHelpers.toNumbers(hiddenColumns.split(','));
+								}
 							}
 						}
 
 						enclosure.actionUI.hide(hiddenRows, hiddenColumns);
+
+						jS.checkMinSize(table);
+
+						jS.controlFactory.tab();
 
 						jS.setChanged(true);
 					},
@@ -5160,11 +5163,16 @@ $.sheet = {
 						actionUI = jS.obj.pane().actionUI,
 						frozenAt = actionUI.frozenAt;
 
-					addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1, s.initScrollRows)
+					addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1, s.initScrollRows);
 					addCols = Math.max((frozenAt.col > addCols ? frozenAt.col + 1 : addCols), 1, s.initScrollCols);
 
 					if (size.cols < addCols) {
 						addCols -= size.cols;
+
+						if (actionUI.hiddenColumns.length > 0) {
+							addCols += arrHelpers.indexOfNearestLessThan(actionUI.hiddenColumns, addCols) + 1;
+						}
+
 						jS.controlFactory.addColumnMulti(null, addCols, false, true, true);
 					}
 
@@ -5173,6 +5181,11 @@ $.sheet = {
 
 					if (size.rows < addRows) {
 						addRows -= size.rows;
+
+						if (actionUI.hiddenRows.length > 0) {
+							addRows += arrHelpers.indexOfNearestLessThan(actionUI.hiddenRows, addRows) + 1;
+						}
+
 						jS.controlFactory.addRowMulti(null, addRows, false, true, true);
 					}
 				},
