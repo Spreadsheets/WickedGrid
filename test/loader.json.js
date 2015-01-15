@@ -297,3 +297,146 @@ tf.test('Calc All', function() {
 	tf.assertEquals([dependency.sheet, dependency.row, dependency.column].join(','), '1,1,1', 'Expected dependency');
 	jS.kill();
 });
+
+tf.test('Loader (json): Hidden Rows', function() {
+	var rowsRaw = '[' +
+			(new Array(99)).join('\n {"columns": [{},{},{},{},{}]},') +
+			'\n {"columns": [{},{},{},{},{}]}' +
+			']',
+		rows = JSON.parse(rowsRaw),
+		loader = new Sheet.JSONLoader([{
+			metadata: {
+				hiddenRows: [5,10,15,20]
+			},
+			rows: rows
+		}]),
+		div = $('<div>')
+			.appendTo('body')
+			.sheet({
+				loader: loader,
+				minSize: {
+					rows: 25,
+					cols: 5
+				}
+			}),
+		jS = div.getSheet(),
+		tr,
+		style,
+		cell = jS.getCell(0,5,1);
+	tr = cell.td.parentNode;
+	style = getComputedStyle(tr);
+	tf.assertEquals(cell.rowIndex, 5, 'Proper row is selected');
+	tf.assertEquals(style['display'], 'none', 'Row is hidden');
+	div.detach();
+	div.getSheet().kill();
+});
+
+tf.test('Loader (json): Hidden Columns', function() {
+	var columnsRaw = '[' + (new Array(99)).join('{},') + '{}' + ']',
+		rowsRaw = '[' +
+			(new Array(99)).join('\n {"columns": ' + columnsRaw + '},') +
+			'\n {"columns": ' + columnsRaw + '}' +
+			']',
+		rows = JSON.parse(rowsRaw),
+		loader = new Sheet.JSONLoader([{
+			metadata: {
+				hiddenColumns: [5,10,15,20]
+			},
+			rows: rows
+		}]),
+		div = $('<div>')
+			.appendTo('body')
+			.sheet({
+				loader: loader,
+				minSize: {
+					rows: 25,
+					cols: 5
+				}
+			}),
+		jS = div.getSheet(),
+		td,
+		style,
+		cell = jS.getCell(0,1,5);
+	td = cell.td;
+	style = getComputedStyle(td);
+	tf.assertEquals(cell.columnIndex, 5, 'Proper column is selected');
+	tf.assertEquals(style['display'], 'none', 'Column is hidden');
+	div.detach();
+	div.getSheet().kill();
+});
+
+tf.test('Loader (json): Scroll Offset with Hidden Rows', function() {
+	var rowsRaw = '[' +
+			(new Array(99)).join('\n {"columns": [{},{},{},{},{}]},') +
+			'\n {"columns": [{},{},{},{},{}]}' +
+			']',
+		rows = JSON.parse(rowsRaw),
+		loader = new Sheet.JSONLoader([{
+			metadata: {
+				hiddenRows: [5,10,15,20]
+			},
+			rows: rows
+		}]),
+		div = $('<div>')
+			.appendTo('body')
+			.sheet({
+				loader: loader,
+				minSize: {
+					rows: 25,
+					cols: 5
+				}
+			}),
+		jS = div.getSheet(),
+		tr,
+		td,
+		style,
+		cell = jS.getCell(0,29,1);
+	td = cell.td || {};
+	tr = td.parentNode || null;
+	style = tr ? getComputedStyle(tr) : {};
+	tf.assertEquals(cell.rowIndex, 29, 'Proper row is selected');
+	tf.assertEquals(style['display'] || '', 'table-row', 'Row is displayed');
+	cell = jS.getCell(0,30,1);
+	tf.assertEquals(cell.rowIndex, 30, 'Following row is selected');
+	tf.assertEquals(typeof cell.td, 'undefined', 'Following row is not yet displayed/created');
+	div.detach();
+	div.getSheet().kill();
+});
+
+tf.test('Loader (json): Scroll Offset with Hidden Columns', function() {
+	var columnsRaw = '[' + (new Array(99)).join('{},') + '{}' + ']',
+		rowsRaw = '[' +
+			(new Array(99)).join('\n {"columns": ' + columnsRaw + '},') +
+			'\n {"columns": ' + columnsRaw + '}' +
+			']',
+		rows = JSON.parse(rowsRaw),
+		loader = new Sheet.JSONLoader([{
+			metadata: {
+				hiddenColumns: [5,10,15,20]
+			},
+			rows: rows
+		}]),
+		div = $('<div>')
+			.appendTo('body')
+			.sheet({
+				loader: loader,
+				minSize: {
+					rows: 1,
+					cols: 25
+				}
+			}),
+		jS = div.getSheet(),
+		tr,
+		td,
+		style,
+		cell = jS.getCell(0,1,29);
+	td = cell.td || null;
+	style = td ? getComputedStyle(td) : {};
+	tf.assertEquals(cell.columnIndex, 29, 'Proper column is selected');
+	tf.assertEquals(style['display'] || '', 'table-cell', 'Column is displayed');
+	cell = jS.getCell(0,1,30);
+	tf.assertEquals(cell.columnIndex, 30, 'Following column is selected');
+	tf.assertEquals(typeof cell.td, 'undefined', 'Following column is not yet displayed/created');
+	div.detach();
+	div.getSheet().kill();
+});

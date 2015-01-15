@@ -303,6 +303,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			this.hiddenRows = (hiddenRows !== null ? hiddenRows : []);
 			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
+			this.hiddenRows.sort();
+			this.hiddenColumns.sort();
+
 			this.toggleHideStyleY.update();
 			this.toggleHideStyleX.update();
 		},
@@ -318,6 +321,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			} else {
 				this.hiddenRows.push(index);
 			}
+			this.hiddenRows.sort();
 			this.toggleHideStyleY.update();
 		},
 
@@ -354,6 +358,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				}
 			}
 
+			newHiddenRows.sort();
 			this.hiddenRows = newHiddenRows;
 			this.toggleHideStyleY.update();
 		},
@@ -378,6 +383,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			} else {
 				this.hiddenColumns.push(index);
 			}
+			this.hiddenColumns.sort();
 			this.toggleHideStyleX.update();
 		},
 		/**
@@ -413,6 +419,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				}
 			}
 
+			newHiddenColumns.sort();
 			this.hiddenColumns = newHiddenColumns;
 			this.toggleHideStyleX.update();
 		},
@@ -496,6 +503,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			if (value === undefined) {
 				value = arrHelpers.closest(axis.v, Math.abs(pixel / axis.area) * 100, axis.min).index;
+				value += arrHelpers.indexOfNearestLessThan(axisType === 'x' ? this.hiddenColumns : this.hiddenRows, value) + 1;
 			}
 
 			max = axis.max;
