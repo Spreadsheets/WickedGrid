@@ -19,6 +19,8 @@
 			this.json = [];
 			this.count = 0;
 		}
+
+		this.cellIds = {};
 	}
 
 	Constructor.prototype = {
@@ -247,6 +249,55 @@
 			};
 
 			return jitCell;
+		},
+		jitCellById: function(id) {
+			if (this.cellIds[id] !== undefined) {
+				return this.cellIds[id].requestCell();
+			}
+
+			var loader = this,
+				json = this.json,
+				sheetIndex = json.length - 1,
+				sheet,
+				rowIndex,
+				rows,
+				row,
+				columnIndex,
+				columns,
+				column;
+
+			if (sheetIndex < 0) return null;
+
+			do {
+				sheet = json[sheetIndex];
+				rows = sheet.rows;
+				rowIndex = rows.length - 1;
+				do {
+					row = rows[rowIndex];
+					columns = row.columns;
+					columnIndex = columns.length - 1;
+
+					do {
+						column = columns[columnIndex];
+						if (typeof column['id'] == 'string') {
+							this.cellIds[id] = {
+								cell: column,
+								sheetIndex: sheetIndex,
+								rowIndex: rowIndex,
+								columnIndex: columnIndex,
+								requestCell: function() {
+									return loader.jitCell(this.sheetIndex, this.rowIndex, this.columnIndex);
+								}
+							};
+						}
+					} while(columnIndex-- > 0);
+				} while(rowIndex-- > 0);
+			} while(sheetIndex-- > 0);
+
+			if (this.cellIds[id] !== undefined) {
+				return this.cellIds[id].requestCell();
+			}
+			return this.cellIds[id] = null;
 		},
 		title: function(sheetIndex) {
 			var json = this.json,
