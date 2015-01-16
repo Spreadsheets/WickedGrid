@@ -104,7 +104,7 @@ var arrHelpers = window.arrHelpers = {
 		}
 
 		while (low <= high) {
-			mid = ((low + high) / 2) >> 1;
+			mid = (low + high) >> 1;
 			item = array[mid];
 			if (item > needle) {
 				high = mid - 1;
