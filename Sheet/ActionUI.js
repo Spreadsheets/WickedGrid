@@ -267,11 +267,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			this.hiddenRows = (hiddenRows !== null ? hiddenRows : []);
 			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
-			this.hiddenRows.sort();
-			this.hiddenColumns.sort();
+			if (this.hiddenRows.length > 0) {
+				this.hiddenRows.sort();
+				this.toggleHideStyleY.update();
+			}
 
-			this.toggleHideStyleY.update();
-			this.toggleHideStyleX.update();
+			if (this.hiddenColumns.length > 0) {
+				this.hiddenColumns.sort();
+				this.toggleHideStyleX.update();
+			}
 		},
 
 		/**
