@@ -76,6 +76,119 @@ tf.test('Cells Hidden: Using attributes (data-hiddenrows, data-hiddencolumns)', 
 });
 
 
+tf.test('Cells Hidden: Using row toggle', function() {
+	var table1 = tableify(' \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n');
+
+	var div = $('<div>')
+			.append(table1)
+			.appendTo('body')
+			.sheet(),
+		jS = div.getSheet(),
+		cell = jS.getCell(0, 1, 1),
+		style,
+		tr;
+
+	jS.toggleHideRow(1);
+
+	tr = cell.td.parentNode;
+
+	style = getComputedStyle(tr);
+
+	tf.assertEquals(style['display'], 'none');
+
+	div.getSheet().kill();
+	div.remove();
+});
+
+tf.test('Cells Hidden: Using column toggle', function() {
+	var table1 = tableify(' \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n');
+
+	var div = $('<div>')
+			.append(table1)
+			.appendTo('body')
+			.sheet(),
+		jS = div.getSheet(),
+		cell = jS.getCell(0, 1, 1),
+		style;
+
+	jS.toggleHideColumn(1);
+
+	style = getComputedStyle(cell.td);
+
+	tf.assertEquals(style['display'], 'none');
+
+	div.getSheet().kill();
+	div.remove();
+});
+
+tf.test('Cells Hidden: Using row range toggle', function() {
+	var table1 = tableify(' \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n');
+
+	var div = $('<div>')
+			.append(table1)
+			.appendTo('body')
+			.sheet(),
+		jS = div.getSheet(),
+		cell1 = jS.getCell(0, 1, 1),
+		cell2 = jS.getCell(0, 5, 1),
+		style1,
+		style2;
+
+	jS.toggleHideRowRange(1,10);
+
+	style1 = getComputedStyle(cell1.td.parentNode);
+	style2 = getComputedStyle(cell2.td.parentNode);
+
+	tf.assertEquals(style1['display'], 'none', 'Row 1 is correctly hidden');
+	tf.assertEquals(style2['display'], 'none', 'Row 2 is correctly hidden');
+
+	div.getSheet().kill();
+	div.remove();
+});
+
+
+tf.test('Cells Hidden: Using column range toggle', function() {
+	var table1 = tableify(' \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n');
+
+	var div = $('<div>')
+			.append(table1)
+			.appendTo('body')
+			.sheet(),
+		jS = div.getSheet(),
+		cell1 = jS.getCell(0, 1, 1),
+		cell2 = jS.getCell(0, 5, 5),
+		style1,
+		style2;
+
+	jS.toggleHideColumnRange(1,10);
+
+	style1 = getComputedStyle(cell1.td);
+	style2 = getComputedStyle(cell2.td);
+
+	tf.assertEquals(style1['display'], 'none', 'Column 1 is correctly hidden');
+	tf.assertEquals(style2['display'], 'none', 'Column 2 is correctly hidden');
+
+	div.getSheet().kill();
+	div.remove();
+});
+
+
 tf.test('Cells Hidden: Using Json (hiddenRows, hiddenColumns)', function() {
 	var spreadsheets = [{
 			metadata: {
