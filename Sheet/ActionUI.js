@@ -37,6 +37,11 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			col: Math.max(this.frozenAt.col, 1)
 		};
 
+		this.foldArea = {
+			row: 0,
+			col: 0
+		};
+
 		var that = this,
 			pane = this.pane,
 			cssId = '#' + table.getAttribute('id'),
@@ -47,6 +52,19 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				if (that.xIndex === index) return false;
 
 				if (index === undefined || index === null) index = that.xIndex;
+
+				var endIndex = index + that.maximumVisibleColumns,
+					startOfSet = arrHelpers.ofSet(that.hiddenColumns, index),
+					endOfSet = arrHelpers.ofSet(that.hiddenColumns, endIndex);
+
+				if (startOfSet !== null) {
+					index = startOfSet.end + (index - startOfSet.start);
+				}
+
+				if (endOfSet !== null) {
+					endIndex = endOfSet.end + (endIndex - endOfSet.start);
+				}
+
 				that.xIndex = index;
 				if (style === undefined) {
 					var col = that.frozenAt.col;
@@ -60,13 +78,14 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						 cssId + ' col:nth-child(-n+' + (col + 1) + ') {display: table-column;}' +
 
 						 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						 cssId + ' tr > *:nth-child(' + (index + 20) + ') ~ * {display: none;}' +
-						 cssId + ' col:nth-child(' + (index + 20) + ') ~ col {display: none;}';
+						 cssId + ' tr > *:nth-child(' + (endIndex) + ') ~ * {display: none;}' +
+						 cssId + ' col:nth-child(' + (endIndex) + ') ~ col {display: none;}';
 
 				}
 
 				this.setStyle(style);
 				that.scrolledArea.col = Math.max(index || 1, 1);
+				that.foldArea.col = endIndex;
 				return true;
 			}, max),
 			scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
@@ -74,6 +93,20 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				if (that.yIndex === index) return false;
 
 				if (index === undefined || index === null) index = that.yIndex;
+
+
+				var endIndex = index + that.maximumVisibleRows,
+					startOfSet = arrHelpers.ofSet(that.hiddenRows, index),
+					endOfSet = arrHelpers.ofSet(that.hiddenRows, endIndex);
+
+				if (startOfSet !== null) {
+					index = startOfSet.end + (index - startOfSet.start);
+				}
+
+				if (endOfSet !== null) {
+					endIndex = endOfSet.end + (endIndex - endOfSet.start);
+				}
+
 				that.yIndex = index;
 				if (style === undefined) {
 					var row = that.frozenAt.row;
@@ -85,11 +118,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
 
 						//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						cssId + ' tr:nth-child(' + (index + 70) + ') ~ tr {display: none;}';
+						cssId + ' tr:nth-child(' + (endIndex) + ') ~ tr {display: none;}';
 				}
 
 				this.setStyle(style);
 				that.scrolledArea.row = Math.max(index || 1, 1);
+				that.foldArea.row = endIndex;
 				return true;
 			});
 
@@ -533,7 +567,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		/**
 		 * @type Sheet.StyleUpdater
 		 */
-		toggleHideStyleY: null
+		toggleHideStyleY: null,
+		maximumVisibleRows: 70,
+		maximumVisibleColumns: 20
 	};
 
 	return Constructor;

@@ -115,6 +115,67 @@ var arrHelpers = window.arrHelpers = {
 		}
 		return target;
 	},
+	ofSet: function (array, needle) {
+		if (array.length === 0) return null;
+		var high = array.length - 1,
+			lastIndex = high,
+			biggest = array[high],
+			smallest = array[0],
+			low = 0,
+			mid,
+			item,
+			target = -1,
+			i,
+			highSet = -1,
+			lowSet = -1;
+		if (array[high] < needle || array[0] > needle) {
+			return null;
+		} else {
+			while (low <= high) {
+				mid = (low + high) >> 1;
+				item = array[mid];
+				if (item > needle) {
+					target = mid;
+					high = mid - 1;
+				} else if (item < needle) {
+					low = mid + 1;
+				} else {
+					target = high;
+					break;
+				}
+			}
+		}
+		if (target > -1) {
+			i = target;
+			while (i <= lastIndex) {
+				if (array[i] + 1 === array[i + 1]) {
+					i++;
+				} else {
+					highSet = array[i];
+					break;
+				}
+			}
+			if (highSet === -1) {
+				highSet = biggest;
+			}
+			i = target;
+			while (i >= 0) {
+				if (array[i] - 1 === array[i - 1]) {
+					i--;
+				} else {
+					lowSet = array[i];
+					break;
+				}
+			}
+			if (lowSet === -1) {
+				lowSet = smallest;
+			}
+		}
+		return {
+			start: lowSet,
+			end: highSet
+		};
+	},
 	closest:function (array, num, min, max) {
 		min = min || 0;
 		max = max || array.length - 1;
