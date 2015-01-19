@@ -1408,6 +1408,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.pane = document.createElement('div');
 		this.table = table;
 		this.max = max;
+
 		this.xIndex = 0;
 		this.yIndex = 0;
 
@@ -1435,6 +1436,11 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			col: Math.max(this.frozenAt.col, 1)
 		};
 
+		this.foldArea = {
+			row: 0,
+			col: 0
+		};
+
 		var that = this,
 			pane = this.pane,
 			tBody = table.tBody,
@@ -1446,7 +1452,21 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				if (that.xIndex === index) return false;
 
 				if (index === undefined || index === null) index = that.xIndex;
+
+				var endIndex = index + that.maximumVisibleColumns,
+					startOfSet = arrHelpers.ofSet(that.hiddenColumns, index),
+					endOfSet = arrHelpers.ofSet(that.hiddenColumns, endIndex);
+
+				if (startOfSet !== null) {
+					index = startOfSet.end + (index - startOfSet.start);
+				}
+
+				if (endOfSet !== null) {
+					endIndex = endOfSet.end + (endIndex - endOfSet.start);
+				}
+
 				that.xIndex = index;
+
 				if (style === undefined) {
 					var col = that.frozenAt.col;
 					 style =
@@ -1459,13 +1479,14 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						 cssId + ' col:nth-child(-n+' + (col + 1) + ') {display: table-column;}' +
 
 						 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						 cssId + ' tr > *:nth-child(' + (index + that.maximumVisibleColumns) + ') ~ * {display: none;}' +
-						 cssId + ' col:nth-child(' + (index + that.maximumVisibleColumns) + ') ~ col {display: none;}';
+						 cssId + ' tr > *:nth-child(' + (endIndex) + ') ~ * {display: none;}' +
+						 cssId + ' col:nth-child(' + (endIndex) + ') ~ col {display: none;}';
 
 				}
 
 				this.setStyle(style);
 				that.scrolledArea.col = Math.max(index || 1, 1);
+				that.foldArea.col = endIndex;
 				return true;
 			}, max),
 			yDetacher = this.yDetacher = new Sheet.Detacher(tBody, tBody.children),
@@ -1474,7 +1495,21 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				if (that.yIndex === index) return false;
 
 				if (index === undefined || index === null) index = that.yIndex;
+
+				var endIndex = index + that.maximumVisibleRows,
+					startOfSet = arrHelpers.ofSet(that.hiddenRows, index),
+					endOfSet = arrHelpers.ofSet(that.hiddenRows, endIndex);
+
+				if (startOfSet !== null) {
+					index = startOfSet.end + (index - startOfSet.start);
+				}
+
+				if (endOfSet !== null) {
+					endIndex = endOfSet.end + (endIndex - endOfSet.start);
+				}
+
 				that.yIndex = index;
+
 				if (style === undefined) {
 					var row = that.frozenAt.row;
 					style =
@@ -1485,11 +1520,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
 
 						//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						cssId + ' tr:nth-child(' + (index + that.maximumVisibleRows) + ') ~ tr {display: none;}';
+						cssId + ' tr:nth-child(' + (endIndex) + ') ~ tr {display: none;}';
 				}
 
 				this.setStyle(style);
 				that.scrolledArea.row = Math.max(index || 1, 1);
+				that.foldArea.row = endIndex;
 				return true;
 			});
 
@@ -1857,7 +1893,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			var axis = this.scrollAxisY,
 				max,
 				i,
-				value = Math.round(pixel / this.pixelScrollDensity);
+				value = Math.round(pixel / this.pixelScrollDensity),
+				offset = arrHelpers.indexOfNearestLessThan(this.hiddenRows, value) + 1;
+
+			if (offset > -1) {
+				value += offset;
+			}
 
 			max = axis.max;
 			axis.value = value;
@@ -9720,8 +9761,8 @@ $.sheet = {
 						sheetSize = actionUI.pane.size(),
 						initRows = s.initCalcRows,
 						initCols = s.initCalcCols,
-						targetRow = (endScrolledArea.row + initRows) - 1,
-						targetCol = (endScrolledArea.col + initCols) - 1,
+						targetRow = Math.max((endScrolledArea.row + initRows) - 1, actionUI.foldArea.row),
+						targetCol = Math.max((endScrolledArea.col + initCols) - 1, actionUI.foldArea.col),
 						rowIndex,
 						row,
 						colIndex,
@@ -9792,8 +9833,8 @@ $.sheet = {
 						sheetSize = actionUI.pane.size(),
 						initRows = s.initCalcRows,
 						initCols = s.initCalcCols,
-						targetRow = (endScrolledArea.row + initRows) - 1,
-						targetCol = (endScrolledArea.col + initCols) - 1,
+						targetRow = Math.max((endScrolledArea.row + initRows) - 1, actionUI.foldArea.row),
+						targetCol = Math.max((endScrolledArea.col + initCols) - 1, actionUI.foldArea.col),
 						rowIndex,
 						row,
 						colIndex,
@@ -14498,6 +14539,75 @@ var arrHelpers = window.arrHelpers = {
 		}
 
 		return target;
+	},
+	ofSet: function (array, needle) {
+		if (array.length === 0) return null;
+
+		var high = array.length - 1,
+			lastIndex = high,
+			biggest = array[high],
+			smallest = array[0],
+			low = 0,
+			mid,
+			item,
+			target = -1,
+			i,
+			highSet = -1,
+			lowSet = -1;
+
+		if (array[high] < needle || array[0] > needle) {
+			return null;
+		} else {
+
+			while (low <= high) {
+				mid = (low + high) >> 1;
+				item = array[mid];
+				if (item > needle) {
+					target = mid;
+					high = mid - 1;
+				} else if (item < needle) {
+					low = mid + 1;
+				} else {
+					target = high;
+					break;
+				}
+			}
+		}
+
+		if (target > -1) {
+			i = target;
+			while (i <= lastIndex) {
+				if (array[i] + 1 === array[i + 1]) {
+					i++;
+				} else {
+					highSet = array[i];
+					break;
+				}
+			}
+
+			if (highSet === -1) {
+				highSet = biggest;
+			}
+
+			i = target;
+			while (i >= 0) {
+				if (array[i] - 1 === array[i - 1]) {
+					i--;
+				} else {
+					lowSet = array[i];
+					break;
+				}
+			}
+
+			if (lowSet === -1) {
+				lowSet = smallest;
+			}
+		}
+
+		return {
+			start: lowSet,
+			end: highSet
+		};
 	},
 	closest:function (array, num, min, max) {
 		min = min || 0;
