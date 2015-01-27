@@ -6062,6 +6062,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				resolveCell:function (cell, skipUndoable) {
+					var updateDependencies = !cell.needsUpdated;
 					if (!skipUndoable) {
 						jS.undo.createCells([cell], function(cells) {
 							jS.trigger('sheetPreCalculation', [
@@ -6074,6 +6075,10 @@ $.sheet = {
 								jS.trigger('sheetCalculation', [
 									{which:'cell', cell: cell}
 								]);
+
+								if (updateDependencies) {
+									cell.updateDependencies();
+								}
 							});
 							return cells;
 						});
@@ -6088,6 +6093,10 @@ $.sheet = {
 							jS.trigger('sheetCalculation', [
 								{which:'cell', cell: cell}
 							]);
+
+							if (updateDependencies) {
+								cell.updateDependencies();
+							}
 						});
 					}
 				},

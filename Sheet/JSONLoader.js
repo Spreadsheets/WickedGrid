@@ -206,7 +206,7 @@
 
 			hasId = (id !== undefined && id !== null);
 			hasValue = (value !== undefined && value !== null);
-			hasCache = (cache !== undefined && cache !== null);
+			hasCache = (cache !== undefined && cache !== null && (cache + '').length > 0);
 			hasFormula = (formula !== undefined && formula !== null);
 			hasCellType = (cellType !== undefined && cellType !== null);
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
@@ -220,13 +220,6 @@
 
 			if (hasId) jitCell.id = id;
 
-			if (hasCache) {
-				jitCell.html = cache;
-				jitCell.needsUpdated = false;
-			} else {
-				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
-			}
-
 			if (hasFormula) jitCell.formula = formula;
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasUneditable) jitCell.uneditable = uneditable;
@@ -237,6 +230,13 @@
 			}
 			else {
 				jitCell.value = new String();
+			}
+
+			if (hasCache) {
+				jitCell.value.html = cache;
+				jitCell.needsUpdated = false;
+			} else {
+				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
 			}
 
 			if (hasDependencies) {

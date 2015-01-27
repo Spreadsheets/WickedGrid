@@ -560,17 +560,61 @@ Sheet.Cell = (function() {
 
 			doneFn();
 		},
-		recurseDependencies: function (fn) {
+
+		recurseDependencies: function (fn, depth) {
+
+			if (depth > Constructor.maxRecursion) {
+				this.recurseDependenciesFlat(fn);
+				return this;
+			}
+
 			var i = 0,
 				dependencies = this.dependencies,
 				dependency,
 				max = dependencies.length;
 
+			if (depth === undefined) {
+				depth = 0;
+			}
+
 			for(;i < max; i++) {
 				dependency = dependencies[i];
 				fn.call(dependency);
-				dependency.recurseDependencies(fn);
+				dependency.recurseDependencies(fn, depth);
 			}
+
+			return this;
+		},
+
+		//http://jsfiddle.net/robertleeplummerjr/yzswj5tq/
+		//http://jsperf.com/recursionless-vs-recursion
+		recurseDependenciesFlat: function (fn) {
+			var dependencies = this.dependencies,
+				i = dependencies.length - 1,
+				dependency,
+				childDependencies,
+				remaining = [];
+
+			if (i < 0) return;
+
+			do {
+				remaining.push(dependencies[i]);
+			} while (i-- > 0);
+
+			do {
+				dependency = remaining[remaining.length - 1];
+				remaining.length--;
+				fn.call(dependency);
+
+				childDependencies = dependency.dependencies;
+				i = childDependencies.length - 1;
+				if (i > -1) {
+					do {
+						remaining.push(childDependencies[i]);
+					} while(i-- > 0);
+				}
+
+			} while (remaining.length > 0);
 		},
 
 		/**
@@ -767,6 +811,7 @@ Sheet.Cell = (function() {
 
 	Constructor.cellLoading = null;
 	Constructor.formulaParserUrl = '../parser/formula/formula.js';
+	Constructor.maxRecursion = 10;
 
 	return Constructor;
 })();
