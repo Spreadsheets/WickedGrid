@@ -599,17 +599,61 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			doneFn();
 		},
-		recurseDependencies: function (fn) {
+
+		recurseDependencies: function (fn, depth) {
+
+			if (depth > Constructor.maxRecursion) {
+				this.recurseDependenciesFlat(fn);
+				return this;
+			}
+
 			var i = 0,
 				dependencies = this.dependencies,
 				dependency,
 				max = dependencies.length;
 
+			if (depth === undefined) {
+				depth = 0;
+			}
+
 			for(;i < max; i++) {
 				dependency = dependencies[i];
 				fn.call(dependency);
-				dependency.recurseDependencies(fn);
+				dependency.recurseDependencies(fn, depth);
 			}
+
+			return this;
+		},
+
+		//http://jsfiddle.net/robertleeplummerjr/yzswj5tq/
+		//http://jsperf.com/recursionless-vs-recursion
+		recurseDependenciesFlat: function (fn) {
+			var dependencies = this.dependencies,
+				i = dependencies.length - 1,
+				dependency,
+				childDependencies,
+				remaining = [];
+
+			if (i < 0) return;
+
+			do {
+				remaining.push(dependencies[i]);
+			} while (i-- > 0);
+
+			do {
+				dependency = remaining[remaining.length - 1];
+				remaining.length--;
+				fn.call(dependency);
+
+				childDependencies = dependency.dependencies;
+				i = childDependencies.length - 1;
+				if (i > -1) {
+					do {
+						remaining.push(childDependencies[i]);
+					} while(i-- > 0);
+				}
+
+			} while (remaining.length > 0);
 		},
 
 		/**
@@ -806,6 +850,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 	Constructor.cellLoading = null;
 	Constructor.formulaParserUrl = '../parser/formula/formula.js';
+	Constructor.maxRecursion = 10;
 
 	return Constructor;
 })();Sheet.CellHandler = (function(Math) {
@@ -2803,7 +2848,7 @@ Sheet.StyleUpdater = (function(document) {
 
 			hasId = (id !== undefined && id !== null);
 			hasValue = (value !== undefined && value !== null);
-			hasCache = (cache !== undefined && cache !== null);
+			hasCache = (cache !== undefined && cache !== null && (cache + '').length > 0);
 			hasFormula = (formula !== undefined && formula !== null);
 			hasCellType = (cellType !== undefined && cellType !== null);
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
@@ -2817,13 +2862,6 @@ Sheet.StyleUpdater = (function(document) {
 
 			if (hasId) jitCell.id = id;
 
-			if (hasCache) {
-				jitCell.html = cache;
-				jitCell.needsUpdated = false;
-			} else {
-				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
-			}
-
 			if (hasFormula) jitCell.formula = formula;
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasUneditable) jitCell.uneditable = uneditable;
@@ -2834,6 +2872,13 @@ Sheet.StyleUpdater = (function(document) {
 			}
 			else {
 				jitCell.value = new String();
+			}
+
+			if (hasCache) {
+				jitCell.value.html = cache;
+				jitCell.needsUpdated = false;
+			} else {
+				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
 			}
 
 			if (hasDependencies) {
@@ -9891,6 +9936,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				resolveCell:function (cell, skipUndoable) {
+					var updateDependencies = !cell.needsUpdated;
 					if (!skipUndoable) {
 						jS.undo.createCells([cell], function(cells) {
 							jS.trigger('sheetPreCalculation', [
@@ -9903,6 +9949,10 @@ $.sheet = {
 								jS.trigger('sheetCalculation', [
 									{which:'cell', cell: cell}
 								]);
+
+								if (updateDependencies) {
+									cell.updateDependencies();
+								}
 							});
 							return cells;
 						});
@@ -9917,6 +9967,10 @@ $.sheet = {
 							jS.trigger('sheetCalculation', [
 								{which:'cell', cell: cell}
 							]);
+
+							if (updateDependencies) {
+								cell.updateDependencies();
+							}
 						});
 					}
 				},
