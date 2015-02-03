@@ -47,6 +47,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		if (td !== undefined && td !== null) {
 			this.td = td;
 			td.jSCell = this;
+		} else {
+			this.td = null;
 		}
 		this.dependencies = [];
 		this.formula = '';
@@ -207,6 +209,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							.setCellAttributes(cell.loadedFrom, {
 								'cache': (typeof cache !== 'object' ? cache : null),
 								'formula': cell.formula,
+								'parsedFormula': cell.parsedFormula,
 								'value': cell.value + '',
 								'cellType': cell.cellType,
 								'uneditable': cell.uneditable
@@ -299,7 +302,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				}
 
 				//visual feedback
-				if (cell.td !== u) {
+				if (cell.td !== null) {
 					cell.td.innerHTML = Constructor.cellLoading;
 				}
 
@@ -490,7 +493,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							case 'object':
 								if (arg.hasOwnProperty('args')) {
 									boundArgs[j] = arg;
-									boundArgs[j].args = argBinder(arg.args);
+									boundArgs[j].a = argBinder(arg.a);
 									break;
 								}
 								else if (arg instanceof Array) {
@@ -544,12 +547,12 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			for (; i < max; i++) {
 				parsed = parsedFormula[i];
-				switch (parsed.type) {
+				switch (parsed.t) {
 					//method
 					case 'm':
 						(function(parsed, i) {
 							steps.push(function() {
-								doneFn(resolved[i] = handler[parsed.method].apply(handler, addCell(cell, parsed.args)));
+								doneFn(resolved[i] = handler[parsed.m].apply(handler, addCell(cell, parsed.a)));
 							});
 						})(parsed, i);
 						break;
@@ -559,13 +562,13 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						(function(parsed, i) {
 							steps.push(function() {
 								//setup callback
-								var lookupArgs = addCell(cell, parsed.args);
+								var lookupArgs = addCell(cell, parsed.a);
 
 								lookupArgs.push(function (value) {
 									doneFn(resolved[i] = value);
 								});
 
-								handler[parsed.method].apply(handler, lookupArgs);
+								handler[parsed.m].apply(handler, lookupArgs);
 							});
 						})(parsed, i);
 						break;
@@ -573,7 +576,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					case 'v':
 						(function(parsed, i) {
 							steps.push(function() {
-								doneFn(resolved[i] = parsed.value);
+								doneFn(resolved[i] = parsed.v);
 							});
 						})(parsed, i);
 						break;
@@ -592,7 +595,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 						break;
 					default:
 						resolved[i] = null;
-						throw new Error('Not implemented:' + parsed.type);
+						throw new Error('Not implemented:' + parsed.t);
 						break;
 				}
 			}
@@ -1112,7 +1115,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 */
 		cellValue:function (parentCell, cellRef, callback) {
 			var jS = this.jS,
-				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
+				loc = jSE.parseLocation(cellRef.c, cellRef.r),
 				cell,
 				value;
 
@@ -1152,7 +1155,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		remoteCellValue:function (parentCell, sheet, cellRef, callback) {
 			var jSE = this.jSE,
 				jS = this.jS,
-				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
+				loc = jSE.parseLocation(cellRef.c, cellRef.r),
 				sheetIndex = jSE.parseSheetLocation(sheet),
 				cell;
 
@@ -1182,8 +1185,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		 */
 		remoteCellRangeValue:function (parentCell, sheet, start, end, callback) {
 			var sheetIndex = (typeof sheet === 'string' ? jSE.parseSheetLocation(sheet) : sheet),
-				_start = jSE.parseLocation(start.colString, start.rowString),
-				_end = jSE.parseLocation(end.colString, end.rowString),
+				_start = jSE.parseLocation(start.c, start.r),
+				_end = jSE.parseLocation(end.c, end.r),
 				rowIndex = Math.max(_start.row, _end.row),
 				rowIndexEnd = Math.min(_start.row, _end.row),
 				colIndexStart = Math.max(_start.col, _end.col),
@@ -1194,7 +1197,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				cell,
 				row,
 				stack = [],
-				key = sheetIndex + '!' + start.colString + start.rowString + ':' + end.colString + end.rowString,
+				key = sheetIndex + '!' + start.c + start.r + ':' + end.c + end.r,
 				cachedRange = Constructor.cellRangeCache[key],
 				i,
 				max,
@@ -2747,7 +2750,7 @@ Sheet.StyleUpdater = (function(document) {
 
 			if (cell.hasOwnProperty('formula')) {
 				td.setAttribute('data-formula', cell['formula'] || '');
-				if (cell.hasOwnProperty('value') && cell.value !== null) {
+				/*if (cell.hasOwnProperty('value') && cell.value !== null) {
 					html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
 					switch (typeof html) {
 						case 'object':
@@ -2760,9 +2763,11 @@ Sheet.StyleUpdater = (function(document) {
 							td.innerHTML = html;
 							break;
 					}
-				}
+				}*/
 				if (jsonCell.hasOwnProperty('cache')) {
-					td.innerHTML = jsonCell['cache'];
+					if (jsonCell['cache'] !== null && jsonCell['cache'] !== '') {
+						td.innerHTML = jsonCell['cache'];
+					}
 				}
 			} else if (jsonCell['cellType'] !== undefined) {
 				td.setAttribute('data-celltype', jsonCell['cellType']);
@@ -2825,6 +2830,7 @@ Sheet.StyleUpdater = (function(document) {
 				value,
 				cache,
 				formula,
+				parsedFormula,
 				cellType,
 				uneditable,
 				dependency,
@@ -2834,6 +2840,7 @@ Sheet.StyleUpdater = (function(document) {
 				hasValue,
 				hasCache,
 				hasFormula,
+				hasParsedFormula,
 				hasCellType,
 				hasUneditable,
 				hasDependencies;
@@ -2842,6 +2849,7 @@ Sheet.StyleUpdater = (function(document) {
 			value = jsonCell['value'];
 			cache = jsonCell['cache'];
 			formula = jsonCell['formula'];
+			parsedFormula = jsonCell['parsedFormula'];
 			cellType = jsonCell['cellType'];
 			uneditable = jsonCell['uneditable'];
 			dependencies = jsonCell['dependencies'];
@@ -2849,7 +2857,8 @@ Sheet.StyleUpdater = (function(document) {
 			hasId = (id !== undefined && id !== null);
 			hasValue = (value !== undefined && value !== null);
 			hasCache = (cache !== undefined && cache !== null && (cache + '').length > 0);
-			hasFormula = (formula !== undefined && formula !== null);
+			hasFormula = (formula !== undefined && formula !== null && formula !== '');
+			hasParsedFormula = (parsedFormula !== undefined && parsedFormula !== null);
 			hasCellType = (cellType !== undefined && cellType !== null);
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
 			hasDependencies = (dependencies !== undefined && dependencies !== null);
@@ -2863,6 +2872,7 @@ Sheet.StyleUpdater = (function(document) {
 			if (hasId) jitCell.id = id;
 
 			if (hasFormula) jitCell.formula = formula;
+			if (hasParsedFormula) jitCell.parsedFormula = parsedFormula;
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasUneditable) jitCell.uneditable = uneditable;
 
@@ -3033,12 +3043,19 @@ Sheet.StyleUpdater = (function(document) {
 		 * @param {Sheet.Cell} cell
 		 */
 		setDependencies: function(cell) {
+			//TODO: need to handle the cell's cache that are dependent on this one so that it changes when it is in view
+			//some cells just have a ridiculous amount of dependencies
+			if (cell.dependencies.length > Constructor.maxStoredDependencies) {
+				delete cell.loadedFrom['dependencies'];
+				return this;
+			}
+
 			var i = 0,
 				loadedFrom = cell.loadedFrom,
 				dependencies = cell.dependencies,
 				dependency,
 				max = dependencies.length,
-				jsonDependencies = loadedFrom.dependencies = [];
+				jsonDependencies = loadedFrom['dependencies'] = [];
 
 			for(;i<max;i++) {
 				dependency = dependencies[i];
@@ -3417,8 +3434,156 @@ Sheet.StyleUpdater = (function(document) {
 			return this.json = output;
 		},
 		type: Constructor,
-		typeName: 'Sheet.JSONLoader'
+		typeName: 'Sheet.JSONLoader',
+
+		clearCaching: function() {
+			var json = this.json,
+				spreadsheet,
+				row,
+				rows,
+				column,
+				columns,
+				sheetIndex = 0,
+				rowIndex,
+				columnIndex,
+				sheetMax = json.length,
+				rowMax,
+				columnMax;
+
+			for (;sheetIndex < sheetMax; sheetIndex++) {
+				spreadsheet = json[sheetIndex];
+				rows = spreadsheet['rows'];
+				rowMax = rows.length;
+
+				for (rowIndex = 0; rowIndex < rowMax; rowIndex++) {
+					row = rows[rowIndex];
+					columns = row['columns'];
+					columnMax = columns.length;
+
+					for (columnIndex = 0; columnIndex < columnMax; columnIndex++) {
+						column = columns[columnIndex];
+
+						delete column['cache'];
+						delete column['dependencies'];
+						delete column['parsedFormula'];
+					}
+				}
+			}
+
+			return this;
+		},
+		/**
+		 *
+		 */
+		download: function(rowSplitAt) {
+			rowSplitAt = rowSplitAt || 500;
+
+			var w = window.open(),
+				d,
+				entry,
+				json = this.json,
+				i = 0,
+				max = json.length - 1,
+				spreadsheet;
+
+
+			//popup blockers
+			if (w !== undefined) {
+				d = w.document;
+				d.write('<html>\
+	<head id="head"></head>\
+	<body>\
+		<div id="entry">\
+		</div>\
+	</body>\
+</html>');
+
+				entry = $(d.getElementById('entry'));
+
+				while (i <= max) {
+					spreadsheet = json[i];
+
+					//strategy: slice spreadsheet into parts so JSON doesn't get overloaded and bloated
+					if (spreadsheet.rows.length > rowSplitAt) {
+						var spreadsheetPart = {
+								title: spreadsheet.title,
+								metadata: spreadsheet.metadata,
+								rows: []
+							},
+							rowParts = [],
+							rowIndex = 0,
+							row,
+							rows = spreadsheet.rows,
+							rowCount = rows.length,
+							fileIndex = 1,
+							setIndex = 0,
+							addFile = function(json, index) {
+								entry.append(document.createElement('br'));
+								entry
+									.append(
+										$(document.createElement('a'))
+											.attr('download', spreadsheet.title + '-part' + index +'.json')
+											.attr('href', URL.createObjectURL(new Blob([JSON.stringify(json)], {type: "application/json"})))
+											.text(spreadsheet.title + ' - part ' + index)
+									);
+							};
+
+						addFile(spreadsheetPart, fileIndex);
+						/*entry
+							.append(
+								document.createElement('br')
+							)
+							.append(
+								$(document.createElement('a'))
+									.attr('download', spreadsheet.title + '-part' + fileIndex +'.json')
+									.attr('href', new Blob([JSON.stringify()], {type: "application/json"}))
+									.text(spreadsheet.title + ' part:' + fileIndex)
+							);*/
+
+						while (rowIndex < rowCount) {
+							if (setIndex === rowSplitAt) {
+								setIndex = 0;
+								fileIndex++;
+
+								addFile(rowParts, fileIndex);
+
+								rowParts = [];
+							}
+							rowParts.push(rows[rowIndex]);
+							setIndex++;
+							rowIndex++
+						}
+
+						if (rowParts.length > 0) {
+							fileIndex++;
+							addFile(rowParts, fileIndex);
+						}
+					}
+
+					//strategy: stringify sheet and output
+					else {
+						entry
+							.append(
+								document.createElement('br')
+							)
+							.append(
+								$(document.createElement('a'))
+									.attr('download', spreadsheet.title + '.json')
+									.attr('href', URL.createObjectURL(new Blob([JSON.stringify(spreadsheet)], {type: "application/json"})))
+									.text(spreadsheet.title)
+							);
+					}
+					i++;
+				}
+
+
+				d.close();
+				w.focus();
+			}
+		}
 	};
+
+	Constructor.maxStoredDependencies = 100;
 
 	return Constructor;
 })(jQuery, document, String);/**
@@ -11452,12 +11617,6 @@ $.sheet = {
 					return size;
 				},
 
-				test: function() {
-					var s = jS.highlighted(true);
-//						console.log(s);
-					console.log(jS.obj.enclosure())
-				},
-
 				sortVerticalSelectAscending:function() {
 					if (confirm('Do you want to extend your selection?')) {
 						jS.sortVertical(); return true;
@@ -11907,6 +12066,15 @@ $.sheet = {
 					s.width = s.parent.width();
 					s.height = s.parent.height();
 					jS.sheetSyncSize();
+				}
+			})
+			.unload(function() {
+				var threads = Sheet.Cell.threads,
+					i = 0,
+					max = threads.length;
+
+				for (;i<max;i++) {
+					threads[i].terminate();
 				}
 			});
 
@@ -15250,9 +15418,9 @@ case 3:
         //js
 
 			var type = {
-		    	type: 'm',
-		    	method: 'variable',
-		    	args: [$$[$0]]
+		    	t: 'm',
+		    	m: 'variable',
+		    	a: [$$[$0]]
 		    };
 		    this.$ = yy.types.length;
 		    yy.types.push(type);
@@ -15267,9 +15435,9 @@ case 4:
 	    //js
 
             var type = {
-            	type: 'm',
-                method: 'time',
-            	args: [$$[$0], true]
+            	t: 'm',
+                m: 'time',
+            	a: [$$[$0], true]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15281,9 +15449,9 @@ case 5:
         //js
             
             var type = {
-            	type: 'm',
-                method: 'time',
-            	args: [$$[$0]]
+            	t: 'm',
+                m: 'time',
+            	a: [$$[$0]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15296,9 +15464,9 @@ case 6:
 	    //js
 	        
             var type = {
-            	type: 'm',
-            	method: 'number',
-            	args: [$$[$0]]
+            	t: 'm',
+            	m: 'number',
+            	a: [$$[$0]]
             };
             this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15313,8 +15481,8 @@ case 7:
         //js
             
             var type = {
-            	type: 'v',
-            	value: yy.escape($$[$0].substring(1, $$[$0].length - 1))
+            	t: 'v',
+            	v: yy.escape($$[$0].substring(1, $$[$0].length - 1))
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15329,8 +15497,8 @@ case 8:
         //js
 
             var type = {
-            	type: 'v',
-            	value: yy.escape($$[$0].substring(2, $$[$0].length - 2))
+            	t: 'v',
+            	v: yy.escape($$[$0].substring(2, $$[$0].length - 2))
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15343,8 +15511,8 @@ break;
 case 9:
 
         var type = {
-        	type: 'v',
-        	value: $$[$0]
+        	t: 'v',
+        	v: $$[$0]
         };
         yy.types.push(type);
     
@@ -15354,9 +15522,9 @@ case 10:
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'concatenate',
-            	args: [$$[$0-2], $$[$0]]
+            	t: 'm',
+            	m: 'concatenate',
+            	a: [$$[$0-2], $$[$0]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15371,9 +15539,9 @@ case 11:
 	    //js
 	        
             var type = {
-            	type: 'm',
-            	method: 'callFunction',
-            	args: ['EQUAL', [$$[$0-2], $$[$0]]]
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['EQUAL', [$$[$0-2], $$[$0]]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15388,9 +15556,9 @@ case 12:
 	    //js
 
 			var type = {
-				type: 'm',
-				method: 'performMath',
-				args: ['+', $$[$0-2], $$[$0]]
+				t: 'm',
+				m: 'performMath',
+				a: ['+', $$[$0-2], $$[$0]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15417,9 +15585,9 @@ case 14:
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'callFunction',
-            	args: ['LESS_EQUAL', [$$[$0-3], $$[$0]]]
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['LESS_EQUAL', [$$[$0-3], $$[$0]]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15434,9 +15602,9 @@ case 15:
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'callFunction',
-            	args: ['GREATER_EQUAL', [$$[$0-3], $$[$0]]]
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['GREATER_EQUAL', [$$[$0-3], $$[$0]]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15451,9 +15619,9 @@ case 16:
 		//js
 
 			var type = {
-				type: 'm',
-				method: 'not',
-				args: [$$[$0-3], $$[$0]]
+				t: 'm',
+				m: 'not',
+				a: [$$[$0-3], $$[$0]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15468,9 +15636,9 @@ case 17:
 	    //js
 	        
 			var type = {
-				type: 'm',
-				method: 'callFunction',
-				args: ['GREATER', [$$[$0-2], $$[$0]]]
+				t: 'm',
+				m: 'callFunction',
+				a: ['GREATER', [$$[$0-2], $$[$0]]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15485,9 +15653,9 @@ case 18:
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'callFunction',
-            	args: ['LESS', [$$[$0-2], $$[$0]]]
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['LESS', [$$[$0-2], $$[$0]]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15502,9 +15670,9 @@ case 19:
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'performMath',
-            	args: ['-', $$[$0-2], $$[$0]]
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['-', $$[$0-2], $$[$0]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15519,9 +15687,9 @@ case 20:
 	    //js
 	        
             var type = {
-            	type: 'm',
-            	method: 'performMath',
-            	args: ['*', $$[$0-2], $$[$0]]
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['*', $$[$0-2], $$[$0]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15536,9 +15704,9 @@ case 21:
 	    //js
 	        
             var type = {
-            	type: 'm',
-            	method: 'performMath',
-            	args: ['/', $$[$0-2], $$[$0]]
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['/', $$[$0-2], $$[$0]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15553,9 +15721,9 @@ case 22:
         //js
 
             var type = {
-            	type: 'm',
-            	method: 'performMath',
-            	args: ['^', $$[$0-2], $$[$0]]
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['^', $$[$0-2], $$[$0]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15570,9 +15738,9 @@ case 23:
 		//js
 
 			var type = {
-				type: 'm',
-				method: 'invertNumber',
-				args: [$$[$0]]
+				t: 'm',
+				m: 'invertNumber',
+				a: [$$[$0]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15587,9 +15755,9 @@ case 24:
 	    //js
 
 	        var type = {
-	        	type: 'm',
-				method: 'number',
-				args: [$$[$0]]
+	        	t: 'm',
+				m: 'number',
+				a: [$$[$0]]
 	        };
 	        this.$ = yy.types.length;
 	        yy.types.push(type);
@@ -15607,9 +15775,9 @@ case 26:
 	    //js
 	        
 			var type = {
-				type: 'm',
-				method: 'callFunction',
-				args: [$$[$0-2]]
+				t: 'm',
+				m: 'callFunction',
+				a: [$$[$0-2]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15624,9 +15792,9 @@ case 27:
 	    //js
 	        
 			var type = {
-				type: 'm',
-				method: 'callFunction',
-				args: [$$[$0-3], $$[$0-1]]
+				t: 'm',
+				m: 'callFunction',
+				a: [$$[$0-3], $$[$0-1]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15641,9 +15809,9 @@ case 29:
 	    //js
 	        
 			var type = {
-				type: 'l',
-				method: 'cellValue',
-				args: [$$[$0]]
+				t: 'l',
+				m: 'cellValue',
+				a: [$$[$0]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15658,9 +15826,9 @@ case 30:
 	    //js
 
 			var type = {
-				type: 'l',
-				method: 'cellRangeValue',
-				args: [$$[$0-2], $$[$0]]
+				t: 'l',
+				m: 'cellRangeValue',
+				a: [$$[$0-2], $$[$0]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15674,9 +15842,9 @@ case 31:
 
 	    //js
 			var type = {
-				type: 'l',
-				method: 'remoteCellValue',
-				args: [$$[$0-2], $$[$0]]
+				t: 'l',
+				m: 'remoteCellValue',
+				a: [$$[$0-2], $$[$0]]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15690,9 +15858,9 @@ case 32:
 
 	    //js
             var type = {
-            	type: 'l',
-            	method: 'remoteCellRangeValue',
-            	args: [$$[$0-4], $$[$0-2], $$[$0]]
+            	t: 'l',
+            	m: 'remoteCellRangeValue',
+            	a: [$$[$0-4], $$[$0-2], $$[$0]]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15706,9 +15874,9 @@ case 33:
 
 		//js
 			var type = {
-				type: 'cell',
-				colString: $$[$0-1],
-				rowString: $$[$0]
+				t: 'cell',
+				c: $$[$0-1],
+				r: $$[$0]
 			};
 			this.$ = yy.types.length;
 			yy.types.push(type);
@@ -15718,9 +15886,9 @@ case 34:
 
 		//js
             var type = {
-            	type: 'cell',
-                colString: $$[$0-1],
-                rowString: $$[$0]
+            	t: 'cell',
+                c: $$[$0-1],
+                r: $$[$0]
             };
             this.$ = yy.types.length;
             yy.types.push(type);
@@ -15730,9 +15898,9 @@ case 35: case 36:
 
         //js
             var type = {
-            	type: 'cell',
-                colString: $$[$0-2],
-                rowString: $$[$0]
+            	t: 'cell',
+                c: $$[$0-2],
+                r: $$[$0]
             };
             this.$ = yy.types.length;
             yy.types.push(type);

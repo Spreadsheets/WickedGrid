@@ -105,7 +105,7 @@
 
 			if (cell.hasOwnProperty('formula')) {
 				td.setAttribute('data-formula', cell['formula'] || '');
-				if (cell.hasOwnProperty('value') && cell.value !== null) {
+				/*if (cell.hasOwnProperty('value') && cell.value !== null) {
 					html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
 					switch (typeof html) {
 						case 'object':
@@ -118,9 +118,11 @@
 							td.innerHTML = html;
 							break;
 					}
-				}
+				}*/
 				if (jsonCell.hasOwnProperty('cache')) {
-					td.innerHTML = jsonCell['cache'];
+					if (jsonCell['cache'] !== null && jsonCell['cache'] !== '') {
+						td.innerHTML = jsonCell['cache'];
+					}
 				}
 			} else if (jsonCell['cellType'] !== undefined) {
 				td.setAttribute('data-celltype', jsonCell['cellType']);
@@ -183,6 +185,7 @@
 				value,
 				cache,
 				formula,
+				parsedFormula,
 				cellType,
 				uneditable,
 				dependency,
@@ -192,6 +195,7 @@
 				hasValue,
 				hasCache,
 				hasFormula,
+				hasParsedFormula,
 				hasCellType,
 				hasUneditable,
 				hasDependencies;
@@ -200,6 +204,7 @@
 			value = jsonCell['value'];
 			cache = jsonCell['cache'];
 			formula = jsonCell['formula'];
+			parsedFormula = jsonCell['parsedFormula'];
 			cellType = jsonCell['cellType'];
 			uneditable = jsonCell['uneditable'];
 			dependencies = jsonCell['dependencies'];
@@ -207,7 +212,8 @@
 			hasId = (id !== undefined && id !== null);
 			hasValue = (value !== undefined && value !== null);
 			hasCache = (cache !== undefined && cache !== null && (cache + '').length > 0);
-			hasFormula = (formula !== undefined && formula !== null);
+			hasFormula = (formula !== undefined && formula !== null && formula !== '');
+			hasParsedFormula = (parsedFormula !== undefined && parsedFormula !== null);
 			hasCellType = (cellType !== undefined && cellType !== null);
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
 			hasDependencies = (dependencies !== undefined && dependencies !== null);
@@ -221,6 +227,7 @@
 			if (hasId) jitCell.id = id;
 
 			if (hasFormula) jitCell.formula = formula;
+			if (hasParsedFormula) jitCell.parsedFormula = parsedFormula;
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasUneditable) jitCell.uneditable = uneditable;
 
@@ -391,12 +398,19 @@
 		 * @param {Sheet.Cell} cell
 		 */
 		setDependencies: function(cell) {
+			//TODO: need to handle the cell's cache that are dependent on this one so that it changes when it is in view
+			//some cells just have a ridiculous amount of dependencies
+			if (cell.dependencies.length > Constructor.maxStoredDependencies) {
+				delete cell.loadedFrom['dependencies'];
+				return this;
+			}
+
 			var i = 0,
 				loadedFrom = cell.loadedFrom,
 				dependencies = cell.dependencies,
 				dependency,
 				max = dependencies.length,
-				jsonDependencies = loadedFrom.dependencies = [];
+				jsonDependencies = loadedFrom['dependencies'] = [];
 
 			for(;i<max;i++) {
 				dependency = dependencies[i];
@@ -775,8 +789,156 @@
 			return this.json = output;
 		},
 		type: Constructor,
-		typeName: 'Sheet.JSONLoader'
+		typeName: 'Sheet.JSONLoader',
+
+		clearCaching: function() {
+			var json = this.json,
+				spreadsheet,
+				row,
+				rows,
+				column,
+				columns,
+				sheetIndex = 0,
+				rowIndex,
+				columnIndex,
+				sheetMax = json.length,
+				rowMax,
+				columnMax;
+
+			for (;sheetIndex < sheetMax; sheetIndex++) {
+				spreadsheet = json[sheetIndex];
+				rows = spreadsheet['rows'];
+				rowMax = rows.length;
+
+				for (rowIndex = 0; rowIndex < rowMax; rowIndex++) {
+					row = rows[rowIndex];
+					columns = row['columns'];
+					columnMax = columns.length;
+
+					for (columnIndex = 0; columnIndex < columnMax; columnIndex++) {
+						column = columns[columnIndex];
+
+						delete column['cache'];
+						delete column['dependencies'];
+						delete column['parsedFormula'];
+					}
+				}
+			}
+
+			return this;
+		},
+		/**
+		 *
+		 */
+		download: function(rowSplitAt) {
+			rowSplitAt = rowSplitAt || 500;
+
+			var w = window.open(),
+				d,
+				entry,
+				json = this.json,
+				i = 0,
+				max = json.length - 1,
+				spreadsheet;
+
+
+			//popup blockers
+			if (w !== undefined) {
+				d = w.document;
+				d.write('<html>\
+	<head id="head"></head>\
+	<body>\
+		<div id="entry">\
+		</div>\
+	</body>\
+</html>');
+
+				entry = $(d.getElementById('entry'));
+
+				while (i <= max) {
+					spreadsheet = json[i];
+
+					//strategy: slice spreadsheet into parts so JSON doesn't get overloaded and bloated
+					if (spreadsheet.rows.length > rowSplitAt) {
+						var spreadsheetPart = {
+								title: spreadsheet.title,
+								metadata: spreadsheet.metadata,
+								rows: []
+							},
+							rowParts = [],
+							rowIndex = 0,
+							row,
+							rows = spreadsheet.rows,
+							rowCount = rows.length,
+							fileIndex = 1,
+							setIndex = 0,
+							addFile = function(json, index) {
+								entry.append(document.createElement('br'));
+								entry
+									.append(
+										$(document.createElement('a'))
+											.attr('download', spreadsheet.title + '-part' + index +'.json')
+											.attr('href', URL.createObjectURL(new Blob([JSON.stringify(json)], {type: "application/json"})))
+											.text(spreadsheet.title + ' - part ' + index)
+									);
+							};
+
+						addFile(spreadsheetPart, fileIndex);
+						/*entry
+							.append(
+								document.createElement('br')
+							)
+							.append(
+								$(document.createElement('a'))
+									.attr('download', spreadsheet.title + '-part' + fileIndex +'.json')
+									.attr('href', new Blob([JSON.stringify()], {type: "application/json"}))
+									.text(spreadsheet.title + ' part:' + fileIndex)
+							);*/
+
+						while (rowIndex < rowCount) {
+							if (setIndex === rowSplitAt) {
+								setIndex = 0;
+								fileIndex++;
+
+								addFile(rowParts, fileIndex);
+
+								rowParts = [];
+							}
+							rowParts.push(rows[rowIndex]);
+							setIndex++;
+							rowIndex++
+						}
+
+						if (rowParts.length > 0) {
+							fileIndex++;
+							addFile(rowParts, fileIndex);
+						}
+					}
+
+					//strategy: stringify sheet and output
+					else {
+						entry
+							.append(
+								document.createElement('br')
+							)
+							.append(
+								$(document.createElement('a'))
+									.attr('download', spreadsheet.title + '.json')
+									.attr('href', URL.createObjectURL(new Blob([JSON.stringify(spreadsheet)], {type: "application/json"})))
+									.text(spreadsheet.title)
+							);
+					}
+					i++;
+				}
+
+
+				d.close();
+				w.focus();
+			}
+		}
 	};
+
+	Constructor.maxStoredDependencies = 100;
 
 	return Constructor;
 })(jQuery, document, String);

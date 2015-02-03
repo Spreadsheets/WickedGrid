@@ -8,6 +8,8 @@ Sheet.Cell = (function() {
 		if (td !== undefined && td !== null) {
 			this.td = td;
 			td.jSCell = this;
+		} else {
+			this.td = null;
 		}
 		this.dependencies = [];
 		this.formula = '';
@@ -168,6 +170,7 @@ Sheet.Cell = (function() {
 							.setCellAttributes(cell.loadedFrom, {
 								'cache': (typeof cache !== 'object' ? cache : null),
 								'formula': cell.formula,
+								'parsedFormula': cell.parsedFormula,
 								'value': cell.value + '',
 								'cellType': cell.cellType,
 								'uneditable': cell.uneditable
@@ -260,7 +263,7 @@ Sheet.Cell = (function() {
 				}
 
 				//visual feedback
-				if (cell.td !== u) {
+				if (cell.td !== null) {
 					cell.td.innerHTML = Constructor.cellLoading;
 				}
 
@@ -451,7 +454,7 @@ Sheet.Cell = (function() {
 							case 'object':
 								if (arg.hasOwnProperty('args')) {
 									boundArgs[j] = arg;
-									boundArgs[j].args = argBinder(arg.args);
+									boundArgs[j].a = argBinder(arg.a);
 									break;
 								}
 								else if (arg instanceof Array) {
@@ -505,12 +508,12 @@ Sheet.Cell = (function() {
 
 			for (; i < max; i++) {
 				parsed = parsedFormula[i];
-				switch (parsed.type) {
+				switch (parsed.t) {
 					//method
 					case 'm':
 						(function(parsed, i) {
 							steps.push(function() {
-								doneFn(resolved[i] = handler[parsed.method].apply(handler, addCell(cell, parsed.args)));
+								doneFn(resolved[i] = handler[parsed.m].apply(handler, addCell(cell, parsed.a)));
 							});
 						})(parsed, i);
 						break;
@@ -520,13 +523,13 @@ Sheet.Cell = (function() {
 						(function(parsed, i) {
 							steps.push(function() {
 								//setup callback
-								var lookupArgs = addCell(cell, parsed.args);
+								var lookupArgs = addCell(cell, parsed.a);
 
 								lookupArgs.push(function (value) {
 									doneFn(resolved[i] = value);
 								});
 
-								handler[parsed.method].apply(handler, lookupArgs);
+								handler[parsed.m].apply(handler, lookupArgs);
 							});
 						})(parsed, i);
 						break;
@@ -534,7 +537,7 @@ Sheet.Cell = (function() {
 					case 'v':
 						(function(parsed, i) {
 							steps.push(function() {
-								doneFn(resolved[i] = parsed.value);
+								doneFn(resolved[i] = parsed.v);
 							});
 						})(parsed, i);
 						break;
@@ -553,7 +556,7 @@ Sheet.Cell = (function() {
 						break;
 					default:
 						resolved[i] = null;
-						throw new Error('Not implemented:' + parsed.type);
+						throw new Error('Not implemented:' + parsed.t);
 						break;
 				}
 			}
