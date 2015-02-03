@@ -257,7 +257,7 @@ Sheet.CellHandler = (function(Math) {
 		 */
 		cellValue:function (parentCell, cellRef, callback) {
 			var jS = this.jS,
-				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
+				loc = jSE.parseLocation(cellRef.c, cellRef.r),
 				cell,
 				value;
 
@@ -297,7 +297,7 @@ Sheet.CellHandler = (function(Math) {
 		remoteCellValue:function (parentCell, sheet, cellRef, callback) {
 			var jSE = this.jSE,
 				jS = this.jS,
-				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
+				loc = jSE.parseLocation(cellRef.c, cellRef.r),
 				sheetIndex = jSE.parseSheetLocation(sheet),
 				cell;
 
@@ -327,8 +327,8 @@ Sheet.CellHandler = (function(Math) {
 		 */
 		remoteCellRangeValue:function (parentCell, sheet, start, end, callback) {
 			var sheetIndex = (typeof sheet === 'string' ? jSE.parseSheetLocation(sheet) : sheet),
-				_start = jSE.parseLocation(start.colString, start.rowString),
-				_end = jSE.parseLocation(end.colString, end.rowString),
+				_start = jSE.parseLocation(start.c, start.r),
+				_end = jSE.parseLocation(end.c, end.r),
 				rowIndex = Math.max(_start.row, _end.row),
 				rowIndexEnd = Math.min(_start.row, _end.row),
 				colIndexStart = Math.max(_start.col, _end.col),
@@ -339,7 +339,7 @@ Sheet.CellHandler = (function(Math) {
 				cell,
 				row,
 				stack = [],
-				key = sheetIndex + '!' + start.colString + start.rowString + ':' + end.colString + end.rowString,
+				key = sheetIndex + '!' + start.c + start.r + ':' + end.c + end.r,
 				cachedRange = Constructor.cellRangeCache[key],
 				i,
 				max,

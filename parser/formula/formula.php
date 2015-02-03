@@ -2221,8 +2221,8 @@ break;
 case 9:
 
         var type = {
-        	type: 'v',
-        	value: $s[$o]
+        	t: 'v',
+        	v: $s[$o]
         };
         yy->types.push(type);
     

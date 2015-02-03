@@ -7578,12 +7578,6 @@ $.sheet = {
 					return size;
 				},
 
-				test: function() {
-					var s = jS.highlighted(true);
-//						console.log(s);
-					console.log(jS.obj.enclosure())
-				},
-
 				sortVerticalSelectAscending:function() {
 					if (confirm('Do you want to extend your selection?')) {
 						jS.sortVertical(); return true;
@@ -8033,6 +8027,15 @@ $.sheet = {
 					s.width = s.parent.width();
 					s.height = s.parent.height();
 					jS.sheetSyncSize();
+				}
+			})
+			.unload(function() {
+				var threads = Sheet.Cell.threads,
+					i = 0,
+					max = threads.length;
+
+				for (;i<max;i++) {
+					threads[i].terminate();
 				}
 			});
 

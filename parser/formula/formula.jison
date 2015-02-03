@@ -103,9 +103,9 @@ expression
         //js
 
 			var type = {
-		    	type: 'm',
-		    	method: 'variable',
-		    	args: [$1]
+		    	t: 'm',
+		    	m: 'variable',
+		    	a: [$1]
 		    };
 		    $$ = yy.types.length;
 		    yy.types.push(type);
@@ -118,9 +118,9 @@ expression
 	    //js
 
             var type = {
-            	type: 'm',
-                method: 'time',
-            	args: [$1, true]
+            	t: 'm',
+                m: 'time',
+            	a: [$1, true]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -130,9 +130,9 @@ expression
         //js
             
             var type = {
-            	type: 'm',
-                method: 'time',
-            	args: [$1]
+            	t: 'm',
+                m: 'time',
+            	a: [$1]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -143,9 +143,9 @@ expression
 	    //js
 	        
             var type = {
-            	type: 'm',
-            	method: 'number',
-            	args: [$1]
+            	t: 'm',
+            	m: 'number',
+            	a: [$1]
             };
             $$ = yy.types.length;
 			yy.types.push(type);
@@ -158,8 +158,8 @@ expression
         //js
             
             var type = {
-            	type: 'v',
-            	value: yy.escape($1.substring(1, $1.length - 1))
+            	t: 'v',
+            	v: yy.escape($1.substring(1, $1.length - 1))
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -172,8 +172,8 @@ expression
         //js
 
             var type = {
-            	type: 'v',
-            	value: yy.escape($1.substring(2, $1.length - 2))
+            	t: 'v',
+            	v: yy.escape($1.substring(2, $1.length - 2))
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -184,8 +184,8 @@ expression
     }
     | LETTERS {
         var type = {
-        	type: 'v',
-        	value: $1
+        	t: 'v',
+        	v: $1
         };
         yy.types.push(type);
     }
@@ -193,9 +193,9 @@ expression
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'concatenate',
-            	args: [$1, $3]
+            	t: 'm',
+            	m: 'concatenate',
+            	a: [$1, $3]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -208,9 +208,9 @@ expression
 	    //js
 	        
             var type = {
-            	type: 'm',
-            	method: 'callFunction',
-            	args: ['EQUAL', [$1, $3]]
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['EQUAL', [$1, $3]]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -223,9 +223,9 @@ expression
 	    //js
 
 			var type = {
-				type: 'm',
-				method: 'performMath',
-				args: ['+', $1, $3]
+				t: 'm',
+				m: 'performMath',
+				a: ['+', $1, $3]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -248,9 +248,9 @@ expression
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'callFunction',
-            	args: ['LESS_EQUAL', [$1, $4]]
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['LESS_EQUAL', [$1, $4]]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -263,9 +263,9 @@ expression
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'callFunction',
-            	args: ['GREATER_EQUAL', [$1, $4]]
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['GREATER_EQUAL', [$1, $4]]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -278,9 +278,9 @@ expression
 		//js
 
 			var type = {
-				type: 'm',
-				method: 'not',
-				args: [$1, $4]
+				t: 'm',
+				m: 'not',
+				a: [$1, $4]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -293,9 +293,9 @@ expression
 	    //js
 	        
 			var type = {
-				type: 'm',
-				method: 'callFunction',
-				args: ['GREATER', [$1, $3]]
+				t: 'm',
+				m: 'callFunction',
+				a: ['GREATER', [$1, $3]]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -308,9 +308,9 @@ expression
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'callFunction',
-            	args: ['LESS', [$1, $3]]
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['LESS', [$1, $3]]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -323,9 +323,9 @@ expression
         //js
             
             var type = {
-            	type: 'm',
-            	method: 'performMath',
-            	args: ['-', $1, $3]
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['-', $1, $3]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -338,9 +338,9 @@ expression
 	    //js
 	        
             var type = {
-            	type: 'm',
-            	method: 'performMath',
-            	args: ['*', $1, $3]
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['*', $1, $3]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -353,9 +353,9 @@ expression
 	    //js
 	        
             var type = {
-            	type: 'm',
-            	method: 'performMath',
-            	args: ['/', $1, $3]
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['/', $1, $3]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -368,9 +368,9 @@ expression
         //js
 
             var type = {
-            	type: 'm',
-            	method: 'performMath',
-            	args: ['^', $1, $3]
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['^', $1, $3]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -383,9 +383,9 @@ expression
 		//js
 
 			var type = {
-				type: 'm',
-				method: 'invertNumber',
-				args: [$2]
+				t: 'm',
+				m: 'invertNumber',
+				a: [$2]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -398,9 +398,9 @@ expression
 	    //js
 
 	        var type = {
-	        	type: 'm',
-				method: 'number',
-				args: [$2]
+	        	t: 'm',
+				m: 'number',
+				a: [$2]
 	        };
 	        $$ = yy.types.length;
 	        yy.types.push(type);
@@ -414,9 +414,9 @@ expression
 	    //js
 	        
 			var type = {
-				type: 'm',
-				method: 'callFunction',
-				args: [$1]
+				t: 'm',
+				m: 'callFunction',
+				a: [$1]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -429,9 +429,9 @@ expression
 	    //js
 	        
 			var type = {
-				type: 'm',
-				method: 'callFunction',
-				args: [$1, $3]
+				t: 'm',
+				m: 'callFunction',
+				a: [$1, $3]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -448,9 +448,9 @@ cellRange :
 	    //js
 	        
 			var type = {
-				type: 'l',
-				method: 'cellValue',
-				args: [$1]
+				t: 'l',
+				m: 'cellValue',
+				a: [$1]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -463,9 +463,9 @@ cellRange :
 	    //js
 
 			var type = {
-				type: 'l',
-				method: 'cellRangeValue',
-				args: [$1, $3]
+				t: 'l',
+				m: 'cellRangeValue',
+				a: [$1, $3]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -477,9 +477,9 @@ cellRange :
 	| SHEET '!' cell {
 	    //js
 			var type = {
-				type: 'l',
-				method: 'remoteCellValue',
-				args: [$1, $3]
+				t: 'l',
+				m: 'remoteCellValue',
+				a: [$1, $3]
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -491,9 +491,9 @@ cellRange :
 	| SHEET '!' cell ':' cell {
 	    //js
             var type = {
-            	type: 'l',
-            	method: 'remoteCellRangeValue',
-            	args: [$1, $3, $5]
+            	t: 'l',
+            	m: 'remoteCellRangeValue',
+            	a: [$1, $3, $5]
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -509,9 +509,9 @@ cell
 	: LETTERS NUMBER {
 		//js
 			var type = {
-				type: 'cell',
-				colString: $1,
-				rowString: $2
+				t: 'cell',
+				c: $1,
+				r: $2
 			};
 			$$ = yy.types.length;
 			yy.types.push(type);
@@ -519,9 +519,9 @@ cell
 	| '$' LETTERS NUMBER {
 		//js
             var type = {
-            	type: 'cell',
-                colString: $2,
-                rowString: $3
+            	t: 'cell',
+                c: $2,
+                r: $3
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -529,9 +529,9 @@ cell
 	| LETTERS '$' NUMBER {
         //js
             var type = {
-            	type: 'cell',
-                colString: $1,
-                rowString: $3
+            	t: 'cell',
+                c: $1,
+                r: $3
             };
             $$ = yy.types.length;
             yy.types.push(type);
@@ -539,9 +539,9 @@ cell
 	| '$' LETTERS '$' NUMBER {
         //js
             var type = {
-            	type: 'cell',
-                colString: $2,
-                rowString: $4
+            	t: 'cell',
+                c: $2,
+                r: $4
             };
             $$ = yy.types.length;
             yy.types.push(type);
