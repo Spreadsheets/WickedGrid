@@ -89,7 +89,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				that.foldArea.col = endIndex;
 				return true;
 			}, max),
-			yDetacher = this.yDetacher = new Sheet.Detacher(tBody, tBody.children),
+			yDetacher = this.yDetacher = new Sheet.Detacher(tBody),
 			scrollStyleY = this.scrollAxisY.scrollStyle = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
 				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
 				if (that.yIndex === index) return false;
@@ -476,18 +476,16 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				this.scrolledArea.row = Math.max(i || 1, 1);
 
 				if (isUp === true) {
-					result = detacher.reattachBefore(i);
-					detacher.detachAfter(i + this.maximumVisibleRows);
+					detacher
+						.attachTopAfter(i)
+						.detachBottomAfter(i + this.maximumVisibleRows);
 				} else {
-					result = detacher.detachBefore(i);
-					detacher.reattachAfter(i + this.maximumVisibleRows);
+					detacher
+						.detachTopBefore(i)
+						.attachBottomBefore(i + this.maximumVisibleRows);
 				}
 
-				if (offset > 0) {
-					result += offset;
-				}
-
-				return result;
+				return detacher.topChanged || detacher.bottomChanged;
 			}
 
 			var axis = this.scrollAxisY,

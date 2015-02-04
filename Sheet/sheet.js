@@ -1816,7 +1816,8 @@ $.sheet = {
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
 							tableSize = table.size(),
-							frag = document.createDocumentFragment();
+							frag = document.createDocumentFragment(),
+							rowLabelIndexOffset = 0;
 
 						qty = qty || 1;
 						type = type || 'col';
@@ -1825,6 +1826,10 @@ $.sheet = {
 							case "row":
 								//setupCell = null;
 							case "row-init":
+								if (pane.actionUI.useDetach) {
+									rowLabelIndexOffset = pane.actionUI.yDetacher.topIndex;
+								}
+
 								//ensure that i isn't out of bounds
 								if (i === u || i === null || i > tableSize.rows) {
 									i = tableSize.rows;
@@ -1849,7 +1854,7 @@ $.sheet = {
 									bar.entity = 'left';
 									bar.type = 'bar';
 									bar.style.height = getHeight(jS.i, at) + 'px';
-									bar.innerHTML = bar.label = barParent.rowIndex;
+									bar.innerHTML = bar.label = at + rowLabelIndexOffset;
 
 									barParent.appendChild(bar);
 									frag.appendChild(barParent);
@@ -1890,7 +1895,7 @@ $.sheet = {
 
 								o.setAddedFinishedFn(function(_offset) {
 									tBody.insertBefore(frag, isBefore ? tBody.children[i] : tBody.children[i].nextSibling);
-									jS.refreshRowLabels(i);
+									//jS.refreshRowLabels(i);
 									offset = _offset;
 								});
 								break;

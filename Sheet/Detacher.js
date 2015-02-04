@@ -3,46 +3,42 @@
  * @param {HTMLCollection} detachables
  * @constructor
  */
-Sheet.Detacher = (function(document) {
+Sheet.Detacher = (function() {
 	var u = undefined;
 
-	function Constructor(parent, detachables) {
+	function Constructor(parent) {
 		this.detached = {};
-		this.detachedBeforeCount = 0;
-		this.detachedAfterCount = 0;
+		this.topIndex = 0;
+		this.bottomIndex = 0;
 		this.parent = parent;
-		this.detachables = detachables;
+		this.topChanged = false;
+		this.bottomChanged = false;
 	}
 
 	Constructor.prototype = {
-		detachBefore: function(i) {
-			var detachables = this.detachables,
-				min = 1,
+		detachTopBefore: function(maxIndex) {
+			var detachable,
 				parent = this.parent,
-				detachable,
-				detached = this.detached;
+				detachables = parent.children,
+				i = this.topIndex;
 
-			//first check if it exists, and if it can be reattached
-			if (detached[i] !== u || i < 1) return false;
+			this.topChanged = false;
 
-			this.detachBefore(i - 1);
+			while (i < maxIndex) {
+				//we will always detach the first element
+				detachable = detachables[1];
+				this.detached[i] = detachable;
+				parent.removeChild(detachable);
+				i++;
 
-			for (; i >= min; i--) {
-				if (detached[i] === u) {
-					detachable = detachables[i - this.detachedBeforeCount];
-					if (detachable !== u && detachable !== parent.firstChild) {
-						this.detachedBeforeCount++;
-						detachable.nextSiblingLocked = detachable.nextSibling;
-						this.detached[i] = parent.removeChild(detachable);
-					}
-				} else {
-					return false;
-				}
+				this.topChanged = true;
 			}
 
-			return true;
+			this.topIndex = maxIndex;
+
+			return this;
 		},
-		detach: function(i) {
+		/*detach: function(i) {
 			var detachable = this.detachables[i - this.detachedBeforeCount],
 				parent = this.parent;
 
@@ -50,71 +46,90 @@ Sheet.Detacher = (function(document) {
 			if (i > 0 && detachable === u || this.detached[i] !== u) return false;
 
 			//detach it
-			detachable.nextSiblingLocked = detachable.nextSibling;
 			this.detached[i] = parent.removeChild(detachable);
 			this.detachedBeforeCount++;
-			return true;
-		},
-		detachAfter: function(i) {
-			var detachables = this.detachables,
-				max = detachables.length,
-				detached = this.detached,
+
+			return this;
+		},*/
+		detachBottomAfter: function(minIndex) {
+			var detachable,
 				parent = this.parent,
-				detachable;
+				detachables = parent.children,
+				htmlIndex = minIndex - this.topIndex,
+				i = minIndex;
 
-			if (i < 1) i = 1;
+			this.bottomChanged = false;
 
-			//first check if it exists, and if it can be reattached
-			if (detached[i] !== u || i < 1) return false;
-
-			for (; i < max; i++) {
-				if (detached[i] === u) {
-					detachable = detachables[i - this.detachedAfterCount];
-					detachable.prevSiblingLocked = detachable.previousSibling;
-					this.detached[i] = parent.removeChild(detachable);
-					this.detachedAfterCount++;
-				} else {
-					return;
-				}
+			while ((detachable = detachables[htmlIndex]) !== u) {
+				this.detached[i] = detachable;
+				parent.removeChild(detachable);
+				//NOTE: index increases, but htmlIndex doesn't because at this moment, it has just decremented
+				i++;
+				this.bottomChanged = true;
 			}
+
+			this.bottomIndex = minIndex;
+			return this;
 		},
 
 
-		reattachBefore: function(i) {
-			var detached = this.detached[i],
-				parent = this.parent;
+		/**
+		 * The idea here is to attach starting just before row 1 and just after row 0 in the table
+		 * The detachBeforeCount needs to be added to the rowIndex of row 1
+		 * @param minIndex
+		 */
+		attachTopAfter: function(minIndex) {
+			var detached,
+				parent = this.parent,
+				i = minIndex,
+				frag = document.createDocumentFragment();
 
-			//first check if it exists, and if it can be reattached
-			if (detached === u || i < 1) return false;
+			this.topChanged = false;
 
-			while (this.reattachBefore(i + 1)) {}
+			while ((detached = this.detached[i]) !== u) {
+				detached = this.detached[i];
+				//attach it
+				delete this.detached[i];
+				frag.appendChild(detached);
+				i++;
+				this.topChanged = true;
+			}
 
-			//attach it
-			delete this.detached[i];
-			parent.insertBefore(detached, detached.nextSiblingLocked);
-			delete detached.nextSiblingLocked;
-			this.detachedBeforeCount--;
+			if (this.topChanged) {
+				parent.insertBefore(frag, parent.children[1]);
+			}
 
-			return true;
+			this.topIndex = minIndex;
+
+			return this;
 		},
-		reattachAfter: function(i) {
-			var detached = this.detached[i],
-				parent = this.parent;
+		attachBottomBefore: function(maxIndex) {
+			var detached,
+				parent = this.parent,
+				htmlIndex = maxIndex - this.topIndex,
+				i = maxIndex,
+				frag = document.createDocumentFragment();
 
-			//first check if it exists, and if it can be reattached
-			if (detached === u || i < 1) return false;
+			this.bottomChanged = false;
 
-			while (this.reattachAfter(i - 1)) {}
+			while ((detached = this.detached[i]) !== u) {
+				//attach it
+				delete this.detached[i];
+				frag.insertBefore(detached, frag.firstChild);
+				i--;
+				this.bottomChanged = true;
+			}
 
-			//attach it
-			delete this.detached[i];
-			parent.insertBefore(detached, detached.prevSiblingLocked);
-			delete detached.prevSiblingLocked;
-			this.detachedAfterCount--;
+			//attach point is going to be at the end of the parent
+			if (this.bottomChanged) {
+				parent.insertBefore(frag, parent.children[htmlIndex]);
+			}
 
-			return true;
+			this.bottomIndex = maxIndex;
+
+			return this;
 		}
 	};
 
 	return Constructor;
-})(document);
+})();
