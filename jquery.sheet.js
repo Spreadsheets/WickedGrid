@@ -1537,7 +1537,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				that.foldArea.col = endIndex;
 				return true;
 			}, max),
-			yDetacher = this.yDetacher = new Sheet.Detacher(tBody, tBody.children),
+			yDetacher = this.yDetacher = new Sheet.Detacher(tBody),
 			scrollStyleY = this.scrollAxisY.scrollStyle = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
 				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
 				if (that.yIndex === index) return false;
@@ -1924,18 +1924,16 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				this.scrolledArea.row = Math.max(i || 1, 1);
 
 				if (isUp === true) {
-					result = detacher.reattachBefore(i);
-					detacher.detachAfter(i + this.maximumVisibleRows);
+					detacher
+						.attachTopAfter(i)
+						.detachBottomAfter(i + this.maximumVisibleRows);
 				} else {
-					result = detacher.detachBefore(i);
-					detacher.reattachAfter(i + this.maximumVisibleRows);
+					detacher
+						.detachTopBefore(i)
+						.attachBottomBefore(i + this.maximumVisibleRows);
 				}
 
-				if (offset > 0) {
-					result += offset;
-				}
-
-				return result;
+				return detacher.topChanged || detacher.bottomChanged;
 			}
 
 			var axis = this.scrollAxisY,
@@ -2425,46 +2423,42 @@ Sheet.Highlighter = (function(document, window, $) {
  * @param {HTMLCollection} detachables
  * @constructor
  */
-Sheet.Detacher = (function(document) {
+Sheet.Detacher = (function() {
 	var u = undefined;
 
-	function Constructor(parent, detachables) {
+	function Constructor(parent) {
 		this.detached = {};
-		this.detachedBeforeCount = 0;
-		this.detachedAfterCount = 0;
+		this.topIndex = 0;
+		this.bottomIndex = 0;
 		this.parent = parent;
-		this.detachables = detachables;
+		this.topChanged = false;
+		this.bottomChanged = false;
 	}
 
 	Constructor.prototype = {
-		detachBefore: function(i) {
-			var detachables = this.detachables,
-				min = 1,
+		detachTopBefore: function(maxIndex) {
+			var detachable,
 				parent = this.parent,
-				detachable,
-				detached = this.detached;
+				detachables = parent.children,
+				i = this.topIndex;
 
-			//first check if it exists, and if it can be reattached
-			if (detached[i] !== u || i < 1) return false;
+			this.topChanged = false;
 
-			this.detachBefore(i - 1);
+			while (i < maxIndex) {
+				//we will always detach the first element
+				detachable = detachables[1];
+				this.detached[i] = detachable;
+				parent.removeChild(detachable);
+				i++;
 
-			for (; i >= min; i--) {
-				if (detached[i] === u) {
-					detachable = detachables[i - this.detachedBeforeCount];
-					if (detachable !== u && detachable !== parent.firstChild) {
-						this.detachedBeforeCount++;
-						detachable.nextSiblingLocked = detachable.nextSibling;
-						this.detached[i] = parent.removeChild(detachable);
-					}
-				} else {
-					return false;
-				}
+				this.topChanged = true;
 			}
 
-			return true;
+			this.topIndex = maxIndex;
+
+			return this;
 		},
-		detach: function(i) {
+		/*detach: function(i) {
 			var detachable = this.detachables[i - this.detachedBeforeCount],
 				parent = this.parent;
 
@@ -2472,74 +2466,93 @@ Sheet.Detacher = (function(document) {
 			if (i > 0 && detachable === u || this.detached[i] !== u) return false;
 
 			//detach it
-			detachable.nextSiblingLocked = detachable.nextSibling;
 			this.detached[i] = parent.removeChild(detachable);
 			this.detachedBeforeCount++;
-			return true;
-		},
-		detachAfter: function(i) {
-			var detachables = this.detachables,
-				max = detachables.length,
-				detached = this.detached,
+
+			return this;
+		},*/
+		detachBottomAfter: function(minIndex) {
+			var detachable,
 				parent = this.parent,
-				detachable;
+				detachables = parent.children,
+				htmlIndex = minIndex - this.topIndex,
+				i = minIndex;
 
-			if (i < 1) i = 1;
+			this.bottomChanged = false;
 
-			//first check if it exists, and if it can be reattached
-			if (detached[i] !== u || i < 1) return false;
-
-			for (; i < max; i++) {
-				if (detached[i] === u) {
-					detachable = detachables[i - this.detachedAfterCount];
-					detachable.prevSiblingLocked = detachable.previousSibling;
-					this.detached[i] = parent.removeChild(detachable);
-					this.detachedAfterCount++;
-				} else {
-					return;
-				}
+			while ((detachable = detachables[htmlIndex]) !== u) {
+				this.detached[i] = detachable;
+				parent.removeChild(detachable);
+				//NOTE: index increases, but htmlIndex doesn't because at this moment, it has just decremented
+				i++;
+				this.bottomChanged = true;
 			}
+
+			this.bottomIndex = minIndex;
+			return this;
 		},
 
 
-		reattachBefore: function(i) {
-			var detached = this.detached[i],
-				parent = this.parent;
+		/**
+		 * The idea here is to attach starting just before row 1 and just after row 0 in the table
+		 * The detachBeforeCount needs to be added to the rowIndex of row 1
+		 * @param minIndex
+		 */
+		attachTopAfter: function(minIndex) {
+			var detached,
+				parent = this.parent,
+				i = minIndex,
+				frag = document.createDocumentFragment();
 
-			//first check if it exists, and if it can be reattached
-			if (detached === u || i < 1) return false;
+			this.topChanged = false;
 
-			while (this.reattachBefore(i + 1)) {}
+			while ((detached = this.detached[i]) !== u) {
+				detached = this.detached[i];
+				//attach it
+				delete this.detached[i];
+				frag.appendChild(detached);
+				i++;
+				this.topChanged = true;
+			}
 
-			//attach it
-			delete this.detached[i];
-			parent.insertBefore(detached, detached.nextSiblingLocked);
-			delete detached.nextSiblingLocked;
-			this.detachedBeforeCount--;
+			if (this.topChanged) {
+				parent.insertBefore(frag, parent.children[1]);
+			}
 
-			return true;
+			this.topIndex = minIndex;
+
+			return this;
 		},
-		reattachAfter: function(i) {
-			var detached = this.detached[i],
-				parent = this.parent;
+		attachBottomBefore: function(maxIndex) {
+			var detached,
+				parent = this.parent,
+				htmlIndex = maxIndex - this.topIndex,
+				i = maxIndex,
+				frag = document.createDocumentFragment();
 
-			//first check if it exists, and if it can be reattached
-			if (detached === u || i < 1) return false;
+			this.bottomChanged = false;
 
-			while (this.reattachAfter(i - 1)) {}
+			while ((detached = this.detached[i]) !== u) {
+				//attach it
+				delete this.detached[i];
+				frag.insertBefore(detached, frag.firstChild);
+				i--;
+				this.bottomChanged = true;
+			}
 
-			//attach it
-			delete this.detached[i];
-			parent.insertBefore(detached, detached.prevSiblingLocked);
-			delete detached.prevSiblingLocked;
-			this.detachedAfterCount--;
+			//attach point is going to be at the end of the parent
+			if (this.bottomChanged) {
+				parent.insertBefore(frag, parent.children[htmlIndex]);
+			}
 
-			return true;
+			this.bottomIndex = maxIndex;
+
+			return this;
 		}
 	};
 
 	return Constructor;
-})(document);
+})();
 Sheet.StyleUpdater = (function(document) {
 	function Constructor(updateFn) {
 		var el = this.styleElement = document.createElement('style');
@@ -5855,7 +5868,8 @@ $.sheet = {
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
 							tableSize = table.size(),
-							frag = document.createDocumentFragment();
+							frag = document.createDocumentFragment(),
+							rowLabelIndexOffset = 0;
 
 						qty = qty || 1;
 						type = type || 'col';
@@ -5864,6 +5878,10 @@ $.sheet = {
 							case "row":
 								//setupCell = null;
 							case "row-init":
+								if (pane.actionUI.useDetach) {
+									rowLabelIndexOffset = pane.actionUI.yDetacher.topIndex;
+								}
+
 								//ensure that i isn't out of bounds
 								if (i === u || i === null || i > tableSize.rows) {
 									i = tableSize.rows;
@@ -5888,7 +5906,7 @@ $.sheet = {
 									bar.entity = 'left';
 									bar.type = 'bar';
 									bar.style.height = getHeight(jS.i, at) + 'px';
-									bar.innerHTML = bar.label = barParent.rowIndex;
+									bar.innerHTML = bar.label = at + rowLabelIndexOffset;
 
 									barParent.appendChild(bar);
 									frag.appendChild(barParent);
@@ -5929,7 +5947,7 @@ $.sheet = {
 
 								o.setAddedFinishedFn(function(_offset) {
 									tBody.insertBefore(frag, isBefore ? tBody.children[i] : tBody.children[i].nextSibling);
-									jS.refreshRowLabels(i);
+									//jS.refreshRowLabels(i);
 									offset = _offset;
 								});
 								break;
