@@ -1,6 +1,13 @@
 /**
+ * Detaches DOM elements from a parent to keep the DOM fast. Can be used with hundreds of thousands r even millions of
+ * DOM elements to simulate a scrolling like behaviour.
  * @param {HTMLElement} parent
- * @param {HTMLCollection} detachables
+ * @property {Object} detached
+ * @property {Number} topIndex
+ * @property {Number} bottomIndex
+ * @property {HTMLElement} parent
+ * @property {Boolean} topChanged
+ * @property {Boolean} bottomChanged
  * @constructor
  */
 Sheet.Detacher = (function() {
@@ -16,6 +23,11 @@ Sheet.Detacher = (function() {
 	}
 
 	Constructor.prototype = {
+		/**
+		 * Ideally used when scrolling down.  Detaches anything before a given index at the top of the parent
+		 * @param maxIndex
+		 * @returns {Sheet.Detacher}
+		 */
 		detachTopBefore: function(maxIndex) {
 			var detachable,
 				parent = this.parent,
@@ -38,19 +50,12 @@ Sheet.Detacher = (function() {
 
 			return this;
 		},
-		/*detach: function(i) {
-			var detachable = this.detachables[i - this.detachedBeforeCount],
-				parent = this.parent;
 
-			//first check if it exists, and if it can be detached
-			if (i > 0 && detachable === u || this.detached[i] !== u) return false;
-
-			//detach it
-			this.detached[i] = parent.removeChild(detachable);
-			this.detachedBeforeCount++;
-
-			return this;
-		},*/
+		/**
+		 * Ideally used when scrolling up.  Detaches anything after a given index at the bottom of the parent
+		 * @param minIndex
+		 * @returns {Sheet.Detacher}
+		 */
 		detachBottomAfter: function(minIndex) {
 			var detachable,
 				parent = this.parent,
@@ -74,9 +79,9 @@ Sheet.Detacher = (function() {
 
 
 		/**
-		 * The idea here is to attach starting just before row 1 and just after row 0 in the table
-		 * The detachBeforeCount needs to be added to the rowIndex of row 1
+		 * Ideally used when scrolling up.  Attaches anything detached after a given index at the top of the parent
 		 * @param minIndex
+		 * @returns {Sheet.Detacher}
 		 */
 		attachTopAfter: function(minIndex) {
 			var detached,
@@ -103,6 +108,12 @@ Sheet.Detacher = (function() {
 
 			return this;
 		},
+
+		/**
+		 * Ideally used when scrolling down.  Attaches anything detached before a given index at the bottom of the parent
+		 * @param maxIndex
+		 * @returns {Sheet.Detacher}
+		 */
 		attachBottomBefore: function(maxIndex) {
 			var detached,
 				parent = this.parent,
