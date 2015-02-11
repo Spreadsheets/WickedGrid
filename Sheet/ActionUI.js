@@ -459,7 +459,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			return axis.scrollStyle.update(i);
 		},
 
-		useDetach: false,
+		useDetach: true,
 		/**
 		 * Scrolls to a position within the spreadsheet
 		 * @param {Number} pixel
@@ -478,7 +478,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				if (isUp === true) {
 					detacher
 						.attachTopAfter(i)
-						.detachBottomAfter(i + this.maximumVisibleRows);
+						.detachBottomAfter(i + this.maximumVisibleRows + 1);
 				} else {
 					detacher
 						.detachTopBefore(i)
@@ -520,7 +520,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		toggleHideStyleY: null,
 
 		pixelScrollDensity: 20,
-		maximumVisibleRows: 70,
+		maximumVisibleRows: 5,
 		maximumVisibleColumns: 20
 	};
 

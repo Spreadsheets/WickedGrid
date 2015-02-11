@@ -1907,7 +1907,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			return axis.scrollStyle.update(i);
 		},
 
-		useDetach: false,
+		useDetach: true,
 		/**
 		 * Scrolls to a position within the spreadsheet
 		 * @param {Number} pixel
@@ -1926,7 +1926,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				if (isUp === true) {
 					detacher
 						.attachTopAfter(i)
-						.detachBottomAfter(i + this.maximumVisibleRows);
+						.detachBottomAfter(i + this.maximumVisibleRows + 1);
 				} else {
 					detacher
 						.detachTopBefore(i)
@@ -1968,7 +1968,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		toggleHideStyleY: null,
 
 		pixelScrollDensity: 20,
-		maximumVisibleRows: 70,
+		maximumVisibleRows: 5,
 		maximumVisibleColumns: 20
 	};
 
@@ -2418,35 +2418,58 @@ Sheet.Highlighter = (function(document, window, $) {
 	};
 
 	return Constructor;
-})();/**
- * Detaches DOM elements from a parent to keep the DOM fast. Can be used with hundreds of thousands r even millions of
- * DOM elements to simulate a scrolling like behaviour.
- * @param {HTMLElement} parent
- * @property {Object} detached
- * @property {Number} topIndex
- * @property {Number} bottomIndex
- * @property {HTMLElement} parent
- * @property {Boolean} topChanged
- * @property {Boolean} bottomChanged
- * @constructor
- */
-Sheet.Detacher = (function() {
+})();(function(Sheet) {
 	var u = undefined;
 
-	function Constructor(parent) {
-		this.detached = {};
+	/**
+	 * Detaches DOM elements from a parent to keep the DOM fast. Can be used with hundreds of thousands r even millions of
+	 * DOM elements to simulate a scrolling like behaviour.
+	 * @param {HTMLElement} parent
+	 * @property {Object} detached
+	 * @property {Number} topIndex
+	 * @property {Number} bottomIndex
+	 * @property {HTMLElement} parent
+	 * @property {Boolean} topChanged
+	 * @property {Boolean} bottomChanged
+	 * @constructor
+	 * @memberOf Sheet
+	 */
+	function Detacher(parent) {
+		this.detachedTop = [];
+		this.detachedBottom = [];
 		this.topIndex = 0;
 		this.bottomIndex = 0;
 		this.parent = parent;
 		this.topChanged = false;
 		this.bottomChanged = false;
+		this.hasInitialDetach = false;
 	}
 
-	Constructor.prototype = {
+	/**
+	 *
+	 * @param {Detacher} _this
+	 * @param {Number} maxIndex
+	 */
+	function initialDetach(_this, maxIndex) {
+		var parent = _this.parent,
+			children = parent.children,
+			topCount = _this.detachedTop.length;
+
+		//if there are too many in top count, return
+		if (maxIndex < topCount) return;
+
+
+		while (topCount + children.length > maxIndex) {
+			_this.detachedBottom.unshift(parent.lastChild);
+			parent.removeChild(parent.lastChild);
+		}
+	}
+
+	Detacher.prototype = {
 		/**
 		 * Ideally used when scrolling down.  Detaches anything before a given index at the top of the parent
 		 * @param maxIndex
-		 * @returns {Sheet.Detacher}
+		 * @returns {Detacher}
 		 */
 		detachTopBefore: function(maxIndex) {
 			var detachable,
@@ -2459,7 +2482,11 @@ Sheet.Detacher = (function() {
 			while (i < maxIndex) {
 				//we will always detach the first element
 				detachable = detachables[1];
-				this.detached[i] = detachable;
+				if (detachable === u) {
+					break;
+				}
+
+				this.detachedTop.push(detachable);
 				parent.removeChild(detachable);
 				i++;
 
@@ -2474,26 +2501,30 @@ Sheet.Detacher = (function() {
 		/**
 		 * Ideally used when scrolling up.  Detaches anything after a given index at the bottom of the parent
 		 * @param minIndex
-		 * @returns {Sheet.Detacher}
+		 * @returns {Detacher}
 		 */
 		detachBottomAfter: function(minIndex) {
+			if (!this.hasInitialDetach) {
+				this.hasInitialDetach = true;
+				initialDetach(this, minIndex);
+			}
+
 			var detachable,
 				parent = this.parent,
-				detachables = parent.children,
-				htmlIndex = minIndex - this.topIndex,
-				i = minIndex;
+				detachedTopCount = this.detachedTop.length,
+				children = parent.children;
 
 			this.bottomChanged = false;
 
-			while ((detachable = detachables[htmlIndex]) !== u) {
-				this.detached[i] = detachable;
+
+			while (detachedTopCount + children.length > minIndex) {
+				this.detachedBottom.unshift(detachable = parent.lastChild);
 				parent.removeChild(detachable);
-				//NOTE: index increases, but htmlIndex doesn't because at this moment, it has just decremented
-				i++;
 				this.bottomChanged = true;
 			}
 
 			this.bottomIndex = minIndex;
+
 			return this;
 		},
 
@@ -2501,22 +2532,17 @@ Sheet.Detacher = (function() {
 		/**
 		 * Ideally used when scrolling up.  Attaches anything detached after a given index at the top of the parent
 		 * @param minIndex
-		 * @returns {Sheet.Detacher}
+		 * @returns {Detacher}
 		 */
 		attachTopAfter: function(minIndex) {
-			var detached,
-				parent = this.parent,
-				i = minIndex,
+			var parent = this.parent,
 				frag = document.createDocumentFragment();
 
 			this.topChanged = false;
 
-			while ((detached = this.detached[i]) !== u) {
-				detached = this.detached[i];
+			while (this.detachedTop.length > minIndex) {
 				//attach it
-				delete this.detached[i];
-				frag.appendChild(detached);
-				i++;
+				frag.insertBefore(this.detachedTop.pop(), frag.firstChild);
 				this.topChanged = true;
 			}
 
@@ -2532,28 +2558,33 @@ Sheet.Detacher = (function() {
 		/**
 		 * Ideally used when scrolling down.  Attaches anything detached before a given index at the bottom of the parent
 		 * @param maxIndex
-		 * @returns {Sheet.Detacher}
+		 * @returns {Detacher}
 		 */
 		attachBottomBefore: function(maxIndex) {
+			if (!this.hasInitialDetach) {
+				this.hasInitialDetach = true;
+				initialDetach(this, maxIndex);
+			}
+
 			var detached,
 				parent = this.parent,
 				htmlIndex = maxIndex - this.topIndex,
-				i = maxIndex,
-				frag = document.createDocumentFragment();
+				frag = document.createDocumentFragment(),
+				fragChildren = frag.children,
+				offset = this.detachedTop.length + parent.children.length;
 
 			this.bottomChanged = false;
 
-			while ((detached = this.detached[i]) !== u) {
+			while (offset + fragChildren.length < maxIndex && this.detachedBottom.length > 0) {
 				//attach it
-				delete this.detached[i];
-				frag.insertBefore(detached, frag.firstChild);
-				i--;
+				detached = this.detachedBottom.shift();
+				frag.appendChild(detached);
 				this.bottomChanged = true;
 			}
 
 			//attach point is going to be at the end of the parent
 			if (this.bottomChanged) {
-				parent.insertBefore(frag, parent.children[htmlIndex]);
+				parent.appendChild(frag);
 			}
 
 			this.bottomIndex = maxIndex;
@@ -2562,8 +2593,8 @@ Sheet.Detacher = (function() {
 		}
 	};
 
-	return Constructor;
-})();
+	Sheet.Detacher = Detacher;
+})(Sheet);
 Sheet.StyleUpdater = (function(document) {
 	function Constructor(updateFn) {
 		var el = this.styleElement = document.createElement('style');
@@ -4924,7 +4955,7 @@ $.sheet = {
 				callbackIfFalse();
 			}
 		},
-		initCalcRows: 40,
+		initCalcRows: 1,
 		initCalcCols: 10,
 		initScrollRows: 0,
 		initScrollCols: 0,
@@ -4978,12 +5009,12 @@ $.sheet = {
 
 		globalizeCultures:{script:'globalize/lib/cultures/globalize.cultures.js', thirdParty:true},
 
-		raphael:{script:'raphael/raphael-min.js', thirdParty:true},
-		gRaphael:{script:'graphael/g.raphael.js', thirdParty:true},
-		gRaphaelBar:{script:'graphael/g.bar.js', thirdParty:true},
-		gRaphaelDot:{script:'graphael/g.dot.js', thirdParty:true},
-		gRaphaelLine:{script:'graphael/g.line.js', thirdParty:true},
-		gRaphaelPie:{script:'graphael/g.pie.js', thirdParty:true},
+		raphael:{script:'raphael/raphael-min.js', thirdParty:true, async: false},
+		gRaphael:{script:'graphael/g.raphael.js', thirdParty:true, async: false},
+		gRaphaelBar:{script:'graphael/g.bar.js', thirdParty:true, async: false},
+		gRaphaelDot:{script:'graphael/g.dot.js', thirdParty:true, async: false},
+		gRaphaelLine:{script:'graphael/g.line.js', thirdParty:true, async: false},
+		gRaphaelPie:{script:'graphael/g.pie.js', thirdParty:true, async: false},
 
 		thaw: {script:"thaw.js/thaw.js", thirdParty:true},
 
@@ -5031,15 +5062,24 @@ $.sheet = {
 			thirdPartyDirectory: 'bower_components/'
 		},settings);
 
-
-		var write = function () {
-			if (this.script !== undefined) {
-				document.write('<script src="' + path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.script + '"></script>');
-			}
-			if (this.css !== undefined) {
-				document.write('<link rel="stylesheet" type="text/css" href="' + path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.css + '"></link>');
-			}
-		};
+		var injectionElement = document.getElementsByTagName('script')[0],
+			injectionParent = injectionElement.parentNode,
+			write = function () {
+				var script;
+				if (this.script !== undefined) {
+					script = document.createElement('script');
+					script.async = this.hasOwnProperty('async') ? this.async : true;
+					script.src = path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.script;
+					injectionParent.insertBefore(script, injectionElement);
+				}
+				if (this.css !== undefined) {
+					script = document.createElement('link');
+					script.rel = 'stylesheet';
+					script.type = 'text/css';
+					script.href = path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.css;
+					injectionParent.insertBefore(script, injectionElement);
+				}
+			};
 
 		for(var i in settings.skip) {
 			if (this.dependencies[settings.skip[i]]) {
@@ -5841,14 +5881,14 @@ $.sheet = {
 					columnAdder: new Sheet.ColumnAdder(),
 					/**
 					 * Creates cells for sheet and the bars that go along with them
-					 * @param {Number} [i] index where cells should be added, if null, cells go to end
+					 * @param {Number} [spreadsheetIndex] index where cells should be added, if null, cells go to end
 					 * @param {Boolean} [isBefore] places cells before the selected cell if set to true, otherwise they will go after, or at end;
 					 * @param {Number} [qty] how many rows/columns to add
 					 * @param {String} [type] "row" or "col", default "col"
 					 * @param {Boolean} [skipFormulaReParse] re-parses formulas if needed
 					 * @memberOf jS.controlFactory
 					 */
-					addCells:function (i, isBefore, qty, type, skipFormulaReParse) {
+					addCells:function (spreadsheetIndex, isBefore, qty, type, skipFormulaReParse) {
 						//hide the autoFiller, it can get confused
 						jS.autoFillerHide();
 
@@ -5856,7 +5896,8 @@ $.sheet = {
 						jS.setChanged(true);
 						jS.obj.barHelper().remove();
 
-						var $table = jS.obj.table(),
+						var domIndex,
+							$table = jS.obj.table(),
 							table = $table[0],
 							pane = table.pane,
 							tBody = table.tBody,
@@ -5878,9 +5919,10 @@ $.sheet = {
 							}),
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
+							sheetSize = pane.size(),
 							tableSize = table.size(),
 							frag = document.createDocumentFragment(),
-							rowLabelIndexOffset = 0;
+							rowIndexOffset = 0;
 
 						qty = qty || 1;
 						type = type || 'col';
@@ -5890,17 +5932,29 @@ $.sheet = {
 								//setupCell = null;
 							case "row-init":
 								if (pane.actionUI.useDetach) {
-									rowLabelIndexOffset = pane.actionUI.yDetacher.topIndex;
+									rowIndexOffset = pane.actionUI.yDetacher.topIndex;
 								}
 
 								//ensure that i isn't out of bounds
-								if (i === u || i === null || i > tableSize.rows) {
-									i = tableSize.rows;
+								if (spreadsheetIndex === u || spreadsheetIndex === null) {
+									spreadsheetIndex = tableSize.rows + rowIndexOffset;
 									isLast = true;
-								} else if (i === 0 ) {
+								}
+
+								if (spreadsheetIndex > sheetSize.rows) {
+									spreadsheetIndex = sheetSize.rows;
+									isLast = true;
+								}
+
+								domIndex = spreadsheetIndex;
+
+								if (domIndex > tableSize.rows) {
+									domIndex = tableSize.rows;
+								} else if (spreadsheetIndex === 0) {
 									isBefore = false;
 								}
-								loc = {row: i, col: 0};
+
+								loc = {row: spreadsheetIndex, col: 0};
 								o = this.rowAdder;
 								if (o.setQty(qty, tableSize) === false) {
 									if (!jS.isBusy()) {
@@ -5917,7 +5971,7 @@ $.sheet = {
 									bar.entity = 'left';
 									bar.type = 'bar';
 									bar.style.height = getHeight(jS.i, at) + 'px';
-									bar.innerHTML = bar.label = at + rowLabelIndexOffset;
+									bar.innerHTML = bar.label = at;
 
 									barParent.appendChild(bar);
 									frag.appendChild(barParent);
@@ -5957,7 +6011,7 @@ $.sheet = {
 								});
 
 								o.setAddedFinishedFn(function(_offset) {
-									tBody.insertBefore(frag, isBefore ? tBody.children[i] : tBody.children[i].nextSibling);
+									tBody.insertBefore(frag, isBefore ? tBody.children[domIndex] : tBody.children[domIndex].nextSibling);
 									//jS.refreshRowLabels(i);
 									offset = _offset;
 								});
@@ -5966,14 +6020,25 @@ $.sheet = {
 								//setupCell = null;
 							case "col-init":
 								//ensure that i isn't out of bounds
-								if (i === u || i === null || i > tableSize.cols) {
-									i = tableSize.cols;
+								if (spreadsheetIndex === u || spreadsheetIndex === null) {
+									spreadsheetIndex = tableSize.cols;
 									isLast = true;
-								} else if (i === 0 ) {
+								}
+
+								if (spreadsheetIndex > sheetSize.cols) {
+									spreadsheetIndex = sheetSize.cols;
+									isLast = true;
+								}
+
+								domIndex = spreadsheetIndex;
+
+								if (domIndex > tableSize.cols) {
+									domIndex = tableSize.cols;
+								} else if (spreadsheetIndex === 0 ) {
 									isBefore = false;
 								}
 
-								loc = {row: 0, col: i};
+								loc = {row: 0, col: spreadsheetIndex};
 								o = this.columnAdder;
 								if (o.setQty(qty, tableSize) === false) {
 									if (!jS.isBusy()) {
@@ -6052,13 +6117,13 @@ $.sheet = {
 								});
 
 								o.setAddedFinishedFn(function(_offset) {
-									jS.refreshColumnLabels(i);
+									jS.refreshColumnLabels(spreadsheetIndex);
 									offset = _offset;
 								});
 								break;
 						}
 
-						o.createCells(i, tableSize, isBefore);
+						o.createCells(spreadsheetIndex, tableSize, isBefore);
 
 						if (!skipFormulaReParse && isLast != true) {
 							//offset formulas
@@ -6070,7 +6135,7 @@ $.sheet = {
 						}
 						if (activeCell && activeCell[0] && activeCell[0].cellIndex && activeCell[0].parentNode) {
 							jS.colLast = activeCell[0].cellIndex;
-							jS.rowLast = activeCell[0].parentNode.rowIndex;
+							jS.rowLast = activeCell[0].parentNode.rowIndex + rowIndexOffset;
 						}
 
 						return true;
@@ -7016,16 +7081,16 @@ $.sheet = {
 						};
 
 						pane.updateX = function () {
-							if (xUpdated) {
+							//if (xUpdated) {
 								jS.calcVisibleCol(actionUI);
-							}
+							//}
 						};
 
 						pane.updateY = function () {
-							if (yUpdated) {
+							//if (yUpdated) {
 								jS.calcVisibleRow(actionUI);
 								jS.updateYBarWidthToCorner(actionUI);
-							}
+							//}
 						};
 
 						pane.finishScroll = function () {
@@ -7039,10 +7104,10 @@ $.sheet = {
 						};
 
 						scrollAction = [
-							pane.scrollToX,
-							pane.scrollToY,
 							pane.updateX,
 							pane.updateY,
+							pane.scrollToX,
+							pane.scrollToY,
 							pane.finishScroll
 						];
 
@@ -8422,7 +8487,16 @@ $.sheet = {
 							if (style.height !== undefined) height = style.height;
 
 							barTd.style.height = height;
-						});
+						}),
+						rowIndexOffset = 0,
+						pane = table.pane,
+						domIndex,
+						tr,
+						trIndex;
+
+					if (pane.actionUI.useDetach) {
+						rowIndexOffset = pane.actionUI.yDetacher.topIndex;
+					}
 
 					rowStart = rowStart || 0;
 					rowEnd = rowEnd || rows.length - 1;
@@ -8437,18 +8511,24 @@ $.sheet = {
 					//This is performed backwards starting at end
 					row = rowEnd;
 					if (row < 0 || col < 0) return;
+
 					do {
-						var tr = rows[row];
+						tr = rows[row];
 						col = colEnd;
 						if (tr === undefined) {
 							if (createCellsIfNeeded) {
-								jS.controlFactory.addCells(null, false, row - (rows.length - 1), 'row-init');
-								tr = rows[row];
+								domIndex = rowIndexOffset + rows.length;
+
+								jS.controlFactory.addCells(null, false, row - domIndex, 'row-init');
+								tr = rows[row - rowIndexOffset];
 							} else {
 								continue;
 							}
 						}
 						do {
+							if (tr === undefined) {
+								continue;
+							}
 							var td = tr.children[col];
 
 							if (td === undefined) {
@@ -10006,7 +10086,7 @@ $.sheet = {
 						row,
 						colIndex,
 						oldPos = this.calcVisiblePos,
-						newPos = {row: rowIndex, col: oldPos.col},
+						newPos = {row: targetRow, col: oldPos.col},
 						cell,
 						stack = [],
 						each = function() {
@@ -11219,16 +11299,24 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				getTdLocation:function (td) {
-					var result = {col:0, row:0};
+					var result = {col:0, row:0},
+						rowOffset = 0,
+						pane = jS.obj.pane();
+
+					if (pane.actionUI.useDetach) {
+						//rowOffset = pane.actionUI.yDetacher.topIndex;
+					}
+
+
 					if (td === u || td === null) return result;
 
-					if (td.parentNode == u || td.parentNode.rowIndex < 0) {
+					if (td.parentNode === u || (td.parentNode.rowIndex + rowOffset) < 0) {
 						return result;
 					}
 
 					return {
-						col:parseInt(td.cellIndex),
-						row:parseInt(td.parentNode.rowIndex)
+						col: td.cellIndex,
+						row: td.parentNode.rowIndex + rowOffset
 					};
 				},
 
@@ -11553,9 +11641,9 @@ $.sheet = {
 				 */
 				rows:function (table) {
 					table = table || jS.obj.table()[0];
-					if (!table) return []; //table
-					if (!table.tBody) return []; //tBody
-					if (!table.tBody.children) return []; //tr
+					if (table === u) return []; //table
+					if (table.tBody === u) return []; //tBody
+					if (table.tBody.children === u) return []; //tr
 
 					return table.tBody.children;
 				},
@@ -11900,23 +11988,48 @@ $.sheet = {
 
 				/**
 				 *
-				 * @param {jQuery|HTMLElement} [table]
+				 * @param {HTMLElement} [table]
 				 * @returns {Object} {cols, rows}
 				 * @memberOf jS
 				 */
-				tableSize:function (table) {
+				tableSize:function (table, getActualSize) {
+					var tBody,
+						tBodyChildren,
+						tr,
+						trChildren,
+						td,
+						pane = table.pane,
+						row = 0,
+						column = 0,
+						rowOffset = 0;
+
+					if (pane.actionUI.useDetach) {
+						//rowOffset = pane.actionUI.yDetacher.topIndex;
+					}
+
 					table = table || jS.obj.table()[0];
 					//table / tBody / tr / td
 
-					var tBody = table.tBody || {},
-						tBodyChildren = tBody.children || [],
-						tr = tBodyChildren[tBodyChildren.length - 1] || {},
-						trChildren = tr.children || [],
-						td = trChildren[trChildren.length - 1] || {};
+					if ((tBody = table.tBody) !== u
+						&& (tBodyChildren = tBody.children) !== u
+						&& (tr = tBodyChildren[tBodyChildren.length - 1]) !== u
+						&& (trChildren = tr.children) !== u
+						&& (td = trChildren[trChildren.length - 1]) !== u
+					) {
+						if (getActualSize === true) {
+							row = tr.rowIndex;
+						} else {
+							row = tr.rowIndex + rowOffset;
+						}
+
+						column = td.cellIndex;
+					} else {
+						return {};
+					}
 
 					return {
-						cols: td.cellIndex || 0,
-						rows: tr.rowIndex || 0
+						cols: column,
+						rows: row
 					};
 				},
 
