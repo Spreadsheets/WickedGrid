@@ -2018,8 +2018,20 @@ $.sheet = {
 								o.setCreateCellFn(function (row, at, createdBar) {
 									var cell = setupCell.call(loader, jS.i, row, at, jS),
 										td,
-										rowParent = tBody.children[row],
+										rowParent,
 										spreadsheetRow = spreadsheet[row];
+
+									if (useDetach) {
+										if ((detacher.detachedAbove.length - 1) >= row) {
+											rowParent = detacher.detachedAbove[row - 1];
+										} else if (detacher.detachedAbove.length + tBody.children.length < row) {
+											rowParent = detacher.detachedBelow[row - (detacher.detachedAbove.length + tBody.children.length)];
+										} else {
+											rowParent = tBody.children[row];
+										}
+									} else {
+										rowParent = tBody.children[row];
+									}
 
 									if (cell === null) return;
 
