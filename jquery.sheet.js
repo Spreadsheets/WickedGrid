@@ -1925,15 +1925,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 				if (isUp === true) {
 					detacher
-						.attachTopAfter(i)
-						.detachBottomAfter(i + this.maximumVisibleRows + 1);
+						.attachAboveAfter(i)
+						.detachBelowAfter(i + this.maximumVisibleRows + 1);
 				} else {
 					detacher
-						.detachTopBefore(i)
-						.attachBottomBefore(i + this.maximumVisibleRows);
+						.detachAboveBefore(i)
+						.attachBelowBefore(i + this.maximumVisibleRows + 1);
 				}
 
-				return detacher.topChanged || detacher.bottomChanged;
+				return detacher.aboveChanged || detacher.belowChanged;
 			}
 
 			var axis = this.scrollAxisY,
@@ -1968,7 +1968,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		toggleHideStyleY: null,
 
 		pixelScrollDensity: 20,
-		maximumVisibleRows: 5,
+		maximumVisibleRows: 65,
 		maximumVisibleColumns: 20
 	};
 
@@ -2425,23 +2425,24 @@ Sheet.Highlighter = (function(document, window, $) {
 	 * Detaches DOM elements from a parent to keep the DOM fast. Can be used with hundreds of thousands r even millions of
 	 * DOM elements to simulate a scrolling like behaviour.
 	 * @param {HTMLElement} parent
-	 * @property {Object} detached
-	 * @property {Number} topIndex
-	 * @property {Number} bottomIndex
+	 * @property {Array} detachedAbove
+	 * @property {Array} detachedBelow
+	 * @property {Number} aboveIndex
+	 * @property {Number} belowIndex
 	 * @property {HTMLElement} parent
-	 * @property {Boolean} topChanged
-	 * @property {Boolean} bottomChanged
+	 * @property {Boolean} aboveChanged
+	 * @property {Boolean} belowChanged
 	 * @constructor
 	 * @memberOf Sheet
 	 */
 	function Detacher(parent) {
-		this.detachedTop = [];
-		this.detachedBottom = [];
-		this.topIndex = 0;
-		this.bottomIndex = 0;
+		this.detachedAbove = [];
+		this.detachedBelow = [];
+		this.aboveIndex = 0;
+		this.belowIndex = 0;
 		this.parent = parent;
-		this.topChanged = false;
-		this.bottomChanged = false;
+		this.aboveChanged = false;
+		this.belowChanged = false;
 		this.hasInitialDetach = false;
 	}
 
@@ -2453,31 +2454,31 @@ Sheet.Highlighter = (function(document, window, $) {
 	function initialDetach(_this, maxIndex) {
 		var parent = _this.parent,
 			children = parent.children,
-			topCount = _this.detachedTop.length;
+			aboveCount = _this.detachedAbove.length;
 
-		//if there are too many in top count, return
-		if (maxIndex < topCount) return;
+		//if there are too many in above count, return
+		if (maxIndex < aboveCount) return;
 
 
-		while (topCount + children.length > maxIndex) {
-			_this.detachedBottom.unshift(parent.lastChild);
+		while (aboveCount + children.length > maxIndex) {
+			_this.detachedBelow.unshift(parent.lastChild);
 			parent.removeChild(parent.lastChild);
 		}
 	}
 
 	Detacher.prototype = {
 		/**
-		 * Ideally used when scrolling down.  Detaches anything before a given index at the top of the parent
+		 * Ideally used when scrolling down.  Detaches anything before a given index at the above of the parent
 		 * @param maxIndex
 		 * @returns {Detacher}
 		 */
-		detachTopBefore: function(maxIndex) {
+		detachAboveBefore: function(maxIndex) {
 			var detachable,
 				parent = this.parent,
 				detachables = parent.children,
-				i = this.topIndex;
+				i = this.aboveIndex;
 
-			this.topChanged = false;
+			this.aboveChanged = false;
 
 			while (i < maxIndex) {
 				//we will always detach the first element
@@ -2486,24 +2487,24 @@ Sheet.Highlighter = (function(document, window, $) {
 					break;
 				}
 
-				this.detachedTop.push(detachable);
+				this.detachedAbove.push(detachable);
 				parent.removeChild(detachable);
 				i++;
 
-				this.topChanged = true;
+				this.aboveChanged = true;
 			}
 
-			this.topIndex = maxIndex;
+			this.aboveIndex = maxIndex;
 
 			return this;
 		},
 
 		/**
-		 * Ideally used when scrolling up.  Detaches anything after a given index at the bottom of the parent
+		 * Ideally used when scrolling up.  Detaches anything after a given index virtually below the parent
 		 * @param minIndex
 		 * @returns {Detacher}
 		 */
-		detachBottomAfter: function(minIndex) {
+		detachBelowAfter: function(minIndex) {
 			if (!this.hasInitialDetach) {
 				this.hasInitialDetach = true;
 				initialDetach(this, minIndex);
@@ -2511,56 +2512,56 @@ Sheet.Highlighter = (function(document, window, $) {
 
 			var detachable,
 				parent = this.parent,
-				detachedTopCount = this.detachedTop.length,
+				detachedAboveCount = this.detachedAbove.length,
 				children = parent.children;
 
-			this.bottomChanged = false;
+			this.belowChanged = false;
 
 
-			while (detachedTopCount + children.length > minIndex) {
-				this.detachedBottom.unshift(detachable = parent.lastChild);
+			while (detachedAboveCount + children.length > minIndex) {
+				this.detachedBelow.unshift(detachable = parent.lastChild);
 				parent.removeChild(detachable);
-				this.bottomChanged = true;
+				this.belowChanged = true;
 			}
 
-			this.bottomIndex = minIndex;
+			this.belowIndex = minIndex;
 
 			return this;
 		},
 
 
 		/**
-		 * Ideally used when scrolling up.  Attaches anything detached after a given index at the top of the parent
+		 * Ideally used when scrolling up.  Attaches anything detached after a given index at the above of the parent
 		 * @param minIndex
 		 * @returns {Detacher}
 		 */
-		attachTopAfter: function(minIndex) {
+		attachAboveAfter: function(minIndex) {
 			var parent = this.parent,
 				frag = document.createDocumentFragment();
 
-			this.topChanged = false;
+			this.aboveChanged = false;
 
-			while (this.detachedTop.length > minIndex) {
+			while (this.detachedAbove.length > minIndex) {
 				//attach it
-				frag.insertBefore(this.detachedTop.pop(), frag.firstChild);
-				this.topChanged = true;
+				frag.insertBefore(this.detachedAbove.pop(), frag.firstChild);
+				this.aboveChanged = true;
 			}
 
-			if (this.topChanged) {
+			if (this.aboveChanged) {
 				parent.insertBefore(frag, parent.children[1]);
 			}
 
-			this.topIndex = minIndex;
+			this.aboveIndex = minIndex;
 
 			return this;
 		},
 
 		/**
-		 * Ideally used when scrolling down.  Attaches anything detached before a given index at the bottom of the parent
+		 * Ideally used when scrolling down.  Attaches anything detached before a given index virtually below the parent
 		 * @param maxIndex
 		 * @returns {Detacher}
 		 */
-		attachBottomBefore: function(maxIndex) {
+		attachBelowBefore: function(maxIndex) {
 			if (!this.hasInitialDetach) {
 				this.hasInitialDetach = true;
 				initialDetach(this, maxIndex);
@@ -2568,28 +2569,34 @@ Sheet.Highlighter = (function(document, window, $) {
 
 			var detached,
 				parent = this.parent,
-				htmlIndex = maxIndex - this.topIndex,
+				htmlIndex = maxIndex - this.aboveIndex,
 				frag = document.createDocumentFragment(),
 				fragChildren = frag.children,
-				offset = this.detachedTop.length + parent.children.length;
+				offset = this.detachedAbove.length + parent.children.length;
 
-			this.bottomChanged = false;
+			this.belowChanged = false;
 
-			while (offset + fragChildren.length < maxIndex && this.detachedBottom.length > 0) {
+			while (offset + fragChildren.length < maxIndex && this.detachedBelow.length > 0) {
 				//attach it
-				detached = this.detachedBottom.shift();
+				detached = this.detachedBelow.shift();
 				frag.appendChild(detached);
-				this.bottomChanged = true;
+				this.belowChanged = true;
 			}
 
 			//attach point is going to be at the end of the parent
-			if (this.bottomChanged) {
+			if (this.belowChanged) {
 				parent.appendChild(frag);
 			}
 
-			this.bottomIndex = maxIndex;
+			this.belowIndex = maxIndex;
 
 			return this;
+		},
+		isAboveActive: function() {
+			return this.detachedAbove.length > 0
+		},
+		isBelowActive: function() {
+			return this.detachedBelow.length > 0
 		}
 	};
 
@@ -5900,6 +5907,7 @@ $.sheet = {
 							$table = jS.obj.table(),
 							table = $table[0],
 							pane = table.pane,
+							actionUI = pane.actionUI,
 							tBody = table.tBody,
 							colGroup = table.colGroup,
 							isLast = false,
@@ -5922,17 +5930,21 @@ $.sheet = {
 							sheetSize = pane.size(),
 							tableSize = table.size(),
 							frag = document.createDocumentFragment(),
-							rowIndexOffset = 0;
+							rowIndexOffset = 0,
+							useDetach = actionUI.useDetach,
+							detacher = actionUI.yDetacher,
+							storeInDetacher = false;
 
 						qty = qty || 1;
 						type = type || 'col';
 
 						switch (type) {
+							case "row-init":
 							case "row":
 								//setupCell = null;
-							case "row-init":
-								if (pane.actionUI.useDetach) {
-									rowIndexOffset = pane.actionUI.yDetacher.topIndex;
+								if (useDetach) {
+									rowIndexOffset = detacher.detachedAbove.length - 1;
+									rowIndexOffset = rowIndexOffset > 0 ? rowIndexOffset : 0;
 								}
 
 								//ensure that i isn't out of bounds
@@ -5952,6 +5964,13 @@ $.sheet = {
 									domIndex = tableSize.rows;
 								} else if (spreadsheetIndex === 0) {
 									isBefore = false;
+								}
+
+								if (useDetach && isLast) {
+									storeInDetacher = detacher.isBelowActive();
+									if (storeInDetacher) {
+										spreadsheetIndex += detacher.detachedBelow.length - 1;
+									}
 								}
 
 								loc = {row: spreadsheetIndex, col: 0};
@@ -5974,7 +5993,12 @@ $.sheet = {
 									bar.innerHTML = bar.label = at;
 
 									barParent.appendChild(bar);
-									frag.appendChild(barParent);
+
+									if (storeInDetacher) {
+										detacher.detachedBelow.push(barParent);
+									} else {
+										frag.appendChild(barParent);
+									}
 
 									if (spreadsheet.length === 0) {
 										controlY[at] = bar;
@@ -6061,7 +6085,7 @@ $.sheet = {
 									topBar.className = colBarClasses;
 
 									//If the row has not been created lets set it up
-									if (rowParent === undefined) {
+									if (rowParent === u) {
 										leftBar = document.createElement('th');
 										leftBar.setAttribute('class', rowBarClasses);
 										leftBar.entity = 'left';
@@ -6101,7 +6125,7 @@ $.sheet = {
 									if (cell === null) return;
 
 									td = cell.td;
-									if (spreadsheetRow === undefined) {
+									if (spreadsheetRow === u) {
 										spreadsheet[row] = spreadsheetRow = [];
 									}
 
@@ -6202,7 +6226,7 @@ $.sheet = {
 							existingTdsInFirstRow = 0,
 							barTop = jS.controls.bar.x.th[jS.i] = [];
 
-						if (trFirst === undefined) {
+						if (trFirst === u) {
 							colGroup.innerHTML = '';
 						} else {
 							existingTdsInFirstRow = trFirst.children.length;
@@ -7063,9 +7087,12 @@ $.sheet = {
 						pane.size = function() { return jS.sheetSize(table); };
 
 						pane.scrollToX = function () {
+							//since you can only scroll one direction at a time, check that and if scrolled Y, then skip x
+							if (yUpdated) return;
+
 							xUpdated = false;
 							scrollLeft = scrollUI.scrollLeft;
-							if (lastScrollLeft != scrollLeft) {
+							if (lastScrollLeft !== scrollLeft) {
 								lastScrollLeft = scrollLeft;
 								xUpdated = actionUI.scrollToPixelX(scrollLeft);
 							}
@@ -7074,23 +7101,26 @@ $.sheet = {
 						pane.scrollToY = function () {
 							yUpdated = false;
 							scrollTop = scrollUI.scrollTop;
-							if (lastScrollTop != scrollTop) {
+							if (lastScrollTop !== scrollTop) {
 								yUpdated = actionUI.scrollToPixelY(scrollTop, lastScrollTop > scrollTop);
 								lastScrollTop = scrollTop;
 							}
 						};
 
 						pane.updateX = function () {
-							//if (xUpdated) {
+							//since you can only scroll one direction at a time, check that and if scrolled Y, then skip x
+							if (yUpdated) return;
+
+							if (xUpdated) {
 								jS.calcVisibleCol(actionUI);
-							//}
+							}
 						};
 
 						pane.updateY = function () {
-							//if (yUpdated) {
+							if (yUpdated) {
 								jS.calcVisibleRow(actionUI);
 								jS.updateYBarWidthToCorner(actionUI);
-							//}
+							}
 						};
 
 						pane.finishScroll = function () {
@@ -7104,10 +7134,10 @@ $.sheet = {
 						};
 
 						scrollAction = [
-							pane.updateX,
 							pane.updateY,
-							pane.scrollToX,
 							pane.scrollToY,
+							pane.updateX,
+							pane.scrollToX,
 							pane.finishScroll
 						];
 
@@ -8472,8 +8502,8 @@ $.sheet = {
 				 */
 				createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd, createCellsIfNeeded) {
 					var rows = jS.rows(table),
-						row,
-						col,
+						rowIndex,
+						columnIndex,
 						loader = (s.loader !== null ? s.loader : null),
 						standardHeight = s.colMargin + 'px',
 						setRowHeight = (loader !== null ? loader.setRowHeight : function(sheetIndex, rowIndex, barTd) {
@@ -8482,20 +8512,29 @@ $.sheet = {
 								height = standardHeight;
 
 							//This element is generated and needs to track the height of the item just before it
-							if ((sibling = barTd.nextSibling) === undefined) return height;
-							if ((style = sibling.style) === undefined) return height;
-							if (style.height !== undefined) height = style.height;
+							if ((sibling = barTd.nextSibling) === u) return height;
+							if ((style = sibling.style) === u) return height;
+							if (style.height !== u) height = style.height;
 
 							barTd.style.height = height;
 						}),
 						rowIndexOffset = 0,
 						pane = table.pane,
-						domIndex,
+						offset,
+						qty,
 						tr,
-						trIndex;
+						trIndex,
+						actionUI = pane.actionUI,
+						useDetacher = actionUI.useDetach,
+						detacher = actionUI.yDetacher,
+						storeInDetacher = false;
+
+					if (useDetacher) {
+						storeInDetacher = detacher.isBelowActive();
+					}
 
 					if (pane.actionUI.useDetach) {
-						rowIndexOffset = pane.actionUI.yDetacher.topIndex;
+						rowIndexOffset = pane.actionUI.yDetacher.aboveIndex;
 					}
 
 					rowStart = rowStart || 0;
@@ -8509,69 +8548,76 @@ $.sheet = {
 					}
 
 					//This is performed backwards starting at end
-					row = rowEnd;
-					if (row < 0 || col < 0) return;
+					rowIndex = rowEnd;
+					if (rowIndex < 0) return;
 
 					do {
-						tr = rows[row];
-						col = colEnd;
-						if (tr === undefined) {
+						tr = rows[rowIndex];
+						columnIndex = colEnd;
+						if (tr === u) {
 							if (createCellsIfNeeded) {
-								domIndex = rowIndexOffset + rows.length;
+								offset = rowIndexOffset + rows.length - 1;
+								if (storeInDetacher) {
+									offset += detacher.detachedBelow.length - 1;
+								}
 
-								jS.controlFactory.addCells(null, false, row - domIndex, 'row-init');
-								tr = rows[row - rowIndexOffset];
+								qty = rowIndex - offset;
+
+								jS.controlFactory.addCells(null, false, qty, 'row-init');
+								tr = rows[rowIndex - rowIndexOffset];
 							} else {
 								continue;
 							}
 						}
 						do {
-							if (tr === undefined) {
-								continue;
+							if (useDetacher && tr === u) {
+								if ((tr = detacher.detachedAbove[rowIndex]) === u) {
+									continue;
+								}
 							}
-							var td = tr.children[col];
+							var td = tr.children[columnIndex];
 
-							if (td === undefined) {
+							if (td === u) {
 								if (createCellsIfNeeded) {
-									jS.controlFactory.addCells(null, false, col - (rows[0].children.length - 1), 'col-init');
-									td = tr.children[col];
+									jS.controlFactory.addCells(null, false, columnIndex - (rows[0].children.length - 1), 'col-init');
+									td = tr.children[columnIndex];
 								} else {
 									continue;
 								}
 							}
 
-							if (row > 0 && col > 0) {
+							if (rowIndex > 0 && columnIndex > 0) {
 								if (td === u) {
 									return;
 								}
 								if (!td.jSCell) {
-									jS.createCell(i, row, col);
+									jS.createCell(i, rowIndex, columnIndex);
 								}
 							} else {
-								if (col == 0 && row > 0) { //barleft
+								if (columnIndex == 0 && rowIndex > 0) { //barleft
 									td.type = 'bar';
 									td.entity = 'left';
 									td.innerHTML = row;
 									td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.theme.bar;
-									setRowHeight.call(loader, i, row, td);
+									setRowHeight.call(loader, i, rowIndex, td);
 								}
 
-								if (row == 0 && col > 0) { //bartop
+								if (rowIndex == 0 && columnIndex > 0) { //bartop
 									td.type = 'bar';
 									td.entity = 'top';
-									td.innerHTML = jSE.columnLabelString(col);
+									td.innerHTML = jSE.columnLabelString(columnIndex);
 									td.className = jS.cl.barTop + ' ' + jS.cl.barTop + '_' + jS.i + ' ' + jS.theme.bar;
 								}
 
-								if (row == 0 && col == 0) { //corner
+								if (rowIndex == 0 && columnIndex == 0) { //corner
 									td.type = 'bar';
 									td.entity = 'corner';
 									td.className = jS.theme.bar + ' ' + jS.cl.barCorner;
 									jS.controls.bar.corner[jS.i] = td;
 								}
 							}
-						} while (col-- > colStart);
-					} while (row-- > rowStart);
+						} while (columnIndex-- > colStart);
+					} while (rowIndex-- > rowStart);
 				},
 				updateYBarWidthToCorner: function(actionUI) {
 					var scrolledArea = actionUI.scrolledArea,
@@ -10049,7 +10095,7 @@ $.sheet = {
 					if (rowIndex > 0) {
 						pos.row = rowIndex;
 						do {
-							if (rowIndex > 0 && (row = spreadsheet[rowIndex]) !== undefined) {
+							if (rowIndex > 0 && (row = spreadsheet[rowIndex]) !== u) {
 								pos.col = columnIndex = min(row.length - 1, initCols);
 								if (columnIndex > 0) {
 									do {
@@ -10091,12 +10137,12 @@ $.sheet = {
 						stack = [],
 						each = function() {
 							if (this.row === u) {
-								while (this.offset > 0 && spreadsheet[this.offset] === undefined) {
+								while (this.offset > 0 && spreadsheet[this.offset] === u) {
 									jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.offset, this.offset, this.colIndex, this.colIndex, true);
 									this.offset--;
 								}
 							} else {
-								if ((this.cell = this.row[this.colIndex]) === undefined) {
+								if ((this.cell = this.row[this.colIndex]) === u) {
 									jS.createCell(jS.i, this.rowIndex, this.colIndex);
 									this.cell = spreadsheet[this.rowIndex][this.colIndex];
 								}
@@ -10162,9 +10208,13 @@ $.sheet = {
 						newPos = {row: oldPos.row, col: oldPos.col},
 						stack = [],
 						each = function() {
-							if (this.row === undefined || this.cell === undefined) {
+							if (this.row === u || this.cell === u) {
 								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
 								this.row = spreadsheet[this.rowIndex];
+							}
+
+							if (this.row === u) {
+								return;
 							}
 
 							cell = this.row[this.colIndex];
@@ -10666,7 +10716,7 @@ $.sheet = {
 
 					jS.i = i;
 
-					if (spreadsheetUI !== undefined) {
+					if (spreadsheetUI !== u) {
 						enclosure = spreadsheetUI.enclosure;
 					} else {
 						enclosure = jS.controls.enclosure[i][0];
@@ -10817,7 +10867,7 @@ $.sheet = {
 									jS.sheetCount++;
 									data = data || null;
 									table = table || document.createElement('table');
-									makeVisible = makeVisible !== undefined ? makeVisible : true;
+									makeVisible = makeVisible !== u ? makeVisible : true;
 									i = i || jS.sheetCount - 1;
 
 									if (data !== null) {
@@ -11304,7 +11354,7 @@ $.sheet = {
 						pane = jS.obj.pane();
 
 					if (pane.actionUI.useDetach) {
-						//rowOffset = pane.actionUI.yDetacher.topIndex;
+						//rowOffset = pane.actionUI.yDetacher.aboveIndex;
 					}
 
 
@@ -12004,7 +12054,7 @@ $.sheet = {
 						rowOffset = 0;
 
 					if (pane.actionUI.useDetach) {
-						//rowOffset = pane.actionUI.yDetacher.topIndex;
+						//rowOffset = pane.actionUI.yDetacher.aboveIndex;
 					}
 
 					table = table || jS.obj.table()[0];

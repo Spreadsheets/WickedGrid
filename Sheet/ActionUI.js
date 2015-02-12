@@ -477,15 +477,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 				if (isUp === true) {
 					detacher
-						.attachTopAfter(i)
-						.detachBottomAfter(i + this.maximumVisibleRows + 1);
+						.attachAboveAfter(i)
+						.detachBelowAfter(i + this.maximumVisibleRows + 1);
 				} else {
 					detacher
-						.detachTopBefore(i)
-						.attachBottomBefore(i + this.maximumVisibleRows);
+						.detachAboveBefore(i)
+						.attachBelowBefore(i + this.maximumVisibleRows + 1);
 				}
 
-				return detacher.topChanged || detacher.bottomChanged;
+				return detacher.aboveChanged || detacher.belowChanged;
 			}
 
 			var axis = this.scrollAxisY,
@@ -520,7 +520,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		toggleHideStyleY: null,
 
 		pixelScrollDensity: 20,
-		maximumVisibleRows: 5,
+		maximumVisibleRows: 65,
 		maximumVisibleColumns: 20
 	};
 

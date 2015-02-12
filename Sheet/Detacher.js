@@ -5,23 +5,24 @@
 	 * Detaches DOM elements from a parent to keep the DOM fast. Can be used with hundreds of thousands r even millions of
 	 * DOM elements to simulate a scrolling like behaviour.
 	 * @param {HTMLElement} parent
-	 * @property {Object} detached
-	 * @property {Number} topIndex
-	 * @property {Number} bottomIndex
+	 * @property {Array} detachedAbove
+	 * @property {Array} detachedBelow
+	 * @property {Number} aboveIndex
+	 * @property {Number} belowIndex
 	 * @property {HTMLElement} parent
-	 * @property {Boolean} topChanged
-	 * @property {Boolean} bottomChanged
+	 * @property {Boolean} aboveChanged
+	 * @property {Boolean} belowChanged
 	 * @constructor
 	 * @memberOf Sheet
 	 */
 	function Detacher(parent) {
-		this.detachedTop = [];
-		this.detachedBottom = [];
-		this.topIndex = 0;
-		this.bottomIndex = 0;
+		this.detachedAbove = [];
+		this.detachedBelow = [];
+		this.aboveIndex = 0;
+		this.belowIndex = 0;
 		this.parent = parent;
-		this.topChanged = false;
-		this.bottomChanged = false;
+		this.aboveChanged = false;
+		this.belowChanged = false;
 		this.hasInitialDetach = false;
 	}
 
@@ -33,31 +34,31 @@
 	function initialDetach(_this, maxIndex) {
 		var parent = _this.parent,
 			children = parent.children,
-			topCount = _this.detachedTop.length;
+			aboveCount = _this.detachedAbove.length;
 
-		//if there are too many in top count, return
-		if (maxIndex < topCount) return;
+		//if there are too many in above count, return
+		if (maxIndex < aboveCount) return;
 
 
-		while (topCount + children.length > maxIndex) {
-			_this.detachedBottom.unshift(parent.lastChild);
+		while (aboveCount + children.length > maxIndex) {
+			_this.detachedBelow.unshift(parent.lastChild);
 			parent.removeChild(parent.lastChild);
 		}
 	}
 
 	Detacher.prototype = {
 		/**
-		 * Ideally used when scrolling down.  Detaches anything before a given index at the top of the parent
+		 * Ideally used when scrolling down.  Detaches anything before a given index at the above of the parent
 		 * @param maxIndex
 		 * @returns {Detacher}
 		 */
-		detachTopBefore: function(maxIndex) {
+		detachAboveBefore: function(maxIndex) {
 			var detachable,
 				parent = this.parent,
 				detachables = parent.children,
-				i = this.topIndex;
+				i = this.aboveIndex;
 
-			this.topChanged = false;
+			this.aboveChanged = false;
 
 			while (i < maxIndex) {
 				//we will always detach the first element
@@ -66,24 +67,24 @@
 					break;
 				}
 
-				this.detachedTop.push(detachable);
+				this.detachedAbove.push(detachable);
 				parent.removeChild(detachable);
 				i++;
 
-				this.topChanged = true;
+				this.aboveChanged = true;
 			}
 
-			this.topIndex = maxIndex;
+			this.aboveIndex = maxIndex;
 
 			return this;
 		},
 
 		/**
-		 * Ideally used when scrolling up.  Detaches anything after a given index at the bottom of the parent
+		 * Ideally used when scrolling up.  Detaches anything after a given index virtually below the parent
 		 * @param minIndex
 		 * @returns {Detacher}
 		 */
-		detachBottomAfter: function(minIndex) {
+		detachBelowAfter: function(minIndex) {
 			if (!this.hasInitialDetach) {
 				this.hasInitialDetach = true;
 				initialDetach(this, minIndex);
@@ -91,56 +92,56 @@
 
 			var detachable,
 				parent = this.parent,
-				detachedTopCount = this.detachedTop.length,
+				detachedAboveCount = this.detachedAbove.length,
 				children = parent.children;
 
-			this.bottomChanged = false;
+			this.belowChanged = false;
 
 
-			while (detachedTopCount + children.length > minIndex) {
-				this.detachedBottom.unshift(detachable = parent.lastChild);
+			while (detachedAboveCount + children.length > minIndex) {
+				this.detachedBelow.unshift(detachable = parent.lastChild);
 				parent.removeChild(detachable);
-				this.bottomChanged = true;
+				this.belowChanged = true;
 			}
 
-			this.bottomIndex = minIndex;
+			this.belowIndex = minIndex;
 
 			return this;
 		},
 
 
 		/**
-		 * Ideally used when scrolling up.  Attaches anything detached after a given index at the top of the parent
+		 * Ideally used when scrolling up.  Attaches anything detached after a given index at the above of the parent
 		 * @param minIndex
 		 * @returns {Detacher}
 		 */
-		attachTopAfter: function(minIndex) {
+		attachAboveAfter: function(minIndex) {
 			var parent = this.parent,
 				frag = document.createDocumentFragment();
 
-			this.topChanged = false;
+			this.aboveChanged = false;
 
-			while (this.detachedTop.length > minIndex) {
+			while (this.detachedAbove.length > minIndex) {
 				//attach it
-				frag.insertBefore(this.detachedTop.pop(), frag.firstChild);
-				this.topChanged = true;
+				frag.insertBefore(this.detachedAbove.pop(), frag.firstChild);
+				this.aboveChanged = true;
 			}
 
-			if (this.topChanged) {
+			if (this.aboveChanged) {
 				parent.insertBefore(frag, parent.children[1]);
 			}
 
-			this.topIndex = minIndex;
+			this.aboveIndex = minIndex;
 
 			return this;
 		},
 
 		/**
-		 * Ideally used when scrolling down.  Attaches anything detached before a given index at the bottom of the parent
+		 * Ideally used when scrolling down.  Attaches anything detached before a given index virtually below the parent
 		 * @param maxIndex
 		 * @returns {Detacher}
 		 */
-		attachBottomBefore: function(maxIndex) {
+		attachBelowBefore: function(maxIndex) {
 			if (!this.hasInitialDetach) {
 				this.hasInitialDetach = true;
 				initialDetach(this, maxIndex);
@@ -148,28 +149,34 @@
 
 			var detached,
 				parent = this.parent,
-				htmlIndex = maxIndex - this.topIndex,
+				htmlIndex = maxIndex - this.aboveIndex,
 				frag = document.createDocumentFragment(),
 				fragChildren = frag.children,
-				offset = this.detachedTop.length + parent.children.length;
+				offset = this.detachedAbove.length + parent.children.length;
 
-			this.bottomChanged = false;
+			this.belowChanged = false;
 
-			while (offset + fragChildren.length < maxIndex && this.detachedBottom.length > 0) {
+			while (offset + fragChildren.length < maxIndex && this.detachedBelow.length > 0) {
 				//attach it
-				detached = this.detachedBottom.shift();
+				detached = this.detachedBelow.shift();
 				frag.appendChild(detached);
-				this.bottomChanged = true;
+				this.belowChanged = true;
 			}
 
 			//attach point is going to be at the end of the parent
-			if (this.bottomChanged) {
+			if (this.belowChanged) {
 				parent.appendChild(frag);
 			}
 
-			this.bottomIndex = maxIndex;
+			this.belowIndex = maxIndex;
 
 			return this;
+		},
+		isAboveActive: function() {
+			return this.detachedAbove.length > 0
+		},
+		isBelowActive: function() {
+			return this.detachedBelow.length > 0
 		}
 	};
 
