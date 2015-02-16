@@ -6,6 +6,7 @@
 		this.addedFinishedFn = null;
 		this.createBar = null;
 		this.createCell = null;
+		this.hidden = null;
 	}
 
 	Constructor.prototype = {
@@ -37,20 +38,30 @@
 		setCreateCellFn: function(fn) {
 			this.createCell = fn;
 		},
+		setHidden: function(hidden) {
+			this.hidden = hidden;
+		},
 		createCells:function (i, size, isBefore) {
 			var offset = (isBefore ? 0 : 1),
 				rowMax = i + this.qty,
+				hiddenOffset = 0,
 				colMax = size.cols || 1,
 				rowParent,
+				isHidden,
 				row = i,
 				col;
 
-			for (; row < rowMax; row++) {
+			for (; (row - hiddenOffset) < rowMax; row++) {
+				if (isHidden = this.hidden[row + offset] !== undefined) {
+					//if this row is hidden, we'll go ahead and process it, but we need to offset the max so that we
+					// eventually get the cells we need
+					hiddenOffset++;
+				}
 				//create a new row
-				rowParent = this.createBar(row + offset);
+				rowParent = this.createBar(row + offset, isHidden);
 
 				for (col = 1; col <= colMax; col++) {
-					this.createCell(row + offset, col, rowParent);
+					this.createCell(row + offset, col, rowParent, isHidden);
 				}
 			}
 

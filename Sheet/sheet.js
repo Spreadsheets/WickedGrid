@@ -1830,7 +1830,6 @@ $.sheet = {
 							tableSize = table.size(),
 							frag = document.createDocumentFragment(),
 							rowIndexOffset = 0,
-							useDetach = actionUI.useDetach,
 							detacher = actionUI.yDetacher,
 							storeInDetacher = false;
 
@@ -1841,10 +1840,9 @@ $.sheet = {
 							case "row-init":
 							case "row":
 								//setupCell = null;
-								if (useDetach) {
-									rowIndexOffset = detacher.detachedAbove.length - 1;
-									rowIndexOffset = rowIndexOffset > 0 ? rowIndexOffset : 0;
-								}
+								rowIndexOffset = detacher.detachedAbove.length - 1;
+								rowIndexOffset = rowIndexOffset > 0 ? rowIndexOffset : 0;
+
 
 								//ensure that i isn't out of bounds
 								if (spreadsheetIndex === u || spreadsheetIndex === null) {
@@ -1865,7 +1863,7 @@ $.sheet = {
 									isBefore = false;
 								}
 
-								if (useDetach && isLast) {
+								if (isLast) {
 									storeInDetacher = detacher.isBelowActive();
 									if (storeInDetacher) {
 										spreadsheetIndex += detacher.detachedBelow.length - 1;
@@ -1881,7 +1879,7 @@ $.sheet = {
 									return;
 								}
 
-								o.setCreateBarFn(function (at) {
+								o.setCreateBarFn(function (at, isHidden) {
 									var barParent = document.createElement('tr'),
 										bar = document.createElement('th');
 
@@ -1893,9 +1891,13 @@ $.sheet = {
 
 									barParent.appendChild(bar);
 
-									if (storeInDetacher) {
+									if (isHidden) {
+										detacher.hidden[at] = barParent;
+									}
+									else if (storeInDetacher) {
 										detacher.detachedBelow.push(barParent);
-									} else {
+									}
+									else {
 										frag.appendChild(barParent);
 									}
 
@@ -1912,7 +1914,7 @@ $.sheet = {
 									return barParent;
 								});
 
-								o.setCreateCellFn(function (row, at, rowParent) {
+								o.setCreateCellFn(function (row, at, rowParent, isHidden) {
 									var cell = setupCell.call(loader, jS.i, row, at, jS),
 										td,
 										spreadsheetRow = spreadsheet[row];
@@ -1932,6 +1934,8 @@ $.sheet = {
 
 									rowParent.insertBefore(td, rowParent.children[at]);
 								});
+
+								o.setHidden(detacher.hidden);
 
 								o.setAddedFinishedFn(function(_offset) {
 									tBody.insertBefore(frag, isBefore ? tBody.children[domIndex] : tBody.children[domIndex].nextSibling);
@@ -2021,14 +2025,11 @@ $.sheet = {
 										rowParent,
 										spreadsheetRow = spreadsheet[row];
 
-									if (useDetach) {
-										if ((detacher.detachedAbove.length - 1) >= row) {
-											rowParent = detacher.detachedAbove[row - 1];
-										} else if (detacher.detachedAbove.length + tBody.children.length < row) {
-											rowParent = detacher.detachedBelow[row - (detacher.detachedAbove.length + tBody.children.length)];
-										} else {
-											rowParent = tBody.children[row];
-										}
+
+									if ((detacher.detachedAbove.length - 1) >= row) {
+										rowParent = detacher.detachedAbove[row - 1];
+									} else if (detacher.detachedAbove.length + tBody.children.length < row) {
+										rowParent = detacher.detachedBelow[row - (detacher.detachedAbove.length + tBody.children.length)];
 									} else {
 										rowParent = tBody.children[row];
 									}
@@ -4436,17 +4437,10 @@ $.sheet = {
 						tr,
 						trIndex,
 						actionUI = pane.actionUI,
-						useDetacher = actionUI.useDetach,
 						detacher = actionUI.yDetacher,
-						storeInDetacher = false;
-
-					if (useDetacher) {
 						storeInDetacher = detacher.isBelowActive();
-					}
 
-					if (pane.actionUI.useDetach) {
-						rowIndexOffset = pane.actionUI.yDetacher.aboveIndex;
-					}
+					rowIndexOffset = pane.actionUI.yDetacher.detachedAbove.length;
 
 					rowStart = rowStart || 0;
 					rowEnd = rowEnd || rows.length - 1;
@@ -4481,7 +4475,7 @@ $.sheet = {
 							}
 						}
 						do {
-							if (useDetacher && tr === u) {
+							if (tr === u) {
 								if ((tr = detacher.detachedAbove[rowIndex]) === u) {
 									continue;
 								}
@@ -5287,9 +5281,10 @@ $.sheet = {
 					if (size.rows < addRows) {
 						addRows -= size.rows;
 
-						if (actionUI.hiddenRows.length > 0) {
-							addRows += arrHelpers.indexOfNearestLessThan(actionUI.hiddenRows, addRows) + 1;
-						}
+						//TODO
+						//if (actionUI.hiddenRows.length > 0) {
+						//	addRows += arrHelpers.indexOfNearestLessThan(actionUI.hiddenRows, addRows) + 1;
+						//}
 
 						jS.controlFactory.addRowMulti(null, addRows, false, true, true);
 					}
@@ -6039,18 +6034,19 @@ $.sheet = {
 						initCols = s.initCalcCols,
 						targetRow = Math.max((endScrolledArea.row + initRows) - 1, actionUI.foldArea.row),
 						targetCol = Math.max((endScrolledArea.col + initCols) - 1, actionUI.foldArea.col),
-						rowIndex,
+						rowIndex = 1,
+						rowMax,
 						row,
 						colIndex,
+						colMax,
 						oldPos = this.calcVisiblePos,
 						newPos = {row: targetRow, col: oldPos.col},
 						cell,
 						stack = [],
 						each = function() {
 							if (this.row === u) {
-								while (this.offset > 0 && spreadsheet[this.offset] === u) {
-									jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.offset, this.offset, this.colIndex, this.colIndex, true);
-									this.offset--;
+								while (spreadsheet[this.rowIndex] === u) {
+									jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
 								}
 							} else {
 								if ((this.cell = this.row[this.colIndex]) === u) {
@@ -6068,28 +6064,33 @@ $.sheet = {
 							jS.trigger('sheetCalculation', [
 								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
 							]);
-						};
+						},
+						offset,
+						hiddenRows = actionUI.yDetacher.hidden;
 
-					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
-					targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
-					rowIndex = targetRow;
+					rowMax = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
+					colMax = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
 
-					if (rowIndex > 0) {
-						do {
-							colIndex = targetCol;
-							if (colIndex > 0) {
-								do {
-									var offset = rowIndex;
-									stack.push({
-										row: row,
-										cell: row !== u ? row[colIndex] : u,
-										rowIndex: rowIndex,
-										colIndex: colIndex,
-										offset: offset
-									});
-								} while (colIndex-- > 1);
-							}
-						} while (rowIndex-- > oldPos.row);
+					rowIndex = oldPos.row;
+
+					for(; rowIndex <= rowMax; rowIndex++) {
+						colIndex = 1;
+						if (hiddenRows[rowIndex] !== u) {
+							rowMax++;
+							newPos.row++;
+						}
+						for(;colIndex < colMax; colIndex++) {
+							offset = rowIndex;
+							row = spreadsheet[rowIndex];
+							cell = row !== u ? row[colIndex] : u;
+
+							stack.push({
+								row: row,
+								cell: cell,
+								rowIndex: rowIndex,
+								colIndex: colIndex
+							});
+						}
 					}
 
 					this.calcVisiblePos = newPos;
@@ -7264,10 +7265,7 @@ $.sheet = {
 						rowOffset = 0,
 						pane = jS.obj.pane();
 
-					if (pane.actionUI.useDetach) {
-						//rowOffset = pane.actionUI.yDetacher.aboveIndex;
-					}
-
+					//rowOffset = pane.actionUI.yDetacher.aboveIndex;
 
 					if (td === u || td === null) return result;
 
@@ -7964,9 +7962,7 @@ $.sheet = {
 						column = 0,
 						rowOffset = 0;
 
-					if (pane.actionUI.useDetach) {
-						//rowOffset = pane.actionUI.yDetacher.aboveIndex;
-					}
+					//rowOffset = pane.actionUI.yDetacher.aboveIndex;
 
 					table = table || jS.obj.table()[0];
 					//table / tBody / tr / td

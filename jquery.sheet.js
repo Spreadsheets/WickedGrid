@@ -1466,7 +1466,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.scrollSize = {};
 
 		this.hiddenColumns = [];
-		this.hiddenRows = [];
 
 		if (!(this.frozenAt = frozenAt)) {
 			this.frozenAt = {row:0, col:0};
@@ -1491,7 +1490,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		var that = this,
 			pane = this.pane,
-			tBody = table.tBody,
+			tBody = this.tBody = table.tBody,
 			cssId = '#' + table.getAttribute('id'),
 			scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
 			scrollInner = pane.scrollInner = document.createElement('div'),
@@ -1536,46 +1535,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				that.scrolledArea.col = Math.max(index || 1, 1);
 				that.foldArea.col = endIndex;
 				return true;
-			}, max),
-			yDetacher = this.yDetacher = new Sheet.Detacher(tBody),
-			scrollStyleY = this.scrollAxisY.scrollStyle = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
-				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
-				if (that.yIndex === index) return false;
+			}, max);
 
-				if (index === undefined || index === null) index = that.yIndex;
-
-				var endIndex = index + that.maximumVisibleRows,
-					startOfSet = arrHelpers.ofSet(that.hiddenRows, index),
-					endOfSet = arrHelpers.ofSet(that.hiddenRows, endIndex);
-
-				if (startOfSet !== null) {
-					index = startOfSet.end + (index - startOfSet.start);
-				}
-
-				if (endOfSet !== null) {
-					endIndex = endOfSet.end + (endIndex - endOfSet.start);
-				}
-
-				that.yIndex = index;
-
-				if (style === undefined) {
-					var row = that.frozenAt.row;
-					style =
-						//hide all previous tr elements
-						cssId + ' tr:nth-child(-n+' + index + ') {display: none;}' +
-
-						//but show those that are frozen
-						cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
-
-						//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						cssId + ' tr:nth-child(' + (endIndex) + ') ~ tr {display: none;}';
-				}
-
-				this.setStyle(style);
-				that.scrolledArea.row = Math.max(index || 1, 1);
-				that.foldArea.row = endIndex;
-				return true;
-			});
+		this.yDetacher = new Sheet.Detacher(tBody);
 
 		scrollOuter.setAttribute('class', cl);
 		scrollOuter.appendChild(scrollInner);
@@ -1596,7 +1558,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		});
 
 		pane.appendChild(scrollStyleX.styleElement);
-		pane.appendChild(scrollStyleY.styleElement);
 
 		new MouseWheel(pane, scrollOuter);
 	};
@@ -1723,7 +1684,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			},0);
 		},
 
-
 		hide:function (hiddenRows, hiddenColumns) {
 			var cssId = '#' + this.table.getAttribute('id'),
 				pane = this.pane,
@@ -1737,23 +1697,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					this.setStyle(style);
 				});
-
-				this.toggleHideStyleY = new Sheet.StyleUpdater(function () {
-					var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
-
-					this.setStyle(style);
-				});
 			}
 
 			pane.appendChild(this.toggleHideStyleX.styleElement);
-			pane.appendChild(this.toggleHideStyleY.styleElement);
 
-			this.hiddenRows = (hiddenRows !== null ? hiddenRows : []);
 			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
-			if (this.hiddenRows.length > 0) {
-				this.hiddenRows.sort();
-				this.toggleHideStyleY.update();
+			if (hiddenRows.length > 0) {
+				hiddenRows.sort();
+				this.toggleHideRowRange(hiddenRows[0], hiddenRows[hiddenRows.length - 1], true);
 			}
 
 			if (this.hiddenColumns.length > 0) {
@@ -1764,63 +1716,99 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		/**
 		 * Toggles a row to be visible
-		 * @param {Number} index
+		 * @param {Number} rowIndex
 		 */
-		toggleHideRow: function(index) {
-			var key;
-			if ((key = this.hiddenRows.indexOf(index)) > -1) {
-				this.hiddenRows.splice(key, 1);
+		toggleHideRow: function(rowIndex) {
+			var domIndex,
+				tBody = this.tBody,
+				detacher = this.yDetacher,
+				hiddenRows = detacher.hidden,
+				row = detacher.hidden[rowIndex],
+				detachedAbove = detacher.detachedAbove,
+				detachedBelow = detacher.detachedBelow,
+				offsetViewPortTop = detachedAbove.length,
+				offsetViewPortBottom = offsetViewPortTop + tBody.length;
+
+			if (row === undefined) {
+				//if index is above the view port
+				if (rowIndex < offsetViewPortTop) {
+					hiddenRows[rowIndex] = detachedAbove[rowIndex];
+				}
+
+				//else if the index is below the view port
+				else if (rowIndex > offsetViewPortBottom) {
+					hiddenRows[rowIndex] = detachedBelow[rowIndex - offsetViewPortBottom];
+				}
+
+				//else if it is in view of the table, remove it from the table
+				else {
+					domIndex = rowIndex - offsetViewPortTop;
+					if (domIndex >= tBody.children.length) {
+						hiddenRows[rowIndex] = null;
+					} else {
+						tBody.removeChild(hiddenRows[rowIndex] = tBody.children[domIndex]);
+					}
+				}
 			} else {
-				this.hiddenRows.push(index);
+				//TODO
+				delete hiddenRows[rowIndex];
 			}
-			this.hiddenRows.sort();
-			this.toggleHideStyleY.update();
 		},
 
 		/**
 		 * Toggles a range of rows to be visible starting at index of 1
 		 * @param {Number} startIndex
 		 * @param {Number} [endIndex]
+		 * @param {Boolean} [hide]
 		 */
-		toggleHideRowRange: function(startIndex, endIndex) {
+		toggleHideRowRange: function(startIndex, endIndex, hide) {
+			//TODO
 			if (!startIndex) return;
 			if (!endIndex) endIndex = startIndex;
 
-			var hiddenRows = this.hiddenRows,
-				newHiddenRows = [],
-				max = hiddenRows.length,
-				hiddenRow,
-				i = 0,
-				removing = null;
+			var domIndex,
+				tBody = this.tBody,
+				rowIndex = startIndex,
+				detacher = this.yDetacher,
+				hiddenRows = detacher.hidden,
+				detachedAbove = detacher.detachedAbove,
+				detachedBelow = detacher.detachedBelow,
+				removing = ((hide === true) || (hiddenRows[startIndex] === u)),
+				offsetViewPortTop = detachedAbove.length - 1,
+				offsetViewPortBottom = offsetViewPortTop + tBody.length;
 
-			for(;i < max; i++){
-				hiddenRow = hiddenRows[i];
-				if (hiddenRow >= startIndex && hiddenRow <= endIndex) {
-					if (removing === null) {
-						removing = true;
+			for(;rowIndex < endIndex; rowIndex++){
+				if (removing) {
+					//if index is above the view port
+					if (rowIndex < offsetViewPortTop) {
+						hiddenRows[rowIndex] = detachedAbove[rowIndex];
 					}
-				} else {
-					newHiddenRows.push(hiddenRow);
+
+					//else if the index is below the view port
+					else if (rowIndex > offsetViewPortBottom) {
+						hiddenRows[rowIndex] = detachedBelow[rowIndex - offsetViewPortBottom];
+					}
+
+					//else if it is in view of the table, remove it from the table
+					else {
+						domIndex = rowIndex - offsetViewPortTop;
+						if (domIndex >= tBody.children.length) {
+							hiddenRows[rowIndex] = null;
+						} else {
+							tBody.removeChild(hiddenRows[rowIndex] = tBody.children[domIndex]);
+						}
+					}
 				}
 			}
-
-			if (removing === null) {
-				for(i = startIndex; i <= endIndex; i++) {
-					newHiddenRows.push(i);
-				}
-			}
-
-			newHiddenRows.sort();
-			this.hiddenRows = newHiddenRows;
-			this.toggleHideStyleY.update();
 		},
 
 		/**
 		 * Makes all rows visible
 		 */
 		rowShowAll:function () {
+			//TODO
 			this.toggleHideStyleY.setStyle('');
-			this.hiddenRows = [];
+			this.hiddenRows = {};
 		},
 
 
@@ -1893,7 +1881,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			var axis = this.scrollAxisX,
 				max,
 				i,
-				value = Math.round(pixel / this.pixelScrollDensity),
+				value = (pixel / this.pixelScrollDensity) >> 1,
 				offset = arrHelpers.indexOfNearestLessThan(this.hiddenColumns, value) + 1;
 
 			if (offset > 0) {
@@ -1907,50 +1895,29 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			return axis.scrollStyle.update(i);
 		},
 
-		useDetach: true,
 		/**
 		 * Scrolls to a position within the spreadsheet
 		 * @param {Number} pixel
 		 * @param {Boolean} [isUp]
 		 */
 		scrollToPixelY: function(pixel, isUp) {
-			if (this.useDetach) {
-				var i = Math.round(pixel / this.pixelScrollDensity),
-					detacher = this.yDetacher,
-					result,
-					offset = arrHelpers.indexOfNearestLessThan(this.hiddenRows, i) + 1;
+			var i = (pixel / this.pixelScrollDensity) >> 1,
+				detacher = this.yDetacher;
 
-				this.yIndex = i;
-				this.scrolledArea.row = Math.max(i || 1, 1);
+			this.yIndex = i;
+			this.scrolledArea.row = Math.max(i || 1, 1);
 
-				if (isUp === true) {
-					detacher
-						.attachAboveAfter(i)
-						.detachBelowAfter(i + this.maximumVisibleRows + 1);
-				} else {
-					detacher
-						.detachAboveBefore(i)
-						.attachBelowBefore(i + this.maximumVisibleRows + 1);
-				}
-
-				return detacher.aboveChanged || detacher.belowChanged;
+			if (isUp === true) {
+				detacher
+					.attachAboveAfter(i)
+					.detachBelowAfter(i + this.maximumVisibleRows + 1);
+			} else {
+				detacher
+					.detachAboveBefore(i)
+					.attachBelowBefore(i + this.maximumVisibleRows + 1);
 			}
 
-			var axis = this.scrollAxisY,
-				max,
-				i,
-				value = Math.round(pixel / this.pixelScrollDensity),
-				offset = arrHelpers.indexOfNearestLessThan(this.hiddenRows, value) + 1;
-
-			if (offset > -1) {
-				value += offset;
-			}
-
-			max = axis.max;
-			axis.value = value;
-
-			i = value > max ? max : value;
-			return axis.scrollStyle.update(i);
+			return detacher.aboveChanged || detacher.belowChanged;
 		},
 
 		scrollToCell: function(axis, value) {
@@ -1967,7 +1934,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 */
 		toggleHideStyleY: null,
 
-		pixelScrollDensity: 20,
+		pixelScrollDensity: 30,
 		maximumVisibleRows: 65,
 		maximumVisibleColumns: 20
 	};
@@ -2360,6 +2327,7 @@ Sheet.Highlighter = (function(document, window, $) {
 		this.addedFinishedFn = null;
 		this.createBar = null;
 		this.createCell = null;
+		this.hidden = null;
 	}
 
 	Constructor.prototype = {
@@ -2391,20 +2359,30 @@ Sheet.Highlighter = (function(document, window, $) {
 		setCreateCellFn: function(fn) {
 			this.createCell = fn;
 		},
+		setHidden: function(hidden) {
+			this.hidden = hidden;
+		},
 		createCells:function (i, size, isBefore) {
 			var offset = (isBefore ? 0 : 1),
 				rowMax = i + this.qty,
+				hiddenOffset = 0,
 				colMax = size.cols || 1,
 				rowParent,
+				isHidden,
 				row = i,
 				col;
 
-			for (; row < rowMax; row++) {
+			for (; (row - hiddenOffset) < rowMax; row++) {
+				if (isHidden = this.hidden[row + offset] !== undefined) {
+					//if this row is hidden, we'll go ahead and process it, but we need to offset the max so that we
+					// eventually get the cells we need
+					hiddenOffset++;
+				}
 				//create a new row
-				rowParent = this.createBar(row + offset);
+				rowParent = this.createBar(row + offset, isHidden);
 
 				for (col = 1; col <= colMax; col++) {
-					this.createCell(row + offset, col, rowParent);
+					this.createCell(row + offset, col, rowParent, isHidden);
 				}
 			}
 
@@ -2427,8 +2405,7 @@ Sheet.Highlighter = (function(document, window, $) {
 	 * @param {HTMLElement} parent
 	 * @property {Array} detachedAbove
 	 * @property {Array} detachedBelow
-	 * @property {Number} aboveIndex
-	 * @property {Number} belowIndex
+	 * @property {Object} hidden
 	 * @property {HTMLElement} parent
 	 * @property {Boolean} aboveChanged
 	 * @property {Boolean} belowChanged
@@ -2438,8 +2415,7 @@ Sheet.Highlighter = (function(document, window, $) {
 	function Detacher(parent) {
 		this.detachedAbove = [];
 		this.detachedBelow = [];
-		this.aboveIndex = 0;
-		this.belowIndex = 0;
+		this.hidden = {};
 		this.parent = parent;
 		this.aboveChanged = false;
 		this.belowChanged = false;
@@ -2454,15 +2430,22 @@ Sheet.Highlighter = (function(document, window, $) {
 	function initialDetach(_this, maxIndex) {
 		var parent = _this.parent,
 			children = parent.children,
-			aboveCount = _this.detachedAbove.length;
+			aboveCount = _this.detachedAbove.length,
+			i,
+			hiddenOffset = 0,
+			hidden = _this.hidden;
 
 		//if there are too many in above count, return
 		if (maxIndex < aboveCount) return;
 
 
-		while (aboveCount + children.length > maxIndex) {
-			_this.detachedBelow.unshift(parent.lastChild);
-			parent.removeChild(parent.lastChild);
+		while ((i = (hiddenOffset + aboveCount + (children.length - 1))) > maxIndex) {
+			if (hidden[i] === u) {
+				_this.detachedBelow.unshift(parent.lastChild);
+				parent.removeChild(parent.lastChild);
+			} else {
+				hiddenOffset++;
+			}
 		}
 	}
 
@@ -2476,25 +2459,22 @@ Sheet.Highlighter = (function(document, window, $) {
 			var detachable,
 				parent = this.parent,
 				detachables = parent.children,
-				i = this.aboveIndex;
+				detachedAbove = this.detachedAbove;
 
 			this.aboveChanged = false;
 
-			while (i < maxIndex) {
+			while (detachedAbove.length - 1 < maxIndex) {
 				//we will always detach the first element
 				detachable = detachables[1];
 				if (detachable === u) {
 					break;
 				}
 
-				this.detachedAbove.push(detachable);
+				detachedAbove.push(detachable);
 				parent.removeChild(detachable);
-				i++;
 
 				this.aboveChanged = true;
 			}
-
-			this.aboveIndex = maxIndex;
 
 			return this;
 		},
@@ -2524,8 +2504,6 @@ Sheet.Highlighter = (function(document, window, $) {
 				this.belowChanged = true;
 			}
 
-			this.belowIndex = minIndex;
-
 			return this;
 		},
 
@@ -2537,21 +2515,29 @@ Sheet.Highlighter = (function(document, window, $) {
 		 */
 		attachAboveAfter: function(minIndex) {
 			var parent = this.parent,
-				frag = document.createDocumentFragment();
+				frag = document.createDocumentFragment(),
+				detached,
+				hiddenOffset = 0,
+				detachedAbove = this.detachedAbove,
+				i,
+				hidden = this.hidden;
 
 			this.aboveChanged = false;
 
-			while (this.detachedAbove.length > minIndex) {
+			while ((i = detachedAbove.length + hiddenOffset) > minIndex) {
 				//attach it
-				frag.insertBefore(this.detachedAbove.pop(), frag.firstChild);
+				detached = detachedAbove.pop();
+				if (hidden[i - 1] === u) {
+					frag.insertBefore(detached, frag.firstChild);
+				} else {
+					hiddenOffset++;
+				}
 				this.aboveChanged = true;
 			}
 
 			if (this.aboveChanged) {
 				parent.insertBefore(frag, parent.children[1]);
 			}
-
-			this.aboveIndex = minIndex;
 
 			return this;
 		},
@@ -2569,17 +2555,23 @@ Sheet.Highlighter = (function(document, window, $) {
 
 			var detached,
 				parent = this.parent,
-				htmlIndex = maxIndex - this.aboveIndex,
 				frag = document.createDocumentFragment(),
 				fragChildren = frag.children,
-				offset = this.detachedAbove.length + parent.children.length;
+				offset = this.detachedAbove.length + parent.children.length,
+				hiddenOffset = 0,
+				i,
+				hidden = this.hidden;
 
 			this.belowChanged = false;
 
-			while (offset + fragChildren.length < maxIndex && this.detachedBelow.length > 0) {
+			while ((i = hiddenOffset + offset + fragChildren.length) < maxIndex && this.detachedBelow.length > 0) {
 				//attach it
 				detached = this.detachedBelow.shift();
-				frag.appendChild(detached);
+				if (hidden[i - 1] === u) {
+					frag.appendChild(detached);
+				} else {
+					hiddenOffset++;
+				}
 				this.belowChanged = true;
 			}
 
@@ -2587,8 +2579,6 @@ Sheet.Highlighter = (function(document, window, $) {
 			if (this.belowChanged) {
 				parent.appendChild(frag);
 			}
-
-			this.belowIndex = maxIndex;
 
 			return this;
 		},
@@ -5931,7 +5921,6 @@ $.sheet = {
 							tableSize = table.size(),
 							frag = document.createDocumentFragment(),
 							rowIndexOffset = 0,
-							useDetach = actionUI.useDetach,
 							detacher = actionUI.yDetacher,
 							storeInDetacher = false;
 
@@ -5942,10 +5931,9 @@ $.sheet = {
 							case "row-init":
 							case "row":
 								//setupCell = null;
-								if (useDetach) {
-									rowIndexOffset = detacher.detachedAbove.length - 1;
-									rowIndexOffset = rowIndexOffset > 0 ? rowIndexOffset : 0;
-								}
+								rowIndexOffset = detacher.detachedAbove.length - 1;
+								rowIndexOffset = rowIndexOffset > 0 ? rowIndexOffset : 0;
+
 
 								//ensure that i isn't out of bounds
 								if (spreadsheetIndex === u || spreadsheetIndex === null) {
@@ -5966,7 +5954,7 @@ $.sheet = {
 									isBefore = false;
 								}
 
-								if (useDetach && isLast) {
+								if (isLast) {
 									storeInDetacher = detacher.isBelowActive();
 									if (storeInDetacher) {
 										spreadsheetIndex += detacher.detachedBelow.length - 1;
@@ -5982,7 +5970,7 @@ $.sheet = {
 									return;
 								}
 
-								o.setCreateBarFn(function (at) {
+								o.setCreateBarFn(function (at, isHidden) {
 									var barParent = document.createElement('tr'),
 										bar = document.createElement('th');
 
@@ -5994,9 +5982,13 @@ $.sheet = {
 
 									barParent.appendChild(bar);
 
-									if (storeInDetacher) {
+									if (isHidden) {
+										detacher.hidden[at] = barParent;
+									}
+									else if (storeInDetacher) {
 										detacher.detachedBelow.push(barParent);
-									} else {
+									}
+									else {
 										frag.appendChild(barParent);
 									}
 
@@ -6013,7 +6005,7 @@ $.sheet = {
 									return barParent;
 								});
 
-								o.setCreateCellFn(function (row, at, rowParent) {
+								o.setCreateCellFn(function (row, at, rowParent, isHidden) {
 									var cell = setupCell.call(loader, jS.i, row, at, jS),
 										td,
 										spreadsheetRow = spreadsheet[row];
@@ -6033,6 +6025,8 @@ $.sheet = {
 
 									rowParent.insertBefore(td, rowParent.children[at]);
 								});
+
+								o.setHidden(detacher.hidden);
 
 								o.setAddedFinishedFn(function(_offset) {
 									tBody.insertBefore(frag, isBefore ? tBody.children[domIndex] : tBody.children[domIndex].nextSibling);
@@ -6122,14 +6116,11 @@ $.sheet = {
 										rowParent,
 										spreadsheetRow = spreadsheet[row];
 
-									if (useDetach) {
-										if ((detacher.detachedAbove.length - 1) >= row) {
-											rowParent = detacher.detachedAbove[row - 1];
-										} else if (detacher.detachedAbove.length + tBody.children.length < row) {
-											rowParent = detacher.detachedBelow[row - (detacher.detachedAbove.length + tBody.children.length)];
-										} else {
-											rowParent = tBody.children[row];
-										}
+
+									if ((detacher.detachedAbove.length - 1) >= row) {
+										rowParent = detacher.detachedAbove[row - 1];
+									} else if (detacher.detachedAbove.length + tBody.children.length < row) {
+										rowParent = detacher.detachedBelow[row - (detacher.detachedAbove.length + tBody.children.length)];
 									} else {
 										rowParent = tBody.children[row];
 									}
@@ -8537,17 +8528,10 @@ $.sheet = {
 						tr,
 						trIndex,
 						actionUI = pane.actionUI,
-						useDetacher = actionUI.useDetach,
 						detacher = actionUI.yDetacher,
-						storeInDetacher = false;
-
-					if (useDetacher) {
 						storeInDetacher = detacher.isBelowActive();
-					}
 
-					if (pane.actionUI.useDetach) {
-						rowIndexOffset = pane.actionUI.yDetacher.aboveIndex;
-					}
+					rowIndexOffset = pane.actionUI.yDetacher.detachedAbove.length;
 
 					rowStart = rowStart || 0;
 					rowEnd = rowEnd || rows.length - 1;
@@ -8582,7 +8566,7 @@ $.sheet = {
 							}
 						}
 						do {
-							if (useDetacher && tr === u) {
+							if (tr === u) {
 								if ((tr = detacher.detachedAbove[rowIndex]) === u) {
 									continue;
 								}
@@ -9388,9 +9372,10 @@ $.sheet = {
 					if (size.rows < addRows) {
 						addRows -= size.rows;
 
-						if (actionUI.hiddenRows.length > 0) {
-							addRows += arrHelpers.indexOfNearestLessThan(actionUI.hiddenRows, addRows) + 1;
-						}
+						//TODO
+						//if (actionUI.hiddenRows.length > 0) {
+						//	addRows += arrHelpers.indexOfNearestLessThan(actionUI.hiddenRows, addRows) + 1;
+						//}
 
 						jS.controlFactory.addRowMulti(null, addRows, false, true, true);
 					}
@@ -10140,18 +10125,19 @@ $.sheet = {
 						initCols = s.initCalcCols,
 						targetRow = Math.max((endScrolledArea.row + initRows) - 1, actionUI.foldArea.row),
 						targetCol = Math.max((endScrolledArea.col + initCols) - 1, actionUI.foldArea.col),
-						rowIndex,
+						rowIndex = 1,
+						rowMax,
 						row,
 						colIndex,
+						colMax,
 						oldPos = this.calcVisiblePos,
 						newPos = {row: targetRow, col: oldPos.col},
 						cell,
 						stack = [],
 						each = function() {
 							if (this.row === u) {
-								while (this.offset > 0 && spreadsheet[this.offset] === u) {
-									jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.offset, this.offset, this.colIndex, this.colIndex, true);
-									this.offset--;
+								while (spreadsheet[this.rowIndex] === u) {
+									jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
 								}
 							} else {
 								if ((this.cell = this.row[this.colIndex]) === u) {
@@ -10169,28 +10155,33 @@ $.sheet = {
 							jS.trigger('sheetCalculation', [
 								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
 							]);
-						};
+						},
+						offset,
+						hiddenRows = actionUI.yDetacher.hidden;
 
-					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
-					targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
-					rowIndex = targetRow;
+					rowMax = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
+					colMax = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
 
-					if (rowIndex > 0) {
-						do {
-							colIndex = targetCol;
-							if (colIndex > 0) {
-								do {
-									var offset = rowIndex;
-									stack.push({
-										row: row,
-										cell: row !== u ? row[colIndex] : u,
-										rowIndex: rowIndex,
-										colIndex: colIndex,
-										offset: offset
-									});
-								} while (colIndex-- > 1);
-							}
-						} while (rowIndex-- > oldPos.row);
+					rowIndex = oldPos.row;
+
+					for(; rowIndex <= rowMax; rowIndex++) {
+						colIndex = 1;
+						if (hiddenRows[rowIndex] !== u) {
+							rowMax++;
+							newPos.row++;
+						}
+						for(;colIndex < colMax; colIndex++) {
+							offset = rowIndex;
+							row = spreadsheet[rowIndex];
+							cell = row !== u ? row[colIndex] : u;
+
+							stack.push({
+								row: row,
+								cell: cell,
+								rowIndex: rowIndex,
+								colIndex: colIndex
+							});
+						}
 					}
 
 					this.calcVisiblePos = newPos;
@@ -11365,10 +11356,7 @@ $.sheet = {
 						rowOffset = 0,
 						pane = jS.obj.pane();
 
-					if (pane.actionUI.useDetach) {
-						//rowOffset = pane.actionUI.yDetacher.aboveIndex;
-					}
-
+					//rowOffset = pane.actionUI.yDetacher.aboveIndex;
 
 					if (td === u || td === null) return result;
 
@@ -12065,9 +12053,7 @@ $.sheet = {
 						column = 0,
 						rowOffset = 0;
 
-					if (pane.actionUI.useDetach) {
-						//rowOffset = pane.actionUI.yDetacher.aboveIndex;
-					}
+					//rowOffset = pane.actionUI.yDetacher.aboveIndex;
 
 					table = table || jS.obj.table()[0];
 					//table / tBody / tr / td

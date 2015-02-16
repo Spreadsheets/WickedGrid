@@ -7,8 +7,7 @@
 	 * @param {HTMLElement} parent
 	 * @property {Array} detachedAbove
 	 * @property {Array} detachedBelow
-	 * @property {Number} aboveIndex
-	 * @property {Number} belowIndex
+	 * @property {Object} hidden
 	 * @property {HTMLElement} parent
 	 * @property {Boolean} aboveChanged
 	 * @property {Boolean} belowChanged
@@ -18,8 +17,7 @@
 	function Detacher(parent) {
 		this.detachedAbove = [];
 		this.detachedBelow = [];
-		this.aboveIndex = 0;
-		this.belowIndex = 0;
+		this.hidden = {};
 		this.parent = parent;
 		this.aboveChanged = false;
 		this.belowChanged = false;
@@ -34,15 +32,22 @@
 	function initialDetach(_this, maxIndex) {
 		var parent = _this.parent,
 			children = parent.children,
-			aboveCount = _this.detachedAbove.length;
+			aboveCount = _this.detachedAbove.length,
+			i,
+			hiddenOffset = 0,
+			hidden = _this.hidden;
 
 		//if there are too many in above count, return
 		if (maxIndex < aboveCount) return;
 
 
-		while (aboveCount + children.length > maxIndex) {
-			_this.detachedBelow.unshift(parent.lastChild);
-			parent.removeChild(parent.lastChild);
+		while ((i = (hiddenOffset + aboveCount + (children.length - 1))) > maxIndex) {
+			if (hidden[i] === u) {
+				_this.detachedBelow.unshift(parent.lastChild);
+				parent.removeChild(parent.lastChild);
+			} else {
+				hiddenOffset++;
+			}
 		}
 	}
 
@@ -56,25 +61,22 @@
 			var detachable,
 				parent = this.parent,
 				detachables = parent.children,
-				i = this.aboveIndex;
+				detachedAbove = this.detachedAbove;
 
 			this.aboveChanged = false;
 
-			while (i < maxIndex) {
+			while (detachedAbove.length - 1 < maxIndex) {
 				//we will always detach the first element
 				detachable = detachables[1];
 				if (detachable === u) {
 					break;
 				}
 
-				this.detachedAbove.push(detachable);
+				detachedAbove.push(detachable);
 				parent.removeChild(detachable);
-				i++;
 
 				this.aboveChanged = true;
 			}
-
-			this.aboveIndex = maxIndex;
 
 			return this;
 		},
@@ -104,8 +106,6 @@
 				this.belowChanged = true;
 			}
 
-			this.belowIndex = minIndex;
-
 			return this;
 		},
 
@@ -117,21 +117,29 @@
 		 */
 		attachAboveAfter: function(minIndex) {
 			var parent = this.parent,
-				frag = document.createDocumentFragment();
+				frag = document.createDocumentFragment(),
+				detached,
+				hiddenOffset = 0,
+				detachedAbove = this.detachedAbove,
+				i,
+				hidden = this.hidden;
 
 			this.aboveChanged = false;
 
-			while (this.detachedAbove.length > minIndex) {
+			while ((i = detachedAbove.length + hiddenOffset) > minIndex) {
 				//attach it
-				frag.insertBefore(this.detachedAbove.pop(), frag.firstChild);
+				detached = detachedAbove.pop();
+				if (hidden[i - 1] === u) {
+					frag.insertBefore(detached, frag.firstChild);
+				} else {
+					hiddenOffset++;
+				}
 				this.aboveChanged = true;
 			}
 
 			if (this.aboveChanged) {
 				parent.insertBefore(frag, parent.children[1]);
 			}
-
-			this.aboveIndex = minIndex;
 
 			return this;
 		},
@@ -149,17 +157,23 @@
 
 			var detached,
 				parent = this.parent,
-				htmlIndex = maxIndex - this.aboveIndex,
 				frag = document.createDocumentFragment(),
 				fragChildren = frag.children,
-				offset = this.detachedAbove.length + parent.children.length;
+				offset = this.detachedAbove.length + parent.children.length,
+				hiddenOffset = 0,
+				i,
+				hidden = this.hidden;
 
 			this.belowChanged = false;
 
-			while (offset + fragChildren.length < maxIndex && this.detachedBelow.length > 0) {
+			while ((i = hiddenOffset + offset + fragChildren.length) < maxIndex && this.detachedBelow.length > 0) {
 				//attach it
 				detached = this.detachedBelow.shift();
-				frag.appendChild(detached);
+				if (hidden[i - 1] === u) {
+					frag.appendChild(detached);
+				} else {
+					hiddenOffset++;
+				}
 				this.belowChanged = true;
 			}
 
@@ -167,8 +181,6 @@
 			if (this.belowChanged) {
 				parent.appendChild(frag);
 			}
-
-			this.belowIndex = maxIndex;
 
 			return this;
 		},
