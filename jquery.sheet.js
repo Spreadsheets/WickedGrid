@@ -2524,7 +2524,7 @@ Sheet.Highlighter = (function(document, window, $) {
 
 			this.aboveChanged = false;
 
-			while ((i = detachedAbove.length + hiddenOffset) > minIndex) {
+			while (detachedAbove.length > 0 && (i = detachedAbove.length + hiddenOffset) > minIndex) {
 				//attach it
 				detached = detachedAbove.pop();
 				if (hidden[i - 1] === u) {
@@ -2555,6 +2555,7 @@ Sheet.Highlighter = (function(document, window, $) {
 
 			var detached,
 				parent = this.parent,
+				detachedBelow = this.detachedBelow,
 				frag = document.createDocumentFragment(),
 				fragChildren = frag.children,
 				offset = this.detachedAbove.length + parent.children.length,
@@ -2564,10 +2565,10 @@ Sheet.Highlighter = (function(document, window, $) {
 
 			this.belowChanged = false;
 
-			while ((i = hiddenOffset + offset + fragChildren.length) < maxIndex && this.detachedBelow.length > 0) {
+			while (detachedBelow.length > 0 && (i = hiddenOffset + offset + (fragChildren.length - 1)) < maxIndex && this.detachedBelow.length > 0) {
 				//attach it
-				detached = this.detachedBelow.shift();
-				if (hidden[i - 1] === u) {
+				detached = detachedBelow.shift();
+				if (hidden[i] === u) {
 					frag.appendChild(detached);
 				} else {
 					hiddenOffset++;
@@ -8593,9 +8594,12 @@ $.sheet = {
 								if (columnIndex == 0 && rowIndex > 0) { //barleft
 									td.type = 'bar';
 									td.entity = 'left';
-									td.innerHTML = row;
+									td.innerHTML = rowIndex;
 									td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.theme.bar;
-									setRowHeight.call(loader, i, rowIndex, td);
+
+									if (setRowHeight !== u) {
+										setRowHeight.call(loader, i, rowIndex, td);
+									}
 								}
 
 								if (rowIndex == 0 && columnIndex > 0) { //bartop
@@ -10118,20 +10122,73 @@ $.sheet = {
 				calcVisibleRow: function(actionUI, sheetIndex) {
 					sheetIndex = sheetIndex || jS.i;
 
-					var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
-						endScrolledArea = actionUI.scrolledArea,
-						sheetSize = actionUI.pane.size(),
+					var spreadsheet = jS.spreadsheets[sheetIndex],
+						initRows = s.initCalcRows,
+						table = actionUI.table,
+						pane = actionUI.pane,
+						columnIndex,
+						columnMax,
+						grow = function() {
+							var stack = [],
+								sheetSize = pane.size(),
+								tableSize = table.size(),
+								rowIndex,
+								row,
+								cell;
+
+							if(tableSize.rows < initRows && spreadsheet.length <= sheetSize.rows) {
+								rowIndex = spreadsheet.length;//self incrementing
+
+								columnIndex = 0;
+								columnMax = sheetSize.cols;
+								for (; columnIndex <= columnMax; columnIndex++) {
+									row = spreadsheet[rowIndex];
+									cell = row !== u ? row[columnIndex] : u;
+
+									stack.push({
+										row: row,
+										cell: cell,
+										rowIndex: rowIndex,
+										columnIndex: columnIndex
+									});
+								}
+
+								thaw(stack, {
+									each: function() {
+										if (this.row === u) {
+											if (spreadsheet[this.rowIndex] === u) {
+												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
+											}
+										} else {
+											if ((this.cell = this.row[this.colIndex]) === u) {
+												jS.createCell(jS.i, this.rowIndex, this.colIndex);
+												this.cell = spreadsheet[this.rowIndex][this.colIndex];
+											}
+										}
+
+										if (this.cell !== u) {
+											this.cell.updateValue();
+										}
+									},
+									done: function() {
+										grow();
+									}
+								});
+							}
+						};
+
+					grow();
+
+					/*var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
 						initRows = s.initCalcRows,
 						initCols = s.initCalcCols,
-						targetRow = Math.max((endScrolledArea.row + initRows) - 1, actionUI.foldArea.row),
-						targetCol = Math.max((endScrolledArea.col + initCols) - 1, actionUI.foldArea.col),
-						rowIndex = 1,
-						rowMax,
+						rowIndex = endScrolledArea.row,
+						rowMax = Math.max((endScrolledArea.row + initRows) - 1, actionUI.foldArea.row),
+						colMax = Math.max((endScrolledArea.col + initCols) - 1, actionUI.foldArea.col),
 						row,
 						colIndex,
-						colMax,
 						oldPos = this.calcVisiblePos,
-						newPos = {row: targetRow, col: oldPos.col},
+						newPos = {row: 0, col: oldPos.col},
 						cell,
 						stack = [],
 						each = function() {
@@ -10143,11 +10200,10 @@ $.sheet = {
 								if ((this.cell = this.row[this.colIndex]) === u) {
 									jS.createCell(jS.i, this.rowIndex, this.colIndex);
 									this.cell = spreadsheet[this.rowIndex][this.colIndex];
+									if (this.cell !== u) {
+										this.cell.updateValue();
+									}
 								}
-							}
-
-							if (this.cell !== u) {
-								this.cell.updateValue();
 							}
 						},
 						done = function() {
@@ -10156,22 +10212,21 @@ $.sheet = {
 								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
 							]);
 						},
-						offset,
 						hiddenRows = actionUI.yDetacher.hidden;
 
-					rowMax = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
-					colMax = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
+					rowMax = rowMax < sheetSize.rows ? rowMax : sheetSize.rows;
+					colMax = colMax < sheetSize.cols ? colMax : sheetSize.cols;
 
-					rowIndex = oldPos.row;
 
 					for(; rowIndex <= rowMax; rowIndex++) {
-						colIndex = 1;
+
+						//if this row is hidden, increase the rowMax to account for it
 						if (hiddenRows[rowIndex] !== u) {
 							rowMax++;
-							newPos.row++;
 						}
+
+						colIndex = 1;
 						for(;colIndex < colMax; colIndex++) {
-							offset = rowIndex;
 							row = spreadsheet[rowIndex];
 							cell = row !== u ? row[colIndex] : u;
 
@@ -10184,6 +10239,7 @@ $.sheet = {
 						}
 					}
 
+					newPos.row = rowIndex;
 					this.calcVisiblePos = newPos;
 
 					thaw(stack, {
@@ -10191,7 +10247,7 @@ $.sheet = {
 						done: done
 					});
 
-					jS.setChanged(false);
+					jS.setChanged(false);*/
 				},
 				calcVisibleCol: function(actionUI, sheetIndex) {
 					sheetIndex = sheetIndex || jS.i;
