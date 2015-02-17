@@ -126,7 +126,7 @@
 
 			this.aboveChanged = false;
 
-			while ((i = detachedAbove.length + hiddenOffset) > minIndex) {
+			while (detachedAbove.length > 0 && (i = detachedAbove.length + hiddenOffset) > minIndex) {
 				//attach it
 				detached = detachedAbove.pop();
 				if (hidden[i - 1] === u) {
@@ -157,6 +157,7 @@
 
 			var detached,
 				parent = this.parent,
+				detachedBelow = this.detachedBelow,
 				frag = document.createDocumentFragment(),
 				fragChildren = frag.children,
 				offset = this.detachedAbove.length + parent.children.length,
@@ -166,10 +167,10 @@
 
 			this.belowChanged = false;
 
-			while ((i = hiddenOffset + offset + fragChildren.length) < maxIndex && this.detachedBelow.length > 0) {
+			while (detachedBelow.length > 0 && (i = hiddenOffset + offset + (fragChildren.length - 1)) < maxIndex && this.detachedBelow.length > 0) {
 				//attach it
-				detached = this.detachedBelow.shift();
-				if (hidden[i - 1] === u) {
+				detached = detachedBelow.shift();
+				if (hidden[i] === u) {
 					frag.appendChild(detached);
 				} else {
 					hiddenOffset++;
