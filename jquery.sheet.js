@@ -2517,21 +2517,17 @@ Sheet.Highlighter = (function(document, window, $) {
 			var parent = this.parent,
 				frag = document.createDocumentFragment(),
 				detached,
-				hiddenOffset = 0,
-				detachedAbove = this.detachedAbove,
-				i,
-				hidden = this.hidden;
+				detachedAbove = this.detachedAbove;
 
 			this.aboveChanged = false;
 
-			while (detachedAbove.length > 0 && (i = detachedAbove.length + hiddenOffset) > minIndex) {
+			while (detachedAbove.length > minIndex) {
+				if (detachedAbove.length < 1) break;
 				//attach it
+
 				detached = detachedAbove.pop();
-				if (hidden[i - 1] === u) {
-					frag.insertBefore(detached, frag.firstChild);
-				} else {
-					hiddenOffset++;
-				}
+				frag.insertBefore(detached, frag.firstChild);
+
 				this.aboveChanged = true;
 			}
 
@@ -5932,7 +5928,7 @@ $.sheet = {
 							case "row-init":
 							case "row":
 								//setupCell = null;
-								rowIndexOffset = detacher.detachedAbove.length - 1;
+								rowIndexOffset = detacher.detachedAbove.length;
 								rowIndexOffset = rowIndexOffset > 0 ? rowIndexOffset : 0;
 
 
@@ -5960,6 +5956,10 @@ $.sheet = {
 									if (storeInDetacher) {
 										spreadsheetIndex += detacher.detachedBelow.length - 1;
 									}
+								}
+
+								if (spreadsheetIndex === 227 && qty === 1) {
+									console.log(this);
 								}
 
 								loc = {row: spreadsheetIndex, col: 0};
@@ -6022,7 +6022,10 @@ $.sheet = {
 										spreadsheetRow.splice(at, 0, cell);
 									}
 
-									cell.updateValue();
+									//TODO: handle those that are hidden when they are unhidden
+									if (!isHidden) {
+										cell.updateValue();
+									}
 
 									rowParent.insertBefore(td, rowParent.children[at]);
 								});
@@ -8587,7 +8590,7 @@ $.sheet = {
 								if (td === u) {
 									return;
 								}
-								if (!td.jSCell) {
+								if (td.jSCell === u) {
 									jS.createCell(i, rowIndex, columnIndex);
 								}
 							} else {
@@ -8629,6 +8632,7 @@ $.sheet = {
 						th,
 						text,
 						newWidth,
+						minWidth = 20,
 						col = corner.col;
 
 					if (tr === u) {
@@ -8642,6 +8646,9 @@ $.sheet = {
 					text = th.label + '';
 
 					newWidth = window.defaultCharSize.width * text.length;
+					//set a miniumum width, because css doesn't respect this on col in FF
+					newWidth = (newWidth > minWidth ? newWidth : minWidth);
+
 					if (newWidth !== col._width || col._width === u) {
 						col._width = newWidth;
 						col.style.width = (newWidth) + 'px';
@@ -10128,6 +10135,7 @@ $.sheet = {
 						pane = actionUI.pane,
 						columnIndex,
 						columnMax,
+						calcVisiblePos = this.calcVisiblePos,
 						grow = function() {
 							var stack = [],
 								sheetSize = pane.size(),
@@ -10137,10 +10145,12 @@ $.sheet = {
 								cell;
 
 							if(tableSize.rows < initRows && spreadsheet.length <= sheetSize.rows) {
-								rowIndex = spreadsheet.length;//self incrementing
+								rowIndex = calcVisiblePos.row;//self incrementing
 
-								columnIndex = 0;
-								columnMax = sheetSize.cols;
+								calcVisiblePos.row++;
+
+								columnIndex = 1;
+								columnMax = calcVisiblePos.col;
 								for (; columnIndex <= columnMax; columnIndex++) {
 									row = spreadsheet[rowIndex];
 									cell = row !== u ? row[columnIndex] : u;
@@ -10157,12 +10167,12 @@ $.sheet = {
 									each: function() {
 										if (this.row === u) {
 											if (spreadsheet[this.rowIndex] === u) {
-												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
+												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.columnIndex, this.columnIndex, true);
 											}
 										} else {
-											if ((this.cell = this.row[this.colIndex]) === u) {
-												jS.createCell(jS.i, this.rowIndex, this.colIndex);
-												this.cell = spreadsheet[this.rowIndex][this.colIndex];
+											if ((this.cell = this.row[this.columnIndex]) === u) {
+												jS.createCell(jS.i, this.rowIndex, this.columnIndex);
+												this.cell = this.row[this.columnIndex];
 											}
 										}
 
@@ -10176,6 +10186,8 @@ $.sheet = {
 								});
 							}
 						};
+
+					calcVisiblePos.row = calcVisiblePos.row >= 0 ? calcVisiblePos.row : initRows;
 
 					grow();
 

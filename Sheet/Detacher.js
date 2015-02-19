@@ -119,21 +119,17 @@
 			var parent = this.parent,
 				frag = document.createDocumentFragment(),
 				detached,
-				hiddenOffset = 0,
-				detachedAbove = this.detachedAbove,
-				i,
-				hidden = this.hidden;
+				detachedAbove = this.detachedAbove;
 
 			this.aboveChanged = false;
 
-			while (detachedAbove.length > 0 && (i = detachedAbove.length + hiddenOffset) > minIndex) {
+			while (detachedAbove.length > minIndex) {
+				if (detachedAbove.length < 1) break;
 				//attach it
+
 				detached = detachedAbove.pop();
-				if (hidden[i - 1] === u) {
-					frag.insertBefore(detached, frag.firstChild);
-				} else {
-					hiddenOffset++;
-				}
+				frag.insertBefore(detached, frag.firstChild);
+
 				this.aboveChanged = true;
 			}
 
