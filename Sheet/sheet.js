@@ -1803,9 +1803,8 @@ $.sheet = {
 						jS.obj.barHelper().remove();
 
 						var domIndex,
-							$table = jS.obj.table(),
-							table = $table[0],
-							pane = table.pane,
+							pane = jS.obj.pane(),
+							table = pane.table,
 							actionUI = pane.actionUI,
 							tBody = table.tBody,
 							colGroup = table.colGroup,
@@ -1901,8 +1900,11 @@ $.sheet = {
 									else if (storeInDetacher) {
 										detacher.detachedBelow.push(barParent);
 									}
-									else {
+									else  if (tBody.children.length + frag.children.length < actionUI.maximumVisibleRows) {
 										frag.appendChild(barParent);
+									}
+									else {
+										detacher.detachedBelow.push(barParent);
 									}
 
 									if (spreadsheet.length === 0) {

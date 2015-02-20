@@ -2365,19 +2365,19 @@ Sheet.Highlighter = (function(document, window, $) {
 		createCells:function (i, size, isBefore) {
 			var offset = (isBefore ? 0 : 1),
 				rowMax = i + this.qty,
-				hiddenOffset = 0,
 				colMax = size.cols || 1,
 				rowParent,
 				isHidden,
 				row = i,
 				col;
 
-			for (; (row - hiddenOffset) < rowMax; row++) {
-				if (isHidden = this.hidden[row + offset] !== undefined) {
+			for (; row < rowMax; row++) {
+				isHidden = this.hidden[row + offset] !== undefined;
+				//if (isHidden = this.hidden[row + offset] !== undefined) {
 					//if this row is hidden, we'll go ahead and process it, but we need to offset the max so that we
 					// eventually get the cells we need
-					hiddenOffset++;
-				}
+				//	rowMax++;
+			//	}
 				//create a new row
 				rowParent = this.createBar(row + offset, isHidden);
 
@@ -5891,9 +5891,8 @@ $.sheet = {
 						jS.obj.barHelper().remove();
 
 						var domIndex,
-							$table = jS.obj.table(),
-							table = $table[0],
-							pane = table.pane,
+							pane = jS.obj.pane(),
+							table = pane.table,
 							actionUI = pane.actionUI,
 							tBody = table.tBody,
 							colGroup = table.colGroup,
@@ -5981,6 +5980,9 @@ $.sheet = {
 									bar.style.height = getHeight(jS.i, at) + 'px';
 									bar.innerHTML = bar.label = at;
 
+									if (at === 779) {
+										console.log(bar);
+									}
 									barParent.appendChild(bar);
 
 									if (isHidden) {
@@ -5989,8 +5991,11 @@ $.sheet = {
 									else if (storeInDetacher) {
 										detacher.detachedBelow.push(barParent);
 									}
-									else {
+									else  if (tBody.children.length + frag.children.length < actionUI.maximumVisibleRows) {
 										frag.appendChild(barParent);
+									}
+									else {
+										detacher.detachedBelow.push(barParent);
 									}
 
 									if (spreadsheet.length === 0) {
