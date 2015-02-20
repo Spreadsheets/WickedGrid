@@ -44,19 +44,15 @@
 		createCells:function (i, size, isBefore) {
 			var offset = (isBefore ? 0 : 1),
 				rowMax = i + this.qty,
-				hiddenOffset = 0,
 				colMax = size.cols || 1,
 				rowParent,
 				isHidden,
 				row = i,
 				col;
 
-			for (; (row - hiddenOffset) < rowMax; row++) {
-				if (isHidden = this.hidden[row + offset] !== undefined) {
-					//if this row is hidden, we'll go ahead and process it, but we need to offset the max so that we
-					// eventually get the cells we need
-					hiddenOffset++;
-				}
+			for (; row < rowMax; row++) {
+				isHidden = this.hidden[row + offset] !== undefined;
+
 				//create a new row
 				rowParent = this.createBar(row + offset, isHidden);
 
