@@ -314,6 +314,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @param {Boolean} [hide]
 		 */
 		toggleHideRowRange: function(startIndex, endIndex, hide) {
+			return;
 			//TODO
 			if (!startIndex) return;
 			if (!endIndex) endIndex = startIndex;

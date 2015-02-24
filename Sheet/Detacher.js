@@ -5,20 +5,21 @@
 	 * Detaches DOM elements from a parent to keep the DOM fast. Can be used with hundreds of thousands r even millions of
 	 * DOM elements to simulate a scrolling like behaviour.
 	 * @param {HTMLElement} parent
+	 * @param {Number} maximumVisible
 	 * @property {Array} detachedAbove
 	 * @property {Array} detachedBelow
-	 * @property {Object} hidden
 	 * @property {HTMLElement} parent
 	 * @property {Boolean} aboveChanged
 	 * @property {Boolean} belowChanged
 	 * @constructor
 	 * @memberOf Sheet
 	 */
-	function Detacher(parent) {
+	function Detacher(parent, maximumVisible) {
+		this.parent = parent;
+		this.maximumVisible = maximumVisible;
+
 		this.detachedAbove = [];
 		this.detachedBelow = [];
-		this.hidden = {};
-		this.parent = parent;
 		this.aboveChanged = false;
 		this.belowChanged = false;
 		this.hasInitialDetach = false;
@@ -33,21 +34,14 @@
 		var parent = _this.parent,
 			children = parent.children,
 			aboveCount = _this.detachedAbove.length,
-			i,
-			hiddenOffset = 0,
-			hidden = _this.hidden;
+			i;
 
 		//if there are too many in above count, return
 		if (maxIndex < aboveCount) return;
 
-
-		while ((i = (hiddenOffset + aboveCount + (children.length - 1))) > maxIndex) {
-			if (hidden[i] === u) {
-				_this.detachedBelow.unshift(parent.lastChild);
-				parent.removeChild(parent.lastChild);
-			} else {
-				hiddenOffset++;
-			}
+		while ((i = (aboveCount + (children.length - 1))) > maxIndex) {
+			_this.detachedBelow.unshift(parent.lastChild);
+			parent.removeChild(parent.lastChild);
 		}
 	}
 
@@ -68,6 +62,8 @@
 			while (detachedAbove.length - 1 < maxIndex) {
 				//we will always detach the first element
 				detachable = detachables[1];
+
+				//if the first element doesn't exist, then stop detaching
 				if (detachable === u) {
 					break;
 				}
@@ -119,14 +115,13 @@
 			var parent = this.parent,
 				frag = document.createDocumentFragment(),
 				detached,
-				detachedAbove = this.detachedAbove;
+				detachedAbove = this.detachedAbove,
+				i;
 
 			this.aboveChanged = false;
 
-			while (detachedAbove.length > minIndex) {
-				if (detachedAbove.length < 1) break;
+			while ((i = detachedAbove.length - 1) >= minIndex) {
 				//attach it
-
 				detached = detachedAbove.pop();
 				frag.insertBefore(detached, frag.firstChild);
 
@@ -157,20 +152,14 @@
 				frag = document.createDocumentFragment(),
 				fragChildren = frag.children,
 				offset = this.detachedAbove.length + parent.children.length,
-				hiddenOffset = 0,
-				i,
-				hidden = this.hidden;
+				i;
 
 			this.belowChanged = false;
-
-			while (detachedBelow.length > 0 && (i = hiddenOffset + offset + (fragChildren.length - 1)) < maxIndex && this.detachedBelow.length > 0) {
+			while ((i = offset + (fragChildren.length - 1)) < maxIndex && this.detachedBelow.length > 0) {
+				if (detachedBelow.length < 1) break;
 				//attach it
 				detached = detachedBelow.shift();
-				if (hidden[i] === u) {
-					frag.appendChild(detached);
-				} else {
-					hiddenOffset++;
-				}
+				frag.appendChild(detached);
 				this.belowChanged = true;
 			}
 
