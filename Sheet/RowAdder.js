@@ -51,7 +51,7 @@
 				col;
 
 			for (; row < rowMax; row++) {
-				isHidden = this.hidden[row + offset] !== undefined;
+				isHidden = this.hidden.indexOf(row + offset) > -1;
 
 				//create a new row
 				rowParent = this.createBar(row + offset, isHidden);

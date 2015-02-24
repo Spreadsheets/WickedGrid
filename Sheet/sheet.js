@@ -1793,8 +1793,11 @@ $.sheet = {
 					 * @param {String} [type] "row" or "col", default "col"
 					 * @param {Boolean} [skipFormulaReParse] re-parses formulas if needed
 					 * @memberOf jS.controlFactory
+					 * @returns {Boolean}
 					 */
 					addCells:function (spreadsheetIndex, isBefore, qty, type, skipFormulaReParse) {
+						if (qty < 1) return false;
+
 						//hide the autoFiller, it can get confused
 						jS.autoFillerHide();
 
@@ -1819,16 +1822,17 @@ $.sheet = {
 							loader = (s.loader !== null ? s.loader : null),
 							getWidth = (loader !== null ? function(i, col) { return loader.getWidth(i, col); } : function() { return s.newColumnWidth; }),
 							getHeight = (loader !== null ? function (i, row) { return loader.getHeight(i, row); } : function() { return s.colMargin; }),
-							setupCell = (loader !== null ? loader.setupCell : function (sheetIndex, rowIndex, columnIndex, createCellFn) {
+							defaultSetupCell = function (sheetIndex, rowIndex, columnIndex, createCellFn) {
 								var td = document.createElement('td');
 								return new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
-							}),
+							},
+							setupCell = (loader !== null ? loader.setupCell : defaultSetupCell),
 							controlX = jS.controls.bar.x.th[jS.i] || (jS.controls.bar.x.th[jS.i] = []),
 							controlY = jS.controls.bar.y.th[jS.i] || (jS.controls.bar.y.th[jS.i] = []),
 							sheetSize = pane.size(),
 							tableSize = table.size(),
 							frag = document.createDocumentFragment(),
-							rowIndexOffset = 0,
+							maximumVisibleQty,
 							detacher = actionUI.yDetacher,
 							storeInDetacher = false;
 
@@ -1838,14 +1842,15 @@ $.sheet = {
 						switch (type) {
 							case "row-init":
 							case "row":
-								//setupCell = null;
-								rowIndexOffset = detacher.detachedAbove.length;
-								rowIndexOffset = rowIndexOffset > 0 ? rowIndexOffset : 0;
-
+								maximumVisibleQty = actionUI.maximumVisibleRows;
 
 								//ensure that i isn't out of bounds
 								if (spreadsheetIndex === u || spreadsheetIndex === null) {
-									spreadsheetIndex = tableSize.rows + rowIndexOffset;
+									spreadsheetIndex = spreadsheet.length - 1;
+									isLast = true;
+								}
+
+								if (type === 'row-init' && spreadsheetIndex === spreadsheet.length - 1) {
 									isLast = true;
 								}
 
@@ -1869,10 +1874,6 @@ $.sheet = {
 									}
 								}
 
-								if (spreadsheetIndex === 227 && qty === 1) {
-									console.log(this);
-								}
-
 								loc = {row: spreadsheetIndex, col: 0};
 								o = this.rowAdder;
 								if (o.setQty(qty, tableSize) === false) {
@@ -1882,58 +1883,63 @@ $.sheet = {
 									return;
 								}
 
-								o.setCreateBarFn(function (at, isHidden) {
+								o.setCreateBarFn(function (rowIndex, isHidden) {
 									var barParent = document.createElement('tr'),
 										bar = document.createElement('th');
 
 									bar.className = rowBarClasses;
 									bar.entity = 'left';
 									bar.type = 'bar';
-									bar.style.height = getHeight(jS.i, at) + 'px';
-									bar.innerHTML = bar.label = at;
+									bar.style.height = getHeight(jS.i, rowIndex) + 'px';
+									bar.innerHTML = bar.label = rowIndex;
 
 									barParent.appendChild(bar);
 
-									if (isHidden) {
-										detacher.hidden[at] = barParent;
-									}
-									else if (storeInDetacher) {
-										detacher.detachedBelow.push(barParent);
-									}
-									else  if (tBody.children.length + frag.children.length < actionUI.maximumVisibleRows) {
-										frag.appendChild(barParent);
-									}
-									else {
-										detacher.detachedBelow.push(barParent);
+									//if row is hidden, simply don't add it to the rows in the detacher, but access it simply from spreadsheet
+									if (!isHidden) {
+										if (storeInDetacher) {
+											detacher.detachedBelow.push(barParent);
+										}
+										else if (tBody.children.length + frag.children.length < actionUI.maximumVisibleRows) {
+											frag.appendChild(barParent);
+											if (frag.children.length === maximumVisibleQty) {
+												storeInDetacher = true;
+											}
+										}
+										else {
+											detacher.detachedBelow.push(barParent);
+										}
 									}
 
 									if (spreadsheet.length === 0) {
-										controlY[at] = bar;
+										controlY[rowIndex] = bar;
 										//make the spreadsheet ready to accept cells;
-										spreadsheet[at] = [];
+										spreadsheet[rowIndex] = [];
 									} else {
-										controlY.splice(at, 0, bar);
+										controlY.splice(rowIndex, 0, bar);
 										//make the spreadsheet ready to accept cells;
-										spreadsheet.splice(at, 0, []);
+										spreadsheet.splice(rowIndex, 0, []);
 									}
 
 									return barParent;
 								});
 
-								o.setCreateCellFn(function (row, at, rowParent, isHidden) {
-									var cell = setupCell.call(loader, jS.i, row, at, jS),
+								o.setCreateCellFn(function (rowIndex, columnIndex, rowParent, isHidden) {
+									var cell = setupCell.call(loader, jS.i, rowIndex, columnIndex, jS),
 										td,
-										spreadsheetRow = spreadsheet[row];
+										spreadsheetRow = spreadsheet[rowIndex];
 
-									if (cell === null) return;
+									if (cell === null) {
+										cell = defaultSetupCell(jS.i, rowIndex, columnIndex, jS);
+									}
 
 									td = cell.td;
 									td.jSCell = cell;
 
 									if (spreadsheetRow.length === 0) {
-										spreadsheetRow[at] = cell;
+										spreadsheetRow[columnIndex] = cell;
 									} else {
-										spreadsheetRow.splice(at, 0, cell);
+										spreadsheetRow.splice(columnIndex, 0, cell);
 									}
 
 									//TODO: handle those that are hidden when they are unhidden
@@ -1941,10 +1947,10 @@ $.sheet = {
 										cell.updateValue();
 									}
 
-									rowParent.insertBefore(td, rowParent.children[at]);
+									rowParent.insertBefore(td, rowParent.children[columnIndex]);
 								});
 
-								o.setHidden(detacher.hidden);
+								o.setHidden(s.hiddenRows[jS.i]);
 
 								o.setAddedFinishedFn(function(_offset) {
 									tBody.insertBefore(frag, isBefore ? tBody.children[domIndex] : tBody.children[domIndex].nextSibling);
@@ -1958,6 +1964,10 @@ $.sheet = {
 								//ensure that i isn't out of bounds
 								if (spreadsheetIndex === u || spreadsheetIndex === null) {
 									spreadsheetIndex = tableSize.cols;
+									isLast = true;
+								}
+
+								if (type === 'col-init') {
 									isLast = true;
 								}
 
@@ -1982,18 +1992,18 @@ $.sheet = {
 									}
 									return;
 								}
-								o.setCreateBarFn(function(at) {
+								o.setCreateBarFn(function(columnIndex) {
 									var barParent = tBody.children[0],
 										col = document.createElement('col'),
 										topBar = document.createElement('th'),
 										leftBar,
 										rowParent = tBody.children[1]; //the very first row may not exist yet
 
-									col.style.width = getWidth(jS.i, at) + 'px';
+									col.style.width = getWidth(jS.i, columnIndex) + 'px';
 
 									topBar.entity = 'top';
 									topBar.type = 'bar';
-									topBar.innerHTML = topBar.label = jSE.columnLabelString(at);
+									topBar.innerHTML = topBar.label = jSE.columnLabelString(columnIndex);
 									topBar.className = colBarClasses;
 
 									//If the row has not been created lets set it up
@@ -2004,7 +2014,7 @@ $.sheet = {
 										leftBar.type = 'bar';
 
 										rowParent = document.createElement('tr');
-										rowParent.style.height = getHeight(jS.i, at) + 'px';
+										rowParent.style.height = getHeight(jS.i, columnIndex) + 'px';
 										rowParent.appendChild(leftBar);
 										tBody.appendChild(rowParent);
 
@@ -2012,13 +2022,13 @@ $.sheet = {
 										controlY.splice(0, 0, leftBar);
 									}
 
-									colGroup.insertBefore(col, colGroup.children[at]);
-									barParent.insertBefore(topBar, barParent.children[at]);
+									colGroup.insertBefore(col, colGroup.children[columnIndex]);
+									barParent.insertBefore(topBar, barParent.children[columnIndex]);
 
 									if (controlX.length === 0) {
-										controlX[at] = topBar;
+										controlX[columnIndex] = topBar;
 									} else {
-										controlX.splice(at, 0, topBar);
+										controlX.splice(columnIndex, 0, topBar);
 									}
 
 									return {
@@ -2028,37 +2038,33 @@ $.sheet = {
 									};
 								});
 
-								o.setCreateCellFn(function (row, at, createdBar) {
-									var cell = setupCell.call(loader, jS.i, row, at, jS),
+								o.setCreateCellFn(function (rowIndex, columnIndex, createdBar) {
+									var cell = setupCell.call(loader, jS.i, rowIndex, columnIndex, jS),
 										td,
 										rowParent,
-										spreadsheetRow = spreadsheet[row];
+										spreadsheetRow = spreadsheet[rowIndex];
 
-
-									if ((detacher.detachedAbove.length - 1) >= row) {
-										rowParent = detacher.detachedAbove[row - 1];
-									} else if (detacher.detachedAbove.length + tBody.children.length < row) {
-										rowParent = detacher.detachedBelow[row - (detacher.detachedAbove.length + tBody.children.length)];
-									} else {
-										rowParent = tBody.children[row];
+									if (cell === null) {
+										cell = defaultSetupCell(jS.i, rowIndex, columnIndex, jS);
 									}
-
-									if (cell === null) return;
 
 									td = cell.td;
 									if (spreadsheetRow === u) {
-										spreadsheet[row] = spreadsheetRow = [];
+										spreadsheet[rowIndex] = spreadsheetRow = [];
+										rowParent = tBody.children[rowIndex];
+									} else {
+										rowParent = spreadsheetRow[1].td.parentNode;
 									}
 
 									if (spreadsheetRow.length === 0) {
-										spreadsheetRow[at] = cell;
+										spreadsheetRow[columnIndex] = cell;
 									} else {
-										spreadsheetRow.splice(at, 0, cell);
+										spreadsheetRow.splice(columnIndex, 0, cell);
 									}
 
 									cell.updateValue();
 
-									rowParent.insertBefore(td, rowParent.children[at]);
+									rowParent.insertBefore(td, rowParent.children[columnIndex]);
 								});
 
 								o.setAddedFinishedFn(function(_offset) {
@@ -2080,7 +2086,7 @@ $.sheet = {
 						}
 						if (activeCell && activeCell[0] && activeCell[0].cellIndex && activeCell[0].parentNode) {
 							jS.colLast = activeCell[0].cellIndex;
-							jS.rowLast = activeCell[0].parentNode.rowIndex + rowIndexOffset;
+							jS.rowLast = activeCell[0].parentNode.rowIndex;
 						}
 
 						return true;
@@ -2973,7 +2979,17 @@ $.sheet = {
 							}
 						}
 
+						if (settings.hiddenRows[i] === u) {
+							settings.hiddenRows[i] = [];
+						}
+						if (settings.hiddenColumns[i] === u) {
+							settings.hiddenColumns[i] = [];
+						}
+
 						enclosure.actionUI.hide(hiddenRows, hiddenColumns);
+
+						settings.hiddenRows[i] = hiddenRows;
+						settings.hiddenColumns[i] = hiddenColumns;
 
 						jS.checkMinSize(table);
 
@@ -4422,8 +4438,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd, createCellsIfNeeded) {
-					var rows = jS.rows(table),
-						rowIndex,
+					var rowIndex,
 						columnIndex,
 						loader = (s.loader !== null ? s.loader : null),
 						standardHeight = s.colMargin + 'px',
@@ -4439,72 +4454,70 @@ $.sheet = {
 
 							barTd.style.height = height;
 						}),
-						rowIndexOffset = 0,
 						pane = table.pane,
-						offset,
-						qty,
-						tr,
-						trIndex,
+						trChildren,
 						actionUI = pane.actionUI,
 						detacher = actionUI.yDetacher,
-						storeInDetacher = detacher.isBelowActive();
-
-					rowIndexOffset = pane.actionUI.yDetacher.detachedAbove.length;
-
-					rowStart = rowStart || 0;
-					rowEnd = rowEnd || rows.length - 1;
-					colStart = colStart || 0;
-					colEnd = colEnd || rows[0].children.length - 1;
+						spreadsheet,
+						row,
+						cells,
+						cell,
+						qty;
 
 					//if we are starting at the beginning of the spreadsheet, then we start from empty
-					if (rowStart === 0 && colStart === 0) {
+					if (rowStart === u && colStart === u) {
 						table.spreadsheet = jS.spreadsheets[i] = []; //reset the sheet's spreadsheet
 					}
 
-					//This is performed backwards starting at end
-					rowIndex = rowEnd;
-					if (rowIndex < 0) return;
+					spreadsheet = table.spreadsheet;
 
-					do {
-						tr = rows[rowIndex];
-						columnIndex = colEnd;
-						if (tr === u) {
+					rowStart = rowStart || 0;
+					rowEnd = rowEnd || 1;
+					colStart = colStart || 0;
+					colEnd = colEnd || 1;
+
+					rowIndex = rowStart;
+
+					for (;rowIndex <= rowEnd; rowIndex++) {
+						row = spreadsheet[rowIndex];
+						columnIndex = colStart;
+						if (row === u) {
 							if (createCellsIfNeeded) {
-								offset = rowIndexOffset + rows.length - 1;
-								if (storeInDetacher) {
-									offset += detacher.detachedBelow.length - 1;
-								}
-
-								qty = rowIndex - offset;
-
-								jS.controlFactory.addCells(null, false, qty, 'row-init');
-								tr = rows[rowIndex - rowIndexOffset];
+								qty = rowIndex - spreadsheet.length - 1;
+								jS.controlFactory.addCells(spreadsheet.length - 1, false, qty, 'row-init');
+								row = spreadsheet[rowIndex];
 							} else {
 								continue;
 							}
 						}
-						do {
-							if (tr === u) {
-								if ((tr = detacher.detachedAbove[rowIndex]) === u) {
+
+						columnIndex = colStart;
+						for (;columnIndex <= colEnd;columnIndex++) {
+							if (row === u) {
+								if ((row = detacher.detachedAbove[rowIndex]) === u) {
 									continue;
 								}
 							}
-							var td = tr.children[columnIndex];
+							cell = row[columnIndex];
 
-							if (td === u) {
+							if (cell === u) {
 								if (createCellsIfNeeded) {
-									jS.controlFactory.addCells(null, false, columnIndex - (rows[0].children.length - 1), 'col-init');
-									td = tr.children[columnIndex];
+									qty = columnIndex - row.length;
+									if (qty === 0) {
+										qty = 1;
+									}
+									jS.controlFactory.addCells(row.length - 1, false, qty, 'col-init');
+									cell = row[columnIndex];
 								} else {
 									continue;
 								}
 							}
 
 							if (rowIndex > 0 && columnIndex > 0) {
-								if (td === u) {
+								if (cell === u) {
 									return;
 								}
-								if (td.jSCell === u) {
+								if (cell.td === u) {
 									jS.createCell(i, rowIndex, columnIndex);
 								}
 							} else {
@@ -4533,8 +4546,8 @@ $.sheet = {
 									jS.controls.bar.corner[jS.i] = td;
 								}
 							}
-						} while (columnIndex-- > colStart);
-					} while (rowIndex-- > rowStart);
+						}
+					}
 				},
 				updateYBarWidthToCorner: function(actionUI) {
 					var scrolledArea = actionUI.scrolledArea,
@@ -5996,9 +6009,11 @@ $.sheet = {
 						min = Math.min,
 						initRows = s.initCalcRows,
 						initCols = s.initCalcCols,
-						rowIndex = min(spreadsheet.length - 1, initRows),
+						rowIndex = 1,
+						rowIndexMax = min(spreadsheet.length - 1, initRows),
 						row,
 						columnIndex,
+						columnIndexMax,
 						pos = {row: -1, col: -1},
 						stack = [],
 						each = function() {
@@ -6014,23 +6029,23 @@ $.sheet = {
 						};
 
 
-					if (rowIndex > 0) {
-						pos.row = rowIndex;
-						do {
-							if (rowIndex > 0 && (row = spreadsheet[rowIndex]) !== u) {
-								pos.col = columnIndex = min(row.length - 1, initCols);
-								if (columnIndex > 0) {
-									do {
-										stack.push({
-											cell: row[columnIndex],
-											rowIndex: rowIndex,
-											columnIndex: columnIndex
-										});
-									} while (columnIndex-- > 1);
-								}
+					pos.row = rowIndexMax;
+					for (;rowIndex <= rowIndexMax; rowIndex++) {
+						if (rowIndex > 0 && (row = spreadsheet[rowIndex]) !== u) {
+							columnIndexMax = pos.col = min(row.length - 1, initCols);
+							columnIndex = 1;
+
+							for (;columnIndex <= columnIndexMax;columnIndex++) {
+								stack.push({
+									cell: row[columnIndex],
+									rowIndex: rowIndex,
+									columnIndex: columnIndex
+								});
 							}
-						} while(rowIndex-- > 1);
+
+						}
 					}
+
 
 					thaw(stack, {
 						each: each,
@@ -6058,7 +6073,11 @@ $.sheet = {
 								row,
 								cell;
 
-							if(tableSize.rows < initRows && spreadsheet.length <= sheetSize.rows) {
+							if(
+								tableSize.rows < initRows
+								&& spreadsheet.length <= sheetSize.rows
+								&& calcVisiblePos.row <= (sheetSize.rows + 1)
+							) {
 								rowIndex = calcVisiblePos.row;//self incrementing
 
 								calcVisiblePos.row++;
@@ -6079,19 +6098,16 @@ $.sheet = {
 
 								thaw(stack, {
 									each: function() {
-										if (this.row === u) {
+										if (this.row === u || (this.row = spreadsheet[this.rowIndex]) === u) {
 											if (spreadsheet[this.rowIndex] === u) {
 												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.columnIndex, this.columnIndex, true);
+												this.row = spreadsheet[this.rowIndex];
 											}
 										} else {
 											if ((this.cell = this.row[this.columnIndex]) === u) {
 												jS.createCell(jS.i, this.rowIndex, this.columnIndex);
 												this.cell = this.row[this.columnIndex];
 											}
-										}
-
-										if (this.cell !== u) {
-											this.cell.updateValue();
 										}
 									},
 									done: function() {
@@ -7740,28 +7756,30 @@ $.sheet = {
 						minSize = s.minSize || {rows: 1, cols: 1},
 						loaderSize;
 
-					table = table || jS.obj.table()[0];
-					//table / tBody / tr / td
-
-					if (
-						(size.cols = s.initScrollCols) > 0
-						&& (size.rows = s.initScrollRows) > 0
-					) {
-						//already set from above
-					} else {
-						lastRow = jS.rowTds(table);
-						loc = jS.getTdLocation(lastRow[lastRow.length - 1]);
-						size.cols = loc.col;
-						size.rows = loc.row;
-					}
-
 					//if we are using a dataloader, get the size from that too and compare
 					if (s.loader !== null) {
 						loaderSize = s.loader.size(table.spreadsheetIndex);
 
-						size.rows = Math.max(loaderSize.rows, size.rows, minSize.rows);
-						size.cols = Math.max(loaderSize.cols, size.cols, minSize.cols);
+						size.rows = Math.max(loaderSize.rows, minSize.rows);
+						size.cols = Math.max(loaderSize.cols, minSize.cols);
 					}
+					 else {
+						table = table || jS.obj.table()[0];
+						//table / tBody / tr / td
+
+						if (
+							(size.cols = s.initScrollCols) > 0
+							&& (size.rows = s.initScrollRows) > 0
+						) {
+							//already set from above
+						} else {
+							lastRow = jS.rowTds(table);
+							loc = jS.getTdLocation(lastRow[lastRow.length - 1]);
+							size.cols = loc.col;
+							size.rows = loc.row;
+						}
+					}
+
 
 					return size;
 				},
