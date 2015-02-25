@@ -6237,6 +6237,7 @@ $.sheet = {
 							}
 						}
 
+						thCorner.className = jS.theme.bar + ' ' + jS.cl.barCorner;
 
 						colCorner.style.width = colCorner.style.minWidth = s.colMargin + 'px';
 						colGroup.insertBefore(colCorner, colGroup.children[0]); //end col corner
@@ -8536,7 +8537,9 @@ $.sheet = {
 						row,
 						cells,
 						cell,
-						qty;
+						qty,
+						lastRowIndex,
+						lastColumnIndex;
 
 					//if we are starting at the beginning of the spreadsheet, then we start from empty
 					if (rowStart === u && colStart === u) {
@@ -8557,8 +8560,9 @@ $.sheet = {
 						columnIndex = colStart;
 						if (row === u) {
 							if (createCellsIfNeeded) {
-								qty = rowIndex - spreadsheet.length - 1;
-								jS.controlFactory.addCells(spreadsheet.length - 1, false, qty, 'row-init');
+								lastRowIndex = (spreadsheet.length > 0 ? spreadsheet.length - 1 : 0);
+								qty = rowIndex - lastRowIndex;
+								jS.controlFactory.addCells(lastRowIndex, false, (qty > 0 ? qty : 1), 'row-init');
 								row = spreadsheet[rowIndex];
 							} else {
 								continue;
@@ -8576,11 +8580,9 @@ $.sheet = {
 
 							if (cell === u) {
 								if (createCellsIfNeeded) {
-									qty = columnIndex - row.length;
-									if (qty === 0) {
-										qty = 1;
-									}
-									jS.controlFactory.addCells(row.length - 1, false, qty, 'col-init');
+									lastColumnIndex = (row.length > 0 ? row.length - 1 : 0);
+									qty = columnIndex - lastColumnIndex;
+									jS.controlFactory.addCells(row.length - 1, false, qty > 0 ? qty : 1, 'col-init');
 									cell = row[columnIndex];
 								} else {
 									continue;
@@ -10195,75 +10197,7 @@ $.sheet = {
 
 					grow();
 
-					/*var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
-						initRows = s.initCalcRows,
-						initCols = s.initCalcCols,
-						rowIndex = endScrolledArea.row,
-						rowMax = Math.max((endScrolledArea.row + initRows) - 1, actionUI.foldArea.row),
-						colMax = Math.max((endScrolledArea.col + initCols) - 1, actionUI.foldArea.col),
-						row,
-						colIndex,
-						oldPos = this.calcVisiblePos,
-						newPos = {row: 0, col: oldPos.col},
-						cell,
-						stack = [],
-						each = function() {
-							if (this.row === u) {
-								while (spreadsheet[this.rowIndex] === u) {
-									jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
-								}
-							} else {
-								if ((this.cell = this.row[this.colIndex]) === u) {
-									jS.createCell(jS.i, this.rowIndex, this.colIndex);
-									this.cell = spreadsheet[this.rowIndex][this.colIndex];
-									if (this.cell !== u) {
-										this.cell.updateValue();
-									}
-								}
-							}
-						},
-						done = function() {
-							stack.length = 0;
-							jS.trigger('sheetCalculation', [
-								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
-							]);
-						},
-						hiddenRows = actionUI.yDetacher.hidden;
-
-					rowMax = rowMax < sheetSize.rows ? rowMax : sheetSize.rows;
-					colMax = colMax < sheetSize.cols ? colMax : sheetSize.cols;
-
-
-					for(; rowIndex <= rowMax; rowIndex++) {
-
-						//if this row is hidden, increase the rowMax to account for it
-						if (hiddenRows[rowIndex] !== u) {
-							rowMax++;
-						}
-
-						colIndex = 1;
-						for(;colIndex < colMax; colIndex++) {
-							row = spreadsheet[rowIndex];
-							cell = row !== u ? row[colIndex] : u;
-
-							stack.push({
-								row: row,
-								cell: cell,
-								rowIndex: rowIndex,
-								colIndex: colIndex
-							});
-						}
-					}
-
-					newPos.row = rowIndex;
-					this.calcVisiblePos = newPos;
-
-					thaw(stack, {
-						each: each,
-						done: done
-					});
-
-					jS.setChanged(false);*/
+					jS.setChanged(false);
 				},
 				calcVisibleCol: function(actionUI, sheetIndex) {
 					sheetIndex = sheetIndex || jS.i;
@@ -10412,7 +10346,7 @@ $.sheet = {
 						enclosureArray =jS.controls.enclosures.toArray(),
 						tabIndex;
 
-					enclosureArray.splice(oldI,1)
+					enclosureArray.splice(oldI,1);
 
 					jS.obj.barHelper().remove();
 
