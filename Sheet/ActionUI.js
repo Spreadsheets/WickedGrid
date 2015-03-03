@@ -255,7 +255,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
-			if (hiddenRows.length > 0) {
+			if (hiddenRows !== null && hiddenRows.length > 0) {
 				hiddenRows.sort();
 				this.toggleHideRowRange(hiddenRows[0], hiddenRows[hiddenRows.length - 1], true);
 			}
