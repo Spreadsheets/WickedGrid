@@ -1937,6 +1937,10 @@ $.sheet = {
 									td = cell.td;
 									td.jSCell = cell;
 
+									if (spreadsheetRow === u) {
+										console.log(jS);
+									}
+
 									if (spreadsheetRow.length === 0) {
 										spreadsheetRow[columnIndex] = cell;
 									} else {

@@ -1,0 +1,35 @@
+
+var AddSheet=function(){
+	var subURL=contextPath+'/'+role+'/TableAssumption';
+	 $.getJSON(subURL).done(function(response) {
+   	  json=JSON.stringify(response);
+   	  tableHtml = $.sheet.dts.toTables.json(response);
+       jS.evt.cellEditAbandon();
+       jS.setDirty(true);
+       jS.controlFactory.sheetUI(jS.obj.ui()[0], tableHtml[0], jS.sheetCount);
+       jS.sheetCount++;
+       jS.sheetSyncSize();
+       jS.obj.pane().resizeScroll();
+       jS.trigger('sheetAdd', [jS.i]);  
+       jS.setActiveSheet(0);
+       jS.switchFormula[2] =false;
+       $('#spinner').fadeOut();
+  
+ });
+	 var subURL=contextPath+'/'+role+'/TableAssumptionHide';
+	 $.getJSON(subURL).done(function(response) {
+   	  json=JSON.stringify(response);
+   	  tableHtml = $.sheet.dts.toTables.json(response);
+       jS.evt.cellEditAbandon();
+       jS.setDirty(true);
+       jS.controlFactory.sheetUI(jS.obj.ui()[0], tableHtml[0], jS.sheetCount);
+       jS.sheetCount++;
+       jS.sheetSyncSize();
+       jS.obj.pane().resizeScroll();
+       jS.trigger('sheetAdd', [jS.i]);  
+       jS.setActiveSheet(0);
+       jS.switchFormula[1] =false;
+       jS.calc(1); // with formula       
+ });
+	
+};                       

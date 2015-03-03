@@ -1,0 +1,3863 @@
+
+$(function() {
+	
+	window.Trs = new Array();
+	window.ClsName = '';
+	
+	window.Facility1_Qtr = null;
+	window.Facility2_Qtr = null;
+	window.Facility3_Qtr = null;
+	window.Facility4_Qtr = null;
+	window.Facility5_Qtr = null;
+	window.AccFlag = false;
+	
+	//Preforma ROE Vars
+	window.annuityProdType1 = false;
+	window.annuityProdType2 = false;
+	window.annuityProdType3 = false;
+	window.annuityProdType4 = false;
+	window.annuityProdType5 = false;
+	window.annuityProdType6 = false;
+	window.episodicProdType1 = false;
+	window.episodicProdType2 = false;
+	window.episodicProdType3 = false;
+	window.episodicProdType4 = false;
+	window.episodicProdType5 = false;
+	window.episodicProdType6 = false;
+	
+	window.ExFac_Qtr = null;
+	window.Facility1_flag = false;
+	window.Facility2_flag = false;
+	window.Facility3_flag = false;
+	window.Facility4_flag = false;
+	window.Facility5_flag = false;
+	window.ExFac_flag = false;	
+	window.IsIndustry = false;
+	
+	window.Flags = {
+            g_Flag1: false,
+            g_Flag2: false,
+            g_Flag3: false,
+            g_Flag4: false,
+            g_Flag5: false, //Facility1_Button
+            g_Flag6: false, //Facility2_Button
+            g_Flag7: false, //Facility3_Button
+            g_Flag8: false, //Facility4_Button
+            g_Flag9: false, //Facility5_Button
+            g_Flag10: false, //FacilityEx_Button
+            g_Flag11: false,
+            g_Flag12: false,
+            g_Flag13: false,
+            g_Flag14: false,
+            g_Flag15: true,
+            g_Flag16: true,
+            g_Flag17: true
+     };
+
+	window.Events = [];
+	Events.push({id:'bHasCPProgram',Inputs: ['CP Program',''], Trs:[[['Cp_Program_Row_', 1, 6, '', 1, '' ]], [ [ 'Cp_Program_Row_', 1, 6, 'hiderowsOrColumn', 1, '' ] ]]});
+	
+	$("#calcBsc").click(function() {
+		$('#spinner').fadeIn("slow");
+		jS.calc(1,true);
+		$('#spinner').fadeOut();
+	});
+});
+
+//Clear Array
+Array.prototype.clear = function() {
+	  /*while (this.length > 0) {
+	    this.pop();
+	  }*/
+	this.length = 0;
+};
+
+
+
+
+//Proforma ROE Events Functions
+
+function CheckPreforma_AnnuityRevenue(){
+	//Hide BSC Roe Rows (28,30,32,34, 36)	
+	if ((!annuityProdType1) && (!annuityProdType2) && (!annuityProdType3) && (!annuityProdType4) && (!annuityProdType5) && (!annuityProdType6)){
+		for(var a = 28; a<38; a++){
+			$('#BSC_ROESUBM_Row_' + a + '').addClass('hiderowsOrColumn');
+		}
+	}
+}
+
+function CheckPreforma_EpisodicFee(){
+	//Hide BSC Roe Rows (38,40,42,44, 46)
+	if ((!episodicProdType1) && (!episodicProdType2) && (!episodicProdType3) && (!episodicProdType4) && (!episodicProdType5) && (!episodicProdType6)){		
+		for(var a = 40; a < 50; a++){
+			$('#BSC_ROESUBM_Row_' + a + '').addClass('hiderowsOrColumn');
+		}
+	}	
+}
+
+function CheckPreforma_ProductType_AnnuityRevenue(p_number, CellVal){
+	var id = 'BSC_ROESUBM_Row_';
+	var l_Rows = [26, 28, 30, 32, 34, 36];
+	
+	/*
+		1 - 26, 27
+		2 - 28, 29
+		3 - 30, 31
+		4 - 32, 33
+		5 - 34, 35
+		6 - 36, 37
+	 */
+	
+	if(p_number == 1){
+		if(CellVal == '' || CellVal == ' ')
+			$('#product_21_1').addClass('visibilityHidden');
+		else
+			$('#product_21_1').removeClass('visibilityHidden');
+	}
+	else{
+		if(CellVal == '' || CellVal == ' '){
+			$('#BSC_ROESUBM_Row_' + l_Rows[p_number - 1] + '').addClass('hiderowsOrColumn');
+			$('#BSC_ROESUBM_Row_' + (l_Rows[p_number - 1] + 1) + '').addClass('hiderowsOrColumn');
+		}
+		else{			
+			$('#BSC_ROESUBM_Row_' + l_Rows[p_number - 1] + '').removeClass('hiderowsOrColumn');
+			$('#BSC_ROESUBM_Row_' + (l_Rows[p_number - 1] + 1) + '').removeClass('hiderowsOrColumn');
+		}			
+	}
+		
+	
+	/*//Hide BSC Roe Rows (28,30,32,34, 36)'	
+	if ((!annuityProdType1) && (!annuityProdType2) && (!annuityProdType3) && (!annuityProdType4) && (!annuityProdType5)){
+		for(var a = 28; a<38; a++){
+			$('#BSC_ROESUBM_Row_' + a + '').addClass('hiderowsOrColumn');
+		}	
+		ClsName = 'hiderowsOrColumn';
+	}
+	//UnHide BSC Roe Rows (28,30,32,34, 36)
+	else{
+		for(var a = 28; a<38; a++){
+			$('#BSC_ROESUBM_Row_' + a + '').removeClass('hiderowsOrColumn');
+		}
+		ClsName = '';
+	}*/
+}
+
+function CheckPreforma_ProductType_EpisodicFee(){
+	
+	var id = 'BSC_ROESUBM_Row_';
+	var l_Rows = [38, 40, 42, 44, 46, 48];
+	
+	
+	if(p_number == 1){
+		if(CellVal == '' || CellVal == ' ')
+			$('#product_22_1').addClass('visibilityHidden');
+		else
+			$('#product_22_1').removeClass('visibilityHidden');
+	}
+	else{
+		if(CellVal == '' || CellVal == ' '){
+			$('#BSC_ROESUBM_Row_' + l_Rows[p_number - 1] + '').addClass('hiderowsOrColumn');
+			$('#BSC_ROESUBM_Row_' + (l_Rows[p_number - 1] + 1) + '').addClass('hiderowsOrColumn');
+		}
+		else{			
+			$('#BSC_ROESUBM_Row_' + l_Rows[p_number - 1] + '').removeClass('hiderowsOrColumn');
+			$('#BSC_ROESUBM_Row_' + (l_Rows[p_number - 1] + 1) + '').removeClass('hiderowsOrColumn');
+		}			
+	}
+}
+
+function Event_AccordianPlusMinus(p_btnId, p_Flag){           
+    
+    var imageUrl;
+    imageUrl = (Flags[p_Flag])? '/resources/images/minus-w.png' : '/resources/images/pluse-w.png';
+    p_btnId = p_btnId + '_btn';
+    
+    $('#'+ p_btnId + '').attr(
+                               "style",
+                               "height:20px; width:26px; " +
+                               "" +
+                               "background-image:url('"
+                                             + contextPath
+                                             + imageUrl + "');");
+}
+
+function ClientNameSearch(){
+	var tdId= "c.CAS_IDClient";
+	var td = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdId+'"]');
+
+	//alert("td"+td);
+	//alert("casValue "+td.html());
+	if(td.html().length==10){
+		$('#popuprel6').draggable();
+		$('#popuprel6').fadeIn();
+		$('body').append('<div id="fade"></div>');
+		$('#fade').css({'filter' : 'alpha(opacity=80)'}).fadeIn(); 
+		var popuptopmargin = ($('#popuprel6').height() + 10) / 2;
+		var popupleftmargin = ($('#popuprel6').width() + 10) / 2;
+		$('#popuprel6').css({
+		'margin-top' : -popuptopmargin,
+		'margin-left' : -popupleftmargin
+		});
+	}else{ 
+		$('#Inp_ClientName_Search_btn_rel').draggable();
+		$('#Inp_ClientName_Search_btn_rel').fadeIn();
+		$('body').append('<div id="fade"></div>');
+		$('#fade').css({'filter' : 'alpha(opacity=80)'}).fadeIn(); 
+		var popuptopmargin = ($('#Inp_ClientName_Search_btn_rel').height() + 10) / 2;
+		var popupleftmargin = ($('#Inp_ClientName_Search_btn_rel').width() + 10) / 2;
+		$('#Inp_ClientName_Search_btn_rel').css({
+		'margin-top' : -popuptopmargin,
+		'margin-left' : -popupleftmargin
+		});	
+	}
+	$('#fade').click(function() {
+ 		// Add markup ids of all custom popup box here 						  
+ 		$('#fade , #popuprel , #popuprel2 , #popuprel3 , #popuprel4 , #popuprel5 , #popuprel6 , #Inp_ClientName_Search_btn_rel, #dealStatusChange').fadeOut();
+ 		return false;
+ 		});
+}
+
+// Update sheet JSON file
+function updateJson(p_Trs, sheetNum) {
+	sheetNum = isNaN(sheetNum)? 0 : sheetNum;
+	
+	jS = $('#sheet').getSheet(); // get the JSON
+//	sheetNum = jS.i; //loaded sheet index
+	
+	var l_Len = p_Trs.length; // length of the input parameter
+	var l_TrId, 
+		l_RptCnt, 
+		l_ApplyClass, 
+		l_StrtNum, 
+		l_Cnt, 
+		l_TempCnt, 
+		l_LoopCnt, 
+		l_IsClass, 
+		l_Formula, 
+		l_colCnt, 
+		l_Row;
+	
+	l_Cnt = l_TempCnt = l_LoopCnt = l_colCnt = l_Row = 0;
+
+	if (l_Len) {
+		for (l_LoopCnt; l_LoopCnt < l_Len; l_LoopCnt++) {
+			
+			l_TrId = p_Trs[l_LoopCnt][0]; 		// Cell ID
+			
+			l_StrtNum = p_Trs[l_LoopCnt][1]; 	// Cell Id starting num. like
+												// CP_Programming_1,2
+			l_RptCnt = p_Trs[l_LoopCnt][2]; 	// For Id any
+												// continuation
+												// is there eg:
+												// CP_Programming_1,CP_Programming_2...
+			l_ApplyClass = p_Trs[l_LoopCnt][3]; // Which
+												// class to
+												// apply for
+												// the given
+												// ID(cell)
+			l_IsClass = p_Trs[l_LoopCnt][4]; 	// Update
+											 	// class /
+											 	// formula
+			l_Formula = p_Trs[l_LoopCnt][5]; 	// formula
+											 	// to be
+											 	// changed
+
+			l_IsRowUpdate = p_Trs[l_LoopCnt][6]; // Update Row(1) / Column(0)
+			
+			var l_td = $("#"+ $(jS.obj.tables()[sheetNum]).attr('id') + "").find('td[id="' + l_TrId + '"]');
+			l_Row = l_td.parent().index();
+			l_colCnt = l_td.index();
+			//updateJsonData(jS.i, l_Row, l_colCnt, l_IsClass, l_Formula, l_ApplyClass, l_IsRowUpdate);
+			
+			// update formula
+			if (l_IsClass == 0) {
+				var index = getJsonRowAndColumn(l_TrId);				
+				jS.s.loader.json[sheetNum].rows[index.rowIndex].columns[index.columnIndex].formula = l_Formula;
+						
+			}
+			// update class
+			else {
+				var l_tempJs = jS.s.loader.json[sheetNum].rows;
+				
+				if(l_IsRowUpdate == 1){ // Row update
+					l_TrId = (l_StrtNum > 0) ? l_TrId
+							+ l_StrtNum : l_TrId;
+					l_Cnt=0;
+					
+					//console.log(l_TrId);
+					while (true) {
+						
+						if (l_tempJs[l_Cnt].hasOwnProperty('id')) {
+							if (l_tempJs[l_Cnt].id == l_TrId)
+								break;
+							else {
+								l_Cnt++;
+								continue;
+							}
+						}
+						l_Cnt++;
+					}
+	
+					if (l_RptCnt > 0) {
+						for (l_TempCnt = l_Cnt; l_TempCnt < l_Cnt + l_RptCnt; l_TempCnt++) {
+							
+							updateJsonClass(sheetNum, l_TempCnt,l_ApplyClass);
+						}
+					} else
+						updateJsonClass(sheetNum, l_Cnt,l_ApplyClass);
+				}
+				else{	//column update
+					l_tempJs = jS.s.loader.json[sheetNum].rows;				
+					var rowId = l_TrId.split('_Col_')[0]; //extract the row id
+					
+					l_Cnt = 0;
+					while (true) { 
+						// find the row number
+						if (l_tempJs[l_Cnt].hasOwnProperty('id')) {
+							if (l_tempJs[l_Cnt].id == rowId)
+								break;
+							else {
+								l_Cnt++;
+								continue;
+							}
+						}
+						l_Cnt++; 
+					}
+					
+				
+					l_tempJsCol = jS.s.loader.json[sheetNum].rows[l_Cnt].columns;
+					
+					for(var a = l_StrtNum; a < (l_StrtNum + l_RptCnt); a++){
+						
+						var clsRef = jS.s.loader.json[sheetNum].rows[l_Cnt].columns[a].class; // = l_ApplyClass;  // apply the column level class
+						//jS.s.loader.json[sheetNum].rows[l_Cnt].columns[a].class = l_ApplyClass;  // apply the column level class
+						
+						if(clsRef != '' && clsRef != ' ' && clsRef !== undefined){							
+							if(clsRef.contains('textBoxDesign')){
+								if(l_ApplyClass == '')
+									clsRef = 'textBoxDesign';
+								else
+									clsRef = 'textBoxDesign' + ' ' + l_ApplyClass;	
+								
+								jS.s.loader.json[sheetNum].rows[l_Cnt].columns[a].class = clsRef;
+							}	
+							else if(clsRef.contains('grayheading')){
+								if(l_ApplyClass == '')
+									clsRef = 'grayheading';
+								else
+									clsRef = 'grayheading' + ' ' + l_ApplyClass;	
+								
+								jS.s.loader.json[sheetNum].rows[l_Cnt].columns[a].class = clsRef;
+							}
+							else{	
+								jS.s.loader.json[sheetNum].rows[l_Cnt].columns[a].class = l_ApplyClass;		
+							}
+						}
+						else{
+							jS.s.loader.json[sheetNum].rows[l_Cnt].columns[a].class = l_ApplyClass;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+		
+//update the Class value
+function updateJsonClass(i, cnt, l_applyClass) {
+	if (l_applyClass != null)
+		jS.s.loader.json[i].rows[cnt].class = l_applyClass;
+}
+
+/*************************************************************************************************************************************
+															Events - Inputs
+/*************************************************************************************************************************************/
+
+//hide or unhide row - a22 from bsc roe submission
+function BSC_ROESUBM_HideOrUnhide(CellVal){
+	
+	ClsName = '';	
+	
+	if(CellVal == '' || CellVal == ' '){
+		$('#BSC_ROESUBM_Row_22').addClass('hiderowsOrColumn');
+		ClsName = 'hiderowsOrColumn';
+	}
+	else{
+		$('#BSC_ROESUBM_Row_22').removeClass('hiderowsOrColumn');
+		ClsName = '';
+	}
+	
+	Trs = new Array();
+	Trs.push(['BSC_ROESUBM_Row_22', 0, 0, ClsName, 1, '', 1]); //row update
+	var sheetIndex = jS.getSpreadsheetIndexByTitle('BSC ROE (SUBMISSION FORMAT)');
+	updateJson(Trs, sheetIndex);
+	Trs.length = 0;
+}
+
+
+//Deal works ID
+function Event_DealId(CellVal)
+{
+	if(CellVal !="" && CellVal !=null)
+		$('#apprv_sub_refresh').removeClass("hiderowsOrColumn");
+	else
+		$('#apprv_sub_refresh').addClass("hiderowsOrColumn");
+	}
+//CP program
+function Event_CPProgram(CellVal){
+
+	var l_rowCnt = 1;
+	Trs = new Array();
+	if(CellVal == 'CP Program'||CellVal == 'true'){	    								
+		for (l_rowCnt; l_rowCnt < 7; l_rowCnt++) {
+			$('#Cp_Program_Row_'+ l_rowCnt).removeClass("hiderowsOrColumn");
+		}
+		
+		if(isSheetLoaded)
+			alert("Please Enter the Commercial Paper Details");
+		
+		Trs = [['Cp_Program_Row_', 1, 6, '', 1, '', 1 ]];
+		//IsUpdate = true;
+		
+	}else{	    							
+		for (l_rowCnt; l_rowCnt < 7; l_rowCnt++) {
+			$('#Cp_Program_Row_'+ l_rowCnt).addClass("hiderowsOrColumn");
+		}	
+		Trs = [ [ 'Cp_Program_Row_', 1, 6, 'hiderowsOrColumn', 1, '', 1 ] ];
+		//IsUpdate = true;
+	}	
+	
+	//if(IsUpdate)
+		updateJson(Trs);
+		Trs.length = 0;
+}
+
+function Event_ProductType(CellVal){
+	Trs = new Array();
+	if(CellVal == 'Trade Finance'){
+		Trs = [['Electronic_Input_Import_LCs',0, 0, '', 1, '', 1 ],
+					[ 'Inp_Fac_Row_', 53, 2,'', 1, '', 1 ] ];
+
+			$('#Electronic_Input_Import_LCs').removeClass("hiderowsOrColumn");
+			$('#Inp_Fac_Row_53').removeClass("hiderowsOrColumn");
+			$('#Inp_Fac_Row_54').removeClass("hiderowsOrColumn");
+			
+			updateJson(Trs);
+			Trs.length = 0;
+			
+			// Facility 1 rows opens based on
+			// flag
+			
+				var rowid = "Inp_Fac1_Row_";
+				productTypeTenorShow(rowid);
+				Trs = new Array();
+				Trs = [[ 'Inp_Fac1_Row_', 57,
+						12, '', 1, '', 1 ]]; // 1: change class
+				updateJson(Trs);	Trs.length = 0;			
+
+				rowid = "Inp_Fac2_Row_";
+				productTypeTenorShow(rowid);
+				Trs = new Array();
+				Trs = [[ 'Inp_Fac2_Row_', 57,
+						12, '', 1, '', 1 ]]; // 1: change class
+				updateJson(Trs); Trs.length = 0;
+				
+				var rowid = "Inp_Fac3_Row_";
+				productTypeTenorShow(rowid);
+				Trs = new Array();
+				Trs = [[ 'Inp_Fac3_Row_', 57,
+						12, '', 1, '', 1 ]]; // 1: change class
+				updateJson(Trs); Trs.length = 0;
+				
+				var rowid = "Inp_Fac4_Row_";
+				productTypeTenorShow(rowid);
+				Trs = new Array();
+				Trs = [[ 'Inp_Fac4_Row_', 57,
+						12, '', 1, '', 1 ]]; // 1: change class
+				updateJson(Trs); Trs.length = 0;
+				
+				var rowid = "Inp_Fac5_Row_";
+				productTypeTenorShow(rowid);
+				Trs = new Array();
+				Trs = [[ 'Inp_Fac5_Row_', 57,
+						12, '', 1, '', 1 ]]; // 1: change class
+				updateJson(Trs); Trs.length = 0;
+				
+				var rowid = "Inp_Fac0_Row_";
+				productTypeTenorShow(rowid);
+				Trs = new Array();
+				Trs = [[ 'Inp_Fac0_Row_', 57,
+						12, '', 1, '', 1 ]]; // 1: change class
+				updateJson(Trs); Trs.length = 0;	
+				
+	}
+	else if (CellVal == ('Traditional Credit')|| " ") {
+		$("#sheet span").each(
+			function() {
+				if ($(this).text() == "Trade LRC Output") {
+					$(this).addClass("hiderowsOrColumn");
+				}
+			});
+		
+		$('#Electronic_Input_Import_LCs').addClass("hiderowsOrColumn");
+		$('#Inp_Fac_Row_53').addClass("hiderowsOrColumn");
+		$('#Inp_Fac_Row_54').addClass("hiderowsOrColumn");
+
+		Trs = new Array();
+		Trs = [
+				['Electronic_Input_Import_LCs', 0, 0, 'hiderowsOrColumn', 1, '', 1 ],
+				[ 'Inp_Fac_Row_', 53, 2, 'hiderowsOrColumn', 1, '', 1 ] ];
+
+		updateJson(Trs);	Trs.length = 0;	
+		
+			var rowid = "Inp_Fac1_Row_";
+			productTypeTenorHide(rowid);
+			
+			Trs = new Array();
+			Trs = [[ 'Inp_Fac1_Row_', 58,
+					11, 'hiderowsOrColumn',
+					1, '', 1 ]];
+			updateJson(Trs); Trs.length = 0;
+		
+			var rowid = "Inp_Fac2_Row_";
+			productTypeTenorHide(rowid);
+
+			Trs = new Array();
+			Trs = [[ 'Inp_Fac2_Row_', 58,
+					11, 'hiderowsOrColumn',
+					1, '', 1 ]];
+			updateJson(Trs); Trs.length = 0;
+			var rowid = "Inp_Fac3_Row_";
+			productTypeTenorHide(rowid);
+
+			Trs = new Array();
+			Trs = [[ 'Inp_Fac3_Row_', 58,
+					11, 'hiderowsOrColumn',
+					1, '', 1 ]];
+			updateJson(Trs); Trs.length = 0;
+			var rowid = "Inp_Fac4_Row_";
+			productTypeTenorHide(rowid);
+
+			Trs = new Array();
+			Trs = [[ 'Inp_Fac4_Row_', 58,
+					11, 'hiderowsOrColumn',
+					1, '', 1 ]];
+			updateJson(Trs); Trs.length = 0;
+			var rowid = "Inp_Fac5_Row_";
+			productTypeTenorHide(rowid);
+
+			Trs = new Array();
+			Trs = [[ 'Inp_Fac5_Row_', 58,
+					11, 'hiderowsOrColumn',
+					1, '', 1 ]];
+			updateJson(Trs); Trs.length = 0;
+			var rowid = "Inp_Fac0_Row_";
+			productTypeTenorHide(rowid);
+
+			Trs = new Array();
+			Trs = [[ 'Inp_Fac0_Row_', 58,
+					11, 'hiderowsOrColumn',
+					1, '', 1 ]];
+			updateJson(Trs); Trs.length = 0;
+			
+	}
+}
+
+//Industry
+var energy_falg=false;
+function Event_Industry(CellVal){	
+	
+	if (CellVal != ' '
+			&& CellVal != ''
+			&& (CellVal == 'Asset Managers'
+					|| CellVal == 'Banks & Finance Cos'
+					|| CellVal == 'Consumer/Retail'
+					|| CellVal == 'Diversified Industries'
+					|| CellVal == 'Energy'
+					|| CellVal == 'Governments; Central Banks & Public Sector'
+					|| CellVal == 'Healthcare'
+					|| CellVal == 'Insurance'
+					|| CellVal == 'Real Estate'
+					|| CellVal == 'Securities Firms & Exchanges' || CellVal == 'TMT')) {
+		IsIndustry = true;
+		
+		if ($('input:checkbox[id=bHasCPProgram_ck]').is(':checked') == true) {
+			if(isSheetLoaded)
+				alert("Please Enter the Commercial Paper Details");
+		}
+		
+		var i, j;
+		
+		for (i = 3; i < 9; i++) {
+			$("#Industry" + i).removeClass("hiderowsOrColumn");
+		}
+
+		Trs = new Array();
+		Trs = [[ 'Industry', 3, 6, '', 1, '', 1]];
+		//Commented the below, to accomadate the changes as per new excel sheet 30th oct, 2014 
+		/*if (CellVal =='Energy') {
+			energy_falg=true;
+		}*/
+		
+		energy_falg = (CellVal == 'Energy') ? true : false;
+		
+		if (energy_falg==true) {
+			$("#Industry1").removeClass("hiderowsOrColumn");
+			$("#Industry2").removeClass("hiderowsOrColumn");
+			
+			Trs.push(['Industry',1, 2,'',1, '', 1 ]);
+		}
+		else{
+			$("#Industry1").addClass("hiderowsOrColumn");
+			$("#Industry2").addClass("hiderowsOrColumn");
+			
+			Trs.push(['Industry',1, 2,'hiderowsOrColumn',1, '', 1 ]);			
+		}
+			
+
+		updateJson(Trs); Trs.length = 0;
+
+		$.ajax({	type : 'POST',
+					url : contextPath + '/getSector',
+					async : false,
+					data : CellVal,
+					contentType : "application/text",
+					success : function(data) {
+						Trs = new Array();
+						
+						if(isSheetLoaded){
+							$('#r\\.Sector')[0].attributes[0].value = data;						
+							temp = "DROPDOWN('')";						
+							replaceDropdownById("r.Sector",data, jS);
+						
+							replaceDropdownById("r.SubSector","DROPDOWN('')",jS);	
+							
+							Trs = [
+									['r.Sector', 0, 0, '', 0, data, 1],
+									['r.SubSector', 0, 0, '', 0, temp, 1] ];
+						}	
+						else
+							Trs = [['r.Sector', 0, 0, '', 0, data, 1]];							
+							
+						updateJson(Trs); Trs.length = 0;						
+					}			
+			});
+	} else {
+		for (j = 1; j < 9; j++) {
+			$("#Industry" + j).addClass("hiderowsOrColumn");
+		}
+		Trs = new Array();
+		Trs = [[ 'Industry', 1, 8, 'hiderowsOrColumn', 1, '', 1 ]];
+		updateJson(Trs); Trs.length = 0;
+	}
+}
+
+function Event_Sector(CellVal){
+	
+	if (CellVal == 'Investment & Pension Funds'
+		|| CellVal == 'Commercial Banking'
+			|| CellVal == 'Income Property'
+			|| CellVal == 'Lessors'
+			|| CellVal == 'Insurance; Nonlife'
+			|| CellVal == 'Insurance'
+			|| CellVal == 'Finance Companies'
+			|| CellVal == 'Hedge Funds'
+			|| CellVal == 'Trusts & Other Investment Companies'
+			|| CellVal == 'Mortgage Banking'
+			|| CellVal == 'Insurance; Life'
+			|| CellVal == 'Thrifts/Credit Unions'
+			|| CellVal == 'Services/Other'
+			|| CellVal == 'Lodging'
+			|| CellVal == 'For Sale Housing'
+			|| CellVal == 'Commodity Brokers; Dlrs; Exchgs'
+			|| CellVal == 'Security Brokers;Dlrs;Exchgs') {	
+
+		$.ajax({	type : 'POST',
+					url : contextPath + '/getSubSector',
+					async : false,
+					data : CellVal,
+					contentType : "application/text",
+					success : function(data) {
+						
+						if(isSheetLoaded){
+							$('#r\\.SubSector')[0].attributes[0].value = data;
+							replaceDropdownById("r.SubSector",data, jS);
+						}
+							Trs = new Array();
+							Trs = [['r.SubSector', 0, 0, '', 0, data, 1]];
+							updateJson(Trs); Trs.length = 0;
+					}				
+			});
+	} 
+}
+
+function Event_TransacType(CellVal){
+	var ClassName = '';
+	if (CellVal == 'Rollover'
+			|| CellVal == 'Amendment') {
+
+		ClassName = '';
+		
+		$('#TransacTypeEx').removeClass("visibilityHidden");
+		$('#ExFacLab').removeClass("visibilityHidden");
+		$('#TotExFacSize').removeClass("visibilityHidden");
+		$('#CurrencyFacEx').removeClass("visibilityHidden");
+		$('#FacExAmt').removeClass("visibilityHidden");
+		$('#FacExType').removeClass("visibilityHidden");
+		$('#ConstructionRealEstateFacEx').removeClass("visibilityHidden");
+		$('#TrancCatFacEx').removeClass("visibilityHidden");
+		$('#FacExProd').removeClass("visibilityHidden");
+		$('#FacExSblcFronting').removeClass("visibilityHidden");
+		$('#FacExSwinglineExposure').removeClass("visibilityHidden");
+		$('#FacExCPbu').removeClass("visibilityHidden");
+		$('#FacExSec').removeClass("visibilityHidden");
+		$('#TenorEx').removeClass("visibilityHidden");
+		$('#MaturityDateFacEx').removeClass("visibilityHidden");
+		$('#FacExLGD').removeClass("visibilityHidden");
+		$('#RegLGDFacEx').removeClass("visibilityHidden");
+		$('#B2FloorFacEx').removeClass("visibilityHidden");
+		$('#ShowsupportEx').removeClass("visibilityHidden");
+		$('#SupportAmtEx').removeClass("visibilityHidden");
+		$('#SupportratingEx').removeClass("visibilityHidden");
+		$('#SupporterTypeEx').removeClass("visibilityHidden");
+		$('#FacExGovtSup').removeClass("visibilityHidden");
+		$('#FacExSCF').removeClass("visibilityHidden");
+		$('#ResetFacEx').removeClass("visibilityHidden");		
+	} else {
+		ClassName = 'visibilityHidden';
+		
+		$('#TransacTypeEx').addClass("visibilityHidden");
+		$('#ExFacLab').addClass("visibilityHidden");
+		$('#TotExFacSize').addClass("visibilityHidden");
+		$('#CurrencyFacEx').addClass("visibilityHidden");
+		$('#FacExAmt').addClass("visibilityHidden");
+		$('#FacExType').addClass("visibilityHidden");
+		$('#ConstructionRealEstateFacEx').addClass("visibilityHidden");
+		$('#TrancCatFacEx').addClass("visibilityHidden");
+		$('#FacExProd').addClass("visibilityHidden");
+		$('#FacExSblcFronting').addClass("visibilityHidden");
+		$('#FacExSwinglineExposure').addClass("visibilityHidden");
+		$('#FacExCPbu').addClass("visibilityHidden");
+		$('#FacExSec').addClass("visibilityHidden");
+		$('#TenorEx').addClass("visibilityHidden");
+		$('#MaturityDateFacEx').addClass("visibilityHidden");
+		$('#FacExLGD').addClass("visibilityHidden");
+		$('#RegLGDFacEx').addClass("visibilityHidden");
+		$('#B2FloorFacEx').addClass("visibilityHidden");
+		$('#ShowsupportEx').addClass("visibilityHidden");
+		$('#SupportAmtEx').addClass("visibilityHidden");
+		$('#SupportratingEx').addClass("visibilityHidden");
+		$('#SupporterTypeEx').addClass("visibilityHidden");
+		$('#FacExGovtSup').addClass("visibilityHidden");
+		$('#FacExSCF').addClass("visibilityHidden");
+		$('#ResetFacEx').addClass("visibilityHidden");
+	}	
+	
+	//Inp_Fac_Row_2
+	Trs = [['Inp_Fac_Row_2_Col_TransacTypeEx', 0, 0, ClassName , 1, '', 0],
+	       ['Inp_Fac_Row_6_Col_ExFacLab', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_4_Col_TotExFacSize', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_7_Col_CurrencyFacEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_9_Col_FacExAmt', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_11_Col_FacExType', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_13_Col_ConstructionRealEstateFacEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_15_Col_TrancCatFacEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_17_Col_FacExProd', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_19_Col_FacExSblcFronting', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_21_Col_FacExSwinglineExposure', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_23_Col_FacExCPbu', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_25_Col_FacExSec', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_27_Col_TenorEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_31_Col_MaturityDateFacEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_33_Col_FacExLGD', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_37_Col_RegLGDFacEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_39_Col_B2FloorFacEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_41_Col_ShowsupportEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_43_Col_SupportAmtEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_45_Col_SupportratingEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_47_Col_SupporterTypeEx', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_49_Col_FacExGovtSup', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_53_Col_FacExSCF', 0, 0, ClassName, 1, '', 0],
+	       ['Inp_Fac_Row_55_Col_ResetFacEx', 0, 0, ClassName, 1, '', 0]
+	];
+	
+	//updateJson(Trs);
+	
+	var len = Trs.length;
+	var r_Cnt, c_Cnt; 
+	
+	for(var a=0; a< len; a++){
+		var l_TrId = Trs[a][0];
+		
+		l_tempJs = jS.s.loader.json[jS.i].rows;				
+		var rowId = l_TrId.split('_Col_')[0]; //extract the row id
+		var colId = l_TrId.split('_Col_')[1];
+		
+		r_Cnt = getJsonRowNum(rowId);
+		c_Cnt = getJsonColumnNum(r_Cnt, colId);
+		
+		jS.s.loader.json[jS.i].rows[r_Cnt].columns[c_Cnt].class = ClassName;  // apply the column level class	
+		
+	}
+}
+
+function Event_FacAmt(FacNum,CellVal){
+    
+    var id = 'Inp_Fac' + FacNum + '_Row';
+    ClsName = '';
+    
+    if(isNaN(CellVal)){       
+           $('#' + id+ '').addClass("hiderowsOrColumn");
+           ClsName = 'hiderowsOrColumn';
+    }
+    else{           
+           $('#' + id+ '').removeClass("hiderowsOrColumn");
+           ClsName = '';
+    }
+    
+    Trs = new Array();
+    Trs.push([id, 0, 0, ClsName, 1, '' , 1]);
+    updateJson(Trs);
+    Trs.length = 0;
+}
+
+function Event_Swingline_Exposure(facNum, CellVal)
+{
+	var rowId = 'Inp_Fac'+ facNum +'_Row_';
+	var temp = '';
+	Trs = new Array();
+	if(CellVal=='Yes')
+		{
+		if(facNum==1)	{			
+			$('#'+rowId+'70').removeClass("hiderowsOrColumn");
+			for (var j = 73; j < 75; j++) 
+				$('#'+rowId+j+'').removeClass("hiderowsOrColumn");
+					
+			temp = rowId + '70';
+            Trs.push([ temp , 0, 0, '', 1, '', 1]);      
+            Trs.push([ rowId , 73, 2, '', 1, '', 1]);   
+		}		
+		if(facNum==2||facNum==3||facNum==4)	{		
+			$('#'+rowId+'69').removeClass("hiderowsOrColumn");
+			for (var j = 72; j < 74; j++) 
+				$('#'+rowId+j+'').removeClass("hiderowsOrColumn");
+				
+		
+			temp = rowId + '69';
+	        Trs.push([ temp , 0, 0, '', 1, '', 1]);      
+	        Trs.push([ rowId , 72, 2, '', 1, '', 1]);   
+		}		
+		if(facNum==5){
+			
+			$('#'+rowId+'57').removeClass("hiderowsOrColumn");
+			for (var j = 60; j < 62; j++) 
+				$('#'+rowId+j+'').removeClass("hiderowsOrColumn");
+					
+			temp = rowId + '57';
+			Trs.push([ temp , 0, 0, '', 1, '', 1]);      
+            Trs.push([ rowId , 60, 2, '', 1, '', 1]);  
+		}
+		if(facNum==0)	{
+			for (var i = 57; i < 60; i++) 
+				$('#'+rowId+i+'').removeClass("hiderowsOrColumn");
+				
+			Trs.push([ rowId , 57, 3, '', 1, '', 1]);  
+		}
+		   updateJson(Trs);
+		   Trs.length = 0;
+		}
+	else if(CellVal=='No')
+		{
+		if(facNum==1)
+		{
+		
+			$('#'+rowId+'70').addClass("hiderowsOrColumn");
+		for (var j = 73; j < 75; j++) {
+			$('#'+rowId+j+'').addClass("hiderowsOrColumn");
+			}	
+		temp = rowId + '70';
+        Trs.push([ temp , 0, 0, 'hiderowsOrColumn', 1, '', 1]);      
+        Trs.push([ rowId , 73, 2, 'hiderowsOrColumn', 1, '', 1]);   
+		}
+	
+	if(facNum==2||facNum==3||facNum==4)
+	{
+		$('#'+rowId+'69').addClass("hiderowsOrColumn");
+	for (var j = 72; j < 74; j++) {
+		$('#'+rowId+j+'').addClass("hiderowsOrColumn");
+		}	
+	temp = rowId + '69';
+    Trs.push([ temp , 0, 0, 'hiderowsOrColumn', 1, '', 1]);      
+    Trs.push([ rowId , 72, 2, 'hiderowsOrColumn', 1, '', 1]);   
+	}
+	if(facNum==5){		
+		$('#'+rowId+'57').addClass("hiderowsOrColumn");			
+		for (var j = 60; j < 62; j++) 
+			$('#'+rowId+j+'').addClass("hiderowsOrColumn");
+			
+		temp = rowId + '57';
+		Trs.push([ temp , 0, 0, 'hiderowsOrColumn', 1, '', 1]);      
+        Trs.push([ rowId , 60, 2, 'hiderowsOrColumn', 1, '', 1]);  
+		}
+	 if(facNum==0)
+		{
+		for (var i = 57; i < 60; i++) {
+			$('#'+rowId+i+'').addClass("hiderowsOrColumn");
+			}	
+		Trs.push([ rowId , 57, 3, 'hiderowsOrColumn', 1, '', 1]);  
+		}
+	   updateJson(Trs);
+	   Trs.length = 0;
+	}
+
+}
+
+function Event_JPM_Swingline_Exposure(facNum, CellVal,TenorId)
+{
+	var val= document.getElementById(TenorId+'_DrpDwn');
+    var tenorVal=val[val.selectedIndex].value;
+    var Qtr = tenorVal* 4 + 5;
+    Trs = new Array();
+    var colId = 'Inp_Fac'+ facNum +'_Row_';
+    
+    
+	var rowId = 'Inp_Fac'+ facNum +'_Row_';
+	 
+	if(CellVal=='Yes')
+		{
+		if(facNum==1)
+			{
+				var k = 74;
+                for ( var revs = 6; revs < Qtr; revs++) {                
+                               $('#Inp_Fac'+ facNum +'_Row_'+ k +'_Col_' + revs).removeClass("visibilityHidden");
+                }
+                var colId1 = colId + k +'_Col_'; 
+                Trs.push([ colId1 , 6, (Qtr-6), '', 1, '', 0]);             
+              
+			
+			for (var j = 71; j < 73; j++) {
+				$('#'+rowId+j+'').removeClass("hiderowsOrColumn");
+				}	
+           Trs.push([ rowId , 71, 2, '', 1, '', 1]);   
+			}
+		if(facNum==2||facNum==3||facNum==4)
+		{
+			var k = 73;
+            for ( var revs = 6; revs < Qtr; revs++) {                
+                           $('#Inp_Fac'+ facNum +'_Row_'+ k +'_Col_' + revs).removeClass("visibilityHidden");
+            }
+            var colId1 = colId + k +'_Col_'; 
+            Trs.push([ colId1 , 6, (Qtr-6), '', 1, '', 0]);
+            
+		for (var j = 70; j < 73; j++) {
+			$('#'+rowId+j+'').removeClass("hiderowsOrColumn");
+			}	
+       Trs.push([ rowId , 70, 2, '', 1, '', 1]);   
+		}
+		if(facNum==5)
+			{
+			var k = 61;
+            for ( var revs = 6; revs < Qtr; revs++) {                
+                           $('#Inp_Fac'+ facNum +'_Row_'+ k +'_Col_' + revs).removeClass("visibilityHidden");
+            }
+            var colId1 = colId + k +'_Col_'; 
+            Trs.push([ colId1 , 6, (Qtr-6), '', 1, '', 0]);
+            
+			for (var j = 58; j < 60; j++) {
+				$('#'+rowId+j+'').removeClass("hiderowsOrColumn");
+				}	
+           Trs.push([ rowId , 58, 2, '', 1, '', 1]);  
+			}
+		if(facNum==0)
+		{
+			var k = 59;
+	        for ( var revs = 6; revs < Qtr; revs++) {                
+	            $('#Inp_Fac'+ facNum +'_Row_'+ k +'_Col_' + revs).removeClass("visibilityHidden");
+	        }
+	        var colId1 = colId + k +'_Col_'; 
+	        Trs.push([ colId1 , 6, (Qtr-6), '', 1, '', 0]);
+		}
+		   updateJson(Trs);Trs.length = 0;
+		}
+	
+	else if(CellVal=='No')
+		{
+		Trs = new Array();
+		if(facNum==1)
+		{
+			
+			var k = 74;
+            for ( var revs = 6; revs < Qtr; revs++) {                
+                           $('#Inp_Fac'+ facNum +'_Row_'+ k +'_Col_' + revs).addClass("visibilityHidden");
+            }
+            var colId1 = colId + k +'_Col_'; 
+            
+            Trs.push([ colId1 , 6, (Qtr-6), '', 1, '', 0]);    
+            
+		for (var j = 71; j < 73; j++) {
+			$('#'+rowId+j+'').addClass("hiderowsOrColumn");
+			}	
+		
+		Trs.push([ rowId , 71, 2, 'hiderowsOrColumn', 1, '', 1]);   
+		}
+	
+	if(facNum==2||facNum==3||facNum==4)
+	{
+		
+		var k = 73;
+        for ( var revs = 6; revs < Qtr; revs++) {                
+                       $('#Inp_Fac'+ facNum +'_Row_'+ k +'_Col_' + revs).addClass("visibilityHidden");
+        }
+        var colId1 = colId + k +'_Col_'; 
+        Trs.push([ colId1 , 6, (Qtr-6), '', 1, '', 0]);
+        
+	for (var j = 70; j < 73; j++) {
+		$('#'+rowId+j+'').addClass("hiderowsOrColumn");
+		}	
+   Trs.push([ rowId , 70, 2, 'hiderowsOrColumn', 1, '', 1]);   
+	}
+	
+	if(facNum==5)
+		{
+			var k = 61;
+            for ( var revs = 6; revs < Qtr; revs++) {                
+                           $('#Inp_Fac'+ facNum +'_Row_'+ k +'_Col_' + revs).addClass("visibilityHidden");
+            }
+            var colId1 = colId + k +'_Col_'; 
+            Trs.push([ colId1 , 6, (Qtr-6), '', 1, '', 0]);
+		for (var j = 58; j < 60; j++) {
+			$('#'+rowId+j+'').addClass("hiderowsOrColumn");
+			}	
+       Trs.push([ rowId , 58, 2, 'hiderowsOrColumn', 1, '', 1]);  
+		}
+	if(facNum==0)
+	{
+		var k = 59;
+        for ( var revs = 6; revs < Qtr; revs++) {                
+            $('#Inp_Fac'+ facNum +'_Row_'+ k +'_Col_' + revs).addClass("visibilityHidden");
+        }
+        var colId1 = colId + k +'_Col_'; 
+        Trs.push([ colId1 , 6, (Qtr-6), '', 1, '', 0]);
+	}
+	   updateJson(Trs);Trs.length = 0;
+	}
+
+}
+
+function Event_L_C_Availability(facNum, CellVal, TenorVal)
+{
+
+    var val= document.getElementById(TenorVal+'_DrpDwn');
+    var tenorVal=val[val.selectedIndex].value;
+    var Qtr = tenorVal* 4 + 5;
+    Trs = new Array();
+    var colId = 'Inp_Fac'+ facNum +'_Row_';
+    
+    if(CellVal=='Yes'  )
+    {
+           for ( var k = 30; k < 59; k++) {
+                   
+                 for ( var revs = 6; revs < Qtr; revs++) {                
+                                $('#Inp_Fac'+ facNum +'_Row_'+ k +'_Col_' + revs).removeClass("visibilityHidden");
+                 }
+                 
+                 var colId1 = colId + k +'_Col_'; 
+                 Trs.push([ colId1 , 6, (Qtr-6), '', 1, '', 0]);             
+               
+           }
+           updateJson(Trs);Trs.length = 0;
+    }
+    else{
+          for ( var k = 30; k < 59; k++) {
+            
+              for ( var revs = 6; revs < Qtr; revs++) {
+                  $('#Inp_Fac'+facNum+'_Row_'+ k +'_Col_' + revs).addClass("visibilityHidden");
+              }
+             
+              var colId1 = colId + k +'_Col_';             
+              Trs.push([ colId1 , 6, (Qtr-6), 'visibilityHidden', 1, '', 0]);             
+                
+          } 
+          updateJson(Trs);Trs.length = 0;
+     }      
+}
+
+function Event_Tenor(TenorNum, CellVal){
+    var InpFacrow, FacInputdata; 
+    
+    Fac1SblcFrontingId = 'Fac' + TenorNum +'SblcFronting_DrpDwn';
+    InpFacrow = 'Inp_Fac' + TenorNum + '_Row_';
+    FacInputdata = 'Fac' + TenorNum + '_InpData_Row_';
+    OnChangeDrpId = 'Fac' + TenorNum +'Tenor';
+  
+    var id1; //, id2;
+
+    if (CellVal != null || CellVal != "") {
+           var Qtr = CellVal * 4 + 5;
+           Facility1_Qtr = Qtr;
+           window.IsproductType = false;           
+           
+           if(isSheetLoaded){           
+	           for ( var k = 1; k < 109; k++) {
+	        	   
+	        	   Trs = new Array();     
+	        	   
+	                  for ( var i = Qtr; i < 65; i++) {                	 
+	                	  //if($('#' + InpFacrow + k+ '_Col_'+ i).length  > 0){
+	                        $('#' + InpFacrow + k+ '_Col_'+ i).addClass("visibilityHidden");    
+	                	//  }
+	                       // $('#' + FacInputdata + k + '_Col_'+ i).addClass("visibilityHidden");                     
+	                  }
+	                  
+	                  id1 = InpFacrow + k + '_Col_';
+	                  id2 =  FacInputdata + k + '_Col_';
+	                  
+	                  Trs.push([id1, Qtr, (65-Qtr), 'visibilityHidden', 1, '', 0]);   //update column
+	                   
+	                   
+	                  for ( var revs = 5; revs < Qtr; revs++) {
+	                	//  if($('#' + InpFacrow + k + '_Col_' + revs).length  > 0){
+	                        $('#' + InpFacrow + k + '_Col_' + revs).removeClass("visibilityHidden");	                    
+	                      //  $('#' + FacInputdata + k+ '_Col_'+ revs).removeClass("visibilityHidden");
+	                	 // }
+	                  }                
+	               
+	                  Trs.push([id1, 5, (Qtr - 5), '', 1, '', 0]);
+	                  updateJson(Trs, 0);Trs.length = 0;
+	           } 
+           }
+           else{
+        	   
+        	   for ( var k = 1; k < 109; k++) {	        	   
+        		  Trs = new Array();   
+        		  
+				  id1 = InpFacrow + k + '_Col_';
+				  id2 =  FacInputdata + k + '_Col_';
+				  
+				  Trs.push([id1, Qtr, (65-Qtr), 'visibilityHidden', 1, '', 0]);   //update column
+				  Trs.push([id1, 5, (Qtr - 5), '', 1, '', 0]);
+				  
+				  updateJson(Trs, 0);Trs.length = 0;
+	           }     
+           }
+        	   
+           if(TenorNum == 1)
+                  Facility1_flag = true;
+           else if(TenorNum == 2)
+                  Facility2_flag = true;
+           else if(TenorNum == 3)
+                  Facility3_flag = true;
+           else if(TenorNum == 4)
+                  Facility4_flag = true;
+           else if(TenorNum == 5)
+                  Facility5_flag = true;
+           
+    } else {
+           for ( var j = 2; j < 109; j++) {
+                  $('#' + InpFacrow + j + '').addClass("hiderowsOrColumn");
+           }
+           
+           Trs = new Array();
+           Trs.push([InpFacrow, 2, 107, 'hiderowsOrColumn', 1, '', 1]);   //update row         
+           
+           updateJson(Trs, 0);Trs.length = 0;
+           
+           if(TenorNum == 1)
+                  Facility1_flag = false;
+           else if(TenorNum == 2)
+                  Facility2_flag = false;
+           else if(TenorNum == 3)
+                  Facility3_flag = false;
+           else if(TenorNum == 4)
+                  Facility4_flag = false;
+           else if(TenorNum == 5)
+                  Facility5_flag = false;
+    }
+    
+     // Allfacility function
+    if(isSheetLoaded){
+		Event_AllFacAndRiskMit();
+   }
+}
+
+function Event_AllFacAndRiskMit(CellVal)
+{
+	var tenor1Val = '', 
+	tenor2Val = '',
+     tenor3Val = '',
+     tenor4Val = '',
+     tenor5Val = '';	
+	
+	var tenorFac1= document.getElementById('Fac1Tenor_DrpDwn');
+	var tenorFac2= document.getElementById('Fac2Tenor_DrpDwn');
+	var tenorFac3= document.getElementById('Fac3Tenor_DrpDwn');
+	var tenorFac4= document.getElementById('Fac4Tenor_DrpDwn');
+	var tenorFac5= document.getElementById('Fac5Tenor_DrpDwn');
+	
+	 tenor1Val=tenorFac1[tenorFac1.selectedIndex].value; // (tenorFac1) ? tenorFac1[tenorFac1.selectedIndex].value : '';
+	 tenor2Val=tenorFac2[tenorFac2.selectedIndex].value;
+	 tenor3Val=tenorFac3[tenorFac3.selectedIndex].value;
+	 tenor4Val=tenorFac4[tenorFac4.selectedIndex].value;
+	 tenor5Val=tenorFac5[tenorFac5.selectedIndex].value;
+	
+	 tenor1Val =  (tenor1Val != undefined && tenor1Val > 0 && tenor1Val != '' && tenor1Val != ' ') ? tenor1Val : 0;
+	 tenor2Val =  (tenor2Val != undefined && tenor2Val > 0 && tenor2Val != '' && tenor2Val != ' ') ? tenor2Val : 0;
+	 tenor3Val =  (tenor3Val != undefined && tenor3Val > 0 && tenor3Val != '' && tenor3Val != ' ') ? tenor3Val : 0;
+	 tenor4Val =  (tenor4Val != undefined && tenor4Val > 0 && tenor4Val != '' && tenor4Val != ' ') ? tenor4Val : 0;
+	 tenor5Val =  (tenor5Val != undefined && tenor5Val > 0 && tenor5Val != '' && tenor5Val != ' ') ? tenor5Val : 0;
+	 
+	 
+	var maxval = Math.max(tenor1Val,tenor2Val,tenor3Val,tenor4Val,tenor5Val);
+	
+	if (maxval != null || maxval != "") {
+
+        var Qtr = maxval * 4 + 5;
+        var tempArray1; //, tempArray2;
+        Trs = tempArray1 = new Array();
+        var InpFacrow='Af_Row_';
+        for ( var k = 2; k < 6; k++) {
+               
+               for ( var i = Qtr; i < 65; i++) {
+                     $('#' + InpFacrow + k+ '_Col_'+ i).addClass("visibilityHidden");    
+               }
+               id1 = InpFacrow + k + '_Col_';
+               tempArray1 = [id1, Qtr, (65-Qtr), 'visibilityHidden', 1, '', 0];   //update column
+               Trs.push(tempArray1); 
+               
+               for ( var revs = 5; revs < Qtr; revs++) {
+                     $('#' + InpFacrow + k + '_Col_' + revs).removeClass("visibilityHidden");
+               }
+               tempArray1 = [id1, 5, (Qtr - 5), '', 1, '', 0];  
+               Trs.push(tempArray1);
+               updateJson(Trs, 0);
+        }    
+        var InpRIskMitrow='Rm_Row_';
+        for ( var k = 8; k < 14; k++) {
+               
+               for ( var i = Qtr; i < 65; i++) {
+                     $('#' + InpRIskMitrow + k+ '_Col_'+ i).addClass("visibilityHidden");    
+               }
+               id1 = InpRIskMitrow + k + '_Col_';
+               tempArray1 = [id1, Qtr, (65-Qtr), 'visibilityHidden', 1, '', 0];   //update column
+               Trs.push(tempArray1); 
+               
+               for ( var revs = 5; revs < Qtr; revs++) {
+                     $('#' + InpRIskMitrow + k + '_Col_' + revs).removeClass("visibilityHidden");
+               }
+               tempArray1 = [id1, 5, (Qtr - 5), '', 1, '', 0];  
+               Trs.push(tempArray1);
+               updateJson(Trs, 0);
+        }    
+        
+ }
+
+}
+
+function Event_Govt(Celval)
+{	
+	for(var i=50;i<52;i++){		
+	   	if(Celval=='US EXIM' || Celval=='ECA')	{			
+	   		$("#Inp_Fac_Row_"+i).removeClass("hiderowsOrColumn");
+	   		ClsName = '';
+	    }
+	    else{
+	    	$("#Inp_Fac_Row_"+i).addClass("hiderowsOrColumn");
+	    	ClsName = 'hiderowsOrColumn';
+	    }
+	}
+	
+	Trs = new Array();
+	Trs = [['Inp_Fac_Row_', 50, 2, ClsName, 1, '', 1]];
+	updateJson(Trs);   Trs.length = 0;
+}
+
+function Event_product(CellVal)
+{
+	ClsName = '';
+	if(CellVal=='Acceptance' || CellVal==' '){
+		$('#Inp_Fac_Row_18').addClass("hiderowsOrColumn");
+		$('#Inp_Fac_Row_19').addClass("hiderowsOrColumn");
+	
+		ClsName = 'hiderowsOrColumn';
+	}
+	else{
+		$('#Inp_Fac_Row_18').removeClass("hiderowsOrColumn");
+		$('#Inp_Fac_Row_19').removeClass("hiderowsOrColumn");
+		
+		ClsName = '';
+	}	
+	
+	Trs = new Array();
+	Trs = [['Inp_Fac_Row_', 18, 2, ClsName, 1, '', 1]];
+	updateJson(Trs);Trs.length = 0;
+}
+
+function Event_FacSblcFronting(CellVal, sblcNum){
+	if(CellVal == 'Yes'){
+	$("#Discretionary_LC1").removeClass("hiderowsOrColumn");
+	$("#Discretionary_LC2").removeClass("hiderowsOrColumn");
+	}if(CellVal == 'No'){
+		$("#Discretionary_LC1").addClass("hiderowsOrColumn");
+		$("#Discretionary_LC2").addClass("hiderowsOrColumn");
+		}
+	var j;
+	//var val = document.getElementById("Fac1SblcFronting_DrpDwn");
+	Trs = new Array();
+	
+	for (j = 31; j < 53; j++) {
+		
+		Trs = new Array();
+		var RowId = "Inp_Fac"+sblcNum+"_Row_";
+				
+		if(CellVal == 'No'){
+			if( j==31 || j==32 || j==33 || j==34 || j==39 || j==40 || j==45 || j==46 || j==51 || j==52  ) {
+					$("#" + RowId + "" + j).addClass("hiderowsOrColumn");
+				}
+				ClsName = 'hiderowsOrColumn';
+
+		} else if(CellVal == 'Yes'){ // if (val[val.selectedIndex].value == 'Yes') {			
+			if( j==31 || j==32 || j==33 || j==34 || j==39 || j==40 || j==45 || j==46 || j==51 || j==52  )  {
+					$("#" + RowId + "" + j).removeClass("hiderowsOrColumn");
+				}
+			
+				ClsName = '';
+		}
+		
+		Trs = [[RowId, 31, 4, ClsName, 1, '', 1],
+		       [RowId, 39, 2, ClsName, 1, '', 1],
+		       [RowId, 45, 2, ClsName, 1, '', 1],
+		       [RowId, 51, 2, ClsName, 1, '', 1]
+			];
+		
+		updateJson(Trs);Trs.length = 0;
+	}
+}
+
+function Event_Inp_Fac1_Row_76_Col_4(CellVal){  //Participation dropdown
+	/*var i;
+	var val = document.getElementById("Inp_Fac1_Row_76_Col_4_DrpDwn");
+	Trs = new Array();*/
+	
+}
+
+function Event_FacType(CellVal,facNum){
+	
+	if (CellVal == 'Term Loan') {
+		$('#Inp_Fac_Row_12').removeClass("hiderowsOrColumn");
+		$('#Inp_Fac_Row_13').removeClass("hiderowsOrColumn");
+		ClsName = '';
+	} else {
+		$('#Inp_Fac_Row_12').addClass("hiderowsOrColumn");
+		$('#Inp_Fac_Row_13').addClass("hiderowsOrColumn");
+		ClsName = 'hiderowsOrColumn';
+	}
+	
+	Trs = new Array();
+	Trs = [['Inp_Fac_Row_', 12, 2, ClsName, 1, '', 1]];
+	updateJson(Trs);Trs.length = 0;
+	
+
+
+	if (CellVal == 'Term Loan'
+			|| CellVal == 'Revolving Credit'
+			|| CellVal == 'Non-committed') {
+		//var sector = CellVal;
+
+		$.ajax({
+					type : 'POST',
+					url : contextPath + '/getTrancheCategory',
+					async : false,
+					data : CellVal, //Facility Type
+					contentType : "application/text",
+					
+					success : function(data) {
+						var jS = $('#sheet').getSheet();
+						replaceDropdownById("TrancCatFac"+facNum, data, jS);
+					}
+				});
+	} else if (CellVal == ' ' || CellVal == '') {
+		replaceDropdownById("TrancCatFac"+facNum, "=dropdown()", jS);
+	}
+}
+
+function ResetFacility(facilityNum){
+	
+	var i= facilityNum;
+	var FacilityCells = new Array();
+
+	/*
+	 * 
+	  	TransacType2_DrpDwn
+		Tot2FacSize
+		CurrencyFac2_DrpDwn                    
+		Fac2Amt					
+		Fac2Type_DrpDwn				
+		ConstructionRealEstateFac2_DrpDwn	
+		TrancCatFac2_DrpDwn			
+		Fac2Prod_DrpDwn				
+		Fac2SblcFronting_DrpDwn			
+		Fac2DiscretionaryLC_DrpDwn		
+		Fac2SwinglineExposure_DrpDwn		
+		Fac2CPbu_DrpDwn				
+		Fac2Sec_DrpDwn
+		Fac2Tenor_DrpDwn
+		MaturityDateFac2
+		Fac2LGD_DrpDwn
+		RegLGDFac2
+		B2FloorFac2_DrpDwn
+		Showsupport2_DrpDwn
+		SupportAmt2
+		Supportrating2_DrpDwn
+		SupporterType2_DrpDwn
+		Fac2GovtSup_DrpDwn
+		CapitalMarketsTakeoutFac2_DrpDwn
+		Fac2SCF_DrpDwn
+	 */
+	
+	
+	//B2FloorFac1_DrpDwn
+	FacilityCells.push ('CurrencyFac' + i+'_DrpDwn'); //0
+	FacilityCells.push ('Fac' + i + 'Amt'); //1
+	FacilityCells.push ('Fac' + i + 'Type_DrpDwn');//2
+	FacilityCells.push ('ConstructionRealEstateFac' + i+'_DrpDwn');//3
+	FacilityCells.push ('TrancCatFac' + i+'_DrpDwn');//4
+	FacilityCells.push ('Fac' + i + 'Prod_DrpDwn');//5
+	FacilityCells.push ('Fac' + i +'SblcFronting_DrpDwn');//6
+	FacilityCells.push ('Fac' + i +'DiscretionaryLC_DrpDwn');//7
+	FacilityCells.push ('Fac' + i + 'SwinglineExposure_DrpDwn');//8
+	FacilityCells.push ('Fac' + i + 'CPbu_DrpDwn');//9
+	FacilityCells.push ('Fac' + i + 'Sec_DrpDwn');//10
+	
+	//TenorEx_DrpDwn - For Existing Facility
+	if(i == 'Ex')
+		FacilityCells.push ('TenorEx_DrpDwn');//11
+	else
+		FacilityCells.push ('Fac' + i +'Tenor_DrpDwn');//11
+	
+	FacilityCells.push ('MaturityDateFac' + i); // ('MaturityDateFac' + i);//12
+	FacilityCells.push ('Fac' + i + 'LGD_DrpDwn');//13
+	FacilityCells.push ('RegLGDFac' + i);//14
+	FacilityCells.push ('B2FloorFac' + i+'_DrpDwn');//15
+	FacilityCells.push ('Showsupport' + i+'_DrpDwn');//16
+	FacilityCells.push ('SupportAmt' + i);//17 
+	FacilityCells.push ('Supportrating' + i+'_DrpDwn');//18
+	FacilityCells.push ('SupporterType' + i+'_DrpDwn');//19
+	FacilityCells.push ('Fac' + i + 'GovtSup_DrpDwn');//20
+	FacilityCells.push ('CapitalMarketsTakeoutFac' + i+'_DrpDwn');//21
+	FacilityCells.push ('Fac' + i + 'SCF_DrpDwn');//22
+	FacilityCells.push ('TransacType' + i +'_DrpDwn'); //23
+	FacilityCells.push('Tot'+ i +'FacSize');//24 
+	
+	// Pricing Cells
+	//Inp_Fac2_Row_4_Col_5 ------  Inp_Fac2_Row_75_Col_12
+	FacilityCells.push ('Inp_Fac' + i + '_Row_2_Col_5'); // 25
+	FacilityCells.push ('Inp_Fac' + i + '_Row_4_Col_5'); // 26
+	FacilityCells.push ('Inp_Fac' + i + '_Row_8_Col_5'); // 27
+	FacilityCells.push ('Inp_Fac' + i + '_Row_12_Col_5'); // 28
+	FacilityCells.push ('Inp_Fac' + i + '_Row_16_Col_5'); //29
+	FacilityCells.push ('Fac' + i + 'Fee'); //30
+	FacilityCells.push ('Upfront' + i); // 31
+	FacilityCells.push ('Inp_Fac' + i + '_Row_26_Col_5'); // 32
+	FacilityCells.push ('Inp_Fac' + i + '_Row_28_Col_5'); // 33
+	FacilityCells.push ('Inp_Fac' + i + '_Row_30_Col_5'); // 34
+	FacilityCells.push ('Inp_Fac' + i + '_Row_32_Col_5'); // 35
+	FacilityCells.push ('Inp_Fac' + i + '_Row_34_Col_5'); // 36
+	FacilityCells.push ('Inp_Fac' + i + '_Row_36_Col_5'); // 37
+	FacilityCells.push ('Inp_Fac' + i + '_Row_38_Col_5'); // 38
+	FacilityCells.push ('Inp_Fac' + i + '_Row_40_Col_5'); // 39
+	FacilityCells.push ('Inp_Fac' + i + '_Row_42_Col_5'); //40
+	FacilityCells.push ('Inp_Fac' + i + '_Row_44_Col_5'); //41
+	FacilityCells.push ('Inp_Fac' + i + '_Row_46_Col_5'); //42
+	FacilityCells.push ('Inp_Fac' + i + '_Row_48_Col_5'); //43
+	FacilityCells.push ('Inp_Fac' + i + '_Row_50_Col_5'); //44
+	FacilityCells.push ('Inp_Fac' + i + '_Row_52_Col_5'); //45
+	FacilityCells.push ('Inp_Fac' + i + '_Row_54_Col_5'); //46
+	FacilityCells.push ('Inp_Fac' + i + '_Row_56_Col_5'); //47
+	FacilityCells.push ('Inp_Fac' + i + '_Row_60_Col_5'); //48
+	FacilityCells.push ('Inp_Fac' + i + '_Row_62_Col_5'); //49
+	FacilityCells.push ('Inp_Fac' + i + '_Row_64_Col_5'); //50
+	FacilityCells.push ('Inp_Fac' + i + '_Row_66_Col_5'); //51
+	FacilityCells.push ('Inp_Fac' + i + '_Row_68_Col_5');//52
+	FacilityCells.push ('Fac' + i + 'SwinglineBool_DrpDwn'); // 53
+	FacilityCells.push ('Fac' + i + 'SwinlineCreditLanguageBool_DrpDwn'); //54
+	FacilityCells.push ('Inp_Fac' + i + '_Row_4_Col_5');  // 55   //check with Kunal for ID - added
+	FacilityCells.push ('ShowParticipationsFac' + i + '_DrpDwn'); // 56 
+	FacilityCells.push ('Inp_Fac' + i + '_Row_77_Col_4_DrpDwn'); // 57   //check with Kunal for ID- added
+	FacilityCells.push ('Inp_Fac' + i + '_Row_79_Col_4_DrpDwn'); // 58   //check with Kunal for ID - added
+	FacilityCells.push ('Inp_Fac' + i + '_Row_82_Col_5'); // 59
+	FacilityCells.push ('Inp_Fac' + i + '_Row_84_Col_5'); // 60
+	FacilityCells.push ('Inp_Fac' + i + '_Row_86_Col_5'); // 61
+	FacilityCells.push ('Inp_Fac' + i + '_Row_88_Col_5'); //62
+	FacilityCells.push ('Inp_Fac' + i + '_Row_90_Col_5'); //63
+	FacilityCells.push ('Inp_Fac' + i + '_Row_92_Col_5'); //64
+	FacilityCells.push ('Inp_Fac' + i + '_Row_94_Col_5'); //65
+	FacilityCells.push ('Inp_Fac' + i + '_Row_96_Col_5'); //66
+	FacilityCells.push ('Inp_Fac' + i + '_Row_98_Col_5'); //67
+	FacilityCells.push ('Inp_Fac' + i + '_Row_100_Col_5'); //68
+	FacilityCells.push ('Inp_Fac' + i + '_Row_102_Col_5'); //69
+	FacilityCells.push ('Inp_Fac' + i + '_Row_104_Col_5'); //70
+	FacilityCells.push ('Inp_Fac' + i + '_Row_106_Col_5'); //71
+	if(i == 0)
+		FacilityCells.push ('Inp_Fac' + i + '_Row_106_Col_5'); //71
+	else
+		FacilityCells.push ('Inp_Fac' + i + '_Row_107_Col_5'); //72 //check with kunal for ID - added
+	
+	FacilityCells.push ('Inp_Fac' + i + '_Row_22_Col_4'); //73
+	FacilityCells.push ('Inp_Fac' + i + '_Row_28_Col_4'); //74
+	
+	
+	
+		
+	
+	/*
+	 * 
+Tot2FacSize
+Fac2Amt
+SupportAmt2
+		
+		ShowParticipationsFac2 (0-No)
+		Inp_Fac2_Row_77_Col_4_DrpDwn
+		Inp_Fac2_Row_79_Col_4_DrpDwn
+
+	 */
+	
+	
+	
+	var len = FacilityCells.length;
+	
+	for(var a = 0; a < len; a++){
+		if((a == 0 ||a == 2|| a == 3 || a == 5 || ( a >= 9 && a <= 11) || a == 13 || a ==15 || a == 16) || (a >= 18 && a <= 23) || (a == 56) || (a == 74))
+		{
+			$('#' + FacilityCells[a]).val($('#' + FacilityCells[a] + ' option:eq(0)').val()).change();
+		}
+		else if(a == 6 || a == 7 || a == 8)			
+			$('#' + FacilityCells[a]).val($('#' + FacilityCells[a] + ' option:eq(1)').val()).change();
+		else
+			{
+			
+			var tdId = FacilityCells[a];
+			var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find('td[id="' + tdId + '"]');
+			var col = td.index();
+			var row = td.parent().index();	
+			
+			if(cell = jS.getCell(jS.i, row, col)){
+				 if (cell !== null) {
+				      try {	    	  
+				    	  	cell.setNeedsUpdated();
+				    	    cell.valueOverride = cell.value="";
+				    	    cell.updateValue();
+							jS.calcDependencies.call(cell);						
+							
+				      } catch (e) { }
+				 }	
+			}
+		}
+	}
+	
+	Trs = new Array;
+	if(i >= 2 && i <= 5){	
+		var a=0;		
+		//Inp_Fac2_Row_4_Col_5 ------  Inp_Fac2_Row_75_Col_12 Hide the columns on Reset Facility
+		id = 'Inp_Fac' + i + '_Row_';
+		
+		for(a=4; a< 76; a++){
+			for(var b = 5; b < 13; b++){
+				$('#' + id + a + '_Col_' + b + '').addClass('visibilityHidden');				
+			}
+			Trs = new Array();
+			Trs.push([id + a + '_Col_', 5, 8, 'visibilityHidden', 1, '', 0]);
+			updateJson(Trs);
+			Trs.length = 0;
+		}
+	}	
+}	
+
+//Facility participatios  Script
+function Event_Participations(PartpNum, CellVal){
+	var i, ClsName, rptCnt;
+	Trs = new Array();	
+	rptCnt = 	110 - 77;
+	
+	if(CellVal=='Yes' ){	
+		
+		for(i=77;i<110;i++)
+			$("#Inp_Fac"+ PartpNum +"_Row_"+i).removeClass("hiderowsOrColumn");
+		
+		ClsName = "";
+		if(PartpNum==1)
+		{
+		rptCnt = 	110 - 77;
+		Trs = [['Inp_Fac' + PartpNum + '_Row_', 77, rptCnt, ClsName, 1, '', 1]];
+
+		}else if(PartpNum==2||PartpNum==3||PartpNum==4||PartpNum==5)
+		{
+		rptCnt = 	109 - 77;
+	Trs = [['Inp_Fac' + PartpNum + '_Row_', 77, rptCnt, ClsName, 1, '', 1]];
+		}else if(PartpNum==0)
+		{
+		rptCnt = 	107 - 77;
+		Trs = [['Inp_Fac' + PartpNum + '_Row_', 77, rptCnt, ClsName, 1, '', 1]];
+		}
+	}
+	else {
+		
+		for(i=77;i<110;i++)		
+			{		
+			$("#Inp_Fac"+PartpNum+"_Row_"+i).addClass("hiderowsOrColumn");	
+			}
+		
+		ClsName = "hiderowsOrColumn";
+		if(PartpNum==1)
+		{
+		rptCnt = 	110 - 77;
+		Trs = [['Inp_Fac' + PartpNum + '_Row_', 77, rptCnt, ClsName, 1, '', 1]];
+
+		}else if(PartpNum==2||PartpNum==3||PartpNum==4||PartpNum==5)
+		{
+		rptCnt = 	109 - 77;
+	Trs = [['Inp_Fac' + PartpNum + '_Row_', 77, rptCnt, ClsName, 1, '', 1]];
+		}else if(PartpNum==0)
+		{
+		rptCnt = 	107 - 77;
+		Trs = [['Inp_Fac' + PartpNum + '_Row_', 77, rptCnt, ClsName, 1, '', 1]];
+		}
+	}
+	
+	updateJson(Trs);
+	Trs.length = 0;
+}
+
+function getJsonRowNum(CellId){
+	// Returns the Row number from Json for a given CellId
+	var l_tempJs = jS.s.loader.json[jS.i].rows;				
+	var rowId = CellId;
+	
+	r_Cnt = 0;
+	
+	while (true) { 
+		// find the row number
+		if (l_tempJs[r_Cnt].hasOwnProperty('id')) {
+			if (l_tempJs[r_Cnt].id == rowId)
+				break;
+			else {
+				r_Cnt++;
+				continue;
+			}
+		}
+		r_Cnt++; 
+	}	
+	
+	return r_Cnt; //returns the row number from Json
+}
+
+function getJsonRowAndColumn(CellId){
+	var rows,
+	columns,
+	jsonCell,
+	row,
+	rowIndex,
+	columnIndex;
+	var index = new Object();
+
+if ((jsonSpreadsheet = jS.s.loader.json[0]) === undefined) return;
+if ((rowIndex = (rows = jsonSpreadsheet.rows).length) < 1) return;
+if (rows[0].columns.length < 1) return;
+
+		rowIndex--;
+		do
+		{
+			row = rows[rowIndex];
+			columns = row.columns;
+			columnIndex = columns.length - 1;
+			do
+			{
+				jsonCell = columns[columnIndex];
+				if(jsonCell.id == CellId) {
+					index.rowIndex = rowIndex;
+					index.columnIndex = columnIndex;
+					return index;
+					//return jsonCell;
+				}
+					
+			}
+			while (columnIndex-- > 0);
+		}
+		while (rowIndex-- > 0);		
+}
+
+function getJsonColumnNum(rowNum, CellId){
+	// Returns the COL number from Json for a given CellId
+	var colId = CellId;	
+	var c_Cnt = 0;	
+	var l_tempJsCol = jS.s.loader.json[jS.i].rows[rowNum].columns;  
+	
+	while (true) { 
+		// find the row number
+		if (l_tempJsCol[c_Cnt].hasOwnProperty('id')) {
+			if (l_tempJsCol[c_Cnt].id == colId)
+				break;
+			else {
+				c_Cnt++;
+				continue;
+			}
+		}
+		c_Cnt++; 
+	}
+	
+	return c_Cnt; //return the column number from Json
+}
+
+/**********************************************************************************************************
+ * 										Events        from      BSE Request
+ *************************************************************************************************************/
+function Event_TotalJPMRevenues(){
+	
+}
+
+/////////////////////////////////////////////// Functions copied from modelEventsOLD.js ////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+/**
+ * ********************************* Event Handling For Input Sheet
+ * **********************************
+ */
+function productTypeTenorHide(RowId) {
+	for ( var j = 58; j < 69; j++) 
+		$("#" + RowId + "" + j).addClass("hiderowsOrColumn");
+}
+function productTypeTenorShow(RowId) {	
+	for ( var j = 58; j < 69; j++) 
+		$("#" + RowId + "" + j).removeClass("hiderowsOrColumn");
+}
+
+
+
+function hideunhide(name, x, y, cnt, tdId, formula, jS) {
+	// alert(name+"--"+cnt);
+	if (cnt == 0) {
+		var i;
+		var j;
+		for (i = x; i < y; i++) {
+			$("#" + name + "" + i).removeClass("hiderowsOrColumn");
+		}
+		replaceDropdownById(tdId, formula, jS);
+	} else if (cnt == 1) {
+		for (j = x; j < y; j++) {
+			$("#" + name + "" + j).addClass("hiderowsOrColumn");
+		}
+		replaceDropdownById(tdId, formula, jS);
+	}
+}
+
+// -------------ends commom code all facilities
+// function------------------------------------------------------------------
+
+/**
+ * ******************************** Approve Button event
+ * handling**********************************
+ */
+
+function Approve_btn() {
+	var jS = $('#sheet').getSheet();
+
+	var myObject = {};
+	var output = [], i = 1 * jS.i, sheet = jS.spreadsheets.length - 1, jsonSpreadsheet, spreadsheet, row, column, parentAttr, jsonRow, jsonColumn, cell, attr, cl, c2, parent, rowHasValues;
+
+	if (sheet < 0)
+		return output;
+
+	do {
+		alert(jS.i);
+		alert(jS.obj.table().attr('title'));
+		rowHasValues = false;
+		jS.i = sheet;
+		jS.evt.cellEditDone();
+		jsonSpreadsheet = {
+			"title" : (jS.obj.table().attr('title') || ''),
+			"rows" : [],
+			"metadata" : {
+				"widths" : [],
+				"frozenAt" : $.extend({}, jS.frozenAt()),
+
+			}
+		};
+
+		output.unshift(jsonSpreadsheet);
+
+		spreadsheet = jS.spreadsheets[sheet];
+		row = spreadsheet.length - 1;
+		do {
+			parentAttr = spreadsheet[row][1].td[0].parentNode.attributes;
+			jsonRow = {
+				"height" : null,
+
+				"columns" : [],
+				"height" : (parentAttr['height'] ? parentAttr['height'].value
+						.replace('px', '') : jS.s.colMargin)
+			};
+
+			c2 = (parentAttr['class'] ? $
+					.trim((parentAttr['class'].value || '').replace(
+							jS.cl.uiCellActive, '').replace(
+							jS.cl.uiCellHighlighted, '')) : '');
+			if (c2.length) {
+				jsonRow['class'] = c2;
+			}
+			if (parentAttr['id']) {
+				jsonRow['id'] = (parentAttr['id'].value || '');
+			}
+			column = spreadsheet[row].length - 1;
+			do {
+				cell = spreadsheet[row][column];
+				jsonColumn = {};
+				attr = cell.td[0].attributes;
+
+				if (rowHasValues || attr['class'] || cell['formula']
+						|| cell['value'] || attr['style'] || attr['rowspan']
+						|| attr['colspan'] || attr['id']) {
+					rowHasValues = true;
+
+					cl = (attr['class'] ? $.trim((attr['class'].value || '')
+							.replace(jS.cl.uiCellActive, '').replace(
+									jS.cl.uiCellHighlighted, '')) : '');
+
+					parent = cell.td[0].parentNode;
+
+					jsonRow.columns.unshift(jsonColumn);
+
+					if (!jsonRow["height"]) {
+						jsonRow["height"] = (parent.attributes['height'] ? parent.attributes['height'].value
+								.replace('px', '')
+								: jS.s.colMargin)
+								+ "border:1px #fff !important ";
+					}
+					if (cell['formula'])
+						jsonColumn['formula'] = cell['formula'];
+					if (cell['cellType'])
+						jsonColumn['cellType'] = cell['cellType'];
+					if (cell['value'])
+						jsonColumn['value'] = cell['value'];
+					if (attr['rowspan'])
+						jsonColumn['rowspan'] = attr['rowspan'].value;
+					if (attr['colspan'])
+						jsonColumn['colspan'] = attr['colspan'].value;
+					var clm = column - 1;
+					jsonColumn['id'] = jS.obj.table().attr('title') + "_" + row
+							+ "[" + clm + "]" + "_col";
+
+					if (attr['style'] && attr['style'].value)
+						jsonColumn['style'] = attr['style'].value;
+					if (attr['id'] && attr['id'].value)
+						jsonColumn['id'] = attr['id'].value;
+
+					if (cl.length) {
+						jsonColumn['class'] = cl;
+					}
+				}
+
+				if (row * 1 == 1) {
+					jsonSpreadsheet.metadata.widths.unshift($(
+							jS.col(null, column)).css('width')
+							.replace('px', ''));
+				}
+			} while (column-- > 1);
+
+			if (rowHasValues) {
+				jsonSpreadsheet.rows.unshift(jsonRow);
+			}
+
+		} while (row-- > 1);
+		var jsonSheet = jS.obj.table().attr('title') + "="
+				+ JSON.stringify(jsonSpreadsheet);		
+
+		$.ajax({
+			type : 'POST',
+			url : contextPath + '/modelApprovedJsonLoad',
+			async : false,
+			data : jsonSheet,
+			contentType : "application/json",
+			dataType : "json",
+			// cache: false,
+			success : function(data) {
+				alert("success");
+			}
+
+		});
+	} while (sheet--);
+	jS.i = i;
+
+	$.ajax({
+		type : 'POST',
+		url : contextPath + '/modelApproveSheet',
+		async : false,
+		dataType : "json",
+		// cache: false,
+		success : function(data) {
+			alert("success");
+		}
+
+	});
+	return output;
+}
+
+/**
+ * ********************************Utility Functions
+ * **********************************
+ */
+
+function replaceDropdownById(tdId, formula, jS) {
+	
+	var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find('td[id="' + tdId + '"]');
+	var col = td.index();
+	var row = td.parent().index();
+	
+	
+	var index = getJsonRowAndColumn(tdId);
+	
+	row = (row < 1) ? (index.rowIndex + 1) : row;
+	col = (col < 1 ) ? (index.columnIndex + 1) : col;
+	
+	var cell;
+	
+	if (jS.getCell && (cell = jS.getCell(jS.i, row, col))) {
+		try {
+			cell.formula = formula;
+			cell.calcLast = cell.calcDependenciesLast = 0;
+			//jS.setCellNeedsUpdated(cell);
+			cell.setNeedsUpdated();
+			//jS.updateCellValue(cell,jS.i, row, col);
+			cell.updateValue();
+			jS.calcDependencies.call(cell, cell.calcDependenciesLast);
+		} catch (e) {
+			console.log("exception" + e);
+		}
+	}	
+	
+}
+
+
+function setValue(val, row, col, jS) {	
+	$('#sheet').setCellValue(val, row, col, jS.i);
+}
+
+function updateCellByIdAndValue(tdId, value, jS) {
+	var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find(
+			'td[id="' + tdId + '"]');
+	var col = td.index();
+	var row = td.parent().index();
+	$('#sheet').setCellValue(value, row, col, jS.i);
+}
+
+/* For updateing the drop-down. */
+function resetDropdownById(tdId, value, jS) {
+	var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find(
+			'td[id="' + tdId + '"]');
+	var col = td.index();
+	var row = td.parent().index();
+	var cell;
+	if (jS.getCell && (cell = jS.getCell(row, col, jS.i))) {
+		try {
+			cell.valueOverride = cell.value = value;
+			cell.calcLast = cell.calcDependenciesLast = 0;
+			jS.updateCellValue(jS.i, row, col);
+			jS.calcDependencies.call(cell, cell.calcDependenciesLast);
+		} catch (e) {
+			console.log("exception" + e);
+		}
+	}
+}
+
+function resetCellByIdAndValue(tdId, value, jS) {
+	var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find(
+			'td[id="' + tdId + '"]');
+	var col = td.index();
+	var row = td.parent().index();
+	var cell;
+	if (jS.getCell && (cell = jS.getCell(row, col, jS.i))) {
+		try {
+			cell.valueOverride = cell.value = ' ';
+			cell.calcLast = cell.calcDependenciesLast = 0;
+			jS.updateCellValue(jS.i, row, col);
+			jS.calcDependencies.call(cell, cell.calcDependenciesLast);
+		} catch (e) {
+			console.log("exception" + e);
+		}
+	}
+}
+
+function updateCellByIdAndFormula(tdId, value, jS) {
+	var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find(
+			'td[id="' + tdId + '"]');
+
+	var col = td.index();
+	var row = td.parent().index();
+	var cell;
+	if (jS.getCell && (cell = jS.getCell(row, col, jS.i))) {
+		try {
+			cell.valueOverride = cell.value = ' ';
+			cell.calcLast = cell.calcDependenciesLast = 0;
+			jS.updateCellValue(jS.i, row, col);
+			jS.calcDependencies.call(cell, cell.calcDependenciesLast);
+			//console.log("cell value after" + cell.value);
+		} catch (e) {
+			alert('Error while request..');
+		}
+	}
+} 
+
+/** ********* Formula Helper Function - START ************ */
+function getCellLocByName(cellName) {
+	cellName = cellName.toString();
+	// dirty handling
+//	cellName = cellName.replace('TablesAndAssumptions!','');
+	col = cellName.match(/[A-Z]+/).toString();
+	row = cellName.match(/[0-9]+/);
+	var colArr = col.split("");
+	var cols = [ "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L",
+			"M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y",
+			"Z" ];
+	var c = 0;
+	for ( var i = 1; i <= colArr.length; i++) {
+		c += Math.pow(26, colArr.length - i)
+				* (cols.indexOf(colArr[i - 1]) + 1);
+	}
+	return {
+		col : parseInt(c),
+		row : parseInt(row)
+	};
+}
+
+function isArraySorted(arr, sortOrder) {
+	sortOrder = typeof (sortOrder) != 'undefined' ? sortOrder : "Asc";
+	var res = true;
+	if (arr.length > 0) {
+		for ( var i = 0; i < arr.length - 1; i++) {
+			res = isNaN(arr[i]) ? ((sortOrder === 'Asc') ? arr[i]
+					.localeCompare(arr[i + 1]) <= 0 : arr[i]
+					.localeCompare(arr[i + 1]) >= 0)
+					: ((sortOrder === 'Asc') ? parseFloat(arr[i]) <= parseFloat(arr[i + 1])
+							: parseFloat(arr[i]) >= parseFloat(arr[i + 1]));
+			if (!res) {
+				break;
+			}
+		}
+		return res;
+	}
+}
+
+function getCellNameByLoc(col) {
+	var name = "";
+	// String name = "";
+	while (col > 0) {
+		col--;
+
+		name = String.fromCharCode("A".charCodeAt(0) + col % 26) + name;
+		col = Math.floor(col / 26);
+	}
+	return name;
+}
+
+function matchValueInArray(value, arr, criteria) {
+//	value = isNaN(value) ? value : parseFloat(value);
+	var strArray = arr.map(function(a){return a.toString();})
+	res = strArray.indexOf(value.toString());
+//	var res = arr.indexOf(value.toString()) > -1 ? arr.indexOf(value.toString()) : arr.indexOf(value);
+	
+	if (res > -1) {
+		return res + 1;
+	}
+	if (res < 0 && criteria > 0) {
+		if (isNaN(value)) {
+			for ( var i = 0; i < arr.length; i++) {
+				res = res === -1 ? 0 : res;
+				res = value.localeCompare(arr[i]) > 0
+						&& arr[res].toString().localeCompare(arr[i]) < 0 ? i
+						: res;
+			}
+			return res > -1 ? res + 1 : '#N/A';
+		} else {
+			for ( var i = 0; i < arr.length; i++) {
+				res = +arr[i] < +value && +arr[i] > +res ? arr[i] : res;
+			}
+			res = arr.indexOf(res);
+			return res > -1 ? res + 1 : '#N/A';
+		}
+	} else if (res < 0 && criteria < 0) {
+		if (isNaN(value)) {
+			for ( var i = 0; i < arr.length; i++) {
+				res = res === -1 ? 0 : res;
+				res = value.localeCompare(arr[i]) < 0
+						&& arr[res].toString().localeCompare(arr[i]) > 0 ? i
+						: res;
+			}
+			res = arr.indexOf(res);
+			return res > -1 ? res + 1 : '#N/A';
+		} else {
+			for ( var i = 0; i < arr.length; i++) {
+				res = +arr[i] > +value && +arr[i] > +res ? arr[i] : res;
+			}
+			res = arr.indexOf(res);
+			return res > -1 ? res + 1 : '#N/A';
+		}
+
+	}
+
+}
+
+function getCellValuesForRange(range, sheetNo) {
+	var cel = range.split(":").sort();
+	cel[0] = getCellLocByName(cel[0]);
+	cel[1] = getCellLocByName(cel[1]);
+	var count = 0;
+	var res = [];
+	for ( var i = cel[0].row; i <= cel[1].row; i++) {
+		for ( var j = cel[0].col; j <= cel[1].col; j++) {
+			res[count] = $('#sheet').getCellValue(i, j, sheetNo);
+			count++;
+		}
+	}
+	return res;
+
+}
+
+/** ********* Formula Helper Function - END ************ */
+
+/**
+ * ********************************client search related Functions
+ * **********************************
+ */
+
+function checkedClientDetails() {
+	var casID = $("input:radio[name=client_names]:checked").val();
+	var ucn1 = $("input:radio[name=client_names]:checked").attr("ucn");
+	var shortName1 = $("input:radio[name=client_names]:checked").attr(
+			"shortName");
+	var longName1 = $("input:radio[name=client_names]:checked")
+			.attr("longName");
+
+	$('#add_casID').html(casID);
+	$('#add_UCN').html(ucn1);
+	$('#add_shortName').html(shortName1);
+	$('#add_longName').html(longName1);
+}
+
+function retreiveButton() {
+
+	var selected = $("input:radio[name=client_names]:checked").attr(
+			"client_name");
+
+	$('#add_here').html(selected);
+	$('#add_questionmark').html(".?");
+	$('#popuprel8').draggable();
+	$('#popuprel8').fadeIn();
+	$('body').append('<div id="fade"></div>');
+	$('#fade').css({
+		'filter' : 'alpha(opacity=80)'
+	}).fadeIn();
+	var popuptopmargin = ($('#popuprel8').height() + 10) / 2;
+	var popupleftmargin = ($('#popuprel8').width() + 10) / 2;
+	$('#popuprel8').css({
+		'margin-top' : -popuptopmargin,
+		'margin-left' : -popupleftmargin
+	});
+	$('#fade').click(function() {
+		// Add markup ids of all custom popup box here
+		$('#fade ,  #popuprel8').fadeOut();
+		return false;
+	});
+
+}
+
+function dataRetrieved() {
+	var url = contextPath + '/GetClientDetailsData';
+	var casID = $("input:radio[name=client_names]:checked").val();
+	var resp = '';
+	$
+			.ajax({
+				type : "GET",
+				url : url,
+				async : false,
+				data : 'casID=' + casID,
+				success : function(xml) {
+					var jS = $('#sheet').getSheet();
+					var error = '';
+					$(xml).find('Error').each(function() {
+						$(this).children('Level').text();
+						$(this).children('Code').text();
+						error = $(this).children('Desc').text();
+						errorPopUp();
+						$('#errorPop').html(error);
+					});
+					if (error == '' || error == null) {
+						$(xml)
+								.find('Body')
+								.each(
+										function() {
+											$(this).children('CasId').text();
+											$(this).children('UCN').text();
+											$(this).children('ClientName')
+													.text();
+											$(this).children('ShortName')
+													.text();
+											$(this).children('LongName').text();
+											$(this).children('ObligorGrade')
+													.text();
+											$(this)
+													.children(
+															'SAndPIssueRating')
+													.text();
+											$(this).children('MoodysRating')
+													.text();
+											$(this).children(
+													'CreditClassifCode').text();
+											$(this).children(
+													'CreditClassifCodeDesc')
+													.text();
+											$(this)
+													.children(
+															'PrimaryCountryOfAssetsCode')
+													.text();
+											$(this)
+													.children(
+															'PrimaryCountryOfAssetsName')
+													.text();
+											$(this)
+													.children(
+															'Basel2AssetClass')
+													.text();
+											$(this)
+													.children(
+															'CreditFamilyUltParentCAS_ID')
+													.text();
+											$(this).children(
+													'CreditFamilyUltParentUCN')
+													.text();
+											$(this)
+													.children(
+															'CreditFamilyUltParentName')
+													.text();
+											updateCellByIdAndValue(
+													"c.CAS_IDClient", $(this)
+															.children('CasId')
+															.text(), jS);
+											updateCellByIdAndValue(
+													"c.NameClient",
+													$(this).children(
+															'ClientName')
+															.text(), jS);
+											updateCellByIdAndValue(
+													"c.CAS_IDParent",
+													$(this)
+															.children(
+																	'CreditFamilyUltParentCAS_ID')
+															.text(), jS);
+											updateCellByIdAndValue(
+													"c.NameParent",
+													$(this)
+															.children(
+																	'CreditFamilyUltParentName')
+															.text(), jS);
+											resetDropdownById(
+													"c.ObligorGradeClient", $(
+															this).children(
+															'ObligorGrade')
+															.text(), jS);
+											updateCellByIdAndValue(
+													"c.RatingSandPClient", $(
+															this).children(
+															'SAndPIssueRating')
+															.text(), jS);
+											updateCellByIdAndValue(
+													"c.RatingMoodyClient", $(
+															this).children(
+															'MoodysRating')
+															.text(), jS);
+											closePopUp();
+											facilitiesPopUp();
+										});
+					}
+				},
+				error : function() {
+					alert('Error while request..');
+				}
+			});
+}
+function searchButton() {
+	var url = contextPath + '/GetClientListData';
+	var name = document.getElementById('tb1').value;
+	var resp = '';
+	$
+			.ajax({
+				type : "GET",
+				url : url,
+				async : false,
+				data : 'name=' + name,
+				success : function(xml) {
+					//xml='<getClientListDataResponse><return><GetClientListData> <Head> <ReturnCode>O</ReturnCode> <EventID>ll15609</EventID></Head><Body><Clients> <Client><CasId>0042497808</CasId> <UCN>830838 199000</UCN><ClientName>APPLE &amp; EVE, LLC</ClientName><ShortName>APPLE &amp; EVE: LLC</ShortName> <LongName>APPLE &amp; EVE: LLC</LongName> </Client> <Client> <CasId>0222388888</CasId><UCN>02058651 7000</UCN> <ClientName>APPLE 200 EISENHOWER,INC.</ClientName> <ShortName>Apple 200 Eisenhower, Inc.</ShortName> <LongName>Apple 200 Eisenhower,Inc.</LongName> </Client> </Clients></Body></GetClientListData></return></getClientListDataResponse>';
+					var error = '';
+					$(xml).find('Error').each(function() {
+						$(this).children('Level').text();
+						$(this).children('Code').text();
+						$(this).children('Desc').text();
+						error = ($(this).children('Desc').text());
+						errorPopUp();
+						$('#errorPop').html(error);
+					});
+
+					var temp = '';
+					var clientName = '';
+					var casID = '';
+					var ucn = '';
+					var shortName = '';
+					var longName = '';
+					if (error == '' || error == null) {
+						$(xml)
+								.find('Client')
+								.each(
+										function() {
+
+											clientName = $(this).children(
+													'ClientName').text();
+											casID = $(this).children('CasId')
+													.text();
+											ucn = $(this).children('UCN')
+													.text();
+											shortName = $(this).children(
+													'ShortName').text();
+											longName = $(this).children(
+													'LongName').text();
+
+											//console.log("ClientName");
+											//console.log("VAl" + $(this).text());
+
+											temp += ' <input type="radio" onclick="checkedClientDetails()" id="rd1" client_name='
+													+ clientName
+													+ ' ucn='
+													+ ucn
+													+ ' shortName='
+													+ shortName
+													+ ' longName='
+													+ longName
+													+ ' name="client_names" value='
+													+ casID
+													+ '>'
+													+ clientName
+													+ ' </br>';
+
+										});
+					}
+					$('#ta1').html(temp);
+
+				},
+				error : function() {
+					alert('Error while request..');
+				}
+			});
+}
+function nameSearch() {
+	$('#Inp_ClientName_Search_btn_rel').draggable();
+	$('#Inp_ClientName_Search_btn_rel').fadeIn();
+	$('body').append('<div id="fade"></div>');
+	$('#fade').css({'filter' : 'alpha(opacity=80)'}).fadeIn(); 
+	var popuptopmargin = ($('#Inp_ClientName_Search_btn_rel').height() + 10) / 2;
+	var popupleftmargin = ($('#Inp_ClientName_Search_btn_rel').width() + 10) / 2;
+	$('#Inp_ClientName_Search_btn_rel').css({
+	'margin-top' : -popuptopmargin,
+	'margin-left' : -popupleftmargin
+	});
+	$('#fade').click(function() {
+		// Add markup ids of all custom popup box here
+	$(
+		'#fade , #popuprel , #popuprel2 , #popuprel3 , #popuprel4 , #popuprel5 , #popuprel6',
+		'#Inp_ClientName_Search_btn_rel').fadeOut();
+		return false;
+	});
+}
+
+function idSearch() {
+	var jS = $('#sheet').getSheet();
+	var tdId = "c.CAS_IDClient";
+	var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find(
+			'td[id="' + tdId + '"]');
+
+	var url = contextPath + '/GetClientDetailsData';
+	var casID = td.html();
+
+	var resp = '';
+	$
+			.ajax({
+				type : "GET",
+				url : url,
+				async : false,
+				data : 'casID=' + casID,
+				success : function(xml) {
+					var jS = $('#sheet').getSheet();
+					var error = '';
+					$(xml).find('Error').each(function() {
+						$(this).children('Level').text();
+						$(this).children('Code').text();
+						error = $(this).children('Desc').text();
+						errorPopUp();
+						$('#errorPop').html(error);
+					});
+					if (error == '' || error == null) {
+						$(xml)
+								.find('Body')
+								.each(
+										function() {
+											$(this).children('CasId').text();
+											$(this).children('UCN').text();
+											$(this).children('ClientName').text();
+											$(this).children('ShortName').text();
+											$(this).children('LongName').text();
+											$(this).children('ObligorGrade').text();
+											$(this).children('SAndPIssueRating').text();
+											$(this).children('MoodysRating').text();
+											$(this).children('CreditClassifCode').text();
+											$(this).children('CreditClassifCodeDesc').text();
+											$(this).children('PrimaryCountryOfAssetsCode').text();
+											$(this).children('PrimaryCountryOfAssetsName').text();
+											$(this).children('Basel2AssetClass').text();
+											$(this).children('CreditFamilyUltParentCAS_ID').text();
+											$(this).children('CreditFamilyUltParentUCN').text();
+											$(this).children('CreditFamilyUltParentName').text();
+											updateCellByIdAndValue("c.CAS_IDClient", $(this).children('CasId').text(), jS);
+											updateCellByIdAndValue("c.NameClient",$(this).children('ClientName').text(), jS);
+											updateCellByIdAndValue("c.CAS_IDParent",$(this).children('CreditFamilyUltParentCAS_ID').text(), jS);
+											updateCellByIdAndValue("c.NameParent",$(this).children('CreditFamilyUltParentName').text(), jS);
+											resetDropdownById("c.ObligorGradeClient", $(this).children('ObligorGrade').text(), jS);
+											updateCellByIdAndValue("c.RatingSandPClient", $(this).children('SAndPIssueRating').text(), jS);
+											updateCellByIdAndValue("c.RatingMoodyClient", $(this).children('MoodysRating').text(), jS);
+											closePopUp();
+											facilitiesPopUp();
+										});
+					}
+				},
+				error : function() {
+					alert('Error while request..');
+				}
+			});
+}
+
+function facilitiesPopUp() {
+	$('#popuprel7').draggable();
+	$('#popuprel7').fadeIn();
+	$('body').append('<div id="fade"></div>');
+	$('#fade').css({
+		'filter' : 'alpha(opacity=80)'
+	}).fadeIn();
+	var popuptopmargin = ($('#popuprel7').height() + 10) / 2;
+	var popupleftmargin = ($('#popuprel7').width() + 10) / 2;
+	$('#popuprel7').css({
+		'margin-top' : -popuptopmargin,
+		'margin-left' : -popupleftmargin
+	});
+
+}
+
+function facilityLRCPopup() {
+
+	var tdId= "c.CAS_IDClient";
+	var td = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdId+'"]');
+	var url = contextPath + '/GetFacilitiesInfo?casID='+td.html();;
+	var resp = '';
+	$
+			.ajax({
+				type : "GET",
+				url : url,
+				async : false,
+				//data : 'casID=' + casID,
+				success : function(facilityMap) {
+					var tempFac = '';
+					var facDesc = '';
+					var facilityID = '';
+					var approvedAmtUSD = '';
+					var lgd = '';
+					var uad = '';
+					var ldo = '';
+					var purposeType = '';
+					var basel2Outstanding = '';
+					var basel2Unused = '';
+					var RWAPre = '';
+					var RWA = '';
+					var asOfDate = '';
+					var FDR = '';
+					var osTypeList = [];
+					var outstandingList = [];
+					var unusedList = [];
+					var RWAPreList = [];
+					var RWAPostList = [];
+					var Currency = '';
+					var error = '';
+					var facilityDesc = '';
+					var utilization = '';
+					var tenor = '';
+
+					for ( var i in facilityMap) {
+						facilityID = i;
+						osTypeList = [];
+						outstandingList = [];
+						unusedList = [];
+						RWAPreList = [];
+						RWAPostList = [];
+
+						error = facilityMap[i].errorType;
+						if (!(error == '' || error == null)) {
+							$('#popuprel7').fadeOut();
+							errorPopUp();
+							$('#errorPop').html(error);
+						} else {
+							$('#popuprel').draggable();
+							$('#popuprel').fadeIn();
+							$('body').append('<div id="fade"></div>');
+							$('#fade').css({
+								'filter' : 'alpha(opacity=80)'
+							}).fadeIn();
+							var popuptopmargin = ($('#popuprel').height() + 10) / 2;
+							var popupleftmargin = ($('#popuprel').width() + 10) / 2;
+							$('#popuprel').css({
+								'margin-top' : -popuptopmargin,
+								'margin-left' : -popupleftmargin
+							});
+
+							$(facilityMap[i].osList).each(
+									function(e, response) {
+										osTypeList[e] = response.replace(
+												/\s+/g, '*');
+									});
+
+							$(facilityMap[i].basel2RWAList).each(
+									function(e, response) {
+										RWAPostList[e] = response;
+									});
+
+							$(facilityMap[i].basel2RWAPreSupportList).each(
+									function(e, response) {
+										RWAPreList[e] = response;
+									});
+
+							$(facilityMap[i].basel2OutstandingList).each(
+									function(e, response) {
+										outstandingList[e] = response;
+									});
+
+							$(facilityMap[i].basel2UnusedList).each(
+									function(e, response) {
+										unusedList[e] = response;
+									});
+
+							approvedAmtUSD = facilityMap[i].amountUSDList;
+							facDesc = facilityMap[i].facilityType;
+							uad = facilityMap[i].underAgreementDate;
+							lgd = facilityMap[i].lossGivenDefault;
+							ldo = facilityMap[i].lastDateOfDraw;
+							asOfDate = facilityMap[i].basel2AsOfDate;
+							FDR = facilityMap[i].fdrAsOfDate;
+							purposeType = facilityMap[i].purposeType.replace(
+									/\s+/g, '*');
+
+							Currency = facilityMap[i].currency;
+							// summation of the corresponding lists
+							RWA = facilityMap[i].basel2RWASum;
+							RWAPre = facilityMap[i].basel2RWAPreSupportSum;
+							basel2Outstanding = facilityMap[i].basel2OutstandingSum;
+							basel2Unused = facilityMap[i].basel2UnusedSum;
+							facilityDesc = facilityMap[i].facilityDescription
+									.replace(/\s+/g, '*');
+							utilization = facilityMap[i].utilization;
+							tenor = facilityMap[i].remainingTenor;
+
+							tempFac += ' <input type="radio" onclick="checkedFacility()" Currency='
+									+ Currency
+									+ ' utilization='
+									+ utilization
+									+ ' tenor='
+									+ tenor
+									+ ' osTypeList='
+									+ osTypeList
+									+ ' outstandingList='
+									+ outstandingList
+									+ ' unusedList='
+									+ unusedList
+									+ ' RWAPreList='
+									+ RWAPreList
+									+ ' RWAPostList='
+									+ RWAPostList
+									+ ' approvedAmtUSD='
+									+ approvedAmtUSD
+									+ ' lgd='
+									+ lgd
+									+ ' uad='
+									+ uad
+									+ ' ldo='
+									+ ldo
+									+ ' purposeType='
+									+ purposeType
+									+ ' basel2Outstanding='
+									+ basel2Outstanding
+									+ ' basel2Unused='
+									+ basel2Unused
+									+ ' RWAPre='
+									+ RWAPre
+									+ ' RWA='
+									+ RWA
+									+ ' asOfDate='
+									+ asOfDate
+									+ ' FDR='
+									+ FDR
+									+ ' facilityDesc='
+									+ facilityDesc
+									+ ' id="rd2" name="facility" value='
+									+ facilityID
+									+ '>'
+									+ facilityID
+									+ '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp '
+									+ approvedAmtUSD
+									+ '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp '
+									+ facDesc + '</br>';
+							//console.log(tempFac);
+						}
+					}
+					$('#fac1').html(tempFac);
+					$('#add_baselDate').html(asOfDate);
+					$('#add_FDRDate').html(FDR);
+				},
+				error : function() {
+					alert('Error while request..');
+				}
+			});
+
+}
+
+function checkedFacility() {
+	var facID = $("input:radio[name=facility]:checked").val();
+
+	var approvedAmtUSD1 = $("input:radio[name=facility]:checked").attr(
+			"approvedAmtUSD");
+	var lgd1 = $("input:radio[name=facility]:checked").attr("lgd");
+	var uad1 = $("input:radio[name=facility]:checked").attr("uad");
+	var ldo1 = $("input:radio[name=facility]:checked").attr("ldo");
+	var basel2Outstanding1 = $("input:radio[name=facility]:checked").attr(
+			"basel2Outstanding");
+	var basel2Unused1 = $("input:radio[name=facility]:checked").attr(
+			"basel2Unused");
+	var RWAPre1 = $("input:radio[name=facility]:checked").attr("RWAPre");
+	var RWA1 = $("input:radio[name=facility]:checked").attr("RWA");
+	var purposeDescription = $("input:radio[name=facility]:checked").attr(
+			"purposeType").replace(/[*]+/g, ' ');
+
+	$('#add_facility').html(facID);
+	$('#add_lgd').html(lgd1);
+	$('#add_uad').html(uad1);
+	$('#add_ldo').html(ldo1);
+	$('#add_purpose').html(purposeDescription);
+	$('#add_totalAmt').html(approvedAmtUSD1);
+	$('#add_outstandingAmt').html(basel2Outstanding1);
+	$('#add_UnusedAmt').html(basel2Unused1);
+	$('#add_RWAPre').html(RWAPre1);
+	$('#add_RWAPost').html(RWA1);
+}
+
+function viewFacilityDetails() {
+	$('#popuprelFacDetail').draggable();
+	$('#popuprelFacDetail').fadeIn();
+	$('body').append('<div id="fade"></div>');
+	$('#fade').css({
+		'filter' : 'alpha(opacity=80)'
+	}).fadeIn();
+	var popuptopmargin = ($('#popuprelFacDetail').height() + 10) / 2;
+	var popupleftmargin = ($('#popuprelFacDetail').width() + 10) / 2;
+	$('#popuprelFacDetail').css({
+		'margin-top' : -popuptopmargin,
+		'margin-left' : -popupleftmargin
+	});
+
+	var facID = $("input:radio[name=facility]:checked").val();
+	var approvedAmtUSD1 = $("input:radio[name=facility]:checked").attr(
+			"approvedAmtUSD");
+	var basel2Outstanding1 = $("input:radio[name=facility]:checked").attr(
+			"outstandingList");
+	var basel2Unused1 = $("input:radio[name=facility]:checked").attr(
+			"unusedList");
+	var RWAPre1 = $("input:radio[name=facility]:checked").attr("RWAPreList");
+	var RWA1 = $("input:radio[name=facility]:checked").attr("RWAPostList");
+	var osType1 = $("input:radio[name=facility]:checked").attr("osTypeList");
+
+	/*alert("basel2Outstanding1  "+basel2Outstanding1);
+	alert("basel2Unused1  "+basel2Unused1);
+	alert("RWAPre1  "+RWAPre1);
+	alert("RWA1  "+RWA1);*/
+	
+	if (basel2Outstanding1.contains(",($")) {
+		$('#facDetailOutstanding').html(
+				basel2Outstanding1.replace(",($", "<br>($"));
+	} else {
+		$('#facDetailOutstanding').html(
+				basel2Outstanding1.replace(",$", "<br>$"));
+	}
+	if (basel2Unused1.contains(",($")) {
+		$('#facDetailUnused').html(basel2Unused1.replace(",($", "<br>($"));
+	} else {
+		$('#facDetailUnused').html(basel2Unused1.replace(",$", "<br>$"));
+	}
+	if (RWAPre1.contains(",($")) {
+		$('#facDetailPreHedge').html(RWAPre1.replace(",($", "<br>($"));
+	} else {
+		$('#facDetailPreHedge').html(RWAPre1.replace(",$", "<br>$"));
+	}
+	if (RWA1.contains(",($")) {
+		$('#facDetailPostHedge').html(RWA1.replace(",($", "<br>($"));
+	} else {
+		$('#facDetailPostHedge').html(RWA1.replace(",$", "<br>$"));
+	}
+
+	$('#facDetailID').html(facID);
+	$('#facDetailAmount').html(approvedAmtUSD1);
+	$('#facDetailOutstandingType').html(
+			osType1.replace(/[*]+/g, ' ').replace(/,/g, '<br>'));
+
+}
+
+function errorPopUp() {
+	$('#popuprelError').draggable();
+	$('#popuprelError').fadeIn();
+	$('body').append('<div id="fade"></div>');
+	$('#fade').css({
+		'filter' : 'alpha(opacity=80)'
+	}).fadeIn();
+	var popuptopmargin = ($('#popuprelError').height() + 10) / 2;
+	var popupleftmargin = ($('#popuprelError').width() + 10) / 2;
+	$('#popuprelError').css({
+		'margin-top' : -popuptopmargin,
+		'margin-left' : -popupleftmargin
+	});
+
+}
+
+function messagePopUp() {
+	
+	$('#popuprelMsg').draggable();
+	$('#popuprelMsg').fadeIn();
+	$('body').append('<div id="fade"></div>');
+	$('#fade').css({
+		'filter' : 'alpha(opacity=80)'
+	}).fadeIn();
+	var popuptopmargin = ($('#popuprelMsg').height() + 10) / 2;
+	var popupleftmargin = ($('#popuprelMsg').width() + 10) / 2;
+	$('#popuprelMsg').css({
+		'margin-top' : -popuptopmargin,
+		'margin-left' : -popupleftmargin
+	});
+
+}
+
+function confirmPopUp() {
+	$('#confirmMsg').draggable();
+	$('#confirmMsg').fadeIn();
+	$('body').append('<div id="fade"></div>');
+	$('#fade').css({
+		'filter' : 'alpha(opacity=80)'
+	}).fadeIn();
+	var popuptopmargin = ($('#confirmMsg').height() + 10) / 2;
+	var popupleftmargin = ($('#confirmMsg').width() + 10) / 2;
+	$('#confirmMsg').css({
+		'margin-top' : -popuptopmargin,
+		'margin-left' : -popupleftmargin
+	});
+
+}
+function SummaryPopUp() {
+	$('#popuprelSummary').draggable();
+	$('#popuprelSummary').fadeIn();
+	$('body').append('<div id="fade"></div>');
+	$('#fade').css({
+		'filter' : 'alpha(opacity=80)'
+	}).fadeIn();
+	var popuptopmargin = ($('#popuprelSummary').height() + 10) / 2;
+	var popupleftmargin = ($('#popuprelSummary').width() + 10) / 2;
+	$('#popuprelSummary').css({
+		'margin-top' : -popuptopmargin,
+		'margin-left' : -popupleftmargin
+	});
+
+	var approvedAmtUSD1 = $("input:radio[name=facility]:checked").attr(
+			"approvedAmtUSD");
+	var facilityType = $("input:radio[name=facility]:checked").attr(
+			"facilityDesc").replace(/[*]+/g, ' ');
+	var lgd1 = $("input:radio[name=facility]:checked").attr("lgd");
+	var RWAPre1 = $("input:radio[name=facility]:checked").attr("RWAPre");
+	var RWA1 = $("input:radio[name=facility]:checked").attr("RWA");
+	var utilization1 = $("input:radio[name=facility]:checked").attr(
+			"utilization");
+	var tenor1 = $("input:radio[name=facility]:checked").attr("tenor");
+
+	$('#add_summaryAmount').html(approvedAmtUSD1);
+	$('#add_summaryFacilityType').html(facilityType);
+	$('#add_summaryLGD').html(lgd1);
+	$('#add_summaryRWAPre').html(RWAPre1);
+	$('#add_summaryRWAPost').html(RWA1);
+	$('#add_summaryUtilization').html(utilization1);
+	$('#add_summaryTenor').html(tenor1);
+
+}
+
+function updateValuesIntoFacilities() {
+	var jS = $('#sheet').getSheet();
+	if ($("#radio_0").prop("checked")) {
+		//resetDropdownById("TransacType1", $("#radio_0").val(), jS);
+		resetDropdownById("TransacType1_DrpDwn", $("#radio_0").val(), jS);
+	} else {
+		//resetDropdownById("TransacType1", $("#radio_1").val(), jS);
+		resetDropdownById("TransacType1_DrpDwn", $("#radio_0").val(), jS);
+	}
+	var Currency1 = $("input:radio[name=facility]:checked").attr("Currency");
+	var approvedAmtUSD1 = $("input:radio[name=facility]:checked").attr(
+			"approvedAmtUSD");
+	var tenor1 = $("input:radio[name=facility]:checked").attr("tenor");
+	var lgd1 = $("input:radio[name=facility]:checked").attr("lgd");
+	if (lgd1.contains(".0")) {
+		lgd1 = lgd1.replace(".0", "");
+
+	}
+	/*alert("TotExFacSize  "+Currency1);
+	alert("FacExAmt  "+approvedAmtUSD1);
+	alert("TenorEx  "+tenor1);
+	alert("FacExLGD_DrpDwn  "+lgd1);*/
+	
+	resetDropdownById("CurrencFacEx_DrpDwn", Currency1, jS);	
+	updateCellByIdAndValue("TotExFacSize", approvedAmtUSD1, jS);
+	resetDropdownById("TenorEx_DrpDwn", tenor1, jS);
+	resetDropdownById("FacExLGD_DrpDwn", lgd1, jS);
+	/*updateCellByIdAndValue("CurrencFacEx", Currency1, jS);	
+	updateCellByIdAndValue("FacExAmt", approvedAmtUSD1, jS);
+	updateCellByIdAndValue("TenorEx", tenor1, jS);
+	resetDropdownById("FacExLGD", lgd1, jS);
+*/
+	// un hiding Existing facility
+
+	$('#TransacTypeEx').removeClass("visibilityHidden");
+	$('#ExFacLab').removeClass("visibilityHidden");
+	$('#TotExFacSize').removeClass("visibilityHidden");
+	$('#CurrencFacEx').removeClass("visibilityHidden");
+	$('#FacExAmt').removeClass("visibilityHidden");
+	$('#FacExType').removeClass("visibilityHidden");
+	$('#ConstructionRealEstateFacEx').removeClass("visibilityHidden");
+	$('#TrancCatFacEx').removeClass("visibilityHidden");
+	$('#FacExProd').removeClass("visibilityHidden");
+	$('#FacExSblcFronting').removeClass("visibilityHidden");
+	$('#FacExSwinglineExposure').removeClass("visibilityHidden");
+	$('#FacExCPbu').removeClass("visibilityHidden");
+	$('#FacExSec').removeClass("visibilityHidden");
+	$('#TenorEx').removeClass("visibilityHidden");
+	$('#MaturityDateFacEx').removeClass("visibilityHidden");
+	$('#FacExLGD').removeClass("visibilityHidden");
+	$('#RegLGDFacEx').removeClass("visibilityHidden");
+	$('#B2FloorFacEx').removeClass("visibilityHidden");
+	$('#ShowsupportEx').removeClass("visibilityHidden");
+	$('#SupportAmtEx').removeClass("visibilityHidden");
+	$('#SupportratingEx').removeClass("visibilityHidden");
+	$('#SupporterTypeEx').removeClass("visibilityHidden");
+	$('#FacExGovtSup').removeClass("visibilityHidden");
+	$('#FacExSCF').removeClass("visibilityHidden");
+}
+
+function closePopUp() {
+	$(
+			'#fade , #Inp_ClientName_Search_btn_rel , #popuprel2 , #popuprel3 , #popuprel4 , #popuprel5 , #popuprel6 , #popuprelMsg , #confirmMsg, #popuprelError , #popuprelSummary, #dealStatusChange')
+			.fadeOut();
+	return false;
+}
+
+function closeRetrievePopUp() {
+	$('#fade , #popuprel8').fadeOut();
+	return false;
+}
+
+function closeFacilitiesPopUp() {
+	$('#fade , #popuprel7 , #popuprel').fadeOut();
+	return false;
+}
+
+function closeLRCFacilityDetailPopUp() {
+	$('#fade , #popuprelFacDetail').fadeOut();
+	return false;
+}
+
+function updateCellByIdAndFormula(tdId, value, jS) {
+	var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find(
+			'td[id="' + tdId + '"]');
+
+	var col = td.index();
+	var row = td.parent().index();
+	var cell;
+	if (jS.getCell && (cell = jS.getCell(row, col, jS.i))) {
+		try {
+			cell.valueOverride = cell.value = ' ';
+			cell.calcLast = cell.calcDependenciesLast = 0;
+			jS.updateCellValue(jS.i, row, col);
+			jS.calcDependencies.call(cell, cell.calcDependenciesLast);
+			//console.log("cell value after" + cell.value);
+		} catch (e) {
+			alert('Error while request..');
+		}
+	}
+}
+
+function updateCelForRowCol(value, cell, row, col, jS) {
+
+	if (jS.getCell && (cell = jS.getCell(row, col, cell.sheet))) {
+		try {
+			cell.value = value;
+			cell.valueOverride = cell.formula = cell.formula;
+			// cell.calcLast = cell.calcDependenciesLast = 0;
+			// jS.updateCellValue(cell.sheet, row, col);
+			jS.updateCellValue.call(cell);
+
+		} catch (e) {
+		}
+
+	}
+	// setValue(args[count],row,col,jS);
+}
+
+function Getformat(result){
+	var value_dec =0;
+	if(result.toString().indexOf('.')>-1){
+		var length = result.toString().split('.')[1].length;
+		var val = 0;
+		value_dec = parseFloat(val.toFixed(length-1)+'1');
+	}
+	return  value_dec;
+}
+
+// default values for service parameters
+var defaultParameters = new Object();
+defaultParameters.CasID = "0220457583";
+defaultParameters.SearchString = "Apple";
+defaultParameters.DealID = "0b015515800e300e";
+defaultParameters.LogData = "Test LogData from Operate Screen";
+defaultParameters.Currency = "USD";
+defaultParameters.Version = "online";
+//input parameters that needs to be sent as CDATA
+var CDATA_Params = new Array();
+CDATA_Params.push("SearchString");
+
+function callLRCService(serviceName,inputValueArray) {
+
+	var soapMessage = getSOAPMessage(serviceName,inputValueArray);
+	alert('Request'+soapMessage);
+	var serviceUrl = ((isOpenService(serviceName) >= 0) ? openUrl : secureUrl);
+
+	// jQuery AJAX call
+	$.ajax({
+        url: serviceUrl, 
+        type: "POST",
+        dataType: "xml",
+        data: soapMessage,
+        crossDomain: true,
+        contentType: "text/xml",
+        xhrFields: {
+            withCredentials: true
+        },
+        beforeSend: function(jqXHR) {
+        	// set value for OPERATE_JANUS_SID request header for secured services 
+        	if (isOpenService(serviceName) < 0) {
+        		jqXHR.setRequestHeader("OPERATE_JANUS_SID", getJanusSID());
+        		jqXHR.setRequestHeader("Cookie", document.cookie);
+        	}
+        },
+        timeout: 150000,
+        success: function (data, status, jqXHR) {
+        	// to get response XML string
+        	var xmlTxt = jqXHR.responseText;
+        	// to decode HTML entities back to respective characters 
+        	xmlTxt = $("#wsResponseHiddenDiv").html(xmlTxt).text();
+        	$("#wsResponseHiddenDiv").html('');
+        	// uses the native parsing function of the browser to create a valid XML Document
+        	var xmlDoc = $.parseXML(xmlTxt);
+        	// to create a typical jQuery object that can be traversed and manipulated.
+        	//var $xml = $(xmlDoc);
+        	alert('Response'+xmlDoc);
+        	window[serviceName+"Response"](xmlDoc);
+        	
+        }, 
+        error: function (jqXHR, status, error) {
+        	alert("error while calling: " +serviceName);
+        	return 'error';
+        }
+    });
+}
+
+
+//prepares SOAP message for given service
+function getSOAPMessage(serviceName,inputValueArray) {
+	var soapMessage = "";
+	soapMessage = soapMessage + getSOAPEnvelopePrefix(serviceName);
+	soapMessage = soapMessage + getSOAPBody(serviceName, getInputParameters(serviceName),inputValueArray);
+	soapMessage = soapMessage + getSOAPEnvelopeSuffix(serviceName);
+	return soapMessage;
+}
+
+// prepares SOAP envelope prefix
+function getSOAPEnvelopePrefix(serviceName) {
+	var soapEnvelopePrefix = "";
+	soapEnvelopePrefix = soapEnvelopePrefix + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+	soapEnvelopePrefix = soapEnvelopePrefix + "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ";
+	soapEnvelopePrefix = soapEnvelopePrefix + "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" ";
+	soapEnvelopePrefix = soapEnvelopePrefix + "xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>";
+	soapEnvelopePrefix = soapEnvelopePrefix + "<ns2:" + lowerCaseFirstLetter(serviceName);
+	soapEnvelopePrefix = soapEnvelopePrefix + " xmlns:ns2=\"http://ws.loanpricer.jpmc.com\">";
+	soapEnvelopePrefix = soapEnvelopePrefix + "<ns2:requestXML>";
+	soapEnvelopePrefix = soapEnvelopePrefix + "&lt;";
+	soapEnvelopePrefix = soapEnvelopePrefix + serviceName + ">";
+	return soapEnvelopePrefix;
+}
+
+//prepares SOAP message body
+function getSOAPBody(serviceName, serviceParameters,inputValueArray) {
+	var soapBody = "";
+
+	for (var i = 0; i < inputValueArray.length; i++) {
+		soapBody = soapBody + "&lt;"
+		soapBody = soapBody + serviceParameters[i];
+		soapBody = soapBody + ">";
+
+		var isCDATA = $.inArray(serviceParameters[i], CDATA_Params) >= 0;
+
+		if (isCDATA) {
+			soapBody = soapBody + "&lt;![CDATA[";
+		}
+
+		soapBody = soapBody + inputValueArray[i];
+
+		if (isCDATA) {
+			soapBody = soapBody + "]]&gt;";
+		}
+
+		soapBody = soapBody + "&lt;/";
+		soapBody = soapBody + serviceParameters[i];
+		soapBody = soapBody + ">";
+	}
+
+	return soapBody;
+}
+
+// prepares SOAP envelope suffix
+function getSOAPEnvelopeSuffix(serviceName) {
+	var soapEnvelopeSuffix = "";
+	soapEnvelopeSuffix = soapEnvelopeSuffix + "&lt;/";
+	soapEnvelopeSuffix = soapEnvelopeSuffix + serviceName + ">";
+	soapEnvelopeSuffix = soapEnvelopeSuffix + "</ns2:requestXML>";
+	soapEnvelopeSuffix = soapEnvelopeSuffix + "</ns2:" + lowerCaseFirstLetter(serviceName) + ">";
+	soapEnvelopeSuffix = soapEnvelopeSuffix + "</soap:Body></soap:Envelope>";
+	return soapEnvelopeSuffix;
+}
+
+// makes the first letter to lower case
+function lowerCaseFirstLetter(str) {
+	return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+// returns input parameters array for given service name 
+function getInputParameters(serviceName) {
+	var parameterString = _Parameters_map[serviceName];
+
+	var tempArray = parameterString.split(":");
+	var inputParameters = new Array();
+
+	for (var i = 1; i < tempArray.length; i++) {
+		inputParameters[i-1] = tempArray[i];
+	}
+
+	return inputParameters;
+}
+
+
+//checks whether the service is open or secured
+var openServicesList = new String('GetOpenTestData:GetLiquidityPremiumData:GetLiborData:LogModelUsage:GetMiscData');
+function isOpenService(serviceName) {
+	return openServicesList.indexOf(serviceName);
+}
+
+//  for JANUS_SID - returns entered SID value or loggedInUserId
+function getJanusSID() {
+	var inputValue = userId;
+	return inputValue.toUpperCase();
+}
+
+var _Parameters_map = {
+		'GetOpenTestData' : 'GetOpenTestData:SID',
+		'GetJanusTestData' : 'GetJanusTestData:SID',
+		'GetLiborData' : 'GetLiborData:SID:Version:Currency',
+		'GetLiquidityPremiumData' : 'GetLiquidityPremiumData:SID:Version',
+		'GetFacilitiesInfo' : 'GetFacilitiesInfo:SID:Version:CasID',
+		'GetClientListData' : 'GetClientListData:SID:Version:SearchString',
+		'GetClientDetailsData' : 'GetClientDetailsData:SID:Version:CasID',
+		'GetIBData' : 'GetIBData:SID:Version:CasID',
+		'GetThresholdData' : 'GetThresholdData:SID:Version:CasID',
+		'GetCDSData' : 'GetCDSData:SID:Version:CasID',
+		'LogModelUsage' : 'LogModelUsage:SID:LogData',
+		'GetMiscData' : 'GetMiscData:SID',
+		'DealworksGetMetaData' : 'DealworksGetMetaData:SID:Version:DealID',
+		'GetLRCUserRole' : 'GetLRCUserRole:SID:VerifySID',
+		'GetCasIDAccess' : 'GetCasIDAccess:SID:CasID'
+};
+
+
+function resetall(){
+    location.reload(true);
+    }
+
+
+function ibankerData(){
+    var tdId= "r.IBankerClient";
+    var td = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdId+'"]');
+    var IbankerCasID='';
+    if(td.html()=="Parent"){
+           var tdIdParent= "c.CAS_IDParent";
+           var tdParent = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdParent+'"]');
+           IbankerCasID=tdParent.html();
+    }else{
+           var tdIdClient= "c.CAS_IDClient";
+           var tdClient = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdClient+'"]');
+           IbankerCasID=tdClient.html();
+    }
+    
+    if(IbankerCasID.length==10){
+           var url = contextPath + '/GetIBData';
+           var casID = IbankerCasID;         
+           $
+                        .ajax({
+                               type : "GET",
+                               url : url,
+                               async : false,
+                               data : 'casID=' + casID,
+                               success : function(xml) {
+                                      var error = '';
+                                      $(xml).find('Error').each(function() {
+                                             $(this).children('Level').text();
+                                             $(this).children('Code').text();
+                                             $(this).children('Desc').text();
+                                             error = ($(this).children('Desc').text());
+                                             errorPopUp();
+                                             $('#errorPop').html(error);
+                                      });
+                                      
+                                      var clientExecutive = '';
+                                      var corporateBanker = '';
+                                      var creditExec = '';
+                                      var industryHead = '';
+                                      var iBankerSponsor = '';
+                                      var iBankerActualROE = '';
+                                      var iBankerNormalizedROE = '';
+                                      var B2NetIncome = '';
+                                      var B2Capital = '';
+                                      var iBankerPriority = '';
+                                      var iBankerObligor = '';
+                                      var iBankerMoody = '';
+                                      var iBankerSandP = '';
+                                      var iBankerGCBPriority = '';
+                                      var iBankerIndustryGroup = '';
+                                      var periodTimeList = [];
+                                      var periodCFList = [];
+                                      var periodTransServicesList = [];
+                                      var periodTradeFinanceList = [];
+                                      var periodCreditList = [];
+                                      var periodSalesAndTradingRevenueList = [];
+                                      var periodDerivativesFxRevenueList = [];
+                                      var periodInvestorServicesList = [];
+                                      var periodAssetWealthMgmtList = [];
+                                      var periodCardServicesList = [];
+                                      var periodOtherList = [];
+                                      var periodBasel_II_CapitalList = [];
+                                      var periodWalletList = [];
+                                      var periodJPMShareList = [];
+                                      var periodBank1List = [];
+                                      var periodBank2List = [];
+                                      var periodBank3List = [];
+                                      
+                                      if (error == '' || error == null) {
+                                             $(xml).find('Body').each(function() {
+
+                                                    alert("IBanker data Hrishik");
+                                             clientExecutive = $(this).children('ClientExecutive').text();
+                                             corporateBanker = $(this).children('IbCorporateBanker').text();
+                                             creditExec = $(this).children('PrimaryCreditExec').text();
+                                             industryHead = $(this).children('SeniorExecutive').text();
+                                             iBankerSponsor = $(this).children('FinancialSponsorCoverage').text();                                            
+                                             iBankerActualROE = parseInt($(this).children('TotalAnnualROE').text())/100;
+                                             iBankerNormalizedROE = parseInt($(this).children('TotalNormalizedROE').text())/100;
+                                             B2NetIncome = $(this).children('TotalNormalizedNetIncome').text();
+                                             B2Capital = $(this).children('TotalNormalizedBaselIICapital').text();
+                                             iBankerPriority = $(this).children('IBPriority').text();
+                                             iBankerObligor = $(this).children('RatingObligor').text();
+                                             iBankerMoody = $(this).children('RatingMoody').text();
+                                             iBankerSandP = $(this).children('RatingSandP').text();
+                                             iBankerGCBPriority = $(this).children('GCBPriority').text();
+                                             iBankerIndustryGroup = $(this).children('IndustryGroup').text();                                                
+                                             
+                                             updateCellByIdAndValue("c.ClientExecutive", clientExecutive, jS);
+                                             updateCellByIdAndValue("c.CorporateBanker", corporateBanker, jS);
+                                             updateCellByIdAndValue("c.CreditExec", creditExec, jS);
+                                             updateCellByIdAndValue("c.IndustryHead", industryHead, jS);
+                                             updateCellByIdAndValue("c.iBankerSponsor", iBankerSponsor, jS);
+                                             updateCellByIdAndValue("c.iBankerActualROE", iBankerActualROE, jS);
+                                             updateCellByIdAndValue("c.iBankerNormalizedROE", iBankerNormalizedROE, jS);
+                                             updateCellByIdAndValue("c.B2NetIncome", B2NetIncome, jS);
+                                             updateCellByIdAndValue("c.B2Capital", B2Capital, jS);
+                                             updateCellByIdAndValue("c.iBankerPriority", iBankerPriority, jS);                                                
+                                             
+                                      /*     if(IbankerCasID=="Parent"){
+                                                    var tdIdObligor= "c.ObligorGradeClient";
+                                                    var tdObligor = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdObligor+'"]');
+                                                    IbankerObligor=tdObligor.html();
+                                                    if(IbankerObligor=='0'){
+                                                    updateCellByIdAndValue("c.iBankerObligor", iBankerObligor, jS); 
+                                                    }else if(IbankerObligor=='' || IbankerObligor==null){
+                                                    updateCellByIdAndValue("c.iBankerObligor",'', jS);       
+                                                    }
+                                             }      */
+                                             
+                                             //Obligor grade 
+                                             /*var tdIdObligor= "c.iBankerObligor";
+                                             var tdObligor = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdObligor+'"]');
+                                             if(tdObligor.html()==0){
+                                                    updateCellByIdAndValue("c.iBankerObligor", iBankerObligor, jS);
+                                             }*/
+                                             
+                                             var tdIdObligorParent= "c.ObligorGradeParent";
+                                             var tdObligorParent = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdObligorParent+'"]');
+                                             
+                                             var tdIdObligorClient= "c.ObligorGradeClient";
+                                             var tdObligorClient = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdObligorClient+'"]');
+                                             
+                                             if(td.html()=="Parent" && tdObligorParent.html()==0){
+                                                    updateCellByIdAndValue("c.ObligorGradeParent", iBankerObligor, jS);
+                                                    if(tdObligorParent.html()==null || tdObligorParent.html()==''){
+                                                    updateCellByIdAndValue("c.ObligorGradeParent", '', jS);
+                                                    }
+                                             }
+                                             else if(td.html()=="Client" && tdObligorClient.html()==0){
+                                                    updateCellByIdAndValue("c.ObligorGradeClient", iBankerObligor, jS);
+                                                    if(tdObligorClient.html()==null || tdObligorClient.html()==''){
+                                                           updateCellByIdAndValue("c.ObligorGradeClient", '', jS);
+                                                    }
+                                             } 
+                                             //Moody Rating
+                                             
+                                             var tdIdMoody= "c.iBankerMoody";
+                                             var tdMoody = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdMoody+'"]');
+                                             if(tdMoody.html().length==0){
+                                                    updateCellByIdAndValue("c.iBankerMoody", iBankerMoody, jS);
+                                             }
+                                             
+                                             var tdIdMoodyParent= "c.RatingMoodyParent";
+                                             var tdMoodyParent = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdMoodyParent+'"]');
+                                             
+                                             var tdIdMoodyClient= "c.RatingMoodyClient";
+                                             var tdMoodyClient = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdMoodyClient+'"]');
+                                             
+                                             if(td.html()=="Parent" && tdMoodyParent.html().length==0){
+                                                    updateCellByIdAndValue("c.RatingMoodyParent", iBankerMoody, jS);
+                                             }else if(td.html()=="Client" && tdMoodyClient.html().length==0){
+                                                    updateCellByIdAndValue("c.RatingMoodyClient", iBankerMoody, jS);
+                                             }
+                                             
+                                             if(tdMoody.html()==null || tdMoody.html()==''){
+                                                    updateCellByIdAndValue("c.iBankerMoody", '', jS);
+                                             }
+                                             
+                                             //SandP Rating       
+                                             
+                                             var tdIdSP= "c.iBankerSandP";
+                                             var tdSP = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdSP+'"]');
+                                             if(tdSP.html().length==0){
+                                                    updateCellByIdAndValue("c.iBankerSandP", iBankerSandP, jS);
+                                             }
+                                             
+                                             var tdIdSPParent= "c.RatingSandPParent";
+                                             var tdSPParent = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdSPParent+'"]');
+                                             
+                                             var tdIdSPClient= "c.RatingSandPClient";
+                                             var tdSPClient = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdSPClient+'"]');
+                                             
+                                             if(td.html()=="Parent" && tdSPParent.html().length==0){
+                                                    updateCellByIdAndValue("c.RatingSandPParent", iBankerSandP, jS);
+                                             }else if(td.html()=="Client" && tdSPClient.html().length==0){
+                                                    updateCellByIdAndValue("c.RatingSandPClient", iBankerSandP, jS);
+                                             }
+                                             
+                                             if(tdSP.html()==null || tdSP.html()==''){
+                                                    updateCellByIdAndValue("c.iBankerSandP", '', jS);
+                                             }
+                                             
+                                             //GCB Priority
+                                             if(iBankerGCBPriority.contains("GCB ")){
+                                                    updateCellByIdAndValue("c.iBankerGCBPriority", iBankerGCBPriority.substring(4), jS);                                                    
+                                             }else{
+                                                    updateCellByIdAndValue("c.iBankerGCBPriority", iBankerGCBPriority, jS);
+                                             }
+                                             
+                                             //IndustryGroup      
+                                             var tdIdCountry= "c.CountryOfAssetsClient";
+                                             var tdCountry = $("#"+$(jS.obj.tables()[jS.i]).attr('id')+"").find('td[id="'+tdIdCountry+'"]');                                             
+                                             if(tdCountry.html()=="UNITED STATES OF AMERICA"  || tdCountry.html()=="CANADA"){
+                                                    var sheetIndex = jS.getSpreadsheetIndexByTitle("BSC Request");                                             
+                                                    //var tdIdIndustry="c.IndustrySourceModel";     
+                                                    var tdIdIndustry="c.iBankerSourceIndustry";     
+                                                    var index = getJsonRowAndColumn(tdIdIndustry);                                           
+                                                    //var cell;
+                                                    jS.setCellValue(iBankerIndustryGroup, index.rowIndex, index.colIndex, sheetIndex);
+                                                    /*
+                                                    var sheetIndex = jS.getSpreadsheetIndexByTitle("BSC Request");    
+                                                    var tdIdIndustry="c.IndustrySourceModel";                                               
+                                                    var index = getJsonRowAndColumn(tdIdIndustry);                                           
+                                                    var cell;
+                                                    cell = jS.getCell(sheetIndex, index.rowIndex, index.colIndex);
+                                                    if (cell.formula) {
+                                                           var formula = cell.formula;
+                                                           calcStack = Sheet.calcStack;
+                                                           formulaParser = this.cellHandler.formulaParser(calcStack);
+                                                                               Sheet.calcStack++;
+                                                           formulaParser.setObj(this);
+                                                           value = formulaParser.parse(formula);
+                                                           value.split(/,(.+)?/)[1]
+
+                                                    }      
+                                                    */                                                     
+                                             }
+                                             
+                                             //TimeDescriptor
+                                             $(this).children('TimeDescriptor').each(function(e, response) {
+                                             //alert($(this).children('TimeDescriptor').children('Period-0').text());
+                                             //$(xml).find('TimeDescriptor').each(function() {                                                      
+                                                    
+                                                    output=iBankerXML2Range(response,0);
+                                                    periodTimeList[e] = response;
+                                                    periodTimeListOutput[e]=output;
+                                                    
+                                             });
+                                             $(this).children('CF_Fees').each(function(e, response) {
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodCFList[e] = response;
+                                                    periodCFListOutput[e] = output;
+                                                    });
+                                             $(this).children('TotalTransServices').each(function(e, response) {   
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodTransServicesList[e] = response;
+                                                    periodTransServicesListOutput[e] = output;
+                                             });
+                                             $(this).children('TotalTradeFinance').each(function(e, response) {
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodTradeFinanceList[e] = response;
+                                                    periodTradeFinanceListOutput[e] = output;
+                                             });
+                                             $(this).children('TotalCredit').each(function(e, response) {
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodCreditList[e] = response;
+                                                    periodCreditListOutput[e] = output;
+                                             });
+                                             $(this).children('SalesAndTradingRevenue').each(function(e, response) {           
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodSalesAndTradingRevenueList[e] = response;
+                                                    periodSalesAndTradingRevenueListOutput[e] = output;
+                                             });
+                                             $(this).children('DerivativesFxRevenue').each(function(e, response) {   
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodDerivativesFxRevenueList[e] = response;
+                                                    periodDerivativesFxRevenueListOutput[e] = output;
+                                             });
+                                             $(this).children('TotalInvestorServices').each(function(e, response) {
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodInvestorServicesList[e] = response;
+                                                    periodInvestorServicesListOutput[e] = output;
+                                             });
+                                             $(this).children('TotalAssetWealthMgmt').each(function(e, response) {   
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodAssetWealthMgmtList[e] = response;
+                                                    periodAssetWealthMgmtListOutput[e] = output;
+                                             });
+                                             $(this).children('TotalCardServices').each(function(e, response) {   
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodCardServicesList[e] = response;
+                                                    periodCardServicesListOutput[e] = output;
+                                             });
+                                             $(this).children('TotalOther').each(function(e, response) {      
+                                                    output=iBankerXML2Range(response,1000);
+                                                    periodOtherList[e] = response;
+                                                    periodOtherListOutput[e] = output;
+                                             });
+                                             $(this).children('Basel_II_Capital').each(function(e, response) {   
+                                                    output=iBankerXML2Range(response,1);
+                                                    periodBasel_II_CapitalList[e] = response;
+                                                    periodBasel_II_CapitalListOutput[e] = output;
+                                             });
+                                             $(this).children('TotalWallet').each(function(e, response) {
+                                                    output=iBankerXML2Range(response,1);
+                                                    periodWalletList[e] = response;
+                                                    periodWalletListOutput[e] = output;
+                                             });
+                                             $(this).children('JPMShare').each(function(e, response) {       
+                                                    output=iBankerXML2Range(response,1);
+                                                    periodJPMShareList[e] = response;
+                                                    periodJPMShareListOutput[e] = output;
+                                             });
+                                             $(this).children('Bank1').each(function(e, response) { 
+                                                    output=iBankerXML2Range(response,1);
+                                                    periodBank1List[e] = response;
+                                                    periodBank1ListOutput[e] = output;
+                                             });
+                                             $(this).children('Bank2').each(function(e, response) { 
+                                                    output=iBankerXML2Range(response,1);
+                                                    periodBank2List[e] = response;
+                                                    periodBank2ListOutput[e] = output;
+                                             });
+                                             $(this).children('Bank3').each(function(e, response) { 
+                                                    output=iBankerXML2Range(response,1);
+                                                    periodBank3List[e] = response;
+                                                    periodBank3ListOutput[e] = output;
+                                             });
+                                             //updation part
+                                             });
+                                      }             
+                               },
+                               error : function() {
+                                      alert('Error while request..');
+                               }
+                        });
+
+    }
+    
+} 
+
+function iBankerXML2Range(/*tdId,*/value,divisor){
+    var result='';
+    if(value.substring(value.length-9)==" Proforma"){
+           result=value.substring(0,4);
+    }else if(value.substring(0,3)=="YTD "){
+           result=value.substring(value.length-4);
+    }else{
+           if(divisor>1){
+                  result=(parseInt(value)/1000).toString();
+           }else{
+                  result=value;
+           }
+    }
+    return result;
+}
+function thresholdData(){
+
+    var jS = $('#sheet').getSheet();
+    var tdId = "c.CAS_IDParent";
+    var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find(
+                  'td[id="' + tdId + '"]');
+
+    var url = contextPath + '/GetThresholdData';
+    var casID = td.html();
+
+    var resp = '';
+    $
+                  .ajax({
+                        type : "GET",
+                        url : url,
+                        async : false,
+                        data : 'casID=' + casID,
+                        success : function(xml) {
+                               var jS = $('#sheet').getSheet();
+                               var error = '';
+                               $(xml).find('Error').each(function() {
+                                      $(this).children('Level').text();
+                                      $(this).children('Code').text();
+                                      error = $(this).children('Desc').text();
+                                      errorPopUp();
+                                      $('#errorPop').html(error);
+                               });
+                               var thresholdDate='';
+                               var primaryExp='';
+                               var temp='';
+                               var primaryExposureList = [];
+                               var TCPList = [];
+                               var counterPartyList = [];
+                               var derivativeList = [];
+                               var creditPortFolioList = [];
+                               var riskShiftsList = [];
+                               var riskShiftsOtherList = [];
+                               var primaryRiskList = [];
+                               var treasuryList = [];
+                               var singleNameRiskList = [];
+                               var equityInvestmentsList = [];
+                               var operatingExposureList = [];
+                               var rbsList = [];
+                               var limitsList = [];
+                               
+                               
+                               if (error == '' || error == null) {
+                                      $(xml).find('Body').each(function() {
+                                             
+                                             if($(this).find('COB_Date')){
+                                                    thresholdDate=$(this).children('COB_Date').text().substring(0, 10);
+                                                    updateCellByIdAndValue("c.ThresholdDate", thresholdDate, jS);
+                                             }else{
+                                                    primaryExp=$(this).children('_10000_PRIMARY_EXPOSURE').text();
+                                                    temp=primaryExp.substring(0, 6);
+                                                    if(temp.contains("_")){
+                                                           temp.replace('_','0');
+                                                    }
+                                                    
+                                                    $(this).children('_10000_PRIMARY_EXPOSURE').each(function(e, response) {                                                   
+                                                           primaryExposureList[e] = parseInt(response)/1000000;
+                                                           });
+                                                    $(this).children('_11000_TRADITIONAL_CREDIT_PRODUCTS').each(function(e, response) {                                                      
+                                                           TCPList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_12000_COUNTERPARTY_EXPOSURE').each(function(e, response) {                                                     
+                                                           counterPartyList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_12100_DERIVATIVE_COUNTERPARTY').each(function(e, response) {                                                   
+                                                           derivativeList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_13000_CREDIT_PORTFOLIO_CDS').each(function(e, response) {                                                      
+                                                           creditPortFolioList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_14000_RISK_SHIFTS_OUT_LEGAL').each(function(e, response) {                                                     
+                                                           riskShiftsList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_15000_RISK_SHIFTS_OUT_OTHER').each(function(e, response) {                                                     
+                                                           riskShiftsOtherList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_16000_PRIMARY_RISK_SHIFTS_IN').each(function(e, response) {                                                    
+                                                           primaryRiskList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_30000_TREASURY').each(function(e, response) {                                                   
+                                                           treasuryList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_40000_SINGLE_NAME_POSITION_RISK').each(function(e, response) {                                                 
+                                                           singleNameRiskList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_50000_EQUITY_INVESTMENTS').each(function(e, response) {                                                 
+                                                           equityInvestmentsList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_60000_OPERATING_EXPOSURE').each(function(e, response) {                                                 
+                                                           operatingExposureList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('_82000_RBS_SEMPRA_EXPOSURE').each(function(e, response) {                                                
+                                                           rbsList[e] = parseInt(response)/1000000;
+                                                    });
+                                                    $(this).children('LIMITS').each(function(e, response) {                                                   
+                                                           limitsList[e] = parseInt(response)/1000000;
+                                                    });                                                    
+                                             }
+                                             
+                                             if(primaryExposureList.length<=7){
+                                                    updateCellByIdAndValue("tbl.PENet1", primaryExposureList[0], jS);
+                                                    updateCellByIdAndValue("tbl.PENet2", primaryExposureList[1], jS);
+                                                    updateCellByIdAndValue("tbl.PENet3", primaryExposureList[2], jS);
+                                                    updateCellByIdAndValue("tbl.PENet4", primaryExposureList[3], jS);
+                                                    updateCellByIdAndValue("tbl.PENet5", primaryExposureList[4], jS);
+                                                    updateCellByIdAndValue("tbl.PENet6", primaryExposureList[5], jS);
+                                                    updateCellByIdAndValue("tbl.PECapital", primaryExposureList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.PENet1", primaryExposureList[6], jS);
+                                                    updateCellByIdAndValue("tbl.PENet2", primaryExposureList[7], jS);
+                                                    updateCellByIdAndValue("tbl.PENet3", primaryExposureList[8], jS);
+                                                    updateCellByIdAndValue("tbl.PENet4", primaryExposureList[9], jS);
+                                                    updateCellByIdAndValue("tbl.PENet5", primaryExposureList[10], jS);
+                                                    updateCellByIdAndValue("tbl.PENet6", primaryExposureList[11], jS);
+                                                    updateCellByIdAndValue("tbl.PECapital", primaryExposureList[12], jS);
+                                             }
+                                             if(limitsList.length<=7){
+                                                    updateCellByIdAndValue("tbl.limitsNet1", limitsList[0], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet2", limitsList[1], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet3", limitsList[2], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet4", limitsList[3], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet5", limitsList[4], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet6", limitsList[5], jS);
+                                                    updateCellByIdAndValue("tbl.limitsCapital", limitsList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.limitsNet1", limitsList[6], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet2", limitsList[7], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet3", limitsList[8], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet4", limitsList[9], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet5", limitsList[10], jS);
+                                                    updateCellByIdAndValue("tbl.limitsNet6", limitsList[11], jS);
+                                                    updateCellByIdAndValue("tbl.limitsCapital", limitsList[12], jS);
+                                             }
+                                             if(TCPList.length<=7){
+                                                    updateCellByIdAndValue("tbl.TCPNet1", TCPList[0], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet2", TCPList[1], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet3", TCPList[2], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet4", TCPList[3], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet5", TCPList[4], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet6", TCPList[5], jS);
+                                                    updateCellByIdAndValue("tbl.TCPCapital", TCPList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.TCPNet1", TCPList[6], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet2", TCPList[7], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet3", TCPList[8], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet4", TCPList[9], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet5", TCPList[10], jS);
+                                                    updateCellByIdAndValue("tbl.TCPNet6", TCPList[11], jS);
+                                                    updateCellByIdAndValue("tbl.TCPCapital", TCPList[12], jS);
+                                             }
+                                             if(counterPartyList.length<=7){
+                                                    updateCellByIdAndValue("tbl.CENet1", counterPartyList[0], jS);
+                                                    updateCellByIdAndValue("tbl.CENet2", counterPartyList[1], jS);
+                                                    updateCellByIdAndValue("tbl.CENet3", counterPartyList[2], jS);
+                                                    updateCellByIdAndValue("tbl.CENet4", counterPartyList[3], jS);
+                                                    updateCellByIdAndValue("tbl.CENet5", counterPartyList[4], jS);
+                                                    updateCellByIdAndValue("tbl.CENet6", counterPartyList[5], jS);
+                                                    updateCellByIdAndValue("tbl.CECapital", counterPartyList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.CENet1", counterPartyList[6], jS);
+                                                    updateCellByIdAndValue("tbl.CENet2", counterPartyList[7], jS);
+                                                    updateCellByIdAndValue("tbl.CENet3", counterPartyList[8], jS);
+                                                    updateCellByIdAndValue("tbl.CENet4", counterPartyList[9], jS);
+                                                    updateCellByIdAndValue("tbl.CENet5", counterPartyList[10], jS);
+                                                    updateCellByIdAndValue("tbl.CENet6", counterPartyList[11], jS);
+                                                    updateCellByIdAndValue("tbl.CECapital", counterPartyList[12], jS);
+                                             }
+                                             if(derivativeList.length<=7){
+                                                    updateCellByIdAndValue("tbl.DCNet1", derivativeList[0], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet2", derivativeList[1], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet3", derivativeList[2], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet4", derivativeList[3], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet5", derivativeList[4], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet6", derivativeList[5], jS);
+                                                    updateCellByIdAndValue("tbl.DCCapital", derivativeList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.DCNet1", derivativeList[6], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet2", derivativeList[7], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet3", derivativeList[8], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet4", derivativeList[9], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet5", derivativeList[10], jS);
+                                                    updateCellByIdAndValue("tbl.DCNet6", derivativeList[11], jS);
+                                                    updateCellByIdAndValue("tbl.DCCapital", derivativeList[12], jS);
+                                             }
+                                             if(creditPortFolioList.length<=7){
+                                                    updateCellByIdAndValue("tbl.CPCNet1", creditPortFolioList[0], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet2", creditPortFolioList[1], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet3", creditPortFolioList[2], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet4", creditPortFolioList[3], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet5", creditPortFolioList[4], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet6", creditPortFolioList[5], jS);
+                                                    updateCellByIdAndValue("tbl.CPCCapital", creditPortFolioList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.CPCNet1", creditPortFolioList[6], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet2", creditPortFolioList[7], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet3", creditPortFolioList[8], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet4", creditPortFolioList[9], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet5", creditPortFolioList[10], jS);
+                                                    updateCellByIdAndValue("tbl.CPCNet6", creditPortFolioList[11], jS);
+                                                    updateCellByIdAndValue("tbl.CPCCapital", creditPortFolioList[12], jS);
+                                             }
+                                             if(riskShiftsList.length<=7){
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet1", riskShiftsList[0], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet2", riskShiftsList[1], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet3", riskShiftsList[2], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet4", riskShiftsList[3], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet5", riskShiftsList[4], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet6", riskShiftsList[5], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalCapital", riskShiftsList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet1", riskShiftsList[6], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet2", riskShiftsList[7], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet3", riskShiftsList[8], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet4", riskShiftsList[9], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet5", riskShiftsList[10], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalNet6", riskShiftsList[11], jS);
+                                                    updateCellByIdAndValue("tbl.RSOLegalCapital", riskShiftsList[12], jS);
+                                             }
+                                             if(riskShiftsOtherList.length<=7){
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet1", riskShiftsOtherList[0], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet2", riskShiftsOtherList[1], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet3", riskShiftsOtherList[2], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet4", riskShiftsOtherList[3], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet5", riskShiftsOtherList[4], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet6", riskShiftsOtherList[5], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherCapital", riskShiftsOtherList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet1", riskShiftsOtherList[6], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet2", riskShiftsOtherList[7], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet3", riskShiftsOtherList[8], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet4", riskShiftsOtherList[9], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet5", riskShiftsOtherList[10], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherNet6", riskShiftsOtherList[11], jS);
+                                                    updateCellByIdAndValue("tbl.RSOOtherCapital", riskShiftsOtherList[12], jS);
+                                             }
+                                             if(primaryRiskList.length<=7){
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet1", primaryRiskList[0], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet2", primaryRiskList[1], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet3", primaryRiskList[2], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet4", primaryRiskList[3], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet5", primaryRiskList[4], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet6", primaryRiskList[5], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInCapital", primaryRiskList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet1", primaryRiskList[6], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet2", primaryRiskList[7], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet3", primaryRiskList[8], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet4", primaryRiskList[9], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet5", primaryRiskList[10], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInNet6", primaryRiskList[11], jS);
+                                                    updateCellByIdAndValue("tbl.primaryRSInCapital", primaryRiskList[12], jS);
+                                             }
+                                             if(treasuryList.length<=7){
+                                                    updateCellByIdAndValue("tbl.treasuryNet1", treasuryList[0], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet2", treasuryList[1], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet3", treasuryList[2], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet4", treasuryList[3], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet5", treasuryList[4], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet6", treasuryList[5], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryCapital", treasuryList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.treasuryNet1", treasuryList[6], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet2", treasuryList[7], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet3", treasuryList[8], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet4", treasuryList[9], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet5", treasuryList[10], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryNet6", treasuryList[11], jS);
+                                                    updateCellByIdAndValue("tbl.treasuryCapital", treasuryList[12], jS);
+                                             }      
+                                             if(singleNameRiskList.length<=7){
+                                                    updateCellByIdAndValue("tbl.SNPRNet1", singleNameRiskList[0], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet2", singleNameRiskList[1], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet3", singleNameRiskList[2], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet4", singleNameRiskList[3], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet5", singleNameRiskList[4], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet6", singleNameRiskList[5], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRCapital", singleNameRiskList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.SNPRNet1", singleNameRiskList[6], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet2", singleNameRiskList[7], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet3", singleNameRiskList[8], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet4", singleNameRiskList[9], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet5", singleNameRiskList[10], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRNet6", singleNameRiskList[11], jS);
+                                                    updateCellByIdAndValue("tbl.SNPRCapital", singleNameRiskList[12], jS);
+                                             }                                               
+                                             if(equityInvestmentsList.length<=7){
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet1", equityInvestmentsList[0], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet2", equityInvestmentsList[1], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet3", equityInvestmentsList[2], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet4", equityInvestmentsList[3], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet5", equityInvestmentsList[4], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet6", equityInvestmentsList[5], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentCapital", equityInvestmentsList[6], jS);     
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet1", equityInvestmentsList[6], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet2", equityInvestmentsList[7], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet3", equityInvestmentsList[8], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet4", equityInvestmentsList[9], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet5", equityInvestmentsList[10], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentNet6", equityInvestmentsList[11], jS);
+                                                    updateCellByIdAndValue("tbl.EquityInvestmentCapital", equityInvestmentsList[12], jS);    
+                                             }                                               
+                                             if(operatingExposureList.length<=7){
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet1", operatingExposureList[0], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet2", operatingExposureList[1], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet3", operatingExposureList[2], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet4", operatingExposureList[3], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet5", operatingExposureList[4], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet6", operatingExposureList[5], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureCapital", operatingExposureList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet1", operatingExposureList[6], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet2", operatingExposureList[7], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet3", operatingExposureList[8], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet4", operatingExposureList[9], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet5", operatingExposureList[10], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureNet6", operatingExposureList[11], jS);
+                                                    updateCellByIdAndValue("tbl.OperatingExposureCapital", operatingExposureList[12], jS);
+                                             }                                        
+                                             if(rbsList.length<=7){
+                                                    updateCellByIdAndValue("tbl.RBSNet1", rbsList[0], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet2", rbsList[1], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet3", rbsList[2], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet4", rbsList[3], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet5", rbsList[4], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet6", rbsList[5], jS);
+                                                    updateCellByIdAndValue("tbl.RBSCapital", rbsList[6], jS);
+                                             }else{
+                                                    updateCellByIdAndValue("tbl.RBSNet1", rbsList[6], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet2", rbsList[7], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet3", rbsList[8], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet4", rbsList[9], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet5", rbsList[10], jS);
+                                                    updateCellByIdAndValue("tbl.RBSNet6", rbsList[11], jS);
+                                                    updateCellByIdAndValue("tbl.RBSCapital", rbsList[12], jS);
+                                             }
+                                             
+                                             });
+                               }
+                        },
+                        error : function() {
+                               alert('Error while request..');
+                        }
+                  });
+
+}
+
+//I/P params - cid - comment's db id, target - td reference 
+function getComment(cid, target){
+	
+	if(cid){
+		$.ajax({	
+			type : 'GET',
+			url : roleContextPath + '/getCellComment?cID='+cid,
+			async : false,
+			contentType : "application/text",
+			success : function(result) {
+				if(result.length >0){
+					$(target).addClass("tooltip").append("<span><img class='callout' src='../resources/images/callout.gif'>" + result + "</span>");
+				}
+			}			
+		});	
+	}
+	else
+		return;
+}
+function formate_date(num){
+	var validDateFormats = ["MM-DD-YYYY","MM/DD/YYYY","MM.DD.YYYY"];
+	///1 = new Date("12/16/2014")//num1.toString())
+	//jFN.DATEVALUE(num1)
+
+
+	var date = moment(num, validDateFormats,true).format('MM/DD/YYYY');
+	if(date != 'Invalid date'){
+		return date ;
+	}
+	
+	return null;
+}
+function getCellByCellId(cellId){
+    
+    var rows, columns, jsonCell, row, rowIndex, columnIndex;
+    
+    if ((jsonSpreadsheet = jS.s.loader.json[0]) === undefined)
+           return;
+    if ((rowIndex = (rows = jsonSpreadsheet.rows).length) < 1)
+           return;
+    if (rows[0].columns.length < 1)
+           return;
+
+    rowIndex--;
+    do {
+           row = rows[rowIndex];
+           columns = row.columns;
+           columnIndex = columns.length - 1;
+           do {
+                  jsonCell = columns[columnIndex];
+                  if (jsonCell.id == cellId) {                           
+                        var CellObj = jS.getCell(jS.i, rowIndex, columnIndex);
+                        return CellObj; //return jSon Cell Object                            
+                  }
+
+           } while (columnIndex-- > 0);
+    } while (rowIndex-- > 0);
+}
+
+
+

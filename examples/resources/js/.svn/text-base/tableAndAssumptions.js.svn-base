@@ -1,0 +1,2511 @@
+/*******************************************************************************
+ * TableTablesAndAssumptions Hide *
+ ******************************************************************************/
+
+var useCustomDialog = false, oldInfoDialog = $.jgrid.info_dialog;
+$.extend($.jgrid, {
+	info_dialog : function(caption, content, c_b, modalopt) {
+		if (useCustomDialog) {
+			// display custom dialog
+			useCustomDialog = false;
+
+		} else {
+			return oldInfoDialog.apply(this, arguments);
+		}
+	},
+});
+var rowoptions;
+var currrow;
+var global;
+
+/**
+ * ******************************************************************
+ * TableTablesAndAssumptions Hide -adding font style for ALL EDF MULTIPLIER
+ * grid********************************************************************
+ */
+
+function fontstyle(cellvalue, options, rowObject, url) {
+	var cellHtml;
+	if (cellvalue == 'Trade Finance' || cellvalue == 'Traditional Credit')
+		cellHtml = "<span style='font-weight: bold; color:#000' originalValue='"
+				+ cellvalue + "'>" + cellvalue + "</span>";
+	else
+		cellHtml = cellvalue;
+	return cellHtml;
+}
+/**
+ * *****************************************************************
+ * TableTablesAndAssumptions Hide -validating Table
+ * Data********************************************************************
+ */
+
+function validateTableData(val, nm, valref) {
+	var g = this;
+	var numericExpression = /^[\-]{0,1}[0-9]*[\.]{0,1}[0-9]+$/;
+	var range;
+	if (g.id != "THRESHOLDS-Source_Credit_Portfolio_Group")
+		range = 100;
+	else
+		range = 10000;
+
+	if (val !== "" && val !== null && val !== undefined && val.length >= 1
+			&& val <= range && val.match(numericExpression)) {
+		$("#edit_btn_" + this.id + "_" + currrow).removeClass('hideButton');
+		$("#save_btn_" + this.id + "_" + currrow).addClass('hideButton');
+		return [ true ];
+	} else {
+		useCustomDialog = true;
+		tr = g.rows.namedItem(currrow);
+		if (tr) {
+			$(tr).children('td').children('input.editable[type="text"]')
+					.removeClass("ui-state-error");
+			iColWithError = valref;
+			td = tr.cells[valref];
+			if (td) {
+				$(td).find('input.editable[type="text"]').addClass(
+						"ui-state-error");
+			}
+		}
+		return [ false, "" ];
+	}
+}
+
+/**
+ * *****************************************************************
+ * TableTablesAndAssumptions Hide -format cells
+ * -percentage********************************************************************
+ */
+
+function commonPercentFormater(cell) {
+	if (cell < 0) {
+		var rmvMinus = cell * -1;
+		cell = "(" + rmvMinus + ")%";
+	} else if (cell >= 0) {
+		cell = cell + "%";
+	}
+	cell.replace("-", "");
+	return cell;
+}
+
+function percentFmatterZeroDec(cellvalue, options, rowObject) {
+	var cell = parseFloat(cellvalue).toFixed(0);
+	return commonPercentFormater(cell);
+}
+function percentFmatter(cellvalue, options, rowObject) {
+	var cell = parseFloat(cellvalue).toFixed(1);
+	return commonPercentFormater(cell);
+}
+function percentFmatterTwoDec(cellvalue, options, rowObject) {
+	var cell = parseFloat(cellvalue).toFixed(2);
+	return commonPercentFormater(cell);
+}
+function percentFmatterThreeDec(cellvalue, options, rowObject) {
+	var cell = parseFloat(cellvalue).toFixed(3);
+	return commonPercentFormater(cell);
+}
+
+/**
+ * *****************************************************************
+ * TableTablesAndAssumptions Hide -unformatPercentage
+ * function********************************************************************
+ */
+
+function unformatPercentage(cellvalue, options, rowObject) {
+	var divid = "#" + this.id;
+	var allRowsInGrid = $(divid).jqGrid('getGridParam', 'data');
+	var fieldval;
+	for ( var i = 0; i < allRowsInGrid.length; i++) {
+		if (allRowsInGrid[i].id == options.rowId)// loop
+		{
+			var colname = options.colModel.name;
+			$.each(allRowsInGrid[i], function(key, val) {
+				if (key == colname) {
+					fieldval = val;
+				}
+			});
+		}
+	}
+	return fieldval;
+}
+
+function loadsrcContent(res) {
+
+	var data = res.lrcGlobalSourceList;
+	for ( var i = 0; i < data.length; i++) {
+		if (data[i].fieldKey == "LRC_GLOBAL_EDF_ALL"
+				|| data[i].fieldKey == "LRC_GLOBAL_ALL_EDF_MULTIPLIER"
+				|| data[i].fieldKey == "LRC_GLOBAL_EDF"
+				|| data[i].fieldKey == "LRC_GLOBAL_LEQ"
+				|| data[i].fieldKey == "LIQUIDITY_RATE"
+				|| data[i].fieldKey == "LIBOR_RATE"
+				|| data[i].fieldKey == "CP_BACKUP"
+				|| data[i].fieldKey == "NOT_CP_BACKUP"
+				|| data[i].fieldKey == "THRESHOLD"
+				|| data[i].fieldKey == "PROBABILITY_OF_DEFAULT"
+				|| data[i].fieldKey == "LEQ_CREDITS") {
+			var table = data[i].sectionName.replace(/\ /g, '_');
+			$("#" + table + "_HEADER").text(data[i].sectionName);
+			$("#" + table + "_Source").text(data[i].sourceInfo);
+			$("#" + table + "_Last_updated").text(res.maxUpdate);
+			var updFreqE_May_M_June;
+			if (data[i].updatedFrequency.split('&&').length > 0) {
+				updFreqE_May_M_June = data[i].updatedFrequency.split('&&');
+				$("#" + table + "_Update_frequency").text(
+						updFreqE_May_M_June[0]);
+				$("#" + table + "_E_May_M_June").text(updFreqE_May_M_June[1]);
+			} else {
+				updFreqE_May_M_June = data[i].updatedFrequency;
+				$("#" + table + "_Update_frequency").text(updFreqE_May_M_June);
+			}
+
+		}
+
+	}
+}
+/**
+ * *****************************************************************
+ * TableTablesAndAssumptions Hide -display buttons
+ * function********************************************************************
+ */
+
+function displayButtons(cellvalue, options, rowObject, url) {
+	var tableId = this.id;
+	;
+	rowoptions = options;
+
+	var edit = "<input  type='button'id='edit_btn_"
+			+ this.id
+			+ "_"
+			+ options.rowId
+			+ "' value='' style='height:13px; width:13px; border:0px; background-color:transparent; background-image:url("
+			+ contextPath
+			+ "/resources/images/edit-icon.png' onclick=\"jQuery('#" + this.id
+			+ "').editRow('" + options.rowId + "');$('#save_btn_" + this.id
+			+ "_" + options.rowId
+			+ "').removeClass('hideButton'); $('#edit_btn_" + this.id + "_"
+			+ options.rowId + "').addClass('hideButton'); currrow='"
+			+ options.rowId + "'\"  />";
+	var save = "<input style='height:13px; width:13px; border:0px; background-color:transparent; background-image:url("
+			+ contextPath
+			+ "/resources/images/save-icon.png' type='button' id='save_btn_"
+			+ this.id
+			+ "_"
+			+ options.rowId
+			+ "' class='hideButton' value='' onclick=\"jQuery('#"
+			+ tableId
+			+ "').saveRow('"
+			+ options.rowId
+			+ "',{ 'successfunc' : null, 'type': 'GET', 'dataType': 'json', 'url' :'"
+			+ contextPath
+			+ "/save"
+			+ this.id
+			+ "','extraparam' : {}, 'aftersavefunc' : function(id,res){if(res.responseText=='Saving Failed')$('#status"
+			+ this.id
+			+ "').text(res.responseText);}, 'errorfunc': null, 'afterrestorefunc' : null,'restoreAfterError' : true, 'mtype' : 'GET' });\"  />";
+	if (role == 'banker')
+		return save;
+	else
+		return edit + save;
+}
+
+/**
+ * *****************************************************************
+ * TableTablesAndAssumptions Hide - Grids
+ * ********************************************************************
+ */
+
+jQuery(document)
+		.ready(
+				function() {
+
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - back button function
+					 * ********************************************************************
+					 */
+
+					$("#backbtn").click(function() {
+						window.history.back();
+					});
+
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - ALL_AGENCY_EDF Section
+					 * ********************************************************************
+					 */
+					var columnName;
+					if (role == 'banker')
+						columnName = {
+							name : "",
+							index : "",
+							width : 30,
+							align : "center",
+							formatter : displayButtons,
+							hidden : true
+						};
+					else
+						columnName = {
+							name : "",
+							index : "",
+							width : 30,
+							align : "center",
+							formatter : displayButtons
+						};
+
+					var grid = $("#ALL_AGENCY_EDF");
+					grid
+							.jqGrid({ // 1st Grid
+								url : contextPath
+										+ '/getLrcGlobalEdfLeq?fieldkey=LRC_GLOBAL_EDF_ALL',
+								datatype : "json",
+								type : "GET",
+								colNames : [ '', 'id', 'fieldKey',
+										'Original Rating', 'RR', 'S&P',
+										'1 Day', '1 Wk', '1 Mos', '3 Mos',
+										'6 Mos', '9 Mos', '1 Yr', '2 Yrs',
+										'3 Yrs', '4 Yrs', '5 Yrs', '6 Yrs',
+										'7 Yrs', '8 Yrs', '9 Yrs', '10 Yrs' ],
+								colModel : [ columnName, {
+									name : 'id',
+									index : 'id',
+									key : true,
+									hidden : true
+								}, {
+									name : 'fieldKey',
+									index : 'fieldKey',
+									hidden : true
+								}, {
+									name : "originalRtng",
+									index : "originalRtng",
+									align : "center",
+									width : 85,
+									editable : false,
+									resizable : false
+								}, {
+									name : "riskRtng",
+									index : "rr",
+									width : 60,
+									align : "center",
+									editable : false,
+									resizable : false
+								}, {
+									name : "stdPrRtng",
+									index : "stdPrRtng",
+									width : 60,
+									align : "center",
+									editable : false,
+									resizable : false
+								}, {
+									name : "day1Pct",
+									index : "day1Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "week1Pct",
+									index : "week1Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "month1Pct",
+									index : "month1Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "month3Pct",
+									index : "month3Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "month6Pct",
+									index : "month6Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "month9Pct",
+									index : "month9Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year1Pct",
+									index : "year1Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year2Pct",
+									index : "year2Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year3Pct",
+									index : "year3Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year4Pct",
+									index : "year4Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year5Pct",
+									index : "year5Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year6Pct",
+									index : "year6Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year7Pct",
+									index : "year7Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year8Pct",
+									index : "year8Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year9Pct",
+									index : "year9Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								}, {
+									name : "year10Pct",
+									index : "year10Pct",
+									width : 60,
+									align : "center",
+									editable : true,
+									resizable : false,
+									formatter : percentFmatter,
+									unformat : unformatPercentage,
+									editrules : {
+										custom : true,
+										custom_func : validateTableData
+									}
+								} ],
+
+								rowNum : 30,
+								rowTotal : 2000,
+								loadonce : true,
+								mtype : "GET",
+								multiselect : false,
+								resizable : false,
+								gridview : true,
+								viewrecords : true,
+								jsonReader : {
+									root : "lrcGlobalEdfLeqList",
+									repeatitems : false,
+
+								},
+								loadComplete : function(res) {
+									loadsrcContent(res);
+
+									$(this).find(">tbody>tr.jqgrow:odd")
+											.addClass('myAltRowClass');
+								},
+								ignoreCase : true,
+								showOn : 'button',
+								prmNames : {
+									rows : 'max'
+								},
+								height : 290,
+								scrollOffset : 21,
+								width : 1158,
+								rownumbers : false
+							});
+
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide -
+					 * ALL_EDF_MULTIPLIER_HEADER Section
+					 * ********************************************************************
+					 */
+
+					$("#ALL_EDF_MULTIPLIER").jqGrid({ // 2nd Grid
+						url : contextPath + '/getLrcGlobalAllEdfMultiplier',
+						type : "GET",
+						datatype : "json",
+						colNames : [ '', 'id', 'LOB', 'Multiplier' ],
+						colModel : [ columnName, {
+							name : 'id',
+							index : 'id',
+							key : true,
+							hidden : true,
+							resizable : false
+						}, {
+							name : "lob",
+							index : "lob",
+							width : 250,
+							editable : false,
+							resizable : false,
+							formatter : fontstyle
+						}, {
+							name : "multiplier",
+							index : "multiplier",
+							width : 75,
+							editable : true,
+							resizable : false,
+							editrules : {
+								custom : true,
+								custom_func : validateTableData
+							}
+						}
+
+						],
+						rowNum : 30,
+						jsonReader : {
+							repeatitems : false,
+							root : "lrcGlobalAllEdfMultiplierList"
+						},
+						loadComplete : function(res) {
+							loadsrcContent(res);
+							// $(this).find(">tbody>tr.jqgrow:odd").addClass('myAltRowClass');
+						},
+						rowTotal : 2000,
+						loadonce : true,
+						mtype : "GET",
+						multiselect : false,
+						resizable : false,
+						gridview : true,
+						viewrecords : true,
+						ignoreCase : true,
+						showOn : 'button',
+						prmNames : {
+							rows : 'max'
+						},
+						height : 278,
+						scrollOffset : 0,
+						rownumbers : false
+					});
+					$("#ALL_EDF_MULTIPLIER").jqGrid('setGridWidth', '100%',
+							true);
+
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - ALRC_AGENCY_EDF_HEADER
+					 * Section
+					 * ********************************************************************
+					 */
+
+					$("#ALRC_AGENCY_EDF")
+							.jqGrid(
+									{ // 3rd Grid
+										url : contextPath
+												+ '/getLrcGlobalEdfLeq?fieldkey=LRC_GLOBAL_EDF',
+										type : "GET",
+										datatype : "json",
+										colNames : [ '', 'id',
+												'Original Rating', 'RR', 'S&P',
+												'1 Day', '1 Wk', '1 Mos',
+												'3 Mos', '6 Mos', '9 Mos',
+												'1 Yr', '2 Yrs', '3 Yrs',
+												'4 Yrs', '5 Yrs', '6 Yrs',
+												'7 Yrs', '8 Yrs', '9 Yrs',
+												'10 Yrs' ],
+										colModel : [ columnName, {
+											name : 'id',
+											index : 'id',
+											key : true,
+											hidden : true
+										}, {
+											name : "originalRtng",
+											index : "originalRtng",
+											align : "center",
+											width : 80,
+											editable : false,
+											resizable : false
+										}, {
+											name : "riskRtng",
+											index : "riskRtng",
+											width : 60,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "stdPrRtng",
+											index : "stdPrRtng",
+											width : 60,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "day1Pct",
+											index : "day1Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											sortable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "week1Pct",
+											index : "week1Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month1Pct",
+											index : "month1Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month3Pct",
+											index : "month3Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month6Pct",
+											index : "month6Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month9Pct",
+											index : "month9Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year1Pct",
+											index : "year1Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year2Pct",
+											index : "year2Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year3Pct",
+											index : "year3Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year4Pct",
+											index : "year4Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year5Pct",
+											index : "year5Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year6Pct",
+											index : "year6Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year7Pct",
+											index : "year7Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year8Pct",
+											index : "year8Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year9Pct",
+											index : "year9Pct",
+											width : 60,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year10Pct",
+											index : "year10Pct",
+											width : 65,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										} ],
+										rowNum : 30,
+										rowTotal : 2000,
+										loadonce : true,
+										mtype : "GET",
+										multiselect : false,
+										resizable : false,
+										gridview : true,
+										viewrecords : true,
+										jsonReader : {
+											root : "lrcGlobalEdfLeqList",
+											repeatitems : false,
+
+										},
+										loadComplete : function(res) {
+											loadsrcContent(res);
+											$(this)
+													.find(
+															">tbody>tr.jqgrow:odd")
+													.addClass('myAltRowClass');
+										},
+										ignoreCase : true,
+										showOn : 'button',
+										prmNames : {
+											rows : 'max'
+										},
+										height : 290,
+										forceFit : false,
+										scrollOffset : 21,
+										rownumbers : false
+									});
+					var width = $("#firstDiv").width();
+					$("#ALRC_AGENCY_EDF").jqGrid('setGridWidth', width, true);
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - ALRC_LEQ_Credit_HEADER
+					 * Section
+					 * ********************************************************************
+					 */
+
+					$("#ALRC_LEQ-Credit")
+							.jqGrid(
+									{ // 4th Grid
+										url : contextPath
+												+ '/getLrcGlobalEdfLeq?fieldkey=LRC_GLOBAL_LEQ',
+										type : "GET",
+										datatype : "json",
+										colNames : [
+												'',
+												'id',
+												'Original Rating',
+												'Default Grade',
+												'S&P',
+												'3 Mos',
+												'6 Mos',
+												'9 Mos',
+												'1 Yr',
+												'2 Yrs',
+												'3 Yrs',
+												'4 Yrs',
+												'5 Yrs',
+												'6 Yrs',
+												'7 Yrs',
+												'8 Yrs',
+												'9 Yrs',
+												'SYNTHETIC LOAN ASSET-INTERNAL',
+												'Letter of Credit',
+												'SBLC Financial, Guarantee-Financial',
+												'SBLC Perf, Guarantee-Perf, Guarantee-Steamship',
+												'Risk Participations' ],
+										colModel : [ columnName, {
+											name : 'id',
+											index : 'id',
+											key : true,
+											hidden : true
+										}, {
+											name : "originalRtng",
+											index : "originalRtng",
+											align : "center",
+											width : 80,
+											editable : false,
+											resizable : false
+										}, {
+											name : "riskRtng",
+											index : "riskRtng",
+											align : "center",
+											width : 60,
+											editable : false,
+											resizable : false
+										}, {
+											name : "stdPrRtng",
+											index : "stdPrRtng",
+											align : "center",
+											width : 60,
+											editable : false,
+											resizable : false
+										}, {
+											name : "month3Pct",
+											index : "month3Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month6Pct",
+											index : "month6Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month9Pct",
+											index : "month9Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year1Pct",
+											index : "year1Pct",
+											align : "center",
+											width : 60,
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year2Pct",
+											index : "year2Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year3Pct",
+											index : "year3Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year4Pct",
+											index : "year4Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year5Pct",
+											index : "year5Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year6Pct",
+											index : "year6Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year7Pct",
+											index : "year7Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year8Pct",
+											index : "year8Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year9Pct",
+											index : "year9Pct",
+											align : "center",
+											width : 60,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "syntheticLoanAstsPct",
+											index : "syntheticLoanAstsPct",
+											align : "center",
+											width : 130,
+											editable : true,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "lcPct",
+											index : "lcPct",
+											align : "center",
+											width : 130,
+											editable : true,
+											formatter : percentFmatterZeroDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "sblcFinGfinPct",
+											index : "sblcFinGfinPct",
+											width : 130,
+											align : "center",
+											editable : true,
+											formatter : percentFmatterZeroDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "sblcPerfGperfGsshpPct",
+											index : "sblcPerfGperfGsshpPct",
+											width : 130,
+											align : "center",
+											editable : true,
+											formatter : percentFmatterZeroDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "particpRskPct",
+											index : "particpRskPct",
+											align : "center",
+											width : 130,
+											editable : true,
+											formatter : percentFmatterZeroDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										} ],
+										rowNum : 30,
+										rowTotal : 2000,
+										mtype : "GET",
+										multiselect : false,
+										resizable : false,
+										gridview : true,
+										jsonReader : {
+											root : "lrcGlobalEdfLeqList",
+											repeatitems : false,
+
+										},
+										loadComplete : function(res) {
+											loadsrcContent(res);
+											$(this)
+													.find(
+															">tbody>tr.jqgrow:odd")
+													.addClass('myAltRowClass');
+										},
+										loadonce : true,
+										viewrecords : true,
+										ignoreCase : true,
+										showOn : 'button',
+										multiselect : false,
+										prmNames : {
+											rows : 'max'
+										},
+										height : 290,
+										shrinkToFit : false,
+										rownumbers : false
+									});
+					var width = $("#firstDiv").width();
+					$("#ALRC_LEQ-Credit").jqGrid('setGridWidth', width, true);
+
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - LIQUIDITY_RATE_HEADER
+					 * Section
+					 * ********************************************************************
+					 */
+
+					$("#LIQUIDITY_RATE")
+							.jqGrid(
+									{ // 5th Grid-sub
+										url : contextPath
+												+ '/getLrcGlobalLiqLiborRate?fieldkey=LIQUIDITY_RATE',
+										type : "GET",
+										datatype : "json",
+										colNames : [ '', ' ', 'id', '',
+												'Credit Spreads (used)',
+												'Credit Spreads (web)' ],
+										colModel : [ columnName, {
+											name : "liquidityLabel",
+											index : "liquidityLabel",
+											width : 100,
+											editable : false,
+											align : "center",
+											resizable : false
+										}, {
+											name : 'id',
+											index : 'id',
+											key : true,
+											hidden : true
+										}, {
+											name : "tenor",
+											index : "tenor",
+											width : 70,
+											editable : false,
+											align : "center",
+											resizable : false
+										}, {
+											name : "creditSpreadUsed",
+											index : "creditSpreadUsed",
+											align : "center",
+											width : 150,
+											editable : true,
+											resizable : false,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "creditSpreadWeb",
+											index : "creditSpreadWeb",
+											align : "center",
+											width : 150,
+											editable : true,
+											editoptions : {
+												disabled : true
+											},
+											resizable : false,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, ],
+										rowNum : 30,
+										rowTotal : 2000,
+										loadonce : true,
+										mtype : "GET",
+										multiselect : false,
+										resizable : false,
+										gridview : true,
+										viewrecords : true,
+										jsonReader : {
+											root : "lrcGlobalLiqLiborRatelList",
+											repeatitems : false
+
+										},
+										loadComplete : function(res) {
+											loadsrcContent(res);
+											$(this)
+													.find(
+															">tbody>tr.jqgrow:odd")
+													.addClass('myAltRowClass');
+										},
+										ignoreCase : true,
+										showOn : 'button',
+										prmNames : {
+											rows : 'max'
+										},
+										height : 290,
+										scrollOffset : 21,
+										rownumbers : false
+									});
+					$("#LIQUIDITY_RATE").jqGrid('setGridWidth', '100%', true);
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - LIBOR_RATES Section
+					 * ********************************************************************
+					 */
+
+					$("#LIBOR_RATES")
+							.jqGrid(
+									{ // 5th Grid-sub
+										url : contextPath
+												+ '/getLrcGlobalLiqLiborRate?fieldkey=LIBOR_RATE',
+
+										type : "GET",
+										datatype : "json",
+										colNames : [ '', 'id', 'Time', 'Tenor',
+												'Rate(Used)', 'Rate(Web)',/* '', */
+												'Use in:' ],
+										colModel : [ columnName, {
+											name : 'id',
+											index : 'id',
+											key : true,
+											hidden : true
+										}, {
+											name : "liborTime",
+											index : "liborTime",
+											width : 70,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "tenor",
+											index : "tenor",
+											width : 150,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "rateUsedPct",
+											index : "rateUsedPct",
+											width : 150,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "rateWebPct",
+											index : "rateWebPct",
+											width : 100,
+											align : "center",
+											editable : true,
+											editoptions : {
+												disabled : true
+											},
+											resizable : false,
+											formatter : percentFmatterTwoDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "useInQue",
+											index : "useInQue",
+											width : 100,
+											align : "center",
+											editable : false,
+											resizable : false
+										} ],
+										rowNum : 30,
+										rowTotal : 2000,
+										loadonce : true,
+										mtype : "GET",
+										multiselect : false,
+										resizable : false,
+										gridview : true,
+										viewrecords : true,
+										jsonReader : {
+											root : "lrcGlobalLiqLiborRatelList",
+											repeatitems : false
+										},
+										loadComplete : function(res) {
+											loadsrcContent(res);
+											$("tr.jqgrow:odd").addClass(
+													'myAltRowClass');
+										},
+
+										ignoreCase : true,
+										showOn : 'button',
+										prmNames : {
+											rows : 'max'
+										},
+										height : 290,
+										scrollOffset : 21,
+										rownumbers : false
+									});
+					$("#LIBOR_RATES").jqGrid('setGridWidth', '100%', true);
+
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - CP_Backup_HEADER Section
+					 * ********************************************************************
+					 */
+
+					$("#CP_Backup")
+							.jqGrid(
+									{ // 5th Grid
+										url : contextPath
+												+ '/getLrcGlobalFrequencyUpdate?fieldkey=CP_BACKUP',
+										type : "GET",
+										datatype : "json",
+										colNames : [ '', ' ', 'id',
+												'<=1 Month', '=3 months',
+												'=6 months', '=9 months',
+												'364 day/1 year',
+												'<=2 years; >1',
+												'<=3 years; >2',
+												'<=4 years; >3', '> 4 years' ],
+										colModel : [ columnName, {
+											name : "duration",
+											index : "duration",
+											width : 70,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : 'id',
+											index : 'id',
+											key : true,
+											hidden : true
+										}, {
+											name : "month1Pct",
+											index : "month1Pct",
+											width : 70,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month3Pct",
+											index : "month3Pct",
+											width : 150,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month6Pct",
+											index : "month6Pct",
+											width : 150,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month9Pct",
+											index : "month9Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year1Pct",
+											index : "year1Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year2Pct",
+											index : "year2Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year3Pct",
+											index : "year3Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year4Pct",
+											index : "year4Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year4AbovePct",
+											index : "year4AbovePct",
+											align : "center",
+											width : 190,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}
+
+										],
+										rowNum : 30,
+										rowTotal : 2000,
+										loadonce : true,
+										mtype : "GET",
+										multiselect : false,
+										resizable : false,
+										gridview : true,
+										viewrecords : true,
+										jsonReader : {
+											repeatitems : false,
+											root : "lrcGlobalFrequencyUpdateList"
+										},
+										loadComplete : function(res) {
+											loadsrcContent(res);
+											$(this)
+													.find(
+															">tbody>tr.jqgrow:odd")
+													.addClass('myAltRowClass');
+										},
+										ignoreCase : true,
+										showOn : 'button',
+										prmNames : {
+											rows : 'max'
+										},
+										height : 290,
+										shrinkToFit : false,
+										rownumbers : false
+									});
+					var width = $("#firstDiv").width();
+					$("#CP_Backup").jqGrid('setGridWidth', width, false);
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - Not_CP_Backup Section
+					 * ********************************************************************
+					 */
+					$("#Not_CP_Backup")
+							.jqGrid(
+									{ // 5th Grid
+										url : contextPath
+												+ '/getLrcGlobalFrequencyUpdate?fieldkey=NOT_CP_BACKUP',
+										ajaxGridOptions : {
+											contentType : 'application/json; charset=utf-8'
+										},
+										type : "GET",
+										datatype : "json",
+										colNames : [ '', '', 'id', '<=1 Month',
+												'=3 months', '=6 months',
+												'=9 months', '364 day/1 year',
+												'<=2 years; >1',
+												'<=3 years; >2',
+												'<=4 years; >3', '> 4 years' ],
+										colModel : [ columnName, {
+											name : "duration",
+											index : "duration",
+											width : 70,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : 'id',
+											index : 'id',
+											key : true,
+											hidden : true
+										}, {
+											name : "month1Pct",
+											index : "month1Pct",
+											width : 70,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month3Pct",
+											index : "month3Pct",
+											width : 150,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month6Pct",
+											index : "month6Pct",
+											width : 150,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "month9Pct",
+											index : "month9Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year1Pct",
+											index : "year1Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year2Pct",
+											index : "year2Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year3Pct",
+											index : "year3Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year4Pct",
+											index : "year4Pct",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "year4AbovePct",
+											index : "year4AbovePct",
+											align : "center",
+											width : 190,
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterThreeDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}
+
+										],
+										rowNum : 30,
+										rowTotal : 2000,
+										loadonce : true,
+										mtype : "GET",
+										multiselect : false,
+										resizable : false,
+										gridview : true,
+										viewrecords : true,
+										jsonReader : {
+											repeatitems : false,
+											root : "lrcGlobalFrequencyUpdateList"
+
+										},
+										loadComplete : function(res) {
+											loadsrcContent(res);
+											$(this)
+													.find(
+															">tbody>tr.jqgrow:odd")
+													.addClass('myAltRowClass');
+										},
+										ignoreCase : true,
+										showOn : 'button',
+										prmNames : {
+											rows : 'max'
+										},
+										height : 290,
+										shrinkToFit : false,
+										rownumbers : false
+									});
+					var width = $("#firstDiv").width();
+					$("#Not_CP_Backup").jqGrid('setGridWidth', width, false);
+
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - PROBABILITY_OF_DEFAULT
+					 * Section
+					 * ********************************************************************
+					 */
+
+					$("#PROBABILITY_OF_DEFAULT")
+							.jqGrid(
+									{ // 6th Grid
+										url : contextPath
+												+ '/getLrcGlobalProbCredThreshold?fieldkey=PROBABILITY_OF_DEFAULT',
+										type : "GET",
+										datatype : "json",
+										colNames : [ '', 'id',
+												'Original Rating',
+												'JPMorgan Chase Obligor Grade',
+												'S&P Rating', 'Moody s Rating',
+												'PD Value (as of Feb 2011)',
+												'PD Value(as of 06/2011)' ],
+										colModel : [ columnName, {
+											name : 'id',
+											index : 'id',
+											key : true,
+											hidden : true
+										}, {
+											name : "originalRtng",
+											index : "originalRtng",
+											width : 250,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "obligatorGrade",
+											index : "obligatorGrade",
+											width : 218,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "stdPrRtng",
+											index : "stdPrRtng",
+											width : 190,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "moodyRtng",
+											index : "moodyRtng",
+											width : 190,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "pdValue",
+											index : "pdValue",
+											width : 190,
+											align : "center",
+											editable : true,
+											resizable : false,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "pdValueOld",
+											index : "pdValueOld",
+											width : 190,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, ],
+										rowNum : 30,
+										rowTotal : 2000,
+										loadonce : true,
+										mtype : "GET",
+										multiselect : false,
+										resizable : false,
+										gridview : true,
+										viewrecords : true,
+										jsonReader : {
+											repeatitems : false,
+											root : "lrcGlobalProbCredThresholdList"
+
+										},
+										loadComplete : function(res) {
+											loadsrcContent(res);
+											$(this)
+													.find(
+															">tbody>tr.jqgrow:odd")
+													.addClass('myAltRowClass');
+										},
+										ignoreCase : true,
+										showOn : 'button',
+										prmNames : {
+											rows : 'max'
+										},
+										height : 290,
+										scrollOffset : 21,
+										rownumbers : false
+									});
+					var width = $("#firstDiv").width();
+					$("#PROBABILITY_OF_DEFAULT").jqGrid('setGridWidth', width,
+							true);
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide - LEQ-Reg Section
+					 * ********************************************************************
+					 */
+
+					$("#LEQ-Reg")
+							.jqGrid(
+									{ // 7th Grid
+										url : contextPath
+												+ '/getLrcGlobalProbCredThreshold?fieldkey=LEQ_CREDITS',
+
+										type : "GET",
+										datatype : "json",
+										colNames : [
+												'',
+												'id',
+												'Original Rating',
+												'Obligor Grade',
+												'S&P',
+												'Outstanding Loan',
+												'Revolving Credit',
+												'Letter of Credit Corporates',
+												'Standby L/C Financial, Guarantee-Financial Corporates',
+												'Standby L/C Performance, Guarantee-Performance, Guarantee-Steamship Corporates' ],
+										colModel : [ columnName, {
+											name : 'id',
+											index : 'id',
+											key : true,
+											hidden : true
+										}, {
+											name : "originalRtng",
+											index : "originalRating",
+											width : 120,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "obligatorGrade",
+											index : "obligatorGrade",
+											width : 100,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "stdPrRtng",
+											index : "stdPrRtng",
+											width : 70,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "outstandLoanPct",
+											index : "outstandLoanPct",
+											width : 120,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatter,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "revolvingCreditPct",
+											index : "revolvingCreditPct",
+											width : 120,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterZeroDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "locCorporatesPct",
+											index : "locCorporatesPct",
+											width : 130,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterZeroDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "stlcFinGfinPct",
+											index : "stlcFinGfinPct",
+											width : 260,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterZeroDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "stlcPerfGperfSshpPerfPct",
+											index : "stlcPerfGperfSshpPerfPct",
+											width : 300,
+											align : "center",
+											editable : true,
+											resizable : false,
+											formatter : percentFmatterZeroDec,
+											unformat : unformatPercentage,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, ],
+
+										rowNum : 30,
+										rowTotal : 2000,
+										loadonce : true,
+										mtype : "GET",
+										multiselect : false,
+										resizable : false,
+										gridview : true,
+										viewrecords : true,
+										jsonReader : {
+											repeatitems : false,
+											root : "lrcGlobalProbCredThresholdList"
+										},
+										loadComplete : function(res) {
+											loadsrcContent(res);
+											$(this)
+													.find(
+															">tbody>tr.jqgrow:odd")
+													.addClass('myAltRowClass');
+										},
+										ignoreCase : true,
+										showOn : 'button',
+										prmNames : {
+											rows : 'max'
+										},
+										height : 290,
+										scrollOffset : 21,
+										rownumbers : false
+									});
+					var width = $("#firstDiv").width();
+					$("#LEQ-Reg").jqGrid('setGridWidth', width, true);
+					/**
+					 * *****************************************************************
+					 * TableTablesAndAssumptions Hide -
+					 * THRESHOLDS-Source_Credit_Portfolio_Group Section
+					 * ********************************************************************
+					 */
+
+					$("#THRESHOLDS-Source_Credit_Portfolio_Group")
+							.jqGrid(
+									{ // 8th Grid
+										url : contextPath
+												+ '/getLrcGlobalProbCredThreshold?fieldkey=THRESHOLD',
+										type : "GET",
+										datatype : "json",
+										colNames : [
+												'',
+												'id',
+												'Parent Obligor Grade',
+												'Corporates and all Others<2Yrs',
+												'Corporates and all Others>2Yrs',
+												'Banks and Broker/Dealers<2Yrs',
+												'Banks and Broker/Dealers>2Yrs',
+												'Capital Net' ],
+										colModel : [ columnName, {
+											name : 'id',
+											index : 'id',
+											key : true,
+											hidden : true
+										}, {
+											name : "obligatorGrade",
+											index : "obligatorGrade",
+											width : 120,
+											align : "center",
+											editable : false,
+											resizable : false
+										}, {
+											name : "corpLess2Years",
+											index : "corpLess2Years",
+											width : 250,
+											align : "center",
+											editable : true,
+											resizable : false,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "corpMore2Years",
+											index : "corpMore2Years",
+											width : 250,
+											align : "center",
+											editable : true,
+											resizable : false,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "bankDealLess2Years",
+											index : "bankDealLess2Years",
+											width : 250,
+											align : "center",
+											editable : true,
+											resizable : false,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "bankDealMore2Years",
+											index : "bankDealMore2Years",
+											width : 250,
+											align : "center",
+											editable : true,
+											resizable : false,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										}, {
+											name : "capitalNet",
+											index : "capitalNet",
+											width : 110,
+											align : "center",
+											editable : true,
+											resizable : false,
+											editrules : {
+												custom : true,
+												custom_func : validateTableData
+											}
+										} ],
+										rowNum : 30,
+										rowTotal : 2000,
+										loadonce : true,
+										mtype : "GET",
+										multiselect : false,
+										resizable : false,
+										gridview : true,
+										viewrecords : true,
+										jsonReader : {
+											root : "lrcGlobalProbCredThresholdList",
+											repeatitems : false
+
+										},
+										loadComplete : function(res) {
+											loadsrcContent(res);
+											$(this)
+													.find(
+															">tbody>tr.jqgrow:odd")
+													.addClass('myAltRowClass');
+										},
+										ignoreCase : true,
+										showOn : 'button',
+										prmNames : {
+											rows : 'max'
+										},
+										height : 290,
+										scrollOffset : 21,
+										rownumbers : false
+									});
+					var width = $("#firstDiv").width();
+					$("#THRESHOLDS-Source_Credit_Portfolio_Group").jqGrid(
+							'setGridWidth', width, true);
+				});
+$(document).ready(function() {
+	$('#firstpane p.menu_head').click(function() {
+
+		$('#firstpane p.menu_head').each(function() {
+			if ($(this).attr('rel') != '') {
+				$(this).removeClass($(this).attr('rel') + 'Over');
+			}
+		});
+		$(this).siblings('div.menu_body').slideDown('fast');
+		$(this).addClass($(this).attr('rel') + 'Over');
+	});
+});
+
+function loapLPButton() {
+	var url = contextPath + '/GetLiquidityPremiumData';
+	$.ajax({
+		type : "GET",
+		url : url,
+		async : false,
+		success : function(xml) {
+			var error = '';
+			$(xml).find('Error').each(function() {
+				$(this).children('Level').text();
+				$(this).children('Code').text();
+				$(this).children('Desc').text();
+				error = ($(this).children('Desc').text());
+				errorPopUp();
+				$('#errorPop').html(error);
+			});
+
+			var identifier = [];
+			var amount = [];
+			var effectiveDate = '';
+			if (error == '' || error == null) {
+				$(xml).find('EffectiveDate').each(function() {
+					effectiveDate = $(this).text();
+					$('#liquidity_last_updated').html(effectiveDate);
+					$('#lpdate').html(effectiveDate);
+				});
+				$(xml).find('TenorPoint').each(function(e, resp) {
+
+					identifier[e] = $(this).children('Identifier').text();
+					amount[e] = $(this).children('Amount').text();
+				});
+			}
+			$(identifier).each(
+					function(e, response) {
+						if (response == '1M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 1,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '2M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 2,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '3M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 3,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '4M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 4,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '5M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 5,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '6M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 6,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '9M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 7,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '12M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 8,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '15M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 9,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '18M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 10,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '21M') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 11,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '2Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 12,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '3Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 13,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '4Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 14,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '5Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 15,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '6Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 16,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '7Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 17,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '8Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 18,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '9Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 19,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '10Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 20,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '11Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 21,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '12Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 22,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '13Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 23,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '14Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 24,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '15Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 25,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '20Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 26,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '30Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 27,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '40Y') {
+							$("#LIQUIDITY_RATE").jqGrid('setCell', 28,
+									'creditSpreadWeb', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else {
+							// alert("no data for this tenor");
+						}
+					});
+		},
+		error : function() {
+			alert('Error while request..');
+		}
+	});
+}
+
+function getLiborRatesButton() {
+	var url = contextPath + '/GetLiborData?currency=USD';
+	$.ajax({
+		type : "GET",
+		url : url,
+		async : false,
+		success : function(xml) {
+			var error = '';
+			$(xml).find('Error').each(function() {
+				$(this).children('Level').text();
+				$(this).children('Code').text();
+				$(this).children('Desc').text();
+				error = ($(this).children('Desc').text());
+				errorPopUp();
+				$('#errorPop').html(error);
+			});
+
+			var identifier = [];
+			var amount = [];
+			var effectiveDate = '';
+			if (error == '' || error == null) {
+				$(xml).find('Date').each(function() {
+					effectiveDate = $(this).text();
+					$('#libor_last_updated').html(effectiveDate);
+					$('#libordate').html(effectiveDate);
+				});
+				$(xml).find('Point').each(function(e, resp) {
+
+					identifier[e] = $(this).children('Identifier').text();
+					amount[e] = $(this).children('Amount').text();
+				});
+			}
+			$(identifier).each(
+					function(e, response) {
+						if (response == '0T') {
+							$("#LIBOR_RATES").jqGrid('setCell', 29,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '1M') {
+							$("#LIBOR_RATES").jqGrid('setCell', 30,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '2M') {
+							$("#LIBOR_RATES").jqGrid('setCell', 31,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '3M') {
+							$("#LIBOR_RATES").jqGrid('setCell', 32,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '4M') {
+							$("#LIBOR_RATES").jqGrid('setCell', 33,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '5M') {
+							$("#LIBOR_RATES").jqGrid('setCell', 34,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '6M') {
+							$("#LIBOR_RATES").jqGrid('setCell', 35,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '9M') {
+							$("#LIBOR_RATES").jqGrid('setCell', 36,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '1Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 37,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '18M') {
+							$("#LIBOR_RATES").jqGrid('setCell', 38,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '2Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 39,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '3Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 40,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '4Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 41,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '5Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 42,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '6Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 43,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '7Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 44,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '8Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 45,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '9Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 46,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '10Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 47,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '12Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 48,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '15Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 49,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '20Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 50,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '25Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 51,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '30Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 52,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else if (response == '40Y') {
+							$("#LIBOR_RATES").jqGrid('setCell', 53,
+									'rateWebPct', amount[e], {
+										'background-color' : 'yellow'
+									}, "", true);
+						} else {
+							alert("no data for this tenor");
+						}
+					});
+		},
+		error : function() {
+			alert('Error while request..');
+		}
+	});
+}

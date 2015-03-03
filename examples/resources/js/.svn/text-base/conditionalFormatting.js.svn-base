@@ -1,0 +1,581 @@
+/*Inputs -- Start*/
+/*ABS(cell)>1*/	
+var CFAbsArr = new Array(["E805"],["L805"]);
+var CFOPAbsArr = new Array(["E805:F807"],["L805:L807"]);
+
+/* AND(cell="No",cell1>0,cell1<>" ") */
+var CFAndArr = new Array(["E258","F263","F263"],["E258","G261","G261"],["E367","F372","F372"],["E367","G370","G370"],["E476","G479","G479"],["E585","G588","G588"],["E694","G697","G697"]);
+var CFOPAndArr = new Array(["F263:BM263"],["G261:BM261"],["F372:BM372"],["G370:BM370"],["G479:BM479"],["G588:BM588"],["G697:BM697"]);
+
+/* CELL>CELL */
+var CFCmpArr = new Array(["F151","F149"],["F261","F259"],["F370","F368"],["F479","F77"],["F588","F586"],["F697","F695"]);
+var CFOPCmpArr = new Array(["F151:BM151"],["F261:BM261"],["F370:BM370"],["F479:BM479"],["F588:BM588"],["F697:BM697"]);
+
+/* LEN(Cell)=0 Formula Cells */
+var CFLenArr1 = new Array(["E36"],["E38"]);
+var CFOPLenArr1 = new Array(["E36:G36"],["E38:H38","E40","E34"]);
+
+/* LEN(Cell)>0 Formula Cells */
+var CFLenArr2 = new Array(["E32"],["F42"],["H75"],["J75"],["L75"],["N75"],["F83:F87"],["F79"],["H83:H87"],["J83:J87"],["L83:L87"],["N83:N87"],["P83:P87"],["H79"],["J79"],["L79"],["N79"],["P79"],["H73"],["J73"],["L73"],["N73"]);
+var CFOPLenArr2 = new Array(["E38:H38", "E36:G36","E40","E34"],["F42"],["H75"],["J75"],["L75"],["N75"],["F83:F87"],["F79"],["H83:H87"],["J83:J87"],["L83:L87"],["N83:N87"],["P83:P87"],["H79"],["J79"],["L79"],["N79"],["P79"],["H73"],["J73"],["L73"],["N73"]);
+
+/*OR(AND((OR($E$71=$H$896,$E$71=$H$897,$E$71=$H$898)),NOT(OR(F$173=" ",F$173=0))),(F$173-0.000001)>F$149-F$155-F$161-F$167) */
+var CFOrArr = new Array(["E71","H896","H897","H898","F173","F149","F155","F161","F167"],["E71","H896","H897","H898","F173","F149","F155","F161","F167"],
+		["E71","H896","H897","H900","F173","F149","F155","F161","F167"],["E71","H896","H898","H900","F167","F149","F155","F161","F173"],
+		["G71","H896","H897","H898","F283","F259","F265","F271","F277"],["G71","H896","H897","H900","F283","F259","F265","F271","F277"],
+		["G71","H896","H898","H900","F283","F259","F265","F271","F277"],["G71","H897","H898","H900","F283","F259","F265","F271","F277"],
+		["I71","H896","H897","H898","F392","F368","F374","F380","F386"],["I71","H896","H897","H900","F392","F368","F374","F380","F386"],
+		["I71","H896","H898","H900","F392","F368","F374","F380","F386"],["I71","H897","H898","H900","F392","F368","F374","F380","F386"],
+		["K71","H896","H897","H898","F501","F477","F483","F489","F495"],["K71","H896","H897","H900","F501","F477","F483","F489","F495"],
+		["K71","H896","H898","H900","F501","F477","F483","F489","F495"],["K71","H897","H898","H900","F501","F477","F483","F489","F495"],
+		["M71","H896","H897","H898","F610","F586","F592","F598","F604"],["M71","H896","H897","H900","F610","F586","F592","F598","F604"],
+		["M71","H896","H898","H900","F610","F586","F592","F598","F604"],["M71","H897","H898","H900","F610","F586","F592","F598","F604"],
+		["O71","H896","H897","H898","F719","F695","F701","F707","F713"],["O71","H896","H897","H900","F719","F695","F701","F707","F713"],
+		["O71","H896","H898","H900","F719","F695","F701","F707","F713"],["O71","H897","H898","H900","F719","F695","F701","F707","F713"]);
+
+/* Output Arrays */
+
+var CFOPOrArr = new Array(["F173:BM173","F193:BM193","F302:BM302","F411:BM411","F520:BM520","F617:BM617"],["F724:BM724"],["F161:BM161"],["F167:BM167"],["F283:BM283"],
+		["F271:BM271"],["F277:BM277"],["F265:BM265"],["F392:BM392"],["F380:BM380"],["F386:BM386"],["F374:BM374"],["F501:BM501"],["F489:BM489"],["F495:BM495"],
+		["F483:BM483"],["F610:BM610"],["F598:BM598"],["F604:BM604"],["F592:BM592"],["F719:BM719"],["F707:BM707"],["F713:BM713"],["F701:BM701"]);
+
+/*var CFLenArr2A = new Array(["E38", "E36","E40","E34"],["F83","F79","H83","J83","L83","N83","P83","H79","J79","L79","N79","P79","F42","H73","J73","L73","N73"],["H75","J75","L75","N75"]);*/
+
+/*Inputs -- End*/
+
+/*BSC Request -- Start*/
+var CFAnd2Arr = new Array(["D116","D115"],["F116","F115"],["H116","H115"],["J116","J115"],["L116","L115"],["N116","N115"]);
+var CFOPAnd2Arr = new Array(["D116"],["F116"],["H116"],["J116"],["L116"],["N116"]);
+
+var CFCellyellowArr = new Array(["Q23"]);
+var CFOPCellyellowArr = new Array(["N23:P24","N30:P30"]);
+
+var CFCellboldArr = new Array(["AD52"],["AF52"],["AB52"],["Z52"],["X52"],["V52"]);
+var CFOPCellboldArr = new Array(["AD43"],["AF43"],["AB43"],["Z43"],["X43"],["V43"]);
+
+/*var CFNTCellboldArr = new Array(["AD52"],["AF52"],["AB52"],["Z52"],["X52"],["V52"]);*/
+var CFOPNTCellboldArr = new Array(["AD51"],["AF51"],["AB51"],["Z51"],["X51"],["V51"]);
+
+var CFCellgrayArr = new Array(["AG16"],["AF14"],["AG12"], ["AG10"],["AG8"],["AG6"],["AC16"],["AC14"],["AC12"],["AC10"],["AC8"],["AC6"]);
+var CFOPCellgrayArr = new Array(["AF16"],["AF14"],["AF12"],["AF10"],["AF8"],["AF6"],["AB16"],["AB14"],["AB12"],["AB10"],["AB8"],["AB6"]);
+/*BSC Request -- End*/
+
+/*BSC ROE (SUBMISSION FORMAT) -- Start*/
+var CFOPNMArr = new Array(["Q54","AN54","Q52","AN52"],["Q52","AN52"]);
+var CFNMArr = new Array(["Q54","Q52"]);
+/*BSC ROE (SUBMISSION FORMAT) -- End*/
+/*BSC Request(Submission format) -- Start*/
+var CFCellboldBscSubArr = new Array(["AF34"],["AD34"],["AB34"],["Z34"],["X34"],["V34"]);
+var CFOPCellboldBscSubArr = new Array(["AF31"],["AD31"],["AB31"],["Z31"],["X31"],["V31"]);
+
+var CFOPNTCellboldBscSubArr = new Array(["AF33"],["AD33"],["AB33"],["Z33"],["X33"],["V33"]);
+
+var CFAnd2BscSubArr = new Array(["D102,D101"],["F102,F101"],["H102,H101"],["J102,J101"],["L102,L101"],["N102,N101"]);
+var CFOPAnd2BscSubArr = new Array(["D102"],["F102"],["H102"],["J102"],["L102"],["N102"]);
+/*BSC Request(Submission format) -- End*/
+/*All Facilities -- Start*/
+var CFCellAllFacArr = new Array(["C77"]);
+var CFOPCellAllFacArr = new Array(["E419:E423"]);
+/*All Facilities -- Start*/
+
+/*var inpJsonArray = new Array(CFOrArr, CFLenArr1, CFLenArr2, CFAbsArr, CFCmpArr,CFAndArr, CFLenArr2A);*/
+var inpJsonArray = new Array(CFOrArr, CFLenArr1, CFLenArr2, CFAbsArr, CFCmpArr,CFAndArr);
+var BscJsonArray = new Array(CFAnd2Arr,CFCellyellowArr,CFCellboldArr,CFCellgrayArr);
+var BSCRoeJsonArray = new Array(CFNMArr);
+var BscSubJsonArray = new Array(CFCellboldBscSubArr,CFAnd2BscSubArr);
+var AllFacilitiesArray = new Array(CFCellAllFacArr);
+
+var inpArray = new Array(inpJsonArray,BscJsonArray,BSCRoeJsonArray,BscSubJsonArray,AllFacilitiesArray);
+var aa = new Array();
+
+function conditionalFormatting(jS, cell) {
+	/* Conditionally formatting based on cell value - START */
+	/* conditional Format for cell F116:AO116 */
+	if (cell.rowIndex == 116 && (6 <= cell.columnIndex <= 41)) {
+		if (cell.value.valueOf() == 1) {
+			if(cell.td!=null)
+			 cell.td.classList.add("top-bottom-border");
+		} else {
+			if(cell.td!=null)
+			cell.td.classList.remove("top-bottom-border");
+		}
+	}
+	/* Conditionally formatting based on cell value - END */
+	
+	if(aa) aa.length = 0;
+
+	var curSheetTtl = jS.s.loader.title(cell.sheetIndex);
+	id = setInpArray(curSheetTtl);	
+
+	var cellName = columnToLetter(cell.columnIndex) + cell.rowIndex;
+    searchDependencies(inpArray[id],cellName,cell);
+    
+    var dependantCell,j,innerdependantCell;
+    var dependencies = cell.dependencies;
+
+    //length of original
+    var i = dependencies.length - 1;
+
+    //iterate through them backwards
+    if (i > -1) {
+           do {
+                  dependantCell = dependencies[i];
+                  cellName = columnToLetter(dependantCell.columnIndex) + dependantCell.rowIndex;
+                  curSheetTtl = jS.s.loader.title(dependantCell.sheetIndex);
+              	  id = setInpArray(curSheetTtl);
+                  searchDependencies(inpArray[id],cellName,dependantCell);
+                  j = dependantCell.dependencies.length - 1;
+                  if(j >= 0){
+                        do{
+                        innerdependantCell = dependantCell.dependencies[j];
+                        cellName = columnToLetter(innerdependantCell.columnIndex) + innerdependantCell.rowIndex;
+                        curSheetTtl = jS.s.loader.title(innerdependantCell.sheetIndex);
+                    	id = setInpArray(curSheetTtl);
+                        searchDependencies(inpArray[id],cellName,innerdependantCell);
+                        }while(j-- > 0);
+                  }
+           } while (i-- > 0);
+    }
+
+	
+
+	/* Conditionally formatting based on Formula - START */
+	if (aa.length > 0) {
+		for (var i = 0; i < aa.length; i = i + 4) {
+			var x = parseInt(aa[i]);
+			var formulaParser = jS.cellHandler.formulaParser(Sheet.calcStack);
+			x = id + ':' + x; //id is hard coded sheetIndex inputs -> 0, bsc request -> 1
+			switch (x) {
+				case '0:0':
+					funORPattern(formulaParser, aa[i + 1], aa[i + 3]);
+					break;
+				case '0:1':
+					funLENZeroPattern(formulaParser, aa[i + 1], aa[i + 3]);
+					break;
+				case '0:2':
+					funLENPattern(formulaParser, aa[i + 1], aa[i + 3]);
+					break;
+				case '0:3':
+					funAbsPattern(formulaParser, aa[i + 1], aa[i + 3]);
+					break;
+				case '0:4':
+					funCmpPattern(formulaParser, aa[i + 1], aa[i + 3]);
+					break;
+				case '0:5':
+					funANDPattern(formulaParser, aa[i + 1], aa[i + 3]);
+					break;
+				// BSC Request conditional formatting
+				case '1:0':
+					funAND2Pattern(formulaParser, aa[i + 1], aa[i + 3]);
+					break;
+				case '1:1':
+					funCellYellowPattern(formulaParser,aa[i + 1], aa[i + 3]);
+					break;
+				case '1:2':
+					funCellBoldPattern(formulaParser,aa[i + 1], aa[i + 3]);
+					break;
+				case '1:3':
+					funCellGrayPattern(formulaParser,aa[i + 1], aa[i + 3]);
+					break;
+				// BSC ROE (SUBMISSION FORMAT)
+				case '2:0':
+					funNMPattern(formulaParser,aa[i+1],aa[i + 3]);
+					break;
+				// BSC Request Submission Format
+				case '1:0':
+					funCellBoldBscSubPattern(formulaParser, aa[i + 1], aa[i + 3]);
+					break;
+				case '1:1':
+					funAND2BscSubPattern(formulaParser,aa[i + 1], aa[i + 3]);
+					break;		
+				// All Facilities
+				case '1:0':
+					funCellHidePattern(formulaParser, aa[i + 1], aa[i + 3]);
+					break;					
+			}
+		}
+	}
+	/* Conditionally formatting based on cell value - END */
+}
+
+function setInpArray(curSheetTtl){
+	if(curSheetTtl == "Inputs"){
+		//inpArray = inpJsonArray;
+		id = 0;
+	}
+	else if(curSheetTtl == "BSC Request"){
+		//inpArray = BscJsonArray;
+		id = 1;
+	}
+	else if(curSheetTtl == "BSC ROE (SUBMISSION FORMAT)"){
+		//inpArray = BSCRoeJsonArray;
+		id = 2;
+	}
+	return id;
+}
+function searchDependencies(inpArray,cellName,cell){
+for (var a in inpArray) {  
+  for(var c in inpArray[a]){
+       
+       var cnt = new Array();
+       b = _.indexOf(inpArray[a][c],cellName);
+       
+       if(b == -1){
+           arr = jQuery.grep(inpArray[a][c], function( n, i ) {  
+             if(n.indexOf(cellName) >= 0)
+                cnt.push(i);
+           });
+           
+       if(cnt.length > 0)   
+              b = cnt[0];
+       }
+    
+    if(b>=0)
+      aa.push(a , c , b,cell);
+  }
+}
+}
+function applyCSSForCell(destCells, locSheetIndex, style, result) {
+	/* cell.td.classList.add(style); */
+	var cellindex, rowStartIndex, colStartIndex, colEndIndex, rowEndIndex, descell,jsonClass;
+	
+
+	for (var i = 0; i < destCells.length; i++) {
+		cellindex = getCellLocByName(destCells[i]);
+
+		rowStartIndex = colStartIndex = colEndIndex = rowEndIndex = "";
+
+		if (destCells[i].contains(":")) {
+			cellindex = getCellLocByName(destCells[i].split(":")[0]);
+			rowStartIndex = cellindex.row;
+			colStartIndex = cellindex.col;
+			cellindex = getCellLocByName(destCells[i].split(":")[1]);
+			rowEndIndex = cellindex.row;
+			colEndIndex = cellindex.col;
+		}
+
+		if (rowStartIndex != "") {
+			for (var rowno = rowStartIndex; rowno <= rowEndIndex; rowno++) {
+
+				for (var cols = colStartIndex; cols <= colEndIndex; cols++) {
+
+					
+					var descell,json,row,col;
+					
+					if((descell = jS.getCell(locSheetIndex, rowno, cols))===null)return null;
+					if((json = jS.s.loader.json[locSheetIndex]) === undefined) return null;
+					if((row = json.rows[rowno]) === undefined) return null;
+					if((col = row.columns[cols]) === undefined) return null;	
+					jsonClass=col.class;
+					if (result.valueOf()) {
+						if(descell.td){
+							if (descell.td.childElementCount > 0) {
+								descell.td.childNodes[0].classList.add(style);
+							} else {
+								descell.td.classList.add(style);
+							}
+						}else{
+							if(jsonClass){
+								if(jsonClass.indexOf(style)<0){
+									jsonClass+=" " +(style);
+								}
+							}else{
+								jS.s.loader.json[locSheetIndex].rows[rowno].columns[cols].class = style;
+							}
+						}
+					} else {
+						if(descell.td){
+							if (descell.td.childElementCount > 0) {
+								descell.td.childNodes[0].classList.remove(style);
+							} else {
+								descell.td.classList.remove(style);
+							}
+						}else{
+							if(jsonClass){
+								jsonClass.replace(style,"");
+							}
+						}
+					}
+				}
+			}
+
+		} else {
+
+			/*descell = jS.getCell(locSheetIndex, cellindex.row, cellindex.col);
+			jsonClass = jS.s.loader.json[locSheetIndex].rows[cellindex.row].columns[cellindex.col].class;					
+			if (result.valueOf()) {
+				if(descell.td){
+					if (descell.td.childElementCount > 0) {
+						descell.td.childNodes[0].classList.add(style);
+					} else {
+						descell.td.classList.add(style);
+					}
+				}else{
+					if(jsonClass){
+						if(jsonClass.indexOf(style)<0){
+							jsonClass+=" " +(style);
+						}
+					}else{
+						jS.s.loader.json[locSheetIndex].rows[cellindex.row].columns[cellindex.col].class = style;
+					}
+				}
+			} else {
+				if(descell.td){
+					if (descell.td.childElementCount > 0) {
+						descell.td.childNodes[0].classList.remove(style);
+					} else {
+						descell.td.classList.remove(style);
+					}
+				}else{
+					if(jsonClass){
+						jsonClass.replace(style,"");
+					}
+				}
+			}*/
+		
+
+			descell = jS.getCell(locSheetIndex, cellindex.row, cellindex.col);
+			if(descell.td){
+			if (result.valueOf()) {
+				if (descell.td.childElementCount > 0) {
+					descell.td.childNodes[0].classList.add(style);
+				} else {
+					descell.td.classList.add(style);
+				}
+			} else {
+				if (descell.td.childElementCount > 0) {
+					descell.td.childNodes[0].classList.remove(style);
+				} else {
+					descell.td.classList.remove(style);
+				}
+			}
+			}
+		}
+	}
+}
+
+function columnToLetter(column) {
+	var temp, letter = '';
+	while (column > 0) {
+		temp = (column - 1) % 26;
+		letter = String.fromCharCode(temp + 65) + letter;
+		column = (column - temp - 1) / 26;
+	}
+	return letter;
+}
+
+function funORPattern(formulaParser, index, cell) {
+	/*var inpCells = CFCmpArr[index].split(",");*/
+	var inpCells = CFOrArr[index];
+	var cell1 = inpCells[0];
+	var cell2 = inpCells[1];
+	var cell3 = inpCells[2];
+	var cell4 = inpCells[3];
+	var cell5 = inpCells[4];
+	var cell6 = inpCells[5];
+	var cell7 = inpCells[6];
+	var cell8 = inpCells[7];
+	var cell9 = inpCells[8];
+
+	var formula = "OR(AND((OR(" + cell1 + "=" + cell2 + "," + cell1 + "="
+				+ cell3 + "," + cell1 + "=" + cell4 + ")),NOT(OR(" + cell5
+				+ "=\" \"," + cell5 + "=0))),(" + cell5 + "-0.000001)>" + cell6
+				+ "-" + cell7 + "-" +cell8 + "-" + cell9 + ")";
+	
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+
+	/*var destCells = CFOPOrArr[index].split(",");*/
+	var destCells = CFOPOrArr[index];
+	/* apply css --> redCell */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "redCell", result);
+	return;
+}
+
+function funLENZeroPattern(formulaParser, index, cell) {
+	/*var formula = "LEN("+columnToLetter(cell.columnIndex) + cell.rowIndex+")=0";	 */
+	/* Using trim function to modify according to the web application, as we are using space to indicate empty value in dropdowns */
+	var formula = "LEN(Trim(" + columnToLetter(cell.columnIndex) + cell.rowIndex + "))=0";
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	/*var destCells = CFOPLenArr1[index].split(",");*/
+	var destCells = CFOPLenArr1[index];
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "lemonYellow-green-border",result);
+	return;
+}
+
+function funLENPattern(formulaParser, index, cell) {
+	var formula = "LEN(Trim(" + columnToLetter(cell.columnIndex)
+			+ cell.rowIndex + "))>0";
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	/*var destCells = CFOPLenArr2[index].split(",");*/
+	var destCells = CFOPLenArr2[index];
+	var locSheetIndex = cell.sheetIndex;
+	var style = "errorMessageBox";
+	if ((columnToLetter(cell.columnIndex) + cell.rowIndex )=="E32"){
+		style = "lemonYellow-green-border";
+	}
+	
+	applyCSSForCell(destCells, locSheetIndex, style, result);
+	
+	return;
+}
+
+function funAbsPattern(formulaParser, index, cell) {
+	var cell1 = CFCmpArr[index];
+	var formula = "ABS(" + cell1 + ")>1";
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	/*var destCells = CFOPAbsArr[index].split(",");*/
+	var destCells = CFOPAbsArr[index];
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "", result);
+	return;
+}
+
+function funCmpPattern(formulaParser, index, cell) {
+	/*var inpCells = CFCmpArr[index].split(",");*/
+	var inpCells = CFCmpArr[index];
+	var cell1 = inpCells[0];
+	var cell2 = inpCells[1];
+	var formula = cell1 + ">" + cell2;
+	
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	/*var destCells = CFOPCmpArr[index].split(",");*/
+	var destCells = CFOPCmpArr[index];
+	/* apply css --> redCell */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "redCell", result);
+	return;
+}
+
+function funANDPattern(formulaParser, index, cell) {
+	/*var inpCells = CFAndArr[index].split(",");*/
+	var inpCells = CFAndArr[index];
+	var cell1 = inpCells[0];
+	var cell2 = inpCells[1];
+	var formula = "AND(" + cell1 + "=\"No\"," + cell2 + ">0," + cell2 + "<>\" \")";
+	
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	/*var destCells = CFOPAndArr[index].split(",");*/
+	var destCells = CFOPAndArr[index];
+	/* apply css --> redCell-yellowFont */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "redCell-yellowFont", result);
+	return;
+}
+
+function funAND2Pattern(formulaParser,index,cell){
+	var inpCells = CFAnd2Arr[index];
+	var cell1 = inpCells[0];
+	var cell2 = inpCells[1];
+	var formula = "AND(LEN(TRIM("+cell1+"))>0,"+cell2+")";
+	
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	var destCells = CFOPAnd2Arr[index];
+	/* apply css --> saffroncell */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "saffroncell", result);
+	return;
+}
+
+function funNMPattern(formulaParser,index,cell){
+	var cell1 = CFNMArr[index][0];
+	var formula = cell1+"<>\"NM\"";
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	var destCells = CFOPNMArr[index];
+	/* apply css --> grayCell-brown-border */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "grayCell-brown-border", result);
+	return;	
+}
+
+function funCellYellowPattern(formulaParser,index,cell){
+	var cell1 = CFCellyellowArr[index][0];
+	var formula = cell1;
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	var destCells = CFOPCellyellowArr[index];
+	/* apply css --> brightYellowcell */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "brightYellowcell", result);
+	return;	
+}
+
+function funCellBoldPattern(formulaParser,index,cell){
+	var cell1 = CFCellboldArr[index][0];
+	var formula = cell1;
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	if(result.valueOf()){
+		var destCells = CFOPCellboldArr[index];
+	}else{
+		var destCells = CFOPNTCellboldArr[index];
+	}
+	/* apply css --> styleBold */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "styleBold", result);
+	return;	
+}
+
+function funCellGrayPattern(formulaParser,index,cell){
+	var cell1 = CFCellgrayArr[index][0];
+	var formula = cell1;
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	var destCells = CFOPCellgrayArr[index];
+	/* apply css --> grayheading */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "grayheading", result);
+	return;	
+}
+
+function funCellHidePattern(formulaParser,index,cell){
+	var cell1 = CFCellAllFacArr[index][0];
+	var formula = "Not(" + cell1 + ")";
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	var destCells = CFOPCellAllFacArr[index];
+	/* apply css --> hideCell */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "hideCell", result);
+	return;	
+}
+
+function funCellBoldBscSubPattern(formulaParser,index,cell){
+	var cell1 = CFCellboldBscSubArr[index][0];
+	var formula = cell1;
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	if(result.valueOf()){
+		var destCells = CFOPCellboldBscSubArr[index];
+	}else{
+		var destCells = CFOPNTCellboldBscSubArr[index];
+	}
+	/* apply css --> styleBold */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "styleBold", result);
+	return;	
+}
+
+function funAND2BscSubPattern(formulaParser,index,cell){
+	var inpCells = CFAnd2BscSubArr[index];
+	var cell1 = inpCells[0];
+	var cell2 = inpCells[1];
+	var formula = "AND(LEN(TRIM("+cell1+"))>0,"+cell2+")";
+	
+	formulaParser.setObj(cell);
+	var result = formulaParser.parse(formula);
+	var destCells = CFOPAnd2BscSubArr[index];
+	/* apply css --> saffroncell */
+	var locSheetIndex = cell.sheetIndex;
+	applyCSSForCell(destCells, locSheetIndex, "saffroncell", result);
+	return;
+}

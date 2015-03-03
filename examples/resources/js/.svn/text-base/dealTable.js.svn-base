@@ -1,0 +1,671 @@
+$.browser = {};
+var monthMap = new Object();
+monthMap[1] = "JAN";
+monthMap[2] = "FEB";
+monthMap[3] = "MAR";
+monthMap[4] = "APR";
+monthMap[5] = "MAY";
+monthMap[6] = "JUN";
+monthMap[7] = "JUL";
+monthMap[8] = "AUG";
+monthMap[9] = "SEP";
+monthMap[10] = "OCT";
+monthMap[11] = "NOV";
+monthMap[12] = "DEC";
+
+/* preference model map */
+var preference_map = {
+	'Id' : 'id',
+	'Deal ID' : 'dealId',
+	'Target BSC Date' : 'formattedTargetBscDate',
+	'CAS ID' : 'clientCasId',
+	'Client Name' : 'clientName',
+	'Country' : 'clientCntryOfAsts',
+	'Industry' : 'clientIndustry',
+	'Status' : 'lrcStatus',
+	'Client ROE' : 'clientRoe',
+	'JPM Target Hold' : 'jpmTargetHold',
+	'Financing ROE' : 'financingRoe',
+	'Financing ShortFall' : 'financingShortfall',
+	'Deal ROE' : 'dealRoe',
+	'Deal ShortFall' : 'dealShortfall',
+	'Proforma ROE' : 'proformaRoe',
+	'Liasion' : 'liaison',
+	'Arrangement Fees' : 'arrangementFees',
+	'Business Potential CF FEES' : 'busPotentialCfFees',
+	'Business Potential MARKETS' : 'busPotentialMarkets',
+	'Business Potential TSS' : 'busPotentialTss',
+	'Client Executive Approvers' : 'clientExecutiveApprovers',
+	'Corporate Banker Approvers' : 'corporateBankerApprovers',
+	'Tenure' : 'inputTenor',
+	'JPM Commitment' : 'jpmCommitment',
+	'No Of Facilities' : 'numberOfFacilities',
+	'Output Modified BIII RWA SPOT' : 'outputModifiedBiiiRwaSpot',
+	'Source Obligator Grade' : 'sourceObligorGrade',
+	'Transaction Type' : 'transactionType',
+	'BSC Approval' : 'bscApproval',
+	'Region' : 'sourceRegion'
+};
+/* preference UI label map */
+var preference_text_map = {
+	'' : '',
+	'Id' : 'id',
+	'Deal ID' : 'Deal ID',
+	'Target BSC Date' : 'BSC Target Date',
+	'CAS ID' : 'CAS ID',
+	'Client Name' : 'Client Name',
+	'Country' : 'Country of Assets',
+	'Industry' : 'Industry',
+	'Status' : 'LRC Status',
+	'Client ROE' : 'Client ROE (%)',
+	'JPM Target Hold' : 'JPM Target Hold ($mm)',
+	'Financing ROE' : 'Financing ROE (%)',
+	'Financing ShortFall' : 'Financing Shortfall ($000\'s)',
+	'Deal ROE' : 'Deal ROE (%)',
+	'Deal ShortFall' : 'Deal Shortfall ($000\'s)',
+	'Proforma ROE' : 'Proforma Client ROE (%)',
+	'Liasion' : 'Deal Contact',
+	'Arrangement Fees' : 'Arrangement Fees ($000\'s)',
+	'Business Potential CF FEES' : 'CF Promises ($mm)',
+	'Business Potential MARKETS' : 'Markets Promises ($mm)',
+	'Business Potential TSS' : 'TS Promises ($mm)',
+	'Client Executive Approvers' : 'Client Executive',
+	'Corporate Banker Approvers' : 'Corporate Banker',
+	'Tenure' : 'Tenor',
+	'JPM Commitment' : 'JPM Commitment ($mm)',
+	'No Of Facilities' : 'No. of Facilities',
+	'Output Modified BIII RWA SPOT' : 'Basel III RWA - Spot ($mm)',
+	'Source Obligator Grade' : 'Obligor Grade',
+	'Transaction Type' : 'Transaction Type',
+	'BSC Approval' : 'BSC Approval Status',
+	'Region' : 'BSC Region'
+};
+
+
+function showVersionList(dealId, divId) {
+//  dealId = '0b015515800ed59b ';
+//	dealId = '0b015515800f1a37 ';
+	divId = divId || 'historyList';
+	
+	$.ajax({
+		url : roleContextPath + '/historyList?dealId=' + dealId,
+		dataType : 'html',
+		success : function(html) {
+			$("#" + divId).html(html);
+			$("#" + divId).dialog({
+				title : 'Model Id - ' + dealId,
+				modal : true,
+				draggable : false,
+				resizable : false,
+				height : 'auto',
+				width : 'auto',
+				create : function(event, ui) {
+					$("#" + divId).parent().find(".ui-dialog-titlebar").hide();
+				}
+			});
+		}
+	});
+}
+
+function loadDealTable(tableId, month, region, recordsPerPage, recordsList, userId,yy) {
+	var p = preference_text_map;
+	var parentWidth = $("#firstMonthDealsDiv").width();
+	//Removing header on accordion
+	//var dt=monthMap[month]+" "+yy;	
+	//$("#" + tableId + "Header").html(dt);
+	
+	/* Code to create request URL bases on user type i.e banker, gadmin, radmin */
+	var requestUrl = roleContextPath + '/getGridData?selectedMonth=' + month;
+	switch (role) {
+	case 'gadmin':
+		break;
+	case 'radmin':
+		requestUrl += '&region='+region
+		break;
+	case 'banker':
+		requestUrl += '&userId='+userId;
+		break;
+	}
+	
+	$("#" + tableId).jqGrid({
+						url : requestUrl,
+						datatype : "json",
+						height : '100%',
+						colNames : [ p[""], p["Id"], "Deal Version", p["Region"],
+								p["Target BSC Date"], p["Status"],
+								p["BSC Approval"], p["Liasion"], p["Deal ID"],
+								p["Client Name"], p["CAS ID"],
+								p["Industry"], p["Country"],
+								p["Client Executive Approvers"], p["Corporate Banker Approvers"],
+								p["Transaction Type"], p["No Of Facilities"],
+								p["Source Obligator Grade"], p["JPM Commitment"],
+								p["JPM Target Hold"],
+								p["Tenure"],
+								p["Arrangement Fees"],
+								p["Business Potential CF FEES"],
+								p["Business Potential TSS"], p["Business Potential MARKETS"],
+								p["Financing ROE"], p["Financing ShortFall"],
+								p["Deal ROE"],
+								p["Deal ShortFall"],
+								p["Client ROE"], p["Proforma ROE"],
+								p["Output Modified BIII RWA SPOT"] ],
+						colModel : [
+								{
+									name : '',
+									index : '',
+									align : "center",
+									width : 25,
+									fixed : true,
+									search : false,
+									sortable : false,
+									formatter : function(cellvalue, options,
+											rowObject) {
+										return '<p class="dealinfo"  onclick="showVersionList(\''
+												+ rowObject.dealId+ '\');" style="margin:0px;" title="History" alt="History"></p>';
+									}
+								},
+								{
+									name : 'id',
+									index : 'id',
+									sorttype : "int",
+									key : true,
+									align : "center",
+									hidden : true
+								},
+								{
+									name : 'dealVerNo',
+									index : 'dealVerNo',
+									sorttype : "int",
+									key : true,
+									align : "center",
+									hidden : true
+								},
+								{
+									name : 'sourceRegion',
+									index : 'sourceRegion',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									resizable : false
+								},
+								{
+									name : 'formattedTargetBscDate',
+									index : 'formattedTargetBscDate',
+									align : "center",
+									searchoptions:{dataInit:datePick, attr:{title:'Select Date'}},
+									hidden : true,
+									sortable : true
+								},
+								{
+									name : 'lrcStatus',
+									index : 'lrcStatus',
+									align : "center",
+									hidden : true,
+									sorttype : "string",
+									sortable : true,
+									resizable : false
+								},
+								 {
+									name : 'bscApproval',
+									index : 'bscApproval',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									resizable : false
+								},
+								{
+									name : 'liaison',
+									index : 'liaison',
+									align : "center",
+									hidden : true,
+									sorttype : "float",
+									sortable : true,
+									resizable : false
+								},
+								{
+									name : 'dealId',
+									index : 'dealId',
+									sorttype : "string",
+									align : "center",
+									hidden : true,
+									sortable : true,
+									formatter : function(cellvalue, options,
+											rowObject) {
+										return '<a href="../'+role+'/model?dealId='
+												+ rowObject.dealId
+												+ '&dealVer='
+												+ rowObject.dealVerNo
+												+ '">'
+												+ cellvalue + '</a>';
+									}
+								},
+								 {
+									name : 'clientName',
+									index : 'clientName',
+									sorttype : "string",
+									align : "center",
+									hidden : true,
+									sorttype : "string",
+									sortable : true,
+									resizable : false
+								},
+								{
+									name : 'clientCasId',
+									index : 'clientCasId',
+									align : "center",
+									hidden : true,
+									sorttype : "int",
+									sortable : true,
+									resizable : false
+								},
+								{
+									name : 'clientIndustry',
+									index : 'clientIndustry',
+									align : "center",
+									hidden : true,
+									sorttype : "string",
+									sortable : true,
+									resizable : false
+								},
+								{
+									name : 'clientCntryOfAsts',
+									index : 'clientCntryOfAsts',
+									align : "center",
+									hidden : true,
+									sorttype : "string",
+									sortable : true,
+									resizable : false
+								},
+								{
+									name : 'clientExecutiveApprovers',
+									index : 'clientExecutiveApprovers',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									resizable : false,
+									width:200
+								},
+								{
+									name : 'corporateBankerApprovers',
+									index : 'corporateBankerApprovers',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									resizable : false,
+									width:200
+								},
+								{
+									name : 'transactionType',
+									index : 'transactionType',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									resizable : false
+								},
+								{
+									name : 'numberOfFacilities',
+									index : 'numberOfFacilities',
+									align : "center",
+									hidden : true,
+									resizable : false
+								},
+								{
+									name : 'sourceObligorGrade',
+									index : 'sourceObligorGrade',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									resizable : false
+								}, 
+								{
+									name : 'jpmCommitment',
+									index : 'jpmCommitment',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									formatter:amountFormat,
+							        sorttype: "float",
+							        searchoptions:{sopt:['eq']},
+									resizable : false
+								},
+								{
+									name : 'jpmTargetHold',
+									index : 'jpmTargetHold',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									formatter:amountFormat,
+							        sorttype: "float",
+							        searchoptions:{sopt:['eq']},
+							       /* formatoptions: {prefix:'$', suffix:'', thousandsSeparator:',',
+							                decimalSeprator:'.'},*/
+									resizable : false
+								},
+								 {
+									name : 'inputTenor',
+									index : 'inputTenor',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									resizable : false
+								},
+								{
+									name : 'arrangementFees',
+									index : 'arrangementFees',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									formatter:amountFormat,
+							        sorttype: "float",
+							        searchoptions:{sopt:['eq']},
+									resizable : false
+								},
+								{
+									name : 'busPotentialCfFees',
+									index : 'busPotentialCfFees',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									formatter:amountFormat,
+							        sorttype: "float",
+							        searchoptions:{sopt:['eq']},
+									resizable : false
+								},
+								 {
+									name : 'busPotentialTss',
+									index : 'busPotentialTss',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									formatter:amountFormat,
+							        sorttype: "float",
+							        searchoptions:{sopt:['eq']},
+									resizable : false
+								},
+								 {
+									name : 'busPotentialMarkets',
+									index : 'busPotentialMarkets',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									formatter:amountFormat,
+							        sorttype: "float",
+							        searchoptions:{sopt:['eq']},
+									resizable : false
+								},
+								{
+									name : 'financingRoe',
+									index : 'financingRoe',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									sorttype: "float",
+							        searchoptions:{sopt:['eq']},
+									formatter : percentAppend,
+									resizable : false
+								},
+								{
+									name : 'financingShortfall',
+									index : 'financingShortfall',
+									align : "center",
+									hidden : true,
+									sorttype : "float",
+									searchoptions:{sopt:['eq']},
+									sortable : true,
+									formatter : amountFormat,
+									resizable : false
+								}, 
+								{
+									name : 'dealRoe',
+									index : 'dealRoe',
+									align : "center",
+									hidden : true,
+									sorttype : "float",
+									searchoptions:{sopt:['eq']},
+									sortable : true,
+									formatter : percentAppend,
+									resizable : false
+								},
+								{
+									name : 'dealShortfall',
+									index : 'dealShortfall',
+									align : "center",
+									hidden : true,
+									sorttype : "float",
+									searchoptions:{sopt:['eq']},
+									sortable : true,
+									formatter : amountFormat,
+									resizable : false
+								},
+								 {
+									name : 'clientRoe',
+									index : 'clientRoe',
+									align : "center",
+									hidden : true,
+									sorttype : "float",
+									searchoptions:{sopt:['eq']},
+									sortable : true,
+									formatter : percentAppend,
+									resizable : false
+								},
+								 {
+									name : 'proformaRoe',
+									index : 'proformaRoe',
+									align : "center",
+									hidden : true,
+									sorttype : "float",
+									searchoptions:{sopt:['eq']},
+									sortable : true,
+									formatter : percentAppend,
+									resizable : false
+								},
+								{
+									name : 'outputModifiedBiiiRwaSpot',
+									index : 'outputModifiedBiiiRwaSpot',
+									align : "center",
+									hidden : true,
+									sortable : true,
+									sorttype : "float",
+									searchoptions:{sopt:['eq']},
+									sortable : true,
+									formatter : amountFormat,
+									resizable : false
+								}],
+						//emptyrecords : "No records to view",
+						loadtext : "Loading..",
+						//loadui : "block",
+						rowNum : recordsPerPage,
+						rowList : recordsList,
+						rowTotal : 2000,
+						loadonce : true,
+						mtype : "GET",
+						multiselect : false,
+						resizable : false,
+						gridview : true,
+						viewrecords : true,
+						ignoreCase : true,
+						shrinkToFit:false,
+						pager : '#' + tableId + 'Pager',
+						jsonReader : {
+							repeatitems : false,
+							root : "vwLrcDashboardData"
+						},
+						 loadComplete: function() {
+		                        $("tr.jqgrow:odd").addClass('myAltRowClass');
+		                        $('#' + tableId + 'Pager' + '_left').css('width','auto');
+		                 }
+					});
+	$("#" + tableId).jqGrid('navGrid', '#' + tableId + 'Pager', {
+		edit : false,
+		add : false,
+		del : false,
+		refresh : true,
+		search : false
+	});
+	$("#" + tableId).jqGrid('filterToolbar', {
+		searchOperators : false,
+		stringResult : true,
+		searchOnEnter : true
+	});
+	$("#" + tableId).setGridParam({
+		rowNum : recordsPerPage
+	}).trigger("reloadGrid");
+	$("#" + tableId).jqGrid('setGridWidth',parentWidth,false);
+}
+
+/*Date picker for Target Bsc Date*/
+datePick = function(elem){
+	   jQuery(elem).datepicker({
+		   format:"mm/dd/yyyy",
+	       changeMonth: true,
+	       editable:false,
+	       changeYear: true,
+	       yearRange: "2000:2030",
+	       onSelect: function(dateText, inst){
+	    	   $(this).focus();
+	       }
+	   });
+	}
+/* Data Formatting Functions */
+function percentAppend(cellvalue, options, rowObject) {
+	if(cellvalue != null){
+		return (cellvalue != "" && typeof (cellvalue) != undefined && cellvalue != null) ? cellvalue+'%' : cellvalue;
+	}else{
+		return '';
+	}
+}
+function amountFormat(cellvalue, options, rowObject) {
+	if(cellvalue != null){
+		if (options.colModel.name === 'dealShortfall'
+			|| options.colModel.name === 'financingShortfall') {
+		return !isNaN(cellvalue) ? numeral(cellvalue).format('($ 0,0.00)')
+				: cellvalue;
+	}
+	return numeral(cellvalue).format('$ 0,0.00');
+	}
+	return '';
+}
+var preference_mandatories = {
+	field_list : [ 'Deal ID', 'CAS ID' ]
+}
+function buildUserPreferences() {
+	$.getJSON(roleContextPath + "/getPreferences?userId="+userId,
+//			 contextPath + "/getPreferences?userId="+ getUrlParam('userId'),
+							
+					function(result) {
+						$('ul#userpreferences').empty();
+						var userPreferencesData = {};
+						var usingDefaultPref = isUsingDefaultPref(result);
+
+						$.each(result,function(i, userPref) {
+
+											var newId = typeof userPreferencesData[userPref.fieldId] == "undefined";
+											if (newId || userPref.userId == userId) {
+												if (newId) {
+													$('ul#userpreferences').append(
+															'<li><input class="pref" data-id="'
+																			+ userPref.fieldTxt
+																			+ '" data-isDefault="'
+																			+ userPref.isDefault
+																			+ '" type="checkbox" name="checkbox" id="'
+																			+ userPref.fieldId
+																			+ '"><label for="ossm">'
+																			+ preference_text_map[userPref.fieldTxt]
+																			+ '</label></li>');
+												}
+												userPreferencesData[userPref.fieldId] = userPref;
+												if ($.inArray(userPref.fieldTxt,preference_mandatories.field_list) !== -1) {
+													$('#' + userPref.fieldId).attr('disabled','disabled');
+												}
+
+												if ((usingDefaultPref && userPref.isDefault == "Y")
+														|| (userPref.isSelected == 1)
+														|| ($.inArray(userPref.fieldTxt,preference_mandatories.field_list) !== -1)) {
+													$('#' + userPref.fieldId).attr('checked','checked');
+													jQuery("#firstMonthDeals").jqGrid('showCol',preference_map[userPref.fieldTxt]);
+													jQuery("#secondMonthDeals").jqGrid('showCol',preference_map[userPref.fieldTxt]);
+													jQuery("#thirdMonthDeals").jqGrid('showCol',preference_map[userPref.fieldTxt]);
+												}
+											}
+										});
+
+						$('ul#userpreferences').data("userpreferences",userPreferencesData);
+
+						$('ul#userpreferences').append('<li><input id="save_preferences" type="submit" value="save"/> </li>');
+						$("#save_preferences").button({
+							icons : {
+								primary : "ui-icon-locked"
+							},
+							text : false
+						});
+						$("#save_preferences").bind("click",saveUserPreferences);
+						$('ul#userpreferences :checkbox').click(function(e) {
+									var $this = $(this);
+									if ($this.is(':checked')) {
+										jQuery("#firstMonthDeals").jqGrid('showCol',preference_map[$this.attr('data-id')]);
+										jQuery("#secondMonthDeals").jqGrid('showCol',preference_map[$this.attr('data-id')]);
+										jQuery("#thirdMonthDeals").jqGrid('showCol',preference_map[$this.attr('data-id')]);
+									} else {
+										jQuery("#firstMonthDeals").jqGrid('hideCol',preference_map[$this.attr('data-id')]);
+										jQuery("#secondMonthDeals").jqGrid('hideCol',preference_map[$this.attr('data-id')]);
+										jQuery("#thirdMonthDeals").jqGrid('hideCol',preference_map[$this.attr('data-id')]);
+									}
+								});
+					});
+	$(document).click(function(e) {
+				var container = $("#userpreferences");
+
+				if ($('#userPrefImg').is(e.target)) {
+					e.preventDefault();
+					container.toggle();
+				}
+
+				if (!container.is(e.target) // if the target of the click isn't the container...
+						&& container.has(e.target).length === 0
+						&& !$('#userPrefImg').is(e.target)) // ... nor adescendant of the container
+				{
+					container.hide();
+				}
+			});
+}
+
+function saveUserPreferences(e) {
+	e.preventDefault();
+	usePrefData = $('ul#userpreferences').data("userpreferences");
+	var selectedPreferences = Array();
+	$("input:checkbox[name=checkbox]:checked").each(function(id, el) {
+		selectedPreferences.push(usePrefData[$(el).attr('id')]);
+	});
+	datajson = {};
+	datajson['UserPreferences'] = selectedPreferences;
+	$('#save_preferences').attr('disabled', 'disabled');
+	$('#save_preferences').attr('value', 'wait...');
+	$.ajax({
+//		url : contextPath + "/savePreferences?userId=" + getUrlParam('userId'),
+		url : roleContextPath + "/savePreferences?userId=" + userId,
+		type : "POST",
+		data : JSON.stringify(datajson),
+		contentType : "application/json",
+		complete : function(data) {
+			$('#save_preferences').removeAttr('disabled');
+			$('#save_preferences').attr('value', 'save');
+		}
+	});
+}
+
+function isUsingDefaultPref(data) {
+	var response = true;
+	$.each(data, function(i, userPref) {
+		if (userPref.isSelected) {
+			response = false;
+		}
+	});
+	return response;
+}
+function getUrlParam(name) {
+	name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+	var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"), results = regex
+			.exec(location.search);
+	return results == null ? null : decodeURIComponent(results[1].replace(
+			/\+/g, " "));
+}
