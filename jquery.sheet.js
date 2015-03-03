@@ -6084,7 +6084,7 @@ $.sheet = {
 
 									topBar.entity = 'top';
 									topBar.type = 'bar';
-									topBar.innerHTML = topBar.label = jSE.columnLabelString(columnIndex - 1);
+									topBar.innerHTML = topBar.label = jSE.columnLabelString(columnIndex);
 									topBar.className = colBarClasses;
 
 									//If the row has not been created lets set it up
@@ -6149,9 +6149,7 @@ $.sheet = {
 								});
 
 								o.setAddedFinishedFn(function(_offset) {
-									if (!isLast) {
-										jS.refreshColumnLabels(spreadsheetIndex);
-									}
+									jS.refreshColumnLabels(spreadsheetIndex);
 									offset = _offset;
 								});
 								break;
@@ -6245,6 +6243,8 @@ $.sheet = {
 								colGroup.removeChild(cols[cols.length -1]);
 							}
 						}
+
+						thCorner.className = jS.theme.bar + ' ' + jS.cl.barCorner;
 
 						colCorner.style.width = colCorner.style.minWidth = s.colMargin + 'px';
 						colGroup.insertBefore(colCorner, colGroup.children[0]); //end col corner
