@@ -1851,7 +1851,7 @@ $.sheet = {
 									isLast = true;
 								}
 
-								if (type === 'row-init' && spreadsheetIndex === spreadsheet.length - 1) {
+								if (type === 'row-init' && ((spreadsheetIndex === 0 && spreadsheet.length === 0) || spreadsheetIndex === spreadsheet.length - 1)) {
 									isLast = true;
 								}
 
@@ -1959,7 +1959,9 @@ $.sheet = {
 
 								o.setAddedFinishedFn(function(_offset) {
 									tBody.insertBefore(frag, isBefore ? tBody.children[domIndex] : tBody.children[domIndex].nextSibling);
-									//jS.refreshRowLabels(i);
+									if (!isLast) {
+										jS.refreshRowLabels(i);
+									}
 									offset = _offset;
 								});
 								break;
@@ -1972,7 +1974,7 @@ $.sheet = {
 									isLast = true;
 								}
 
-								if (type === 'col-init') {
+								if (type === 'col-init' && ((spreadsheetIndex === 0 && spreadsheet[1].length === 0) || spreadsheetIndex === spreadsheet.length - 1)) {
 									isLast = true;
 								}
 
@@ -2008,7 +2010,7 @@ $.sheet = {
 
 									topBar.entity = 'top';
 									topBar.type = 'bar';
-									topBar.innerHTML = topBar.label = jSE.columnLabelString(columnIndex);
+									topBar.innerHTML = topBar.label = jSE.columnLabelString(columnIndex - 1);
 									topBar.className = colBarClasses;
 
 									//If the row has not been created lets set it up
@@ -2073,7 +2075,9 @@ $.sheet = {
 								});
 
 								o.setAddedFinishedFn(function(_offset) {
-									jS.refreshColumnLabels(spreadsheetIndex);
+									if (!isLast) {
+										jS.refreshColumnLabels(spreadsheetIndex);
+									}
 									offset = _offset;
 								});
 								break;
@@ -4523,7 +4527,7 @@ $.sheet = {
 								}
 							} else {
 								tr = trChildren[rowIndex];
-								td = (tr !== u ? tr.children[columnIndex] : null);
+								td = (tr !== u && tr.children.length > columnIndex ? tr.children[columnIndex] : null);
 								if (td !== null) {
 									if (columnIndex == 0 && rowIndex > 0) { //barleft
 										td.type = 'bar';
