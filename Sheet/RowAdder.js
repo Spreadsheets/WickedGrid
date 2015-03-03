@@ -39,7 +39,7 @@
 			this.createCell = fn;
 		},
 		setHidden: function(hidden) {
-			this.hidden = hidden;
+			this.hidden = hidden || [];
 		},
 		createCells:function (i, size, isBefore) {
 			var offset = (isBefore ? 0 : 1),

@@ -1703,7 +1703,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
-			if (hiddenRows.length > 0) {
+			if (hiddenRows !== null && hiddenRows.length > 0) {
 				hiddenRows.sort();
 				this.toggleHideRowRange(hiddenRows[0], hiddenRows[hiddenRows.length - 1], true);
 			}
@@ -2361,7 +2361,7 @@ Sheet.Highlighter = (function(document, window, $) {
 			this.createCell = fn;
 		},
 		setHidden: function(hidden) {
-			this.hidden = hidden;
+			this.hidden = hidden || [];
 		},
 		createCells:function (i, size, isBefore) {
 			var offset = (isBefore ? 0 : 1),
@@ -5113,6 +5113,7 @@ $.sheet = {
 			n = isNaN,
 			nAN = NaN,
 			thaw = window.thaw,
+			createCellsIfNeeded = (s.loader !== null),
 
 			/**
 			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index].
@@ -6236,8 +6237,6 @@ $.sheet = {
 								colGroup.removeChild(cols[cols.length -1]);
 							}
 						}
-
-						thCorner.className = jS.theme.bar + ' ' + jS.cl.barCorner;
 
 						colCorner.style.width = colCorner.style.minWidth = s.colMargin + 'px';
 						colGroup.insertBefore(colCorner, colGroup.children[0]); //end col corner
@@ -8509,11 +8508,11 @@ $.sheet = {
 				 * @param {Number} [rowEnd]
 				 * @param {Number} [colStart]
 				 * @param {Number} [colEnd]
-				 * @param {Boolean} [createCellsIfNeeded]
 				 * @memberOf jS
 				 */
-				createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd, createCellsIfNeeded) {
+				createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd) {
 					var rowIndex,
+						tBody = table.tBody,
 						columnIndex,
 						loader = (s.loader !== null ? s.loader : null),
 						standardHeight = s.colMargin + 'px',
@@ -8530,7 +8529,8 @@ $.sheet = {
 							barTd.style.height = height;
 						}),
 						pane = table.pane,
-						trChildren,
+						trChildren = tBody.children,
+						tr,
 						actionUI = pane.actionUI,
 						detacher = actionUI.yDetacher,
 						spreadsheet,
@@ -8539,7 +8539,9 @@ $.sheet = {
 						cell,
 						qty,
 						lastRowIndex,
-						lastColumnIndex;
+						lastColumnIndex,
+						tds,
+						td;
 
 					//if we are starting at the beginning of the spreadsheet, then we start from empty
 					if (rowStart === u && colStart === u) {
@@ -8549,9 +8551,9 @@ $.sheet = {
 					spreadsheet = table.spreadsheet;
 
 					rowStart = rowStart || 0;
-					rowEnd = rowEnd || 1;
+					rowEnd = (rowEnd === u && s.loader === null ? trChildren.length - 1: rowEnd || 1);
 					colStart = colStart || 0;
-					colEnd = colEnd || 1;
+					colEnd = (colEnd === u && s.loader === null ? trChildren[0].children.length - 1: colEnd || 1);
 
 					rowIndex = rowStart;
 
@@ -8565,61 +8567,58 @@ $.sheet = {
 								jS.controlFactory.addCells(lastRowIndex, false, (qty > 0 ? qty : 1), 'row-init');
 								row = spreadsheet[rowIndex];
 							} else {
-								continue;
+								row = spreadsheet[rowIndex] = [];
 							}
 						}
 
 						columnIndex = colStart;
 						for (;columnIndex <= colEnd;columnIndex++) {
-							if (row === u) {
-								if ((row = detacher.detachedAbove[rowIndex]) === u) {
-									continue;
-								}
-							}
-							cell = row[columnIndex];
-
-							if (cell === u) {
-								if (createCellsIfNeeded) {
-									lastColumnIndex = (row.length > 0 ? row.length - 1 : 0);
-									qty = columnIndex - lastColumnIndex;
-									jS.controlFactory.addCells(row.length - 1, false, qty > 0 ? qty : 1, 'col-init');
-									cell = row[columnIndex];
-								} else {
-									continue;
-								}
-							}
-
 							if (rowIndex > 0 && columnIndex > 0) {
+								cell = row[columnIndex];
+
 								if (cell === u) {
-									return;
-								}
-								if (cell.td === u) {
-									jS.createCell(i, rowIndex, columnIndex);
+									if (createCellsIfNeeded) {
+										lastColumnIndex = (row.length > 0 ? row.length - 1 : 0);
+										qty = columnIndex - lastColumnIndex;
+										jS.controlFactory.addCells(row.length - 1, false, qty > 0 ? qty : 1, 'col-init');
+										cell = row[columnIndex];
+									} else {
+										jS.createCell(i, rowIndex, columnIndex);
+										cell = row[columnIndex];
+										cell.needsUpdated = true;
+										cell.updateValue();
+									}
+								} else {
+									cell.updateValue();
 								}
 							} else {
-								if (columnIndex == 0 && rowIndex > 0) { //barleft
-									td.type = 'bar';
-									td.entity = 'left';
-									td.innerHTML = rowIndex;
-									td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.theme.bar;
+								tr = trChildren[rowIndex];
+								td = (tr !== u ? tr.children[columnIndex] : null);
+								if (td !== null) {
+									if (columnIndex == 0 && rowIndex > 0) { //barleft
+										td.type = 'bar';
+										td.entity = 'left';
+										td.innerHTML = rowIndex;
+										td.className = jS.cl.barLeft + ' ' + jS.cl.barLeft + '_' + jS.i + ' ' + jS.theme.bar;
 
-									if (setRowHeight !== u) {
-										setRowHeight.call(loader, i, rowIndex, td);
+										if (setRowHeight !== u) {
+											setRowHeight.call(loader, i, rowIndex, td);
+										}
 									}
-								}
 
-								if (rowIndex == 0 && columnIndex > 0) { //bartop
-									td.type = 'bar';
-									td.entity = 'top';
-									td.innerHTML = jSE.columnLabelString(columnIndex);
-									td.className = jS.cl.barTop + ' ' + jS.cl.barTop + '_' + jS.i + ' ' + jS.theme.bar;
-								}
+									if (rowIndex == 0 && columnIndex > 0) { //bartop
+										td.type = 'bar';
+										td.entity = 'top';
+										td.innerHTML = jSE.columnLabelString(columnIndex);
+										td.className = jS.cl.barTop + ' ' + jS.cl.barTop + '_' + jS.i + ' ' + jS.theme.bar;
+									}
 
-								if (rowIndex == 0 && columnIndex == 0) { //corner
-									td.type = 'bar';
-									td.entity = 'corner';
-									td.className = jS.theme.bar + ' ' + jS.cl.barCorner;
-									jS.controls.bar.corner[jS.i] = td;
+									if (rowIndex == 0 && columnIndex == 0) { //corner
+										td.type = 'bar';
+										td.entity = 'corner';
+										td.className = jS.theme.bar + ' ' + jS.cl.barCorner;
+										jS.controls.bar.corner[jS.i] = td;
+									}
 								}
 							}
 						}
@@ -9690,7 +9689,7 @@ $.sheet = {
 
 				/**
 				 * sets cell active to sheet, and highlights it for the user, shouldn't be called directly, should use cellEdit
-				 * @param {HTMLElement} td
+				 * @param {HTMLTableCellElement} td
 				 * @param {Object} loc {col, row}
 				 * @param {Boolean} [isDrag] should be determined by if the user is dragging their mouse around setting cells
 				 * @param {Boolean} [directional] makes highlighting directional, only left/right or only up/down
@@ -9717,7 +9716,7 @@ $.sheet = {
 
 						jS.highlighter
 							.setBar('left', td.parentNode.firstChild)
-							.setBar('top', td.parentNode.parentNode.firstChild.children[td.cellIndex]);
+							.setBar('top', td.parentNode.parentNode.children[0].children[td.cellIndex]);
 
 						var selectModel,
 							clearHighlightedModel;
@@ -10176,7 +10175,7 @@ $.sheet = {
 									each: function() {
 										if (this.row === u || (this.row = spreadsheet[this.rowIndex]) === u) {
 											if (spreadsheet[this.rowIndex] === u) {
-												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.columnIndex, this.columnIndex, true);
+												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.columnIndex, this.columnIndex);
 												this.row = spreadsheet[this.rowIndex];
 											}
 										} else {
@@ -10218,7 +10217,7 @@ $.sheet = {
 						stack = [],
 						each = function() {
 							if (this.row === u || this.cell === u) {
-								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex, true);
+								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex);
 								this.row = spreadsheet[this.rowIndex];
 							}
 
