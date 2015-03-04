@@ -142,7 +142,7 @@ tf.test('Behaviour Testing: Adding Columns @ After 1', function(tf) {
 
 	td = div.find('table.jS td:contains("original")');
 
-	headers = div.find('table.jS tr:first th');
+	headers = div.find('th.jSBarTop');
 
 	tf.assertEquals(td[0].cellIndex, 1, 'original @ expected location');
 	tf.assertNotEquals(td[0].nextSibling, null, 'added @ expected location');

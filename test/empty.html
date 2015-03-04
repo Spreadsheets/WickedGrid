@@ -3,7 +3,7 @@
 <head>
 	<title>({{pass}}|{{fail}}) {{title}} · Testify Suite</title>
 	<meta charset="utf-8" />
-	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
+	<script src="../bower_components/jquery/dist/jquery.js"></script>
 	<script src="../jquery.sheet.js"></script>
 	<script src="../utilities/tableify.js"></script>
 	<script>
@@ -14,16 +14,27 @@
 	<script>
 		$(function() {
 
-			var div = $('<div>')
+			var table = $(tableify('="<b>test</b>"')),
+					div = $('<div>')
 							.appendTo('body')
-							.append('<table><tr><td data-formula="Sheet1!B1 + 1"></td><td data-celltype="percent">.1</td></tr></table>')
+							.append(table)
 							.sheet(),
 					jS = div.getSheet(),
 					td;
 
-			jS.getCell(0,1,1).updateValue();
+			td = div.find('table.jS td');
 
-			td = div.find('table.jS td').first();
+			tf.assertEquals(td[0].innerHTML, '&lt;b&gt;test&lt;/b&gt;', 'greater than, less than');
+
+
+
+			/*tf.assertSame(sheet1B1.value.valueOf(), 1, 'sheet1B1 value is correct');
+			tf.assertSame(sheet1B1.loadedFrom.cache, 1, 'sheet1B1 cache is correct');
+			tf.assertSame(sheet2B1.value.valueOf(), 33, 'sheet2B1 value is correct');
+			tf.assertSame(sheet2B1.loadedFrom.cache, 33, 'sheet2B1 cache is correct');
+			tf.assertSame(sheet3B1.value.valueOf(), 66, 'sheet3B1 value is correct');
+			tf.assertSame(sheet3B1.loadedFrom.cache, 66, 'sheet3B1 cache is correct');
+			div.getSheet().kill();*/
 		});
 	</script>
 </head>

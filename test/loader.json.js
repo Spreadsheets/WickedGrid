@@ -326,10 +326,9 @@ tf.test('Loader (json): Hidden Rows', function() {
 		cell = jS.getCell(0,5,1);
 
 	tr = cell.td.parentNode;
-	style = getComputedStyle(tr);
 
 	tf.assertEquals(cell.rowIndex, 5, 'Proper row is selected');
-	tf.assertEquals(style['display'], 'none', 'Row is hidden');
+	tf.assertEquals(tr.parentNode, null, 'Row is hidden');
 	div.detach();
 	div.getSheet().kill();
 });
@@ -394,15 +393,13 @@ tf.test('Loader (json): Scroll Offset with Hidden Rows', function() {
 		jS = div.getSheet(),
 		tr,
 		td,
-		style,
-		cell = jS.getCell(0,29,1);
+		cell = jS.getCell(0,4,1);
 
 	td = cell.td || {};
 	tr = td.parentNode || null;
-	style = tr ? getComputedStyle(tr) : {};
 
 	tf.assertEquals(cell.rowIndex, 29, 'Proper row is selected');
-	tf.assertEquals(style['display'] || '', 'table-row', 'Row is displayed');
+	tf.assertNotEquals(tr.parentNode, null, 'Row is displayed');
 
 	cell = jS.getCell(0,30,1);
 

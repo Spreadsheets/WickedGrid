@@ -95,15 +95,11 @@ tf.test('Cell Types: Percent Addition', function() {
 			.sheet(),
 		jS = div.getSheet(),
 		td,
-		cellValue;
+		cell = jS.getCell(0,1,1);
 
-	jS.getCell(0,1,1).updateValue(function(_cellValue) {
-		cellValue = _cellValue;
-	});
+	cell.updateValue();
 
-	td = div.find('table.jS td').first();
-
-	tf.assertEquals(td.html(), '1.1', 'html is properly displayed');
-	tf.assertEquals(cellValue.valueOf(), 1.1, 'value remains a number');
+	tf.assertEquals(cell.td.innerHTML, '1.1', 'html is properly displayed');
+	tf.assertEquals(cell.value.valueOf(), 1.1, 'value remains a number');
 	div.getSheet().kill();
 });

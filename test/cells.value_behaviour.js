@@ -1,6 +1,7 @@
 tf.test('Value Behaviour: Angle Brackets', function() {
-	var div = $('<div>')
-			.append(tableify('="<b>test</b>"'))
+	var table = $(tableify('="<b>test</b>"')),
+		div = $('<div>')
+			.append(table)
 			.sheet(),
 		jS = div.getSheet(),
 		td;

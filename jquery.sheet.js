@@ -1684,7 +1684,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			},0);
 		},
 
-		hide:function (hiddenRows, hiddenColumns) {
+		hide:function (jS, hiddenColumns, hiddenRows) {
 			var cssId = '#' + this.table.getAttribute('id'),
 				pane = this.pane,
 				that = this;
@@ -1705,7 +1705,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			if (hiddenRows !== null && hiddenRows.length > 0) {
 				hiddenRows.sort();
-				this.toggleHideRowRange(hiddenRows[0], hiddenRows[hiddenRows.length - 1], true);
+				this.toggleHideRowRange(jS, hiddenRows[0], hiddenRows[hiddenRows.length - 1], true);
 			}
 
 			if (this.hiddenColumns.length > 0) {
@@ -1716,100 +1716,70 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		/**
 		 * Toggles a row to be visible
+		 * @param {jQuery.sheet.instance} jS
 		 * @param {Number} rowIndex
 		 */
-		toggleHideRow: function(rowIndex) {
-			var domIndex,
-				tBody = this.tBody,
-				detacher = this.yDetacher,
-				hiddenRows = detacher.hidden,
-				row = detacher.hidden[rowIndex],
-				detachedAbove = detacher.detachedAbove,
-				detachedBelow = detacher.detachedBelow,
-				offsetViewPortTop = detachedAbove.length,
-				offsetViewPortBottom = offsetViewPortTop + tBody.length;
-
-			if (row === undefined) {
-				//if index is above the view port
-				if (rowIndex < offsetViewPortTop) {
-					hiddenRows[rowIndex] = detachedAbove[rowIndex];
-				}
-
-				//else if the index is below the view port
-				else if (rowIndex > offsetViewPortBottom) {
-					hiddenRows[rowIndex] = detachedBelow[rowIndex - offsetViewPortBottom];
-				}
-
-				//else if it is in view of the table, remove it from the table
-				else {
-					domIndex = rowIndex - offsetViewPortTop;
-					if (domIndex >= tBody.children.length) {
-						hiddenRows[rowIndex] = null;
-					} else {
-						tBody.removeChild(hiddenRows[rowIndex] = tBody.children[domIndex]);
-					}
-				}
-			} else {
-				//TODO
-				delete hiddenRows[rowIndex];
-			}
+		toggleHideRow: function(jS, rowIndex) {
+			this.toggleHideRowRange(jS, rowIndex);
 		},
 
 		/**
 		 * Toggles a range of rows to be visible starting at index of 1
+		 * @param {jQuery.sheet.instance} jS
 		 * @param {Number} startIndex
 		 * @param {Number} [endIndex]
 		 * @param {Boolean} [hide]
 		 */
-		toggleHideRowRange: function(startIndex, endIndex, hide) {
-			return;
-			//TODO
+		toggleHideRowRange: function(jS, startIndex, endIndex, hide) {
 			if (!startIndex) return;
 			if (!endIndex) endIndex = startIndex;
 
-			var domIndex,
+			var spreadsheets = jS.spreadsheets,
+				spreadsheet = spreadsheets[jS.i],
 				tBody = this.tBody,
 				rowIndex = startIndex,
-				detacher = this.yDetacher,
-				hiddenRows = detacher.hidden,
-				detachedAbove = detacher.detachedAbove,
-				detachedBelow = detacher.detachedBelow,
-				removing = ((hide === true) || (hiddenRows[startIndex] === u)),
-				offsetViewPortTop = detachedAbove.length - 1,
-				offsetViewPortBottom = offsetViewPortTop + tBody.length;
+				row,
+				tr,
+				removing = (hide !== undefined ? hide : (spreadsheet[startIndex][1].td.parentNode.parentNode !== null)),
+				lastAnchorIndex = endIndex + 1,
+				lastAnchor = null;
 
-			for(;rowIndex < endIndex; rowIndex++){
-				if (removing) {
-					//if index is above the view port
-					if (rowIndex < offsetViewPortTop) {
-						hiddenRows[rowIndex] = detachedAbove[rowIndex];
+			if (removing) {
+				for(;rowIndex <= endIndex && (row = spreadsheet[rowIndex]) !== undefined; rowIndex++){
+					tr = row[1].td.parentNode;
+					if (tr.parentNode !== null) {
+						tBody.removeChild(tr);
 					}
+				}
+			} else {
 
-					//else if the index is below the view port
-					else if (rowIndex > offsetViewPortBottom) {
-						hiddenRows[rowIndex] = detachedBelow[rowIndex - offsetViewPortBottom];
+				while (lastAnchor === null && lastAnchorIndex < spreadsheet.length) {
+					row = spreadsheet[lastAnchorIndex++];
+					lastAnchor = row[1].td.parentNode;
+					if (lastAnchor.parentNode === null) {
+						lastAnchor = null;
 					}
+				}
 
-					//else if it is in view of the table, remove it from the table
-					else {
-						domIndex = rowIndex - offsetViewPortTop;
-						if (domIndex >= tBody.children.length) {
-							hiddenRows[rowIndex] = null;
-						} else {
-							tBody.removeChild(hiddenRows[rowIndex] = tBody.children[domIndex]);
-						}
+				for(;rowIndex <= endIndex && (row = spreadsheet[rowIndex]) !== undefined; rowIndex++){
+					tr = row[1].td.parentNode;
+					if (tr.parentNode !== null) {
+						tBody.insertBefore(tr, lastAnchor);
 					}
 				}
 			}
+
 		},
 
 		/**
+		 * @param {jQuery.sheet.instance} jS
 		 * Makes all rows visible
 		 */
-		rowShowAll:function () {
-			//TODO
-			this.toggleHideStyleY.setStyle('');
-			this.hiddenRows = {};
+		rowShowAll:function (jS) {
+			var spreadsheet = jS.spreadsheets[jS.i],
+				lastIndex = spreadsheet.length - 1;
+
+			this.toggleHideRowRange(jS, 1, lastIndex, false);
 		},
 
 
@@ -4457,7 +4427,7 @@ $.fn.extend({
 
 		$(this).each(function () {
 			var me = $(this),
-				chosenSettings = $.extend({}, $.sheet.defaults, settings || {}),
+				chosenSettings = $.extend(true, {}, $.sheet.defaults, settings || {}),
 				jS = this.jS;
 
 			chosenSettings.useStack = (window.thaw === undefined ? false : chosenSettings.useStack);
@@ -4863,7 +4833,7 @@ $.sheet = {
 				return false;
 			},
 			"Hide row":function (jS) {
-				jS.toggleHideRow();
+				jS.toggleHideRow(jS);
 				return false;
 			},
 			"Show all rows": function (jS) {
@@ -4989,12 +4959,12 @@ $.sheet = {
 
 		globalizeCultures:{script:'globalize/lib/cultures/globalize.cultures.js', thirdParty:true},
 
-		raphael:{script:'raphael/raphael-min.js', thirdParty:true, async: false},
-		gRaphael:{script:'graphael/g.raphael.js', thirdParty:true, async: false},
-		gRaphaelBar:{script:'graphael/g.bar.js', thirdParty:true, async: false},
-		gRaphaelDot:{script:'graphael/g.dot.js', thirdParty:true, async: false},
-		gRaphaelLine:{script:'graphael/g.line.js', thirdParty:true, async: false},
-		gRaphaelPie:{script:'graphael/g.pie.js', thirdParty:true, async: false},
+		raphael:{script:'raphael/raphael.js', thirdParty:true},
+		gRaphael:{script:'graphael/g.raphael.js', thirdParty:true},
+		gRaphaelBar:{script:'graphael/g.bar.js', thirdParty:true},
+		gRaphaelDot:{script:'graphael/g.dot.js', thirdParty:true},
+		gRaphaelLine:{script:'graphael/g.line.js', thirdParty:true},
+		gRaphaelPie:{script:'graphael/g.pie.js', thirdParty:true},
 
 		thaw: {script:"thaw.js/thaw.js", thirdParty:true},
 
@@ -5042,41 +5012,26 @@ $.sheet = {
 			thirdPartyDirectory: 'bower_components/'
 		},settings);
 
-		var injectionElement = document.getElementsByTagName('script')[0],
-			injectionParent = injectionElement.parentNode,
+		var injectionParent = $('script:first'),
 			write = function () {
 				var script;
 				if (this.script !== undefined) {
 					script = document.createElement('script');
-					script.async = this.hasOwnProperty('async') ? this.async : true;
 					script.src = path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.script;
-					injectionParent.insertBefore(script, injectionElement);
+					injectionParent.after(script);
 				}
 				if (this.css !== undefined) {
 					script = document.createElement('link');
 					script.rel = 'stylesheet';
 					script.type = 'text/css';
 					script.href = path + (this.thirdParty ? settings.thirdPartyDirectory : '') + this.css;
-					injectionParent.insertBefore(script, injectionElement);
+					injectionParent.after(script);
 				}
 			};
 
-		for(var i in settings.skip) {
-			if (this.dependencies[settings.skip[i]]) {
-				delete this.dependencies[settings.skip[i]];
-			}
-			if (this.optional[settings.skip[i]]) {
-				delete this.optional[settings.skip[i]];
-			}
-		}
+		$.each(this.dependencies, write);
 
-		$.each(this.dependencies, function () {
-			write.call(this);
-		});
-
-		$.each(this.optional, function () {
-			write.call(this);
-		});
+		$.each(this.optional, write);
 	},
 
 	/**
@@ -5112,7 +5067,28 @@ $.sheet = {
 			math = Math,
 			n = isNaN,
 			nAN = NaN,
-			thaw = window.thaw,
+			thaw = ($.sheet.defaults.useStack && window.thaw !== u ? window.thaw : function(stack, options) {
+				options = options || {};
+
+				var i = 0,
+					max = stack.length,
+					item,
+					each = options.each || function() {},
+					done = options.done || function() {};
+
+				if (stack[0].call !== u) {
+					for (; i < max; i++) {
+						item = stack[i];
+						item();
+					}
+				} else {
+					for (; i < max; i++) {
+						item = stack[i];
+						each.apply(item);
+					}
+					done();
+				}
+			}),
 			createCellsIfNeeded = (s.loader !== null),
 
 			/**
@@ -5962,6 +5938,21 @@ $.sheet = {
 									var barParent = document.createElement('tr'),
 										bar = document.createElement('th');
 
+									if (tableSize.cols === 0) {
+										var topBarParent = tBody.children[0],
+											col = document.createElement('col'),
+											topBar = document.createElement('th');
+
+										col.style.width = getWidth(jS.i, 1) + 'px';
+
+										topBar.entity = 'top';
+										topBar.type = 'bar';
+										topBar.innerHTML = topBar.label = jSE.columnLabelString(1);
+										topBar.className = colBarClasses;
+										topBarParent.appendChild(topBar);
+										colGroup.appendChild(col);
+									}
+
 									bar.className = rowBarClasses;
 									bar.entity = 'left';
 									bar.type = 'bar';
@@ -5991,9 +5982,15 @@ $.sheet = {
 										//make the spreadsheet ready to accept cells;
 										spreadsheet[rowIndex] = [];
 									} else {
-										controlY.splice(rowIndex, 0, bar);
-										//make the spreadsheet ready to accept cells;
-										spreadsheet.splice(rowIndex, 0, []);
+										if (rowIndex >= spreadsheet.length) {
+											controlY[rowIndex] = bar;
+											//make the spreadsheet ready to accept cells;
+											spreadsheet[rowIndex] = [];
+										} else {
+											controlY.splice(rowIndex, 0, bar);
+											//make the spreadsheet ready to accept cells;
+											spreadsheet.splice(rowIndex, 0, []);
+										}
 									}
 
 									return barParent;
@@ -6032,9 +6029,13 @@ $.sheet = {
 								o.setHidden(s.hiddenRows[jS.i]);
 
 								o.setAddedFinishedFn(function(_offset) {
-									tBody.insertBefore(frag, isBefore ? tBody.children[domIndex] : tBody.children[domIndex].nextSibling);
+									if (spreadsheetIndex === 0 && isLast) {
+										tBody.appendChild(frag);
+									} else {
+										tBody.insertBefore(frag, isBefore ? tBody.children[domIndex] : tBody.children[domIndex].nextSibling);
+									}
 									if (!isLast) {
-										jS.refreshRowLabels(i);
+										jS.refreshRowLabels(spreadsheetIndex);
 									}
 									offset = _offset;
 								});
@@ -6084,7 +6085,7 @@ $.sheet = {
 
 									topBar.entity = 'top';
 									topBar.type = 'bar';
-									topBar.innerHTML = topBar.label = jSE.columnLabelString(columnIndex - 1);
+									topBar.innerHTML = topBar.label = jSE.columnLabelString(columnIndex);
 									topBar.className = colBarClasses;
 
 									//If the row has not been created lets set it up
@@ -6115,7 +6116,8 @@ $.sheet = {
 									return {
 										bar: topBar,
 										col: col,
-										barParent: barParent
+										barParent: barParent,
+										firstRowParent: rowParent
 									};
 								});
 
@@ -6133,6 +6135,8 @@ $.sheet = {
 									if (spreadsheetRow === u) {
 										spreadsheet[rowIndex] = spreadsheetRow = [];
 										rowParent = tBody.children[rowIndex];
+									} else if (rowIndex === 1 && createdBar.firstRowParent) {
+										rowParent = createdBar.firstRowParent;
 									} else {
 										rowParent = spreadsheetRow[1].td.parentNode;
 									}
@@ -7044,7 +7048,10 @@ $.sheet = {
 						}
 
 						else {
-							if (hiddenRows === u || hiddenRows.length < 1) {
+							hiddenRows = hiddenRows || null;
+							hiddenColumns = hiddenColumns || null;
+
+							if (hiddenRows === null || hiddenRows.length < 1) {
 								hiddenRows = table.getAttribute('data-hiddenrows');
 
 								if (hiddenRows !== null) {
@@ -7052,7 +7059,7 @@ $.sheet = {
 								}
 							}
 
-							if (hiddenColumns === u || hiddenColumns.length < 1) {
+							if (hiddenColumns === null || hiddenColumns.length < 1) {
 								hiddenColumns = table.getAttribute('data-hiddencolumns');
 
 								if (hiddenColumns !== null) {
@@ -7068,7 +7075,8 @@ $.sheet = {
 							settings.hiddenColumns[i] = [];
 						}
 
-						enclosure.actionUI.hide(hiddenRows, hiddenColumns);
+						//hide cells, if we use loader, it is done dynamically as the cells are built, otherwise it is done here
+						enclosure.actionUI.hide(jS, hiddenColumns, s.loader === null ? hiddenRows : null);
 
 						settings.hiddenRows[i] = hiddenRows;
 						settings.hiddenColumns[i] = hiddenColumns;
@@ -8671,13 +8679,13 @@ $.sheet = {
 
 					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideRow(i);
+					actionUI.toggleHideRow(jS, i);
 					jS.autoFillerGoToTd();
 				},
 				toggleHideRowRange: function(startIndex, endIndex) {
 					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideRowRange(startIndex, endIndex);
+					actionUI.toggleHideRowRange(jS, startIndex, endIndex);
 					jS.autoFillerGoToTd();
 				},
 				toggleHideColumn: function(i) {

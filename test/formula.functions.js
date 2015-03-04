@@ -31,13 +31,12 @@ tf.test('Formula: Transpose', function() {
 1.09	1.95	50\n\
 1.29	1.71	0"))
 			.sheet(),
-		value;
+		jS  = div.getSheet(),
+		cell = jS.getCell(0, 1, 1);
 
-	div.getCellValue(0,1,1, function(_value) {
-		value = _value.valueOf();
-	});
+	cell.updateValue();
 
-	tf.assertEquals(value, 0.457, 'value = ' + value + ', should = ' + 0.457);
+	tf.assertEquals(cell.value.valueOf(), 0.457, 'value = ' + cell.value.valueOf() + ', should = ' + 0.457);
 
 	div.getSheet().kill();
 });
