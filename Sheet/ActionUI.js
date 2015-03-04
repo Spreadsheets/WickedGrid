@@ -236,7 +236,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			},0);
 		},
 
-		hide:function (hiddenRows, hiddenColumns) {
+		hide:function (jS, hiddenColumns, hiddenRows) {
 			var cssId = '#' + this.table.getAttribute('id'),
 				pane = this.pane,
 				that = this;
@@ -257,7 +257,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			if (hiddenRows !== null && hiddenRows.length > 0) {
 				hiddenRows.sort();
-				this.toggleHideRowRange(hiddenRows[0], hiddenRows[hiddenRows.length - 1], true);
+				this.toggleHideRowRange(jS, hiddenRows[0], hiddenRows[hiddenRows.length - 1], true);
 			}
 
 			if (this.hiddenColumns.length > 0) {
@@ -268,100 +268,70 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		/**
 		 * Toggles a row to be visible
+		 * @param {jQuery.sheet.instance} jS
 		 * @param {Number} rowIndex
 		 */
-		toggleHideRow: function(rowIndex) {
-			var domIndex,
-				tBody = this.tBody,
-				detacher = this.yDetacher,
-				hiddenRows = detacher.hidden,
-				row = detacher.hidden[rowIndex],
-				detachedAbove = detacher.detachedAbove,
-				detachedBelow = detacher.detachedBelow,
-				offsetViewPortTop = detachedAbove.length,
-				offsetViewPortBottom = offsetViewPortTop + tBody.length;
-
-			if (row === undefined) {
-				//if index is above the view port
-				if (rowIndex < offsetViewPortTop) {
-					hiddenRows[rowIndex] = detachedAbove[rowIndex];
-				}
-
-				//else if the index is below the view port
-				else if (rowIndex > offsetViewPortBottom) {
-					hiddenRows[rowIndex] = detachedBelow[rowIndex - offsetViewPortBottom];
-				}
-
-				//else if it is in view of the table, remove it from the table
-				else {
-					domIndex = rowIndex - offsetViewPortTop;
-					if (domIndex >= tBody.children.length) {
-						hiddenRows[rowIndex] = null;
-					} else {
-						tBody.removeChild(hiddenRows[rowIndex] = tBody.children[domIndex]);
-					}
-				}
-			} else {
-				//TODO
-				delete hiddenRows[rowIndex];
-			}
+		toggleHideRow: function(jS, rowIndex) {
+			this.toggleHideRowRange(jS, rowIndex);
 		},
 
 		/**
 		 * Toggles a range of rows to be visible starting at index of 1
+		 * @param {jQuery.sheet.instance} jS
 		 * @param {Number} startIndex
 		 * @param {Number} [endIndex]
 		 * @param {Boolean} [hide]
 		 */
-		toggleHideRowRange: function(startIndex, endIndex, hide) {
-			return;
-			//TODO
+		toggleHideRowRange: function(jS, startIndex, endIndex, hide) {
 			if (!startIndex) return;
 			if (!endIndex) endIndex = startIndex;
 
-			var domIndex,
+			var spreadsheets = jS.spreadsheets,
+				spreadsheet = spreadsheets[jS.i],
 				tBody = this.tBody,
 				rowIndex = startIndex,
-				detacher = this.yDetacher,
-				hiddenRows = detacher.hidden,
-				detachedAbove = detacher.detachedAbove,
-				detachedBelow = detacher.detachedBelow,
-				removing = ((hide === true) || (hiddenRows[startIndex] === u)),
-				offsetViewPortTop = detachedAbove.length - 1,
-				offsetViewPortBottom = offsetViewPortTop + tBody.length;
+				row,
+				tr,
+				removing = (hide !== undefined ? hide : (spreadsheet[startIndex][1].td.parentNode.parentNode !== null)),
+				lastAnchorIndex = endIndex + 1,
+				lastAnchor = null;
 
-			for(;rowIndex < endIndex; rowIndex++){
-				if (removing) {
-					//if index is above the view port
-					if (rowIndex < offsetViewPortTop) {
-						hiddenRows[rowIndex] = detachedAbove[rowIndex];
+			if (removing) {
+				for(;rowIndex <= endIndex && (row = spreadsheet[rowIndex]) !== undefined; rowIndex++){
+					tr = row[1].td.parentNode;
+					if (tr.parentNode !== null) {
+						tBody.removeChild(tr);
 					}
+				}
+			} else {
 
-					//else if the index is below the view port
-					else if (rowIndex > offsetViewPortBottom) {
-						hiddenRows[rowIndex] = detachedBelow[rowIndex - offsetViewPortBottom];
+				while (lastAnchor === null && lastAnchorIndex < spreadsheet.length) {
+					row = spreadsheet[lastAnchorIndex++];
+					lastAnchor = row[1].td.parentNode;
+					if (lastAnchor.parentNode === null) {
+						lastAnchor = null;
 					}
+				}
 
-					//else if it is in view of the table, remove it from the table
-					else {
-						domIndex = rowIndex - offsetViewPortTop;
-						if (domIndex >= tBody.children.length) {
-							hiddenRows[rowIndex] = null;
-						} else {
-							tBody.removeChild(hiddenRows[rowIndex] = tBody.children[domIndex]);
-						}
+				for(;rowIndex <= endIndex && (row = spreadsheet[rowIndex]) !== undefined; rowIndex++){
+					tr = row[1].td.parentNode;
+					if (tr.parentNode !== null) {
+						tBody.insertBefore(tr, lastAnchor);
 					}
 				}
 			}
+
 		},
 
 		/**
+		 * @param {jQuery.sheet.instance} jS
 		 * Makes all rows visible
 		 */
-		rowShowAll:function () {
-			//TODO
-			this.toggleHideStyleY.setStyle('');
-			this.hiddenRows = {};
+		rowShowAll:function (jS) {
+			var spreadsheet = jS.spreadsheets[jS.i],
+				lastIndex = spreadsheet.length - 1;
+
+			this.toggleHideRowRange(jS, 1, lastIndex, false);
 		},
 
 

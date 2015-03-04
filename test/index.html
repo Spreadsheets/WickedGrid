@@ -26,15 +26,16 @@
 	<script src="formula.js"></script>
 	<script src="formula.functions.js"></script>
 	<script src="loader.json.js"></script>
-	<script>
-		$(function() {
-			tf.run();
 
-			document.body.innerHTML = Testify.report.html.ui;
-			Testify.report.html(tf);
-
-		});
-	</script>
 </head>
 <body></body>
+<script>
+	$(function() {
+		tf.run();
+
+		document.body.innerHTML = Testify.report.html.ui;
+		Testify.report.html(tf);
+
+	});
+</script>
 </html>
