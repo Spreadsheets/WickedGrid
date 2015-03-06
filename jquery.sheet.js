@@ -5634,8 +5634,13 @@ $.sheet = {
 						|| (row = spreadsheet[rowIndex]) === u
 						|| (cell = row[columnIndex]) === u
 					) {
+						//look in loader first
 						if (s.loader !== null) {
 							cell = s.loader.jitCell(sheetIndex, rowIndex, columnIndex);
+						}
+						//if loader doesn't have the cell, perhaps it is in the table still
+						else {
+							return jS.createCell(sheetIndex, rowIndex, columnIndex);
 						}
 					}
 
