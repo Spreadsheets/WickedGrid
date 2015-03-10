@@ -275,10 +275,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 							value = new String(value);
 							break;
 					}
-					value.cell = this;
-					this.updateDependencies();
-					this.needsUpdated = false;
-					
+					value.cell = cell;
+					cell.value = value;
+					cell.updateDependencies();
+					cell.needsUpdated = false;
+					cell.displayValue();
 					if (callback !== u) {
 						callback.call(cell, value);
 					}
@@ -791,7 +792,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		typeName: 'Sheet.Cell',
 		parseFormula: function(item) {
 			if (!this.jS.s.useMultiThreads) {
-				item.callback(this.cellHandler.formulaParser(Sheet.calcStack).parse(item.formula));
+				var formulaParser = this.cellHandler.formulaParser(Sheet.calcStack);
+				formulaParser.yy.types.length = 0;
+				item.callback(formulaParser.parse(item.formula));
 				return;
 			}
 			var i = Constructor.threadIndex,
@@ -1177,14 +1180,14 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		/**
 		 * Get cell values as an array from a different sheet within an instance
 		 * @param {Sheet.Cell} parentCell
-		 * @param {String} sheet example "SHEET1"
+		 * @param {String} sheetTitle example "SHEET1"
 		 * @param {Object} start
 		 * @param {Object} end
 		 * @param {Function} [callback]
 		 * @returns {Array}
 		 */
-		remoteCellRangeValue:function (parentCell, sheet, start, end, callback) {
-			var sheetIndex = (typeof sheet === 'string' ? jSE.parseSheetLocation(sheet) : sheet),
+		remoteCellRangeValue:function (parentCell, sheetTitle, start, end, callback) {
+			var sheetIndex = (typeof sheetTitle === 'string' ? jSE.parseSheetLocation(sheetTitle) : sheetTitle),
 				_start = jSE.parseLocation(start.c, start.r),
 				_end = jSE.parseLocation(end.c, end.r),
 				rowIndex = Math.max(_start.row, _end.row),
@@ -1205,7 +1208,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				that = this,
 				remaining = ((colIndexEnd - 1) - colIndexStart) * ((rowIndexEnd - 1) - rowIndex),
 				detected = remaining + 0,
-				count = 0;
+				count = 0,
+				sheet;
 
 			if (sheetIndex < 0) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
@@ -1235,8 +1239,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			 }
 			 }*/
 
+			sheet = jS.spreadsheets[sheetIndex];
+
 			if (sheet === u) {
-				jS.spreadsheets[sheetIndex] = sheet = {};
+				jS.spreadsheets[sheetIndex] = sheet = [];
 			}
 
 			if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
@@ -4905,8 +4911,8 @@ $.sheet = {
 				callbackIfFalse();
 			}
 		},
-		initCalcRows: 1,
-		initCalcCols: 10,
+		initCalcRows: 50,
+		initCalcCols: 15,
 		initScrollRows: 0,
 		initScrollCols: 0,
 		loader: null,
@@ -5545,6 +5551,9 @@ $.sheet = {
 					if ((td = tr.children[colIndex]) === u) return null;
 
 					jSCell = row[colIndex] = td.jSCell = new Sheet.Cell(sheetIndex, td, jS, jS.cellHandler);
+					jSCell.sheetIndex = sheetIndex;
+					jSCell.rowIndex = rowIndex;
+					jSCell.columnIndex = colIndex;
 
 					formula = td.getAttribute('data-formula');
 					cellType = td.getAttribute('data-celltype');
@@ -5640,7 +5649,7 @@ $.sheet = {
 						}
 						//if loader doesn't have the cell, perhaps it is in the table still
 						else {
-							return jS.createCell(sheetIndex, rowIndex, columnIndex);
+							cell = jS.createCell(sheetIndex, rowIndex, columnIndex);
 						}
 					}
 
@@ -8607,7 +8616,6 @@ $.sheet = {
 										jS.createCell(i, rowIndex, columnIndex);
 										cell = row[columnIndex];
 										cell.needsUpdated = true;
-										cell.updateValue();
 									}
 								} else {
 									cell.updateValue();
@@ -14787,7 +14795,6 @@ var jFN = $.sheet.fn = {
 			columnIndex,
 			cell,
 			cells = [],
-			cellValue,
 			transposedCell,
 			transposedCells = [],
 			value,
@@ -14823,16 +14830,14 @@ var jFN = $.sheet.fn = {
 			transposedCell = transposedCells[i];
 			if (transposedCell !== this) {
 				cell = cells[i];
-				transposedCell.defer = cell;
 				transposedCell.setNeedsUpdated();
-				cellValue = transposedCell.updateValue();
+				transposedCell.defer = cell;
+				transposedCell.updateValue();
 				transposedCell.addDependency(this);
-				transposedCell.td.innerHTML = cellValue;
-
 			}
 		}
 
-		return firstValue;
+		return firstValue.valueOf();
 	},
 	/**
 	 * cell function

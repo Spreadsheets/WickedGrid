@@ -9,8 +9,7 @@ tf.test('Formula: Math - ABS', function() {
 });
 
 tf.test('Formula: Transpose', function() {
-	var div = $('<div>')
-			.append(tableify("=TRANSPOSE(SHEET2!A2:A10)\t\t\t\t\t\t\t\t\t\n\
+	var table1 = tableify("=TRANSPOSE(SHEET2!A2:A10)\t\t\t\t\t\t\t\t\t\n\
 =TRANSPOSE(A1:I1)\t\t\t\t\t\t\t\t\t\n\
 \t\t\t\t\t\t\t\t\t\t\n\
 \t\t\t\t\t\t\t\t\t\t\n\
@@ -19,8 +18,8 @@ tf.test('Formula: Transpose', function() {
 \t\t\t\t\t\t\t\t\t\t\n\
 \t\t\t\t\t\t\t\t\t\t\n\
 \t\t\t\t\t\t\t\t\t\t\n\
-\t\t\t\t\t\t\t\t\t\t"))
-			.append(tableify("Density	Viscosity	Temperature\n\
+\t\t\t\t\t\t\t\t\t\t"),
+		table2 = tableify("Density	Viscosity	Temperature\n\
 0.457	3.55	500\n\
 0.525	3.25	400\n\
 0.616	2.93	300\n\
@@ -29,7 +28,10 @@ tf.test('Formula: Transpose', function() {
 0.835	2.38	150\n\
 0.946	2.17	100\n\
 1.09	1.95	50\n\
-1.29	1.71	0"))
+1.29	1.71	0"),
+		div = $('<div>')
+			.append(table1)
+			.append(table2)
 			.sheet(),
 		jS  = div.getSheet(),
 		cell = jS.getCell(0, 1, 1);

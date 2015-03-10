@@ -1978,7 +1978,6 @@ var jFN = $.sheet.fn = {
 			columnIndex,
 			cell,
 			cells = [],
-			cellValue,
 			transposedCell,
 			transposedCells = [],
 			value,
@@ -2014,16 +2013,14 @@ var jFN = $.sheet.fn = {
 			transposedCell = transposedCells[i];
 			if (transposedCell !== this) {
 				cell = cells[i];
-				transposedCell.defer = cell;
 				transposedCell.setNeedsUpdated();
-				cellValue = transposedCell.updateValue();
+				transposedCell.defer = cell;
+				transposedCell.updateValue();
 				transposedCell.addDependency(this);
-				transposedCell.td.innerHTML = cellValue;
-
 			}
 		}
 
-		return firstValue;
+		return firstValue.valueOf();
 	},
 	/**
 	 * cell function
