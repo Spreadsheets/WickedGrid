@@ -236,10 +236,11 @@ Sheet.Cell = (function() {
 							value = new String(value);
 							break;
 					}
-					value.cell = this;
-					this.updateDependencies();
-					this.needsUpdated = false;
-					
+					value.cell = cell;
+					cell.value = value;
+					cell.updateDependencies();
+					cell.needsUpdated = false;
+					cell.displayValue();
 					if (callback !== u) {
 						callback.call(cell, value);
 					}
@@ -752,7 +753,9 @@ Sheet.Cell = (function() {
 		typeName: 'Sheet.Cell',
 		parseFormula: function(item) {
 			if (!this.jS.s.useMultiThreads) {
-				item.callback(this.cellHandler.formulaParser(Sheet.calcStack).parse(item.formula));
+				var formulaParser = this.cellHandler.formulaParser(Sheet.calcStack);
+				formulaParser.yy.types.length = 0;
+				item.callback(formulaParser.parse(item.formula));
 				return;
 			}
 			var i = Constructor.threadIndex,

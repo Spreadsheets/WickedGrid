@@ -319,14 +319,14 @@ Sheet.CellHandler = (function(Math) {
 		/**
 		 * Get cell values as an array from a different sheet within an instance
 		 * @param {Sheet.Cell} parentCell
-		 * @param {String} sheet example "SHEET1"
+		 * @param {String} sheetTitle example "SHEET1"
 		 * @param {Object} start
 		 * @param {Object} end
 		 * @param {Function} [callback]
 		 * @returns {Array}
 		 */
-		remoteCellRangeValue:function (parentCell, sheet, start, end, callback) {
-			var sheetIndex = (typeof sheet === 'string' ? jSE.parseSheetLocation(sheet) : sheet),
+		remoteCellRangeValue:function (parentCell, sheetTitle, start, end, callback) {
+			var sheetIndex = (typeof sheetTitle === 'string' ? jSE.parseSheetLocation(sheetTitle) : sheetTitle),
 				_start = jSE.parseLocation(start.c, start.r),
 				_end = jSE.parseLocation(end.c, end.r),
 				rowIndex = Math.max(_start.row, _end.row),
@@ -347,7 +347,8 @@ Sheet.CellHandler = (function(Math) {
 				that = this,
 				remaining = ((colIndexEnd - 1) - colIndexStart) * ((rowIndexEnd - 1) - rowIndex),
 				detected = remaining + 0,
-				count = 0;
+				count = 0,
+				sheet;
 
 			if (sheetIndex < 0) {
 				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
@@ -377,8 +378,10 @@ Sheet.CellHandler = (function(Math) {
 			 }
 			 }*/
 
+			sheet = jS.spreadsheets[sheetIndex];
+
 			if (sheet === u) {
-				jS.spreadsheets[sheetIndex] = sheet = {};
+				jS.spreadsheets[sheetIndex] = sheet = [];
 			}
 
 			if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {

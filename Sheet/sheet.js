@@ -861,8 +861,8 @@ $.sheet = {
 				callbackIfFalse();
 			}
 		},
-		initCalcRows: 1,
-		initCalcCols: 10,
+		initCalcRows: 50,
+		initCalcCols: 15,
 		initScrollRows: 0,
 		initScrollCols: 0,
 		loader: null,
@@ -1501,6 +1501,9 @@ $.sheet = {
 					if ((td = tr.children[colIndex]) === u) return null;
 
 					jSCell = row[colIndex] = td.jSCell = new Sheet.Cell(sheetIndex, td, jS, jS.cellHandler);
+					jSCell.sheetIndex = sheetIndex;
+					jSCell.rowIndex = rowIndex;
+					jSCell.columnIndex = colIndex;
 
 					formula = td.getAttribute('data-formula');
 					cellType = td.getAttribute('data-celltype');
@@ -1596,7 +1599,7 @@ $.sheet = {
 						}
 						//if loader doesn't have the cell, perhaps it is in the table still
 						else {
-							return jS.createCell(sheetIndex, rowIndex, columnIndex);
+							cell = jS.createCell(sheetIndex, rowIndex, columnIndex);
 						}
 					}
 
@@ -4563,7 +4566,6 @@ $.sheet = {
 										jS.createCell(i, rowIndex, columnIndex);
 										cell = row[columnIndex];
 										cell.needsUpdated = true;
-										cell.updateValue();
 									}
 								} else {
 									cell.updateValue();
