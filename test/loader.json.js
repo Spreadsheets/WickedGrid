@@ -393,18 +393,18 @@ tf.test('Loader (json): Scroll Offset with Hidden Rows', function() {
 		jS = div.getSheet(),
 		tr,
 		td,
-		cell = jS.getCell(0,4,1);
+		cell = jS.getCell(0,25,1);
 
 	td = cell.td || {};
 	tr = td.parentNode || null;
 
-	tf.assertEquals(cell.rowIndex, 29, 'Proper row is selected');
+	tf.assertEquals(cell.rowIndex, 25, 'Proper row is selected');
 	tf.assertNotEquals(tr.parentNode, null, 'Row is displayed');
 
-	cell = jS.getCell(0,30,1);
+	cell = jS.getCell(0,26,1);
 
-	tf.assertEquals(cell.rowIndex, 30, 'Following row is selected');
-	tf.assertEquals(typeof cell.td, 'undefined', 'Following row is not yet displayed/created');
+	tf.assertEquals(cell.rowIndex, 26, 'Following row is selected');
+	tf.assertEquals(cell.td, null, 'Following row is not yet displayed/created');
 
 	div.detach();
 	div.getSheet().kill();
@@ -447,7 +447,7 @@ tf.test('Loader (json): Scroll Offset with Hidden Columns', function() {
 	cell = jS.getCell(0,1,30);
 
 	tf.assertEquals(cell.columnIndex, 30, 'Following column is selected');
-	tf.assertEquals(typeof cell.td, 'undefined', 'Following column is not yet displayed/created');
+	tf.assertEquals(cell.td, null, 'Following column is not yet displayed/created');
 
 	div.detach();
 	div.getSheet().kill();
