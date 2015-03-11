@@ -7,6 +7,9 @@
 	<script src="../jquery.sheet.js"></script>
 	<script src="../utilities/tableify.js"></script>
 	<script>
+		$.sheet.defaults.useMultiThreads = false;
+		$.sheet.defaults.useStack = false;
+
 		$.sheet.preLoad('../');
 
 	</script>
@@ -14,27 +17,69 @@
 	<script>
 		$(function() {
 
-			var table = $(tableify('="<b>test</b>"')),
-					div = $('<div>')
-							.appendTo('body')
-							.append(table)
-							.sheet(),
-					jS = div.getSheet(),
-					td;
+			var menuLeft = $('<a>left</a>'),
+				menuRight = $('<a>right</a>'),
+				div = $('<div>\
+	<table>\
+		<tr>\
+			<td>1</td>\
+			<td>2</td>\
+			<td>3</td>\
+			<td>4</td>\
+			<td>5</td>\
+		</tr>\
+		<tr>\
+			<td>6</td>\
+			<td>7</td>\
+			<td>8</td>\
+			<td>9</td>\
+			<td>10</td>\
+		</tr>\
+		<tr>\
+			<td>11</td>\
+			<td>12</td>\
+			<td>13</td>\
+			<td>14</td>\
+			<td>15</td>\
+		</tr>\
+		<tr>\
+			<td>16</td>\
+			<td>17</td>\
+			<td>18</td>\
+			<td>19</td>\
+			<td>20</td>\
+		</tr>\
+		<tr>\
+			<td>21</td>\
+			<td>22</td>\
+			<td>23</td>\
+			<td>24</td>\
+			<td>25</td>\
+		</tr>\
+	</table>\
+</div>')
+					.appendTo('body')
+					.sheet({
+						menuLeft: menuLeft,
+						menuRight: menuRight
+					}),
+				jS = div.getSheet(),
+				loader = new Sheet.JSONLoader([]),
+				json = loader.bindJS(jS).fromSheet();
 
-			td = div.find('table.jS td');
+			loader = new Sheet.JSONLoader(json);
+			jS.kill();
 
-			tf.assertEquals(td[0].innerHTML, '&lt;b&gt;test&lt;/b&gt;', 'greater than, less than');
+			jS = div
+				.sheet({
+					menuLeft: menuLeft,
+					menuRight: menuRight,
+					loader: loader
+				})
+				.getSheet();
 
 
-
-			/*tf.assertSame(sheet1B1.value.valueOf(), 1, 'sheet1B1 value is correct');
-			tf.assertSame(sheet1B1.loadedFrom.cache, 1, 'sheet1B1 cache is correct');
-			tf.assertSame(sheet2B1.value.valueOf(), 33, 'sheet2B1 value is correct');
-			tf.assertSame(sheet2B1.loadedFrom.cache, 33, 'sheet2B1 cache is correct');
-			tf.assertSame(sheet3B1.value.valueOf(), 66, 'sheet3B1 value is correct');
-			tf.assertSame(sheet3B1.loadedFrom.cache, 66, 'sheet3B1 cache is correct');
-			div.getSheet().kill();*/
+			console.log(jS);
 		});
 	</script>
 </head>

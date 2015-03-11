@@ -3383,7 +3383,7 @@ Sheet.StyleUpdater = (function(document) {
 				spreadsheet = jS.spreadsheets[sheet];
 				row = spreadsheet.length - 1;
 				do {
-					parentEle = spreadsheet[row][1].td[0].parentNode;
+					parentEle = spreadsheet[row][1].td.parentNode;
 					parentHeight = parentEle.style['height'];
 					jsonRow = {
 						"columns": [],
@@ -3394,7 +3394,7 @@ Sheet.StyleUpdater = (function(document) {
 					do {
 						cell = spreadsheet[row][column];
 						jsonColumn = {};
-						attr = cell.td[0].attributes;
+						attr = cell.td.attributes;
 
 						if (doNotTrim || rowHasValues || attr['class'] || cell['formula'] || cell['value'] || attr['style']) {
 							rowHasValues = true;
@@ -3405,7 +3405,7 @@ Sheet.StyleUpdater = (function(document) {
 									.replace(jS.cl.uiCellHighlighted, '')
 							) : '');
 
-							parent = cell.td[0].parentNode;
+							parent = cell.td.parentNode;
 
 							jsonRow.columns.unshift(jsonColumn);
 
@@ -5963,6 +5963,7 @@ $.sheet = {
 										topBar.type = 'bar';
 										topBar.innerHTML = topBar.label = jSE.columnLabelString(1);
 										topBar.className = colBarClasses;
+										controlX[1] = topBar;
 										topBarParent.appendChild(topBar);
 										colGroup.appendChild(col);
 									}
@@ -6063,7 +6064,7 @@ $.sheet = {
 									isLast = true;
 								}
 
-								if (type === 'col-init' && ((spreadsheetIndex === 0 && spreadsheet[1].length === 0) || spreadsheetIndex === spreadsheet.length - 1)) {
+								if (type === 'col-init' && ((spreadsheetIndex === 0 && spreadsheet[1].length === 0) || spreadsheetIndex === spreadsheet[1].length - 1)) {
 									isLast = true;
 								}
 
@@ -6115,7 +6116,7 @@ $.sheet = {
 										tBody.appendChild(rowParent);
 
 										leftBar.innerHTML = rowParent.rowIndex;
-										controlY.splice(0, 0, leftBar);
+										controlY[1] = leftBar;
 									}
 
 									colGroup.insertBefore(col, colGroup.children[columnIndex]);
@@ -9366,7 +9367,7 @@ $.sheet = {
 
 							for (i = 0, j = Math.min(firstTr.children.length, s.initCalcCols); i < j; i++) {
 								col = document.createElement('col');
-								col.style.width = getWidth(jS.i, i) + 'px'
+								col.style.width = getWidth(jS.i, i) + 'px';
 
 								colGroup.appendChild(col);
 

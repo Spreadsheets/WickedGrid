@@ -1913,6 +1913,7 @@ $.sheet = {
 										topBar.type = 'bar';
 										topBar.innerHTML = topBar.label = jSE.columnLabelString(1);
 										topBar.className = colBarClasses;
+										controlX[1] = topBar;
 										topBarParent.appendChild(topBar);
 										colGroup.appendChild(col);
 									}
@@ -2013,7 +2014,7 @@ $.sheet = {
 									isLast = true;
 								}
 
-								if (type === 'col-init' && ((spreadsheetIndex === 0 && spreadsheet[1].length === 0) || spreadsheetIndex === spreadsheet.length - 1)) {
+								if (type === 'col-init' && ((spreadsheetIndex === 0 && spreadsheet[1].length === 0) || spreadsheetIndex === spreadsheet[1].length - 1)) {
 									isLast = true;
 								}
 
@@ -2065,7 +2066,7 @@ $.sheet = {
 										tBody.appendChild(rowParent);
 
 										leftBar.innerHTML = rowParent.rowIndex;
-										controlY.splice(0, 0, leftBar);
+										controlY[1] = leftBar;
 									}
 
 									colGroup.insertBefore(col, colGroup.children[columnIndex]);
@@ -5316,7 +5317,7 @@ $.sheet = {
 
 							for (i = 0, j = Math.min(firstTr.children.length, s.initCalcCols); i < j; i++) {
 								col = document.createElement('col');
-								col.style.width = getWidth(jS.i, i) + 'px'
+								col.style.width = getWidth(jS.i, i) + 'px';
 
 								colGroup.appendChild(col);
 
