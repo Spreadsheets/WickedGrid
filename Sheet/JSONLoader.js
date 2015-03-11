@@ -727,7 +727,7 @@
 				spreadsheet = jS.spreadsheets[sheet];
 				row = spreadsheet.length - 1;
 				do {
-					parentEle = spreadsheet[row][1].td[0].parentNode;
+					parentEle = spreadsheet[row][1].td.parentNode;
 					parentHeight = parentEle.style['height'];
 					jsonRow = {
 						"columns": [],
@@ -738,7 +738,7 @@
 					do {
 						cell = spreadsheet[row][column];
 						jsonColumn = {};
-						attr = cell.td[0].attributes;
+						attr = cell.td.attributes;
 
 						if (doNotTrim || rowHasValues || attr['class'] || cell['formula'] || cell['value'] || attr['style']) {
 							rowHasValues = true;
@@ -749,7 +749,7 @@
 									.replace(jS.cl.uiCellHighlighted, '')
 							) : '');
 
-							parent = cell.td[0].parentNode;
+							parent = cell.td.parentNode;
 
 							jsonRow.columns.unshift(jsonColumn);
 
