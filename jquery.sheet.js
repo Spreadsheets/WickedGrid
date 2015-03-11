@@ -1212,7 +1212,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				sheet;
 
 			if (sheetIndex < 0) {
-				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
+				sheetIndex = jS.getSpreadsheetIndexByTitle(sheetTitle);
 			}
 
 			//can't find spreadsheet here

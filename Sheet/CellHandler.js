@@ -351,7 +351,7 @@ Sheet.CellHandler = (function(Math) {
 				sheet;
 
 			if (sheetIndex < 0) {
-				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
+				sheetIndex = jS.getSpreadsheetIndexByTitle(sheetTitle);
 			}
 
 			//can't find spreadsheet here
