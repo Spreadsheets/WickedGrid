@@ -459,7 +459,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		pixelScrollDensity: 30,
 		maximumVisibleRows: 65,
-		maximumVisibleColumns: 20
+		maximumVisibleColumns: 35
 	};
 
 	return Constructor;

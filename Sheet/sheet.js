@@ -6859,11 +6859,11 @@ $.sheet = {
 									i = i || jS.sheetCount - 1;
 
 									if (data !== null) {
-										loader.addSpreadsheet(data);
+										s.loader.addSpreadsheet(data);
 									}
 
 									if (!table.hasAttribute('title')) {
-										table.setAttribute('title', loader.title(i));
+										table.setAttribute('title', s.loader.title(i));
 									}
 
 									var showSpreadsheet = function() {
