@@ -7280,6 +7280,8 @@ $.sheet = {
 						textarea.i = jS.i;
 						textarea.className = jS.cl.inPlaceEdit + ' ' + jS.theme.inPlaceEdit;
 						textarea.td = td;
+						//td / tr / tbody / table
+						textarea.table = td.parentNode.parentNode.parentNode;
 						textarea.goToTd = function() {
 							this.offset = $(td).position();
 							if (!this.offset.left && !this.offset.right) {
@@ -8082,7 +8084,7 @@ $.sheet = {
 									if (!skipMove) {
 										loc.row += (e.shiftKey ? -1 : 1);
 									}
-									if (s.autoAddCells && loc.row > jS.sheetSize().rows) {
+									if (s.autoAddCells && loc.row > jS.sheetSize(e.target.table).rows) {
 										jS.controlFactory.addRow();
 									}
 								}
@@ -8097,7 +8099,7 @@ $.sheet = {
 									if (!skipMove) {
 										loc.col += (e.shiftKey ? -1 : 1);
 									}
-									if (s.autoAddCells && loc.col > jS.sheetSize().cols) {
+									if (s.autoAddCells && loc.col > jS.sheetSize(e.target.table).cols) {
 										jS.controlFactory.addColumn();
 									}
 								}
@@ -11784,6 +11786,8 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				sheetSize:function (table) {
+					table = table || jS.obj.table()[0];
+
 					var lastRow,
 						loc,
 						size = {},
@@ -11798,7 +11802,6 @@ $.sheet = {
 						size.cols = Math.max(loaderSize.cols, minSize.cols);
 					}
 					 else {
-						table = table || jS.obj.table()[0];
 						//table / tBody / tr / td
 
 						if (
@@ -14471,7 +14474,7 @@ var jFN = $.sheet.fn = {
 			checkbox.className = id;
 			checkbox.value = v;
 			checkbox.onchange = function () {
-				if ($(this).is(':checked')) {
+				if (this.checked) {
 					value = new String(v);
 				} else {
 					value = new String('');
@@ -14488,9 +14491,9 @@ var jFN = $.sheet.fn = {
 				checkbox.setAttribute('disabled', 'true');
 			} else {
 				jS.s.parent.bind('sheetKill', function() {
-					cell.value = (cell.value == 'true' || $(checkbox).is(':checked') ? v : '');
+					cell.value = (cell.value == 'true' || checkbox.checked ? v : '');
 					if (cell.td !== null) {
-						cell.td.innerText = cell.td.textContent = cell.cell.value;
+						cell.td.innerText = cell.td.textContent = cell.value.valueOf();
 					}
 				});
 			}
@@ -14509,15 +14512,17 @@ var jFN = $.sheet.fn = {
 			};
 			html.cell = cell;
 
-			if (v == cell.value || cell.value === 'true') {
-				checkbox.checked =  true;
+			switch (cell.value.valueOf()) {
+				case v.valueOf():
+				case 'true':
+					checkbox.checked = true;
 			}
 		}
 
 		//when spreadsheet initiates, this will be the value, otherwise we are dependent on the checkbox being checked
 		if (
 			cell.value === 'true'
-			|| $(checkbox).is(':checked')
+			|| checkbox.checked
 		) {
 			result = new String(v);
 		}

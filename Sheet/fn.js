@@ -1656,7 +1656,7 @@ var jFN = $.sheet.fn = {
 			checkbox.className = id;
 			checkbox.value = v;
 			checkbox.onchange = function () {
-				if ($(this).is(':checked')) {
+				if (this.checked) {
 					value = new String(v);
 				} else {
 					value = new String('');
@@ -1673,9 +1673,9 @@ var jFN = $.sheet.fn = {
 				checkbox.setAttribute('disabled', 'true');
 			} else {
 				jS.s.parent.bind('sheetKill', function() {
-					cell.value = (cell.value == 'true' || $(checkbox).is(':checked') ? v : '');
+					cell.value = (cell.value == 'true' || checkbox.checked ? v : '');
 					if (cell.td !== null) {
-						cell.td.innerText = cell.td.textContent = cell.cell.value;
+						cell.td.innerText = cell.td.textContent = cell.value.valueOf();
 					}
 				});
 			}
@@ -1694,15 +1694,17 @@ var jFN = $.sheet.fn = {
 			};
 			html.cell = cell;
 
-			if (v == cell.value || cell.value === 'true') {
-				checkbox.checked =  true;
+			switch (cell.value.valueOf()) {
+				case v.valueOf():
+				case 'true':
+					checkbox.checked = true;
 			}
 		}
 
 		//when spreadsheet initiates, this will be the value, otherwise we are dependent on the checkbox being checked
 		if (
 			cell.value === 'true'
-			|| $(checkbox).is(':checked')
+			|| checkbox.checked
 		) {
 			result = new String(v);
 		}

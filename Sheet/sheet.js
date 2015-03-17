@@ -3240,6 +3240,8 @@ $.sheet = {
 						textarea.i = jS.i;
 						textarea.className = jS.cl.inPlaceEdit + ' ' + jS.theme.inPlaceEdit;
 						textarea.td = td;
+						//td / tr / tbody / table
+						textarea.table = td.parentNode.parentNode.parentNode;
 						textarea.goToTd = function() {
 							this.offset = $(td).position();
 							if (!this.offset.left && !this.offset.right) {
@@ -4042,7 +4044,7 @@ $.sheet = {
 									if (!skipMove) {
 										loc.row += (e.shiftKey ? -1 : 1);
 									}
-									if (s.autoAddCells && loc.row > jS.sheetSize().rows) {
+									if (s.autoAddCells && loc.row > jS.sheetSize(e.target.table).rows) {
 										jS.controlFactory.addRow();
 									}
 								}
@@ -4057,7 +4059,7 @@ $.sheet = {
 									if (!skipMove) {
 										loc.col += (e.shiftKey ? -1 : 1);
 									}
-									if (s.autoAddCells && loc.col > jS.sheetSize().cols) {
+									if (s.autoAddCells && loc.col > jS.sheetSize(e.target.table).cols) {
 										jS.controlFactory.addColumn();
 									}
 								}
@@ -7744,6 +7746,8 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				sheetSize:function (table) {
+					table = table || jS.obj.table()[0];
+
 					var lastRow,
 						loc,
 						size = {},
@@ -7758,7 +7762,6 @@ $.sheet = {
 						size.cols = Math.max(loaderSize.cols, minSize.cols);
 					}
 					 else {
-						table = table || jS.obj.table()[0];
 						//table / tBody / tr / td
 
 						if (
