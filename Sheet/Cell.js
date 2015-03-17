@@ -34,6 +34,15 @@ Sheet.Cell = (function() {
 	}
 
 	Constructor.prototype = {
+		clone: function() {
+			var clone = new Constructor(this.sheetIndex, this.td, this.jS, this.cellHandler),
+				prop;
+			for (prop in this) if (this.hasOwnProperty(prop)) {
+				clone[prop] = this[prop];
+			}
+
+			return clone;
+		},
 		addDependency:function(cell) {
 			if (cell === undefined || cell === null) return;
 
@@ -69,7 +78,7 @@ Sheet.Cell = (function() {
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
-			if (this.formula.length < 1 && this.cellType === null && this.defer === null) {
+			if (this.cellType === null && this.defer === null && this.formula.length < 1) {
 				if (
 					this.value !== undefined
 					&& (
