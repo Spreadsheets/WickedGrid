@@ -73,6 +73,15 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	}
 
 	Constructor.prototype = {
+		clone: function() {
+			var clone = new Constructor(this.sheetIndex, this.td, this.jS, this.cellHandler),
+				prop;
+			for (prop in this) if (this.hasOwnProperty(prop)) {
+				clone[prop] = this[prop];
+			}
+
+			return clone;
+		},
 		addDependency:function(cell) {
 			if (cell === undefined || cell === null) return;
 
@@ -108,7 +117,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 
 			//If the value is empty or has no formula, and doesn't have a starting and ending handler, then don't process it
-			if (this.formula.length < 1 && this.cellType === null && this.defer === null) {
+			if (this.cellType === null && this.defer === null && this.formula.length < 1) {
 				if (
 					this.value !== undefined
 					&& (
@@ -1421,26 +1430,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			for(var i = 0; i < max;i++) {
 				cell = cells[i];
 
-				clone = {
-					value:cell.value,
-					formula:cell.formula,
-					td: cell.td,
-					dependencies: cell.dependencies,
-					needsUpdated: cell.needsUpdated,
-					calcCount: cell.calcCount,
-					sheetIndex: cell.sheetIndex,
-					rowIndex: cell.rowIndex,
-					columnIndex: cell.columnIndex,
-					html: cell.html,
-					state: cell.state,
-					jS: cell.jS,
-					style: cell.style,
-					cl: cell.cl,
-					id: cell.id,
-					cellType: cell.cellType,
-					type: cell.type,
-					uneditable: cell.uneditable
-				};
+				clone = cell.clone();
 
 				clones.push(clone);
 			}
@@ -7912,7 +7902,7 @@ $.sheet = {
 											cell.value = v;
 											cell.formula = '';
 
-											if ((loadedFrom = cell.loadedFrom) !== u) {
+											if ((loadedFrom = cell.loadedFrom) !== null) {
 												loader.setCellAttributes(loadedFrom, {
 													'cache': u,
 													'formula': '',
@@ -8763,7 +8753,7 @@ $.sheet = {
 							td = lastTd;
 						}
 
-						if (td.getAttribute('rowSpan') || td.getAttribute('colSpan')) {
+						if (td.hasAttribute('rowSpan') || td.hasAttribute('colSpan')) {
 							return false;
 						}
 
@@ -8788,28 +8778,34 @@ $.sheet = {
 							}
 							s.parent.one('sheetPreCalculation', function () {
 								if (_td.cellIndex != loc.col || _td.parentNode.rowIndex != loc.row) {
-									cell.formula = null;
+									cell.formula = '';
 									cell.value = '';
 									cell.defer = td.jSCell;
 
 									_td.removeAttribute('data-formula');
 									_td.removeAttribute('data-celltype');
 									_td.innerHTML = '';
-									_td.style.display = 'none';
-									_td.colSpan = colSpan - (_td.cellIndex - td.cellIndex);
-									_td.rowSpan = rowSpan - (_td.parentNode.rowIndex - td.parentNode.rowIndex);
+									//_td.style.display = 'none';
+									_td.style.visibility = 'collapse';
+									//_td.colSpan = colSpan - (_td.cellIndex - td.cellIndex);
+									//_td.rowSpan = rowSpan - (_td.parentNode.rowIndex - td.parentNode.rowIndex);
 								}
 							});
 
 							jS.resolveCell(cell);
 						} while(i--);
 
-						td.jSCell.value = cellsValue.join(' ');
-						td.jSCell.formula = (td.jSCell.formula ? cellsValue.join(' ') : '');
+						td.jSCell.value = $.trim(cellsValue.join(' '));
+						td.jSCell.formula = $.trim(td.jSCell.formula ? cellsValue.join(' ') : '');
 
-						td.style.display = '';
 						td.setAttribute('rowSpan', rowSpan);
 						td.setAttribute('colSpan', colSpan);
+						td.style.display = '';
+						td.style.visibility = '';
+						td.style.position = '';
+						td.style.height = td.clientHeight + 'px';
+						td.style.width = td.clientWidth + 'px';
+						td.style.position = 'absolute';
 
 						jS.resolveCell(td.jSCell);
 						jS.evt.cellEditDone();
@@ -8848,6 +8844,7 @@ $.sheet = {
 							_td = jS.getTd(-1, i, j);
 							if (_td === null) continue;
 							_td.style.display = '';
+							_td.style.visibility = '';
 							_td.removeAttribute('colSpan');
 							_td.removeAttribute('rowSpan');
 							_td.jSCell.defer = null;

@@ -17,69 +17,43 @@
 	<script>
 		$(function() {
 
-			var menuLeft = $('<a>left</a>'),
-				menuRight = $('<a>right</a>'),
-				div = $('<div>\
-	<table>\
-		<tr>\
-			<td>1</td>\
-			<td>2</td>\
-			<td>3</td>\
-			<td>4</td>\
-			<td>5</td>\
-		</tr>\
-		<tr>\
-			<td>6</td>\
-			<td>7</td>\
-			<td>8</td>\
-			<td>9</td>\
-			<td>10</td>\
-		</tr>\
-		<tr>\
-			<td>11</td>\
-			<td>12</td>\
-			<td>13</td>\
-			<td>14</td>\
-			<td>15</td>\
-		</tr>\
-		<tr>\
-			<td>16</td>\
-			<td>17</td>\
-			<td>18</td>\
-			<td>19</td>\
-			<td>20</td>\
-		</tr>\
-		<tr>\
-			<td>21</td>\
-			<td>22</td>\
-			<td>23</td>\
-			<td>24</td>\
-			<td>25</td>\
-		</tr>\
-	</table>\
-</div>')
-					.appendTo('body')
-					.sheet({
-						menuLeft: menuLeft,
-						menuRight: menuRight
-					}),
-				jS = div.getSheet(),
-				loader = new Sheet.JSONLoader([]),
-				json = loader.bindJS(jS).fromSheet();
+			var div = $('<div>')
+							.appendTo('body')
+							.append(tableify(' \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n'))
+							.append(tableify(' \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n'))
+							.append(tableify(' \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n\
+ \t \t \t \t \n'))
+							.sheet(),
+					jS = div.getSheet(),
+					tds = [];
 
-			loader = new Sheet.JSONLoader(json);
-			jS.kill();
+			tds.push(jS.spreadsheets[0][2][2].td);
+			tds.push(jS.spreadsheets[0][3][2].td);
+			tds.push(jS.spreadsheets[0][4][2].td);
+			tds.push(jS.spreadsheets[0][2][3].td);
+			tds.push(jS.spreadsheets[0][3][3].td);
+			tds.push(jS.spreadsheets[0][4][3].td);
 
-			jS = div
-				.sheet({
-					menuLeft: menuLeft,
-					menuRight: menuRight,
-					loader: loader
-				})
-				.getSheet();
+			jS.merge(tds);
 
+			//this breaks it
+			tds = [];
+			tds.push(jS.spreadsheets[0][2][1].td);
+			tds.push(jS.spreadsheets[0][3][1].td);
+			tds.push(jS.spreadsheets[0][4][1].td);
 
-			console.log(jS);
+			jS.merge(tds);
 		});
 	</script>
 </head>
