@@ -19,41 +19,14 @@
 
 			var div = $('<div>')
 							.appendTo('body')
-							.append(tableify(' \t \t \t \t \n\
- \t \t \t \t \n\
- \t \t \t \t \n\
- \t \t \t \t \n\
- \t \t \t \t \n'))
-							.append(tableify(' \t \t \t \t \n\
- \t \t \t \t \n\
- \t \t \t \t \n\
- \t \t \t \t \n\
- \t \t \t \t \n'))
-							.append(tableify(' \t \t \t \t \n\
- \t \t \t \t \n\
- \t \t \t \t \n\
- \t \t \t \t \n\
- \t \t \t \t \n'))
+							.append(tableify('=C1\t \t \n\
+=C2\t \t \n\
+=C3\t \t \n'))
 							.sheet(),
 					jS = div.getSheet(),
-					tds = [];
+					td;
 
-			tds.push(jS.spreadsheets[0][2][2].td);
-			tds.push(jS.spreadsheets[0][3][2].td);
-			tds.push(jS.spreadsheets[0][4][2].td);
-			tds.push(jS.spreadsheets[0][2][3].td);
-			tds.push(jS.spreadsheets[0][3][3].td);
-			tds.push(jS.spreadsheets[0][4][3].td);
-
-			jS.merge(tds);
-
-			//this breaks it
-			tds = [];
-			tds.push(jS.spreadsheets[0][2][1].td);
-			tds.push(jS.spreadsheets[0][3][1].td);
-			tds.push(jS.spreadsheets[0][4][1].td);
-
-			jS.merge(tds);
+			jS.controlFactory.addColumn(2, true);
 		});
 	</script>
 </head>

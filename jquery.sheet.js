@@ -2073,8 +2073,10 @@ Sheet.Highlighter = (function(document, window, $) {
 		this.lastTop = $([]);
 		this.lastLeft = $([]);
 		this.lastTab = $([]);
-		this.start = {row: 0, col: 0};
-		this.end = {row: 0, col: 0};
+		this.startRowIndex = 0;
+		this.startColumnIndex = 0;
+		this.endRowIndex = 0;
+		this.endColumnIndex = 0;
 	};
 
 	Constructor.prototype = {
@@ -2205,14 +2207,16 @@ Sheet.Highlighter = (function(document, window, $) {
 			return this;
 		},
 
-		setStart: function(start) {
-			this.start = start;
+		setStart: function(cell) {
+			this.startRowIndex = cell.rowIndex + 0;
+			this.startColumnIndex = cell.columnIndex + 0;
 
 			return this;
 		},
 
-		setEnd: function(end) {
-			this.end = end;
+		setEnd: function(cell) {
+			this.endRowIndex = cell.rowIndex + 0;
+			this.endColumnIndex = cell.columnIndex + 0;
 
 			return this;
 		}
@@ -5269,6 +5273,9 @@ $.sheet = {
 					tdActive:function () {
 						return jS.cellLast.td || null;
 					},
+					cellActive:function() {
+						return jS.cellLast;
+					},
 					tdMenu:function () {
 						return jS.controls.tdMenu[jS.i] || $([]);
 					},
@@ -5867,7 +5874,7 @@ $.sheet = {
 							tBody = table.tBody,
 							colGroup = table.colGroup,
 							isLast = false,
-							activeCell = jS.obj.tdActive(),
+							activeCell = jS.obj.cellActive(),
 							spreadsheet = jS.spreadsheets[jS.i] || (jS.spreadsheets[jS.i] = []),
 							o,
 							offset,
@@ -6176,9 +6183,9 @@ $.sheet = {
 						if (pane.inPlaceEdit) {
 							pane.inPlaceEdit.goToTd();
 						}
-						if (activeCell && activeCell[0] && activeCell[0].cellIndex && activeCell[0].parentNode) {
-							jS.colLast = activeCell[0].cellIndex;
-							jS.rowLast = activeCell[0].parentNode.rowIndex;
+						if (activeCell) {
+							jS.colLast = activeCell.columnIndex;
+							jS.rowLast = activeCell.rowIndex;
 						}
 
 						return true;
@@ -7255,7 +7262,7 @@ $.sheet = {
 					 * @memberOf jS.controlFactory
 					 */
 					inPlaceEdit:function (td, selected) {
-						td = td || jS.obj.tdActive();
+						td = td || jS.obj.cellActive().td || null;
 
 						if (td === null) {
 							td = jS.rowTds(null, 1)[1];
@@ -7398,63 +7405,68 @@ $.sheet = {
 				updateCellsAfterPasteToFormula:function (oldVal) {
 					var newValCount = 0,
 						formula = jS.obj.formula(),
-						last = new Date();
+						startCell = jS.cellLast;
 
 					oldVal = oldVal || formula.val();
 
-					var loc = {row:jS.cellLast.row, col:jS.cellLast.col},
-						val = formula.val(), //once ctrl+v is hit formula now has the data we need
+					var val = formula.val(), //once ctrl+v is hit formula now has the data we need
 						firstValue = val;
 
 					//at this point we need to check if there is even a cell selected, if not, we can't save the information, so clear formula editor
-					if ((loc.row == 0 && loc.col == 0) || val.length === 0) {
+					if ((startCell.rowIndex == 0 && startCell.columnIndex == 0) || val.length === 0) {
 						return false;
 					}
 
-					var row = jS.tsv.parse(val);
+					var parsedRows = jS.tsv.parse(val);
 
 					//Single cell value
-					if (!$.isArray(row)) {
-						formula.val(row);
-						jS.fillUpOrDown(false, row);
+					if (!$.isArray(parsedRows)) {
+						formula.val(parsedRows);
+						jS.fillUpOrDown(false, parsedRows);
 						return true;
 					}
 
+					var i = 0,
+						j,
+						parsedColumns,
+						spreadsheet,
+						row,
+						cell;
+
 					//values that need put into multi cells
-					for (var i = 0; i < row.length; i++) {
-						jS.cellLast.isEdit = true;
-						var col = row[i];
-						for (var j = 0; j < col.length; j++) {
+					for (; i < parsedRows.length; i++) {
+						startCell.isEdit = true;
+						parsedColumns = parsedRows[i];
+						for (j = 0; j < parsedColumns.length; j++) {
 							newValCount++;
-							var td = jS.getTd(-1, i + loc.row, j + loc.col);
 
-							if (td === null) continue;
+							if (
+								!(spreadsheet = jS.spreadsheets[jS.i])
+								|| !(row = spreadsheet[i + startCell.rowIndex])
+								|| !(cell = row[j + startCell.columnIndex])
+							) continue;
 
-							td.row = loc.row;
-							td.col = loc.col;
-
-							if (td.length) {
-								if (!jS.spreadsheets[jS.i] || !jS.spreadsheets[jS.i][i + loc.row] || !jS.spreadsheets[jS.i][i + loc.row][j + loc.col]) continue;
-								var cell = jS.spreadsheets[jS.i][i + loc.row][j + loc.col];
-								if (cell) {
+							if (cell) {
+								(function(cell, parsedColumn) {
 									s.parent.one('sheetPreCalculation', function () {
-										if ((col[j] + '').charAt(0) == '=') { //we need to know if it's a formula here
-											cell.formula = col[j].substring(1);
+										if ((parsedColumn + '').charAt(0) == '=') { //we need to know if it's a formula here
+											cell.formula = parsedColumn.substring(1);
 											cell.value = '';
-											td.setAttribute('data-formula', col[j]);
+											cell.td.setAttribute('data-formula', parsedColumn);
 										} else {
 											cell.formula = '';
-											cell.value = col[j];
-											td.removeData('formula');
+											cell.value = parsedColumn;
+											cell.td.removeData('formula');
 										}
 									});
-									jS.resolveCell(cell);
+								})(cell, parsedColumns[j]);
+								jS.resolveCell(cell);
 
-									if (i == 0 && j == 0) { //we have to finish the current edit
-										firstValue = col[j];
-									}
+								if (i == 0 && j == 0) { //we have to finish the current edit
+									firstValue = parsedColumns[j];
 								}
 							}
+
 						}
 					}
 
@@ -7537,7 +7549,7 @@ $.sheet = {
 						keydown:function (e) {
 							e = e || window.event;
 							if (jS.readOnly[jS.i]) return false;
-							if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
+							if (jS.cellLast !== null && (jS.cellLast.rowIndex < 0 || jS.cellLast.columnIndex < 0)) return false;
 
 							jS.trigger('sheetFormulaKeydown', [false]);
 
@@ -7712,13 +7724,13 @@ $.sheet = {
 								i;
 							//TODO: refactor to use scroll position
 							if (reverse) { //go up
-								for (i = jS.cellLast.row; i > 0 && prevRowsHeights < paneHeight; i--) {
+								for (i = jS.cellLast.rowIndex; i > 0 && prevRowsHeights < paneHeight; i--) {
 									td = jS.getTd(-1, i, 1);
 									if (td !== null && !td.getAttribute('data-hidden') && $(td).is(':hidden')) $(td).show();
 									prevRowsHeights += td.parentNode.clientHeight;
 								}
 							} else { //go down
-								for (i = jS.cellLast.row; i < size.rows && prevRowsHeights < paneHeight; i++) {
+								for (i = jS.cellLast.rowIndex; i < size.rows && prevRowsHeights < paneHeight; i++) {
 									td = jS.getTd(-1, i, 1);
 									if (td === null) continue;
 									prevRowsHeights += td.parentNode.clientHeight;
@@ -7738,7 +7750,7 @@ $.sheet = {
 						keydown:function (e) {
 							e = e || window.event;
 							if (jS.readOnly[jS.i]) return false;
-							if (jS.cellLast.row < 0 || jS.cellLast.col < 0) return false;
+							if (jS.cellLast !== null && (jS.cellLast.rowIndex < 0 || jS.cellLast.columnIndex < 0)) return false;
 							var td = jS.cellLast.td;
 
 							if (jS.nav) {
@@ -7869,20 +7881,20 @@ $.sheet = {
 					 */
 					cellEditDone:function (force) {
 						var inPlaceEdit = jS.obj.inPlaceEdit(),
-							inPlaceEditHasFocus = $(inPlaceEdit).is(':focus');
+							inPlaceEditHasFocus = $(inPlaceEdit).is(':focus'),
+							cell = jS.cellLast;
 
 						(jS.obj.inPlaceEdit().destroy || emptyFN)();
-						if (jS.cellLast.isEdit || force) {
+						if (cell !== null && (cell.isEdit || force)) {
 							var formula = (inPlaceEditHasFocus ? $(inPlaceEdit) : jS.obj.formula()),
-								td = jS.obj.tdActive();
+								td = cell.td;
 
 							if (jS.isFormulaEditable(td)) {
 								//Lets ensure that the cell being edited is actually active
-								if (td && jS.cellLast.row > 0 && jS.cellLast.col > 0) {
+								if (td && jS.cellLast.rowIndex > 0 && jS.cellLast.columnIndex > 0) {
 
 									//This should return either a val from textbox or formula, but if fails it tries once more from formula.
 									var v = formula.val(),
-										cell = td.jSCell,
 										i = 0,
 										loader = s.loader,
 										loadedFrom;
@@ -7943,15 +7955,15 @@ $.sheet = {
 							jS.calc();
 						}
 
-						jS.cellLast.td = null;
-						jS.cellLast.row = 0;
-						jS.cellLast.col = 0;
+						jS.cellLast = null;
 						jS.rowLast = 0;
 						jS.colLast = 0;
-						jS.highlighter.start = {row:0,col:0};
-						jS.highlighter.end = {row:0,col:0};
+						jS.highlighter.startRowIndex = 0;
+						jS.highlighter.startColumnIndex = 0;
+						jS.highlighter.endRowIndex = 0;
+						jS.highlighter.endColumnIndex = 0;
 
-						jS.labelUpdate('', true);
+						jS.labelUpdate('');
 						jS.obj.formula()
 							.val('')
 							.blur();
@@ -7969,77 +7981,78 @@ $.sheet = {
 					 * @memberOf jS.evt
 					 */
 					cellSetHighlightFromKeyCode:function (e) {
-						var grid = jS.highlightedLastOrdered(),
+						var grid = jS.orderedGrid(jS.highlighter),
 							size = jS.sheetSize(),
-							td = jS.obj.tdActive(),
-							loc = jS.getTdLocation(td),
-							start = grid.start,
-							end = grid.end,
+							cellActive = jS.cellActive,
 							highlighter = jS.highlighter;
+
+						if (cellActive === null) return false;
 
 						switch (e.keyCode) {
 							case key.UP:
-								if (start.row < loc.row) {
-									start.row--;
-									start.row = math.max(start.row, 1);
+								if (grid.startRowIndex < cellActive.rowIndex) {
+									grid.startRowIndex--;
+									grid.startRowIndex = grid.startRowIndex > 0 ? grid.startRowIndex : 1;
 									break;
 								}
 
-								end.row--;
-								end.row = math.max(end.row, 1);
+								grid.endRowIndex--;
+								grid.endRowIndex = grid.endRowIndex > 0 ? grid.endRowIndex : 1;
 
 								break;
 							case key.DOWN:
 								//just beginning the highlight
-								if (start.row === start.end) {
-									start.row++;
-									start.row = math.min(start.row, size.rows);
+								if (grid.startRowIndex === grid.endRowIndex) {
+									grid.startRowIndex++;
+									grid.startRowIndex = grid.startRowIndex < size.rows ? grid.startRowIndex : size.rows;
 									break;
 								}
 
 								//if the highlight is above the active cell, then we have selected up and need to move down
-								if (start.row < loc.row) {
-									start.row++;
-									start.row = math.max(start.row, 1);
+								if (grid.startRowIndex < cell.rowIndex) {
+									grid.startRowIndex++;
+									grid.startRowIndex = grid.startRowIndex > 0 ? grid.startRowIndex : 1;
 									break;
 								}
 
 								//otherwise we increment the row, and limit it to the size of the total grid
-								end.row++;
-								end.row = math.min(end.row, size.rows);
+								grid.endRowIndex++;
+								grid.endRowIndex = grid.endRowIndex < size.rows ? grid.endRowIndex : size.rows;
 
 								break;
 							case key.LEFT:
-								if (start.col < loc.col) {
-									start.col--;
-									start.col = math.max(start.col, 1);
+								if (grid.startColumnIndex < cell.columnIndex) {
+									grid.startColumnIndex--;
+									grid.startColumnIndex = grid.startColumnIndex > 0 ? grid.startColumnIndex : 1;
 									break;
 								}
 
-								end.col--;
-								end.col = math.max(end.col, 1);
+								grid.endColumnIndex--;
+								grid.endColumnIndex = grid.endColumnIndex > 0 ? grid.endColumnIndex : 1;
 
 								break;
 							case key.RIGHT:
-								if (start.col < loc.col) {
-									start.col++;
-									start.col = math.min(start.col, size.cols);
+								if (grid.startColumnIndex < cell.columnIndex) {
+									grid.startColumnIndex++;
+									grid.startColumnIndex = grid.startColumnIndex < size.cols ? grid.startColumnIndex : size.cols;
 									break;
 								}
 
-								end.col++;
-								end.col = math.min(end.col, size.cols);
+								grid.endColumnIndex++;
+								grid.endColumnIndex = grid.endColumnIndex < size.cols ? grid.endColumnIndex : size.cols;
 
 								break;
 						}
 
 						//highlight the cells
-						jS.highlighter.start = start;
-						jS.highlighter.end = end;
+						highlighter.startRowIndex = grid.startRowIndex;
+						highlighter.startColumnIndex = grid.startColumnIndex;
+						highlighter.endRowIndex = grid.endRowIndex;
+						highlighter.endColumnIndex = grid.endColumnIndex;
 
 						jS.cycleCellArea(function (o) {
 							highlighter.set(o.td);
-						}, start, end);
+						}, grid);
 
 						return false;
 					},
@@ -8053,77 +8066,85 @@ $.sheet = {
 					 * @memberOf jS.evt
 					 */
 					cellSetActiveFromKeyCode:function (e, skipMove) {
-						var loc = {
-								row: jS.cellLast.row,
-								col: jS.cellLast.col
+						if (jS.cellLast === null) return false;
+
+						var cell = jS.cellLast,
+							loc = {
+								rowIndex: cell.rowIndex,
+								columnColumn: cell.columnIndex
 							},
+							spreadsheet,
+							row,
+							nextCell,
 							overrideIsEdit = false,
 							highlighted,
 							doNotClearHighlighted = false;
 
 						switch (e.keyCode) {
 							case key.UP:
-								loc.row--;
+								loc.rowIndex--;
 								break;
 							case key.DOWN:
-								loc.row++;
+								loc.rowIndex++;
 								break;
 							case key.LEFT:
-								loc.col--;
+								loc.columnIndex--;
 								break;
 							case key.RIGHT:
-								loc.col++;
+								loc.columnIndex++;
 								break;
 							case key.ENTER:
-								loc = jS.evt.incrementAndStayInGrid(jS.highlightedLastOrdered(), loc, 'row', 'col', e.shiftKey);
+								loc = jS.evt.incrementAndStayInGrid(jS.orderedGrid(jS.highlighter), loc, true, e.shiftKey);
 								overrideIsEdit = true;
 								highlighted = jS.highlighted();
 								if (highlighted.length > 1) {
 									doNotClearHighlighted = true;
 								} else {
 									if (!skipMove) {
-										loc.row += (e.shiftKey ? -1 : 1);
+										loc.rowIndex += (e.shiftKey ? -1 : 1);
 									}
-									if (s.autoAddCells && loc.row > jS.sheetSize(e.target.table).rows) {
+									if (s.autoAddCells && loc.rowIndex > jS.sheetSize(e.target.table).rows) {
 										jS.controlFactory.addRow();
 									}
 								}
 								break;
 							case key.TAB:
-								loc = jS.evt.incrementAndStayInGrid(jS.highlightedLastOrdered(), loc, 'col', 'row', e.shiftKey);
+								loc = jS.evt.incrementAndStayInGrid(jS.orderedGrid(jS.highlighter), loc, false, e.shiftKey);
 								overrideIsEdit = true;
 								highlighted = jS.highlighted();
 								if (highlighted.length > 1) {
 									doNotClearHighlighted = true;
 								} else {
 									if (!skipMove) {
-										loc.col += (e.shiftKey ? -1 : 1);
+										loc.columnIndex += (e.shiftKey ? -1 : 1);
 									}
-									if (s.autoAddCells && loc.col > jS.sheetSize(e.target.table).cols) {
+									if (s.autoAddCells && loc.columnIndex > jS.sheetSize(e.target.table).cols) {
 										jS.controlFactory.addColumn();
 									}
 								}
 								break;
 							case key.HOME:
-								loc.col = 1;
+								loc.columnIndex = 1;
 								break;
 							case key.END:
-								loc.col = jS.obj.tdActive().parentNode.children.length - 2;
+								loc.columnIndex = jS.obj.tdActive().parentNode.children.length - 2;
 								break;
 						}
 
 						//we check here and make sure all values are above 0, so that we get a selected cell
-						loc.col = loc.col || 1;
-						loc.row = loc.row || 1;
+						loc.columnIndex = loc.columnIndex || 1;
+						loc.rowIndex = loc.rowIndex || 1;
 
 						//to get the td could possibly make keystrokes slow, we prevent it here so the user doesn't even know we are listening ;)
-						if (!jS.cellLast.isEdit || overrideIsEdit) {
+						if (!cell.isEdit || overrideIsEdit) {
 							//get the td that we want to go to
-							var td = jS.getTd(-1, loc.row, loc.col);
+							if ((spreadsheet = jS.spreadsheets[jS.i]) === u) return false;
+							if ((row = spreadsheet[loc.rowIndex]) === u) return false;
+							if ((nextCell = row[loc.columnIndex]) === u) return false;
 
 							//if the td exists, lets go to it
-							if (td !== null) {
-								jS.cellEdit(td, null, doNotClearHighlighted);
+							if (nextCell !== null) {
+								jS.cellEdit(nextCell.td, null, doNotClearHighlighted);
 								return false;
 							}
 						}
@@ -8135,33 +8156,54 @@ $.sheet = {
 					 * Calculate position for either horizontal movement or vertical movement within a grid, both forward and reverse
 					 * @param {Object} grid
 					 * @param {Object} loc
-					 * @param {String} locA
-					 * @param {String} locB
+					 * @param {Boolean} isRows
 					 * @param {Boolean} reverse
 					 * @returns {Object} loc
 					 * @memberOf jS.evt
 					 */
-					incrementAndStayInGrid: function (grid, loc, locA, locB, reverse) {
-						if (reverse) {
-							loc[locA]--;
-							if (loc[locA] < grid.start[locA]) {
-								loc[locA] = grid.end[locA];
-								loc[locB]--;
-							}
-							if (loc[locB] < grid.start[locB]) {
-								loc[locB] = grid.end[locB];
-							}
-						} else {
-							loc[locA]++;
-							if (loc[locA] > grid.end[locA]) {
-								loc[locA] = grid.start[locA];
-								loc[locB]++;
-							}
-							if (loc[locB] > grid.end[locB]) {
-								loc[locB] = grid.start[locB];
+					incrementAndStayInGrid: function (grid, loc, isRows, reverse) {
+						if (isRows) {
+							if (reverse) {
+								loc.rowIndex--;
+								if (loc.rowIndex < grid.startRowIndex) {
+									loc.rowIndex = grid.endRowIndex;
+									loc.columnIndex--;
+								}
+								if (loc.columnIndex < grid.startColumnIndex) {
+									loc.columnIndex = grid.endColumnIndex;
+								}
+							} else {
+								loc.rowIndex++;
+								if (loc.rowIndex > grid.endRowIndex) {
+									loc.rowIndex = grid.startRowIndex;
+									loc.columnIndex++;
+								}
+								if (loc.columnIndex > grid.endColumnIndex) {
+									loc.columnIndex = grid.startColumnIndex;
+								}
 							}
 						}
-
+						else {
+							if (reverse) {
+								loc.columnIndex--;
+								if (loc.columnIndex < grid.startColumnIndex) {
+									loc.columnIndex = grid.endColumnIndex;
+									loc.rowIndex--;
+								}
+								if (loc.rowIndex < grid.startRowIndex) {
+									loc.rowIndex = grid.endRowIndex;
+								}
+							} else {
+								loc.columnIndex++;
+								if (loc.columnIndex > grid.endColumnIndex) {
+									loc.columnIndex = grid.startColumnIndex;
+									loc.rowIndex++;
+								}
+								if (loc.rowIndex > grid.endRowIndex) {
+									loc.rowIndex = grid.startRowIndex;
+								}
+							}
+						}
 						return loc;
 					},
 
@@ -9209,7 +9251,7 @@ $.sheet = {
 				 */
 				cycleCells:function (fn, firstLoc, lastLoc, i) {
 					i = i || jS.i;
-					firstLoc = firstLoc || {row:1, col:1};
+					firstLoc = firstLoc || {rowIndex:1, col:1};
 
 					if (!lastLoc) {
 						var size = jS.sheetSize();
@@ -9217,23 +9259,24 @@ $.sheet = {
 					}
 
 					var spreadsheet = jS.spreadsheets[i],
-						rowIndex = lastLoc.row,
+						rowIndex,
 						colIndex,
 						row,
 						cell;
 
-					if (rowIndex < firstLoc.row) return;
+					for(colIndex = firstLoc.col; colIndex <= lastLoc.col; colIndex++) {
+						for(rowIndex = firstLoc.row; rowIndex <= lastLoc.row; rowIndex++) {
 
-					do {
-						colIndex = lastLoc.col;
-						row = spreadsheet[rowIndex];
-						do {
-							cell  = row[colIndex];
+							if ((row = spreadsheet[rowIndex]) === u) continue;
+							if ((cell  = row[colIndex]) === u) continue;
+
+							//Something may have happened to the spreadsheet dimensions, lets go ahead and update the indexes
+							cell.rowIndex = rowIndex;
+							cell.columnIndex = colIndex;
+
 							fn.call(cell, i, rowIndex, colIndex);
 						}
-						while (colIndex-- > firstLoc.col);
 					}
-					while (rowIndex-- > firstLoc.row);
 				},
 
 				/**
@@ -9255,48 +9298,28 @@ $.sheet = {
 				/**
 				 * Cycles through a certain group of td objects in a spreadsheet table and applies a function to them, firstLoc can be bigger then lastLoc, this is more dynamic
 				 * @param {Function} fn the function to apply to a cell
-				 * @param {Object} firstLoc expects keys row,col, the cell to start at
-				 * @param {Object} lastLoc expects keys row,col, the cell to end at
-				 * @param {Boolean} [ordered] is what you are sending to this method already sorted?
-				 * @param {Boolean} [increment] use increment rather than decrement, which is a bit slower
+				 * @param {Object} grid {startRowIndex, startColumnIndex, endRowIndex, endColumnIndex}
 				 * @memberOf jS
 				 */
-				cycleCellArea:function (fn, firstLoc, lastLoc, ordered, increment) {
-					var grid = {start:{}, end: {}},
-						rowIndex,
-						colIndex,
+				cycleCellArea:function (fn, grid) {
+					var rowIndex,
+						columnIndex,
 						row,
 						cell,
 						i = jS.i,
 						o = {cell: [], td: []},
-						sheet = jS.spreadsheets[i],
-						arrayMethod = (increment ? 'unshift' : 'push');
+						spreadsheet = jS.spreadsheets[i];
 
-					if (ordered) {
-						grid.start = firstLoc;
-						grid.end = lastLoc;
-					} else {
-						grid.start.row = math.max(math.min(firstLoc.row, lastLoc.row), 1);
-						grid.start.col = math.max(math.min(firstLoc.col, lastLoc.col), 1);
-						grid.end.row = math.max(firstLoc.row, lastLoc.row, 1);
-						grid.end.col = math.max(firstLoc.col, lastLoc.col, 1);
+					for(rowIndex = grid.startRowIndex; rowIndex <= grid.endRowIndex; rowIndex++) {
+						if ((row = spreadsheet[rowIndex]) === u) continue;
+
+						for(columnIndex = grid.startColumnIndex; columnIndex <= grid.endColumnIndex; columnIndex++) {
+							if ((cell = row[columnIndex]) === u) continue;
+
+							o.cell.push(cell);
+							o.td.push(cell.td);
+						}
 					}
-
-					rowIndex = grid.end.row;
-
-					do {
-						colIndex = grid.end.col;
-						row = sheet[rowIndex] || null;
-						do {
-							if (row) {
-								cell = row[colIndex] || null;
-								if (cell) {
-									o.cell[arrayMethod](cell);
-									o.td[arrayMethod](cell.td);
-								}
-							}
-						} while (colIndex-- > grid.start.col);
-					} while (rowIndex-- > grid.start.row);
 
 					if (fn) {
 						fn(o);
@@ -9659,16 +9682,15 @@ $.sheet = {
 
 				/**
 				 * Updates the label so that the user knows where they are currently positioned
-				 * @param {String|Object} v Value to update to, if object {col, row}
-				 * @param {Boolean} [setDirect]
+				 * @param {Sheet.Cell|*} entity
 				 * @memberOf jS
 				 */
-				labelUpdate:function (v, setDirect) {
-					if (!setDirect) {
-						v = jSE.parseCellName(v.col, v.row);
-						if (v) jS.obj.label().text(v);
+				labelUpdate:function (entity) {
+					if (entity instanceof Sheet.Cell) {
+						var name = jSE.parseCellName(entity.columnIndex, entity.rowIndex);
+						jS.obj.label().text(name);
 					} else {
-						jS.obj.label().text(v);
+						jS.obj.label().text(entity);
 					}
 				},
 
@@ -9685,8 +9707,7 @@ $.sheet = {
 
 					if (td === null) return;
 
-					var loc = jS.getTdLocation(td),
-						cell = td.jSCell,
+					var cell = td.jSCell,
 						v;
 
 					if (cell === u || cell === null) return;
@@ -9694,14 +9715,14 @@ $.sheet = {
 
 					jS.trigger('sheetCellEdit', [cell]);
 
-					if (td !== jS.cellLast.td) {
+					if (jS.cellLast !== null && td !== jS.cellLast.td) {
 						jS.followMe(td);
 					} else {
 						jS.autoFillerGoToTd(td);
 					}
 
 					//Show where we are to the user
-					jS.labelUpdate(loc);
+					jS.labelUpdate(cell);
 
 					if (cell.formula.length > 0) {
 						v = '=' + cell.formula;
@@ -9713,150 +9734,149 @@ $.sheet = {
 						.val(v)
 						.blur();
 
-					jS.cellSetActive(td, loc, isDrag, false, null, doNotClearHighlighted);
+					jS.cellSetActive(cell, isDrag, false, null, doNotClearHighlighted);
 				},
 
 				/**
 				 * sets cell active to sheet, and highlights it for the user, shouldn't be called directly, should use cellEdit
-				 * @param {HTMLTableCellElement} td
-				 * @param {Object} loc {col, row}
+				 * @param {Sheet.Cell} cell
 				 * @param {Boolean} [isDrag] should be determined by if the user is dragging their mouse around setting cells
 				 * @param {Boolean} [directional] makes highlighting directional, only left/right or only up/down
 				 * @param {Function} [fnDone] called after the cells are set active
 				 * @param {Boolean} [doNotClearHighlighted]
 				 * @memberOf jS
 				 */
-				cellSetActive:function (td, loc, isDrag, directional, fnDone, doNotClearHighlighted) {
-					loc = loc || jS.getTdLocation(td);
-					if (loc.col != u) {
-						jS.cellLast.td = td; //save the current cell/td
+				cellSetActive:function (cell, isDrag, directional, fnDone, doNotClearHighlighted) {
+					var td = cell.td;
 
-						jS.cellLast.row = jS.rowLast = loc.row;
-						jS.cellLast.col = jS.colLast = loc.col;
+					jS.cellLast = cell;
 
-						if (!doNotClearHighlighted) {
-							jS.highlighter
-								.set(td) //themeroll the cell and bars
-								.setStart(loc)
-								.setEnd(loc);
-						}
+					jS.rowLast = cell.rowIndex;
+					jS.colLast = cell.columnIndex;
 
-						if (td === null) return;
-
+					if (!doNotClearHighlighted) {
 						jS.highlighter
-							.setBar('left', td.parentNode.firstChild)
-							.setBar('top', td.parentNode.parentNode.children[0].children[td.cellIndex]);
-
-						var selectModel,
-							clearHighlightedModel;
-
-						switch (s.cellSelectModel) {
-							case Sheet.excelSelectModel:
-							case Sheet.googleDriveSelectModel:
-								selectModel = function () {};
-								clearHighlightedModel = function() {};
-								break;
-							case Sheet.openOfficeSelectModel:
-								selectModel = function (target) {
-									if (jS.isCell(target)) {
-										jS.cellEdit(target);
-									}
-								};
-								clearHighlightedModel = function () {};
-								break;
-						}
-
-						if (isDrag) {
-							var locTrack = {},
-								pane = jS.obj.pane();
-
-							locTrack.last = loc;//we keep track of the most recent location because we don't want tons of recursion here
-
-							pane.onmousemove = function (e) {
-								e = e || window.event;
-
-								var target = e.target || e.srcElement;
-
-								if (jS.isBusy()) {
-									return false;
-								}
-
-								var locEnd = jS.highlighter.end = jS.getTdLocation(target),
-									ok = true,
-									highlighter = jS.highlighter;
-
-								//bar
-								if (
-									locEnd.col < 1
-										|| locEnd.row < 1
-										|| locEnd.col == nAN
-										|| locEnd.row == nAN
-									) {
-									return false;
-								}
-
-								if (directional) {
-									ok = false;
-									if (loc.col == locEnd.col || loc.row == locEnd.row) {
-										ok = true;
-									}
-								}
-
-								if ((locTrack.last.col != locEnd.col || locTrack.last.row != locEnd.row) && ok) { //this prevents this method from firing too much
-									//select active cell if needed
-									selectModel(target);
-
-									//highlight the cells
-									jS.cycleCellArea(function (o) {
-										highlighter.set(o.td);
-									}, loc, locEnd, false, true);
-								}
-								jS.followMe(target);
-								var mouseY = e.clientY,
-									mouseX = e.clientX,
-									offset = pane.$enclosure.offset(),
-									cellLoc = jS.getTdLocation(target),
-									up = cellLoc.row,
-									left = cellLoc.col,
-									move = false,
-									previous;
-
-								if (n(up) || n(left)) {
-									return false;
-								}
-
-								if(mouseY > offset.top){
-									move = true;
-									up--
-								}
-								if(mouseX > offset.left){
-									move = true;
-									left--
-								}
-								if(move){
-									if (up < 1 || left < 1) {
-										return false;
-									}
-									previous = jS.spreadsheets[jS.i][up][left];
-									jS.followMe(previous.td, true);
-								}
-
-								locTrack.last = locEnd;
-								return true;
-							};
-
-							document.onmouseup = function() {
-								pane.onmousemove = null;
-								pane.onmousemove = null;
-								pane.onmouseup = null;
-								document.onmouseup = null;
-
-								if (fnDone) {
-									fnDone();
-								}
-							};
-						}
+							.set(cell.td) //themeroll the cell and bars
+							.setStart(cell)
+							.setEnd(cell);
 					}
+
+					jS.highlighter
+						.setBar('left', td.parentNode.children[0])
+						.setBar('top', td.parentNode.parentNode.children[0].children[td.cellIndex]);
+
+					var selectModel,
+						clearHighlightedModel;
+
+					switch (s.cellSelectModel) {
+						case Sheet.excelSelectModel:
+						case Sheet.googleDriveSelectModel:
+							selectModel = function () {};
+							clearHighlightedModel = function() {};
+							break;
+						case Sheet.openOfficeSelectModel:
+							selectModel = function (target) {
+								if (jS.isCell(target)) {
+									jS.cellEdit(target);
+								}
+							};
+							clearHighlightedModel = function () {};
+							break;
+					}
+
+					if (isDrag) {
+						var pane = jS.obj.pane(),
+							highlighter = jS.highlighter,
+							grid = {
+								startRowIndex: cell.rowIndex,
+								startColumnIndex: cell.columnIndex,
+								endRowIndex: 0,
+								endColumnIndex: 0
+							},
+							lastTouchedRowIndex = cell.rowIndex,
+							lastTouchedColumnIndex = cell.columnIndex;
+
+						pane.onmousemove = function (e) {
+							e = e || window.event;
+
+							var target = e.target || e.srcElement;
+
+							if (jS.isBusy()) {
+								return false;
+							}
+
+							if (target.jSCell === u) return false;
+
+							var touchedCell = target.jSCell,
+								ok = true;
+
+							grid.endColumnIndex = touchedCell.columnIndex;
+							grid.endRowIndex = touchedCell.rowIndex;
+
+							if (directional) {
+								ok = (cell.columnIndex === touchedCell.columnIndex || cell.rowIndex === touchedCell.rowIndex);
+							}
+
+							if ((
+								lastTouchedColumnIndex !== touchedCell.columnIndex
+								|| lastTouchedRowIndex !== touchedCell.rowIndex
+								) && ok) { //this prevents this method from firing too much
+								//select active cell if needed
+								selectModel(target);
+
+								//highlight the cells
+								jS.cycleCellArea(function (o) {
+									highlighter.set(o.td);
+								}, jS.orderedGrid(grid));
+							}
+
+							jS.followMe(target);
+
+							var mouseY = e.clientY,
+								mouseX = e.clientX,
+								offset = pane.$enclosure.offset(),
+								up = touchedCell.rowIndex,
+								left = touchedCell.columnIndex,
+								move = false,
+								previous;
+
+							if (n(up) || n(left)) {
+								return false;
+							}
+
+							if(mouseY > offset.top){
+								move = true;
+								up--
+							}
+							if(mouseX > offset.left){
+								move = true;
+								left--
+							}
+							if(move){
+								if (up < 1 || left < 1) {
+									return false;
+								}
+								previous = jS.spreadsheets[jS.i][up][left];
+								jS.followMe(previous.td, true);
+							}
+
+							lastTouchedColumnIndex = touchedCell.columnIndex;
+							lastTouchedRowIndex = touchedCell.rowIndex;
+							return true;
+						};
+
+						document.onmouseup = function() {
+							pane.onmousemove = null;
+							pane.onmousemove = null;
+							pane.onmouseup = null;
+							document.onmouseup = null;
+
+							if (fnDone) {
+								fnDone();
+							}
+						};
+					}
+
 				},
 
 				/**
@@ -9876,28 +9896,22 @@ $.sheet = {
 				 * @memberOf jS
 				 * @type {Object}
 				 */
-				cellLast:{
-					td:[], //this is a dud td, so that we don't get errors
-					row:0,
-					col:0,
-					isEdit:false
-				},
+				cellLast:null,
 
 				/**
 				 * the most recent highlighted cells {td, rowStart, colStart, rowEnd, colEnd}, in order
 				 * @memberOf jS
 				 * @type {Object}
 				 */
-				highlightedLastOrdered: function() {
-					var grid = this.highlighter,
-						_grid = {start:{}, end:{}};
+				orderedGrid: function(grid) {
+					var gridOrdered = {
+						startRowIndex: (grid.startRowIndex < grid.endRowIndex ? grid.startRowIndex : grid.endRowIndex),
+						startColumnIndex: (grid.startColumnIndex < grid.endColumnIndex ? grid.startColumnIndex : grid.endColumnIndex),
+						endRowIndex: (grid.endRowIndex > grid.startRowIndex ? grid.endRowIndex : grid.startRowIndex),
+						endColumnIndex: (grid.endColumnIndex > grid.startColumnIndex ? grid.endColumnIndex : grid.startColumnIndex)
+					};
 
-					_grid.start.row = Math.min(grid.start.row, grid.end.row);
-					_grid.start.col = Math.min(grid.start.col, grid.end.col);
-					_grid.end.row = Math.max(grid.start.row, grid.end.row);
-					_grid.end.col = Math.max(grid.start.col, grid.end.col);
-
-					return _grid;
+					return gridOrdered;
 				},
 
 				/**
@@ -10450,7 +10464,7 @@ $.sheet = {
 
 				/**
 				 * removes the currently selected row
-				 * @param {Number} rowIndex
+				 * @param {Number} [rowIndex]
 				 * @param {Boolean} skipCalc
 				 * @memberOf jS
 				 */
@@ -10463,13 +10477,14 @@ $.sheet = {
 						row,
 						pane = jS.obj.pane(),
 						tBody = pane.table.tBody,
-						td;
+						td,
+						highlighter = jS.highlighter;
 
 					if (rowIndex) {
 						start = end = rowIndex;
 					} else {
-						start = math.min(jS.highlighter.start.row, jS.highlighter.end.row);
-						end = math.max(jS.highlighter.start.row, jS.highlighter.end.row);
+						start = (highlighter.startRowIndex < highlighter.endRowIndex ? highlighter.startRowIndex : highlighter.endRowIndex);
+						end = (highlighter.endRowIndex > highlighter.startRowIndex ? highlighter.endRowIndex : highlighter.startRowIndex);
 					}
 
 					qty = (end - start) + 1;
@@ -10533,13 +10548,14 @@ $.sheet = {
 						size = jS.sheetSize(),
 						cells,
 						k,
-						pane = jS.obj.pane();
+						pane = jS.obj.pane(),
+						highlighter = jS.highlighter;
 
 					if (i) {
 						start = end = i;
 					} else {
-						start = math.min(jS.highlighter.start.col, jS.highlighter.end.col);
-						end = math.max(jS.highlighter.start.col, jS.highlighter.end.col);
+						start = (highlighter.startColumnIndex < highlighter.endColumnIndex ? highlighter.startColumnIndex : highlighter.endColumnIndex);
+						end = (highlighter.endColumnIndex > highlighter.startColumnIndex ? highlighter.endColumnIndex : highlighter.startColumnIndex);
 					}
 
 					qty = (end - start) + 1;
@@ -10682,8 +10698,8 @@ $.sheet = {
 				autoFillerGoToTd:function (td, h, w) {
 					if (!s.autoFiller) return;
 
-					if (td === u) {
-						td = jS.obj.tdActive();
+					if (td === u && jS.cellLast !== null) {
+						td = jS.cellLast.td;
 					}
 
 					if (td && td.type == 'cell') { //ensure that it is a usable cell
@@ -10726,7 +10742,7 @@ $.sheet = {
 						i = i || 0;
 					}
 
-					if (jS.cellLast.row > 0 || jS.cellLast.col > 0) {
+					if (jS.cellLast !== null && (jS.cellLast.rowIndex > 0 || jS.cellLast.columnIndex > 0)) {
 						jS.evt.cellEditDone();
 						jS.obj.formula().val('');
 					}
@@ -11175,13 +11191,13 @@ $.sheet = {
 						 * Sets active bar
 						 * @param {Boolean} [before]
 						 */
-							SetActive = function (before) {
+						SetActive = function (before) {
 							switch (s.cellSelectModel) {
 								case Sheet.openOfficeSelectModel: //follow cursor behavior
 									this.row = (before ? start.row : stop.row);
 									this.col = (before ? start.col : stop.col);
 									this.td = jS.getTd(-1, this.row, this.col);
-									if (this.td !== null && this.td !== jS.cellLast.td) {
+									if (this.td !== null && (jS.cellLast !== null && this.td !== jS.cellLast.td)) {
 										jS.cellEdit(this.td, false, true);
 									}
 									break;
@@ -11189,7 +11205,7 @@ $.sheet = {
 									this.row = (before ? stop.row : start.row);
 									this.col = (before ? stop.col : start.col);
 									this.td = jS.getTd(-1, this.row, this.col);
-									if (this.td !== null && this.td !== jS.cellLast.td) {
+									if (this.td !== null && (jS.cellLast !== null && this.td !== jS.cellLast.td)) {
 										jS.cellEdit(this.td, false, true);
 									}
 									break;
@@ -11200,7 +11216,8 @@ $.sheet = {
 						sheet = jS.obj.table(),
 						col,
 						row,
-						td;
+						td,
+						highlighter = jS.highlighter;
 
 					switch (type) {
 						case 'top':
@@ -11209,10 +11226,10 @@ $.sheet = {
 							stop.row = scrolledArea.row;
 							stop.col = last;
 
-							jS.highlighter.start.row = 1;
-							jS.highlighter.start.col = first;
-							jS.highlighter.end.row = size.rows;
-							jS.highlighter.end.col = last;
+							highlighter.startRowIndex = 1;
+							highlighter.startColumnIndex = first;
+							highlighter.endRowIndex = size.rows;
+							highlighter.endColumnIndex = last;
 
 							col = last;
 
@@ -11226,10 +11243,10 @@ $.sheet = {
 							stop.row = last;
 							stop.col = scrolledArea.col;
 
-							jS.highlighter.start.row = first;
-							jS.highlighter.start.col = 1;
-							jS.highlighter.end.row = last;
-							jS.highlighter.end.col = size.cols;
+							highlighter.startRowIndex = first;
+							highlighter.startColumnIndex = 1;
+							highlighter.endRowIndex = last;
+							highlighter.endColumn = size.cols;
 
 							row = last;
 
