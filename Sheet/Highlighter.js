@@ -13,8 +13,10 @@ Sheet.Highlighter = (function(document, window, $) {
 		this.lastTop = $([]);
 		this.lastLeft = $([]);
 		this.lastTab = $([]);
-		this.start = {row: 0, col: 0};
-		this.end = {row: 0, col: 0};
+		this.startRowIndex = 0;
+		this.startColumnIndex = 0;
+		this.endRowIndex = 0;
+		this.endColumnIndex = 0;
 	};
 
 	Constructor.prototype = {
@@ -145,14 +147,16 @@ Sheet.Highlighter = (function(document, window, $) {
 			return this;
 		},
 
-		setStart: function(start) {
-			this.start = start;
+		setStart: function(cell) {
+			this.startRowIndex = cell.rowIndex + 0;
+			this.startColumnIndex = cell.columnIndex + 0;
 
 			return this;
 		},
 
-		setEnd: function(end) {
-			this.end = end;
+		setEnd: function(cell) {
+			this.endRowIndex = cell.rowIndex + 0;
+			this.endColumnIndex = cell.columnIndex + 0;
 
 			return this;
 		}
