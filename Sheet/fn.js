@@ -1501,7 +1501,7 @@ var jFN = $.sheet.fn = {
 				select.setAttribute('disabled', true);
 			} else {
 				jS.s.parent.bind('sheetKill', function() {
-					td.innerText = td.textContent = cell.value = select.value;
+					td.innerText = td.textContent = cell.value.valueOf();
 				});
 			}
 
@@ -1529,8 +1529,6 @@ var jFN = $.sheet.fn = {
 			v,
 			value,
 			html,
-			inputs,
-			$inputs,
 			radio,
 			id,
 			result;
@@ -1543,7 +1541,6 @@ var jFN = $.sheet.fn = {
 		if (html === undefined || html.length < 1 || cell.needsUpdated) {
 			v = arrHelpers.flatten(arguments);
 			v = arrHelpers.unique(v);
-			inputs = [];
 
 			if (this.id !== null) {
 				id = this.id + '-radio';
@@ -1555,7 +1552,7 @@ var jFN = $.sheet.fn = {
 			html.className = 'jSRadio';
 			html.onmousedown = function () {
 				if (this.cell.td !== null) {
-					jS.cellEdit(this.cell.td);
+					jS.cellEdit(cell.td);
 				}
 			};
 			html.cell = cell;
@@ -1569,6 +1566,9 @@ var jFN = $.sheet.fn = {
 					input.setAttribute('name', id);
 					input.className = id;
 					input.value = v[i];
+					if (!jS.s.editable) {
+						input.setAttribute('disabled', 'disabled');
+					}
 					input.onchange = function() {
 						value = new String(this.value);
 						value.html = html;
@@ -1579,33 +1579,23 @@ var jFN = $.sheet.fn = {
 						jS.trigger('sheetCellEdited', [cell]);
 					};
 
-					inputs.push(input);
-
-					if (v[i] == cell.value) {
-						input.setAttribute('checked', 'true');
+					if (v[i].valueOf() === cell.value.valueOf()) {
+						input.checked = true;
 					}
 					label.textContent = label.innerText = v[i];
 					html.appendChild(input);
-					html.input = input;
-					label.onclick = function () {
-						$(this).prev().click();
+					label.input = input;
+					label.onmousedown = function () {
+						$(this.input).click();
 					};
 					html.appendChild(label);
 					html.appendChild(document.createElement('br'));
 				}
 			}
 
-			$inputs = $(inputs);
-
-			if (!jS.s.editable) {
-				cell.value = $inputs.filter(':checked').val();
-				$inputs.attr('disabled', true);
-			} else {
-				jS.s.parent.bind('sheetKill', function() {
-					cell.value = $inputs.filter(':checked').val();
-					td.textContent = td.innerText = cell.value;
-				});
-			}
+			jS.s.parent.bind('sheetKill', function() {
+				td.textContent = td.innerText = cell.value.valueOf();
+			});
 		}
 
 		if (typeof cell.value !== 'object') {
@@ -1646,7 +1636,7 @@ var jFN = $.sheet.fn = {
 			if (this.id !== null) {
 				id = this.id + '-checkbox';
 			} else if (td !== null) {
-				id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
+				id = "checkbox" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			checkbox = document.createElement('input');

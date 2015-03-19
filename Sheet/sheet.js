@@ -4027,7 +4027,7 @@ $.sheet = {
 						var cell = jS.cellLast,
 							loc = {
 								rowIndex: cell.rowIndex,
-								columnColumn: cell.columnIndex
+								columnIndex: cell.columnIndex
 							},
 							spreadsheet,
 							row,
