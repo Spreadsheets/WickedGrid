@@ -763,7 +763,7 @@ Sheet.Cell = (function() {
 		parseFormula: function(item) {
 			if (!this.jS.s.useMultiThreads) {
 				var formulaParser = this.cellHandler.formulaParser(Sheet.calcStack);
-				formulaParser.yy.types.length = 0;
+				formulaParser.yy.types = [];
 				item.callback(formulaParser.parse(item.formula));
 				return;
 			}
@@ -775,7 +775,9 @@ Sheet.Cell = (function() {
 			if (isThreadAbsent) {
 				thread = Constructor.threads[i] = operative(function(formula) {
 					if (typeof formula === 'string') {
-						return parser.Formula().parse(formula);
+						var formulaParser = parser.Formula();
+						formulaParser.yy.types = [];
+						return formulaParser.parse(formula);
 					}
 					return null;
 				}, [
