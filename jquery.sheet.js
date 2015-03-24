@@ -11984,12 +11984,14 @@ $.sheet = {
 				sortHorizontal:function (reversed) {
 
 					var selected = jS.highlighted(true),
-						tdSibling = selected[0].td[0],
-						tdSiblingIndex = tdSibling.cellIndex,
-						colGroup = tdSibling.table.colGroup,
+						pane = jS.obj.pane(),
+						table = pane.table,
+						tdSibling = selected[0].td,
+						cell = tdSibling.jSCell,
+						tdSiblingIndex = cell.cellIndex,
+						colGroup = table.colGroup,
 						size = jS.sheetSize().rows,
 						length = selected.length,
-						date = new Date(),
 						isNum = true,
 						vals = [],
 						offset,
@@ -13156,36 +13158,26 @@ var jFN = $.sheet.fn = {
 	 */
 	SUM:function () {
 		var sum = 0,
-			args = arguments,
-			arg,
+			values = arrHelpers.flatten(arguments),
 			v,
-			i = args.length - 1,
-			j,
-			k,
+			i = 0,
+			max = values.length,
 			_isNaN = isNaN;
 
-		if (i < 0) {
-			return 0;
-		}
-
-		do {
-			arg = args[i];
-			j = arg.length - 1;
-			do {
-				v = arg[j];
-				if (v === null || v === undefined) continue;
-				v = v.valueOf();
-				if (!_isNaN(v)) {
-					switch (typeof v) {
-						case 'string':
-							sum += (v * 1);
-							break;
-						default:
-							sum += v;
-					}
+		for(; i < max; i++) {
+			v = values[i];
+			if (v === null || v === undefined) continue;
+			v = v.valueOf();
+			if (!_isNaN(v)) {
+				switch (typeof v) {
+					case 'string':
+						sum += (v * 1);
+						break;
+					default:
+						sum += v;
 				}
-			} while (j-- > 0);
-		} while (i-- > 0);
+			}
+		}
 
 		return sum;
 	},
@@ -16203,7 +16195,7 @@ break;
 case 58:
 
         //js
-            this.$ = ($$[$0-2] + '.' + $$[$0]) * 1;
+            this.$ = $$[$0-2] + '.' + $$[$0];
 
         /*php
             this.$ = $$[$0-2] . '.' . $$[$0];
@@ -16212,7 +16204,12 @@ case 58:
 break;
 case 59:
 
-        this.$ = $$[$0-1] * 0.01;
+		//js
+        	this.$ = ($$[$0-1] * 0.01) + '';
+
+        /*php
+        	this.$ = ($$[$0-1] * 0.01) . '';
+        */
     
 break;
 }

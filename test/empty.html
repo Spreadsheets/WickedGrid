@@ -17,16 +17,19 @@
 	<script>
 		$(function() {
 
-			var div = $('<div>')
+			var table = tableify('=FV(7.5%/12, 2*12, -250, -5000, 1)'),
+					div = $('<div>')
 							.appendTo('body')
-							.append(tableify('=C1\t \t \n\
-=C2\t \t \n\
-=C3\t \t \n'))
+							.append(table)
 							.sheet(),
 					jS = div.getSheet(),
-					td;
+					A1 = jS.getCell(0, 1, 1);
 
-			jS.controlFactory.addColumn(2, true);
+			A1.updateValue();
+
+			console.log(A1.parsedFormula);
+			//tf.assertEquals(A1.value.valueOf(), 385.50, 'Correct value');
+			//div.getSheet().kill();
 		});
 	</script>
 </head>

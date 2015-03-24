@@ -7938,12 +7938,14 @@ $.sheet = {
 				sortHorizontal:function (reversed) {
 
 					var selected = jS.highlighted(true),
-						tdSibling = selected[0].td[0],
-						tdSiblingIndex = tdSibling.cellIndex,
-						colGroup = tdSibling.table.colGroup,
+						pane = jS.obj.pane(),
+						table = pane.table,
+						tdSibling = selected[0].td,
+						cell = tdSibling.jSCell,
+						tdSiblingIndex = cell.cellIndex,
+						colGroup = table.colGroup,
 						size = jS.sheetSize().rows,
 						length = selected.length,
-						date = new Date(),
 						isNum = true,
 						vals = [],
 						offset,
