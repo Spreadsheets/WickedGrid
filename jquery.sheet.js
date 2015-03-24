@@ -5193,8 +5193,7 @@ $.sheet = {
 					chart:[],
 					tdMenu:[],
 					cellsEdited:[],
-					enclosure:[],
-					enclosures:null,
+					enclosures:[],
 					formula:null,
 					fullScreen:null,
 					header:null,
@@ -5288,10 +5287,10 @@ $.sheet = {
 						return jS.controls.chart[jS.i] || $([]);
 					},
 					enclosure:function () {
-						return jS.controls.enclosure[jS.i] || $([]);
+						return jS.controls.enclosures[jS.i] || [];
 					},
 					enclosures:function () {
-						return jS.controls.enclosures || $([]);
+						return jS.controls.enclosures || [];
 					},
 					formula:function () {
 						return jS.controls.formula || $([]);
@@ -7221,8 +7220,7 @@ $.sheet = {
 
 						jS.controls.pane[jS.i] = pane;
 						jS.controls.panes = jS.obj.panes().add(pane);
-						jS.controls.enclosure[jS.i] = $enclosure;
-						jS.controls.enclosures = jS.obj.enclosures().add(enclosure);
+						jS.controls.enclosures[jS.i] = enclosure;
 
 						return enclosure;
 					},
@@ -7384,7 +7382,7 @@ $.sheet = {
 							return false;
 						};
 
-						pane.autoFiller = jS.controls.autoFiller[jS.i] = $(autoFiller);
+						pane.autoFiller = jS.controls.autoFiller[jS.i] = autoFiller;
 						pane.appendChild(autoFiller);
 						return true;
 					}
@@ -8354,8 +8352,7 @@ $.sheet = {
 					end = end || ths.length;
 
 					for (var i = start; i < end; i++) {
-						if (i > 0) {
-							th = ths[i];
+						if (i > 0 && (th = ths[i]) !== u) {
 							th.innerHTML = th.label = th.parentNode.rowIndex;
 						}
 					}
@@ -8641,6 +8638,8 @@ $.sheet = {
 						columnIndex = colStart;
 						for (;columnIndex <= colEnd;columnIndex++) {
 							if (rowIndex > 0 && columnIndex > 0) {
+								if (row === u) continue;
+
 								cell = row[columnIndex];
 
 								if (cell === u) {
@@ -10387,19 +10386,14 @@ $.sheet = {
 				 */
 				deleteSheet:function (i) {
 					var oldI = i || jS.i,
-						enclosureArray =jS.controls.enclosures.toArray(),
+						enclosureArray = jS.controls.enclosure,
 						tabIndex;
 
 					enclosureArray.splice(oldI,1);
 
 					jS.obj.barHelper().remove();
 
-					jS.obj.enclosure().remove();
-					//BUG Found:
-					//The enclosure will not be removed correctly while you delete the sheet.You may find all the enclosure will be hidden after you add a sheet and delete it.
-					//The reason is that "jS.controls.enclosures" is a jQuery selector object( "$([])" ) which can't not remove element like an array.All enclosure are reserved after sheet has been deleted.
-					//Here I remove the element by creating the selector object again.
-					jS.controls.enclosures = $(enclosureArray);
+					$(jS.obj.enclosure()).remove();
 					jS.obj.menus().remove();
 					jS.obj.tabContainer().children().eq(jS.i).remove();
 					jS.spreadsheets.splice(oldI, 1);
@@ -10714,10 +10708,7 @@ $.sheet = {
 
 						var tdPos = $(td).position();
 
-						jS.obj.autoFiller()
-							.show()
-							.css('top', ((tdPos.top + (h || td.clientHeight) - 3) + 'px'))
-							.css('left', ((tdPos.left + (w || td.clientWidth) - 3) + 'px'));
+						jS.autoFillerShow(((tdPos.top + (h || td.clientHeight) - 3) + 'px'), ((tdPos.left + (w || td.clientWidth) - 3) + 'px'));
 					}
 				},
 
@@ -10728,7 +10719,25 @@ $.sheet = {
 				autoFillerHide:function () {
 					if (!s.autoFiller) return;
 
-					jS.obj.autoFiller().hide();
+					var autoFiller = jS.obj.autoFiller(),
+						parent = autoFiller.parentNode;
+					if (parent !== null) {
+						parent.removeChild(autoFiller);
+					}
+				},
+
+
+				autoFillerShow: function(top, left) {
+					if (!s.autoFiller) return;
+
+					var autoFiller = jS.obj.autoFiller(),
+						parent = jS.obj.pane(),
+						style = autoFiller.style;
+
+					style.top = top;
+					style.left = left;
+
+					parent.insertBefore(autoFiller, parent.firstChild);
 				},
 
 				/**
@@ -10751,33 +10760,31 @@ $.sheet = {
 
 					//the below use of _scrollLeft and _scrollTop are protected from IE, which makes those attributes go away after something is hidden, thus forgetting where you are scrolled to when you change sheets
 					//IE, stop flossin' me
-					var enclosures = jS.obj.enclosures(),
-						j = enclosures.length - 1,
+					var ui = jS.obj.ui,
+						enclosures = jS.obj.enclosures(),
+						j = 0,
+						max = enclosures.length,
 						enclosure,
 						pane;
 
 					jS.autoFillerHide();
 
-					if (j > 0) {
-						do {
-							if (i != j) {
-								enclosure = enclosures[j];
+					for (;j < max; j++) {
+						if (i != j) {
+							enclosure = enclosures[j];
+							if (enclosure !== u && enclosure.parentNode !== null) {
 								enclosure._scrollLeft = enclosure._scrollLeft || enclosure.scrollUI.scrollLeft;
 								enclosure._scrollTop = enclosure._scrollTop || enclosure.scrollUI.scrollTop;
-								enclosure.style.display = "none";
+								ui.removeChild(enclosure);
 							}
-						} while (j-- > 0);
+						}
 					}
 
 					jS.i = i;
 
-					if (spreadsheetUI !== u) {
-						enclosure = spreadsheetUI.enclosure;
-					} else {
-						enclosure = jS.controls.enclosure[i][0];
-					}
+					enclosure = jS.obj.enclosure();
 
-					enclosure.style.display = "";
+					ui.appendChild(enclosure);
 
 					jS.highlighter.setTab(jS.obj.tab());
 
@@ -10934,7 +10941,7 @@ $.sheet = {
 									}
 
 									var showSpreadsheet = function() {
-											jS.obj.enclosure().hide();
+											jS.obj.ui.removeChild(jS.obj.enclosure());
 											jS.setBusy(true);
 											var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, table, options);
 											jS.setActiveSheet(-1, spreadsheetUI);
@@ -12460,7 +12467,7 @@ $.sheet = {
 					scrollUI;
 				if (j > -1) {
 					do {
-						scrollUI = instance[j].controls.enclosure[i][0].scrollUI;
+						scrollUI = instance[j].controls.enclosures[i].scrollUI;
 
 						if (this !== scrollUI) {
 							scrollUI.scrollLeft = me.scrollLeft;
