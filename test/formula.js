@@ -19,6 +19,50 @@ tf.test('Formula: Dependencies', function() {
 });
 
 
+tf.test('Formula: Proper number parsing', function() {
+	var table = tableify('=SUM(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)'),
+		div = $('<div>')
+			.append(table)
+			.sheet(),
+		jS = div.getSheet(),
+		A1 = jS.getCell(0, 1, 1);
+
+	A1.updateValue();
+
+	tf.assertEquals(A1.value.valueOf(), 20, 'Correct value');
+	div.getSheet().kill();
+});
+
+
+tf.test('Formula: Proper cell parsing', function() {
+	var table = tableify('=SUM(B1)\t185.50'),
+		div = $('<div>')
+			.append(table)
+			.sheet(),
+		jS = div.getSheet(),
+		A1 = jS.getCell(0, 1, 1);
+
+	A1.updateValue();
+
+	tf.assertEquals(A1.value.valueOf(), 185.50, 'Correct value');
+	div.getSheet().kill();
+});
+
+
+tf.test('Formula: Proper cell & value parsing', function() {
+	var table = tableify('=SUM(B1, 200)\t185.50'),
+		div = $('<div>')
+			.append(table)
+			.sheet(),
+		jS = div.getSheet(),
+		A1 = jS.getCell(0, 1, 1);
+
+	A1.updateValue();
+
+	tf.assertEquals(A1.value.valueOf(), 385.50, 'Correct value');
+	div.getSheet().kill();
+});
+
 tf.test('Formula: Dependencies from JSON', function() {
 	var spreadsheets = [{
 			title: '1',

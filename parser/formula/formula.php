@@ -2428,7 +2428,9 @@ case 58:
 break;
 case 59:
 
-        $thisS = $s[$o-1] * 0.01;
+		
+        	$thisS = ($s[$o-1] * 0.01) . '';
+        
     
 break;
 }
