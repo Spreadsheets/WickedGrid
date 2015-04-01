@@ -266,40 +266,50 @@
 
 			return jitCell;
 		},
-		jitCellById: function(id) {
+		jitCellById: function(id, sheetIndex, callback) {
 			if (this.cellIds[id] !== undefined) {
-				return this.cellIds[id].requestCell();
+				callback(this.cellIds[id].requestCell());
+				return this;
 			}
 
 			var loader = this,
 				json = this.json,
-				sheetIndex = json.length - 1,
+				sheetMax = (sheetIndex < 0 ? json.length - 1: sheetIndex + 1),
 				sheet,
 				rowIndex,
+				rowMax,
 				rows,
 				row,
 				columnIndex,
+				columnMax,
 				columns,
 				column;
 
-			if (sheetIndex < 0) return null;
+			if (sheetIndex < 0) {
+				sheetIndex = 0;
+			}
 
-			do {
+			for(;sheetIndex < sheetMax;sheetIndex++) {
 				sheet = json[sheetIndex];
 				rows = sheet.rows;
-
 				if (rows.length < 1) continue;
+				rowIndex = 0;
+				rowMax = rows.length;
 
-				rowIndex = rows.length - 1;
-				do {
+				for (; rowIndex < rowMax; rowIndex++) {
+
 					row = rows[rowIndex];
 					columns = row.columns;
-					columnIndex = columns.length - 1;
+					columnIndex = 0;
+					columnMax = columns.length;
 
-					do {
+					for (; columnIndex < columnMax; columnIndex++) {
 						column = columns[columnIndex];
-						if (typeof column['id'] == 'string') {
-							this.cellIds[id] = {
+
+						if (column === null) continue;
+
+						if (typeof column['id'] === 'string') {
+							this.cellIds[column['id']] = {
 								cell: column,
 								sheetIndex: sheetIndex,
 								rowIndex: rowIndex,
@@ -309,14 +319,15 @@
 								}
 							};
 						}
-					} while(columnIndex-- > 0);
-				} while(rowIndex-- > 0);
-			} while(sheetIndex-- > 0);
+					}
+				}
+			}
 
 			if (this.cellIds[id] !== undefined) {
-				return this.cellIds[id].requestCell();
+				callback(this.cellIds[id].requestCell());
 			}
-			return this.cellIds[id] = null;
+
+			return this;
 		},
 		title: function(sheetIndex) {
 			var json = this.json,
