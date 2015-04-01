@@ -2918,40 +2918,50 @@ Sheet.StyleUpdater = (function(document) {
 
 			return jitCell;
 		},
-		jitCellById: function(id) {
+		jitCellById: function(id, sheetIndex, callback) {
 			if (this.cellIds[id] !== undefined) {
-				return this.cellIds[id].requestCell();
+				callback(this.cellIds[id].requestCell());
+				return this;
 			}
 
 			var loader = this,
 				json = this.json,
-				sheetIndex = json.length - 1,
+				sheetMax = (sheetIndex < 0 ? json.length - 1: sheetIndex + 1),
 				sheet,
 				rowIndex,
+				rowMax,
 				rows,
 				row,
 				columnIndex,
+				columnMax,
 				columns,
 				column;
 
-			if (sheetIndex < 0) return null;
+			if (sheetIndex < 0) {
+				sheetIndex = 0;
+			}
 
-			do {
+			for(;sheetIndex < sheetMax;sheetIndex++) {
 				sheet = json[sheetIndex];
 				rows = sheet.rows;
-
 				if (rows.length < 1) continue;
+				rowIndex = 0;
+				rowMax = rows.length;
 
-				rowIndex = rows.length - 1;
-				do {
+				for (; rowIndex < rowMax; rowIndex++) {
+
 					row = rows[rowIndex];
 					columns = row.columns;
-					columnIndex = columns.length - 1;
+					columnIndex = 0;
+					columnMax = columns.length;
 
-					do {
+					for (; columnIndex < columnMax; columnIndex++) {
 						column = columns[columnIndex];
-						if (typeof column['id'] == 'string') {
-							this.cellIds[id] = {
+
+						if (column === null) continue;
+
+						if (typeof column['id'] === 'string') {
+							this.cellIds[column['id']] = {
 								cell: column,
 								sheetIndex: sheetIndex,
 								rowIndex: rowIndex,
@@ -2961,14 +2971,15 @@ Sheet.StyleUpdater = (function(document) {
 								}
 							};
 						}
-					} while(columnIndex-- > 0);
-				} while(rowIndex-- > 0);
-			} while(sheetIndex-- > 0);
+					}
+				}
+			}
 
 			if (this.cellIds[id] !== undefined) {
-				return this.cellIds[id].requestCell();
+				callback(this.cellIds[id].requestCell());
 			}
-			return this.cellIds[id] = null;
+
+			return this;
 		},
 		title: function(sheetIndex) {
 			var json = this.json,
@@ -5667,13 +5678,48 @@ $.sheet = {
 				/**
 				 *
 				 * @param {String} cellId
-				 * @param {Number|Function} [callbackOrSheet]
+				 * @param {Number|Function} callbackOrSheet
 				 * @param {Function} [callback]
-				 * @returns {*}
+				 * @returns {jS}
 				 */
 				getCellById: function(cellId, callbackOrSheet, callback) {
-					var hasLoader = s.loader !== null,
+					var loader = s.loader,
 						cell,
+						sheet;
+
+					if (loader !== null) {
+						if (typeof callbackOrSheet === 'function') {
+							sheet = -1;
+							callback = callbackOrSheet;
+						} else {
+							sheet = callbackOrSheet;
+							if (typeof sheet === 'sting') {
+								sheet = loader.getSpreadsheetIndexByTitle(sheet);
+							}
+						}
+
+						if (jS.isBusy()) {
+							jS.whenNotBusy(function(){
+								loader.jitCellById(cellId, sheet, callback);
+							});
+						} else {
+							loader.jitCellById(cellId, sheet, callback);
+						}
+					} else {
+						throw new Error('Not yet implemented');
+					}
+
+					return this;
+				},
+				getCells: function(cellReferences, callbackOrSheet, callback) {
+					var i = 0,
+						max = cellReferences.length,
+						remaining = max - 1,
+						cellReference,
+						cellLocation,
+						cell,
+						cells = [],
+						got = 0,
 						sheet;
 
 					if (typeof callbackOrSheet === 'function') {
@@ -5682,85 +5728,60 @@ $.sheet = {
 					} else {
 						sheet = callbackOrSheet;
 						if (typeof sheet === 'sting') {
-							sheet = s.loader.getSpreadsheetIndexByTitle(sheet);
+							sheet = loader.getSpreadsheetIndexByTitle(sheet);
 						}
 					}
 
-					if (hasLoader) {
-						cell = s.loader.jitCellById(cellId, sheet);
+					jS.whenNotBusy(function() {
+						for(;i < max; i++) {
+							cellReference = cellReferences[i];
+							if (typeof cellReference === 'string') {
+								(function(i) {
+									cell = jS.getCellById(cellReference, sheet, function(cell) {
+										cells[i] = cell;
+										got++;
 
-						if (callback !== u && cell !== null) {
-							callback.call(cell);
-							return this;
-						}
-
-						return cell;
-					}
-
-					return null;
-				},
-				getCells: function(cellReferences, callback) {
-					var i = 0,
-						max = cellReferences.length,
-						remaining = max - 1,
-						cellReference,
-						cellLocation,
-						cell,
-						cells = [];
-
-					for(;i < max; i++) {
-						cellReference = cellReferences[i];
-						if (typeof cellReference === 'string') {
-							//TODO: get cellLocation from string here
-							cell = jS.getCellById(cellReference);
-						} else {
-							cellLocation = cellReference;
-							cell = jS.getCell(cellLocation.sheet, cellLocation.rowIndex, cellLocation.columnIndex);
-						}
-
-						if (cell !== null) {
-							cells.push(cell);
-						}
-					}
-
-					return cells;
-				},
-
-				updateCells: function(cellReferences, callback) {
-					var i = 0,
-						max = cellReferences.length,
-						remaining = max - 1,
-						cellReference,
-						cellLocation,
-						cell,
-						values = [];
-
-					for(;i < max; i++) {
-						cellReference = cellReferences[i];
-						if (typeof cellReference === 'string') {
-							cell = jS.getCellById(cellReference);
-						} else {
-							cellLocation = cellReference;
-							cell = jS.getCell(cellLocation.sheet, cellLocation.rowIndex, cellLocation.columnIndex);
-						}
-
-						if (cell !== null) {
-
-							if (callback !== u) {
-								(function(cell, i) {
-									cell.updateValue(function (value) {
-										remaining--;
-										values[i] = value;
-										if (remaining < 0) {
-											callback.apply(jS, values);
-										}
+										if (got === max) callback(cells);
 									});
-								})(cell, i);
+								})(i);
+							} else {
+								cellLocation = cellReference;
+								cell = jS.getCell(cellLocation.sheet, cellLocation.rowIndex, cellLocation.columnIndex);
+								if (cell !== null) {
+									cells[i] = cell;
+									got++;
+
+									if (got === max) callback(cells);
+								}
 							}
-						} else {
-							remaining--;
 						}
-					}
+					});
+
+					return this;
+				},
+
+				updateCells: function(cellReferences, callbackOrSheet, callback) {
+					jS.getCells(cellReferences, callbackOrSheet, function() {
+						var cells = arguments,
+							max = cells.length,
+							remaining = max - 1,
+							values = [],
+							i = 0;
+
+						for(;i < max;i++) {
+							(function(i) {
+								cells[i].updateValue(function(value) {
+									remaining--;
+									values[i] = value;
+									if (remaining < 0) {
+										callback.apply(jS, values);
+									}
+								});
+							})(i);
+						}
+					});
+
+					return this;
 				},
 				/**
 				 * Tracks which spreadsheet is active to intercept keystrokes for navigation
@@ -7913,9 +7934,9 @@ $.sheet = {
 										//reset formula to null so it can be re-evaluated
 										cell.parsedFormula = null;
 										if (v.charAt(0) == '=') {
-											td.setAttribute('data-formula', v);
+											cell.formula = v = v.substring(1);
 											//change only formula, previous value will be stored and recalculated momentarily
-											cell.formula = v;
+											td.setAttribute('data-formula', cell.formula = v);
 										} else {
 											td.removeAttribute('data-formula');
 											cell.value = v;
@@ -9492,6 +9513,10 @@ $.sheet = {
 					} else {
 						jS.busy.pop();
 					}
+
+					if (jS.busy.length < 1 && jS.whenNotBusyStack.length > 0) {
+						jS.whenNotBusyStack.shift()();
+					}
 				},
 
 				/**
@@ -9501,6 +9526,17 @@ $.sheet = {
 				 */
 				isBusy:function () {
 					return (jS.busy.length > 0);
+				},
+
+
+				whenNotBusyStack: [],
+
+				whenNotBusy: function(callback) {
+					if (jS.isBusy()) {
+						jS.whenNotBusyStack.push(callback);
+					} else {
+						callback();
+					}
 				},
 
 				/**
