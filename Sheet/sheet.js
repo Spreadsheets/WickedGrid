@@ -3503,7 +3503,8 @@ $.sheet = {
 						keydown:function (e) {
 							e = e || window.event;
 							if (jS.readOnly[jS.i]) return false;
-							if (jS.cellLast !== null && (jS.cellLast.rowIndex < 0 || jS.cellLast.columnIndex < 0)) return false;
+							if (jS.cellLast === null) return false;
+							if (jS.cellLast.rowIndex < 0 || jS.cellLast.columnIndex < 0) return false;
 
 							jS.trigger('sheetFormulaKeydown', [false]);
 
@@ -3704,7 +3705,8 @@ $.sheet = {
 						keydown:function (e) {
 							e = e || window.event;
 							if (jS.readOnly[jS.i]) return false;
-							if (jS.cellLast !== null && (jS.cellLast.rowIndex < 0 || jS.cellLast.columnIndex < 0)) return false;
+							if (jS.cellLast === null) return;
+							if (jS.cellLast.rowIndex < 0 || jS.cellLast.columnIndex < 0) return false;
 							var td = jS.cellLast.td;
 
 							if (jS.nav) {
@@ -6071,10 +6073,7 @@ $.sheet = {
 					}
 				},
 
-				calcVisiblePos: {
-					row: -1,
-					col: -1
-				},
+				calcVisiblePos: [],
 				calcVisibleInit: function(sheetIndex) {
 					sheetIndex = sheetIndex || jS.i;
 
@@ -6125,7 +6124,7 @@ $.sheet = {
 						done: done
 					});
 
-					this.calcVisiblePos = pos;
+					this.calcVisiblePos[jS.i] = pos;
 					jS.setChanged(false);
 				},
 				calcVisibleRow: function(actionUI, sheetIndex) {
@@ -6137,7 +6136,10 @@ $.sheet = {
 						pane = actionUI.pane,
 						columnIndex,
 						columnMax,
-						calcVisiblePos = this.calcVisiblePos,
+						calcVisiblePos = this.calcVisiblePos[jS.i] || {
+								row: -1,
+								col: -1
+							},
 						grow = function() {
 							var stack = [],
 								sheetSize = pane.size(),
@@ -6210,7 +6212,10 @@ $.sheet = {
 						row,
 						colIndex,
 						cell,
-						oldPos = this.calcVisiblePos,
+						oldPos = this.calcVisiblePos[jS.i] || {
+								row: -1,
+								col: -1
+							},
 						newPos = {row: oldPos.row, col: oldPos.col},
 						stack = [],
 						each = function() {
@@ -6247,7 +6252,7 @@ $.sheet = {
 						} while(rowIndex-- > 1);
 					}
 
-					this.calcVisiblePos = newPos;
+					this.calcVisiblePos[jS.i] = newPos;
 
 					thaw(stack,{
 						each: each
@@ -6351,6 +6356,7 @@ $.sheet = {
 					jS.obj.menus().remove();
 					jS.obj.tabContainer().children().eq(jS.i).remove();
 					jS.spreadsheets.splice(oldI, 1);
+					jS.calcVisiblePos.splice(oldI, 1);
 					jS.controls.autoFiller.splice(oldI, 1);
 					jS.controls.bar.helper.splice(oldI, 1);
 					jS.controls.bar.corner.splice(oldI, 1);
@@ -6853,12 +6859,12 @@ $.sheet = {
 								minHeight:s.parent.height() * 0.1,
 								start:function () {
 									jS.setBusy(true);
-									jS.obj.enclosure().hide();
+									jS.obj.ui.removeChild(jS.obj.enclosure());
 									ui.sheetAdder.hide();
 									ui.tabContainer.hide();
 								},
 								stop:function () {
-									jS.obj.enclosure().show();
+									jS.obj.ui.appendChild(jS.obj.enclosure());
 									ui.sheetAdder.show();
 									ui.tabContainer.show();
 									jS.setBusy(false);
