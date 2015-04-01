@@ -1633,7 +1633,7 @@ $.sheet = {
 							callback = callbackOrSheet;
 						} else {
 							sheet = callbackOrSheet;
-							if (typeof sheet === 'sting') {
+							if (typeof sheet === 'string') {
 								sheet = loader.getSpreadsheetIndexByTitle(sheet);
 							}
 						}
@@ -1667,7 +1667,7 @@ $.sheet = {
 						callback = callbackOrSheet;
 					} else {
 						sheet = callbackOrSheet;
-						if (typeof sheet === 'sting') {
+						if (typeof sheet === 'string') {
 							sheet = loader.getSpreadsheetIndexByTitle(sheet);
 						}
 					}
@@ -1677,11 +1677,11 @@ $.sheet = {
 							cellReference = cellReferences[i];
 							if (typeof cellReference === 'string') {
 								(function(i) {
-									cell = jS.getCellById(cellReference, sheet, function(cell) {
+									jS.getCellById(cellReference, sheet, function(cell) {
 										cells[i] = cell;
 										got++;
 
-										if (got === max) callback(cells);
+										if (got === max) callback.apply(jS, cells);
 									});
 								})(i);
 							} else {
@@ -1691,7 +1691,7 @@ $.sheet = {
 									cells[i] = cell;
 									got++;
 
-									if (got === max) callback(cells);
+									if (got === max) callback.apply(jS, cells);
 								}
 							}
 						}
@@ -1701,7 +1701,19 @@ $.sheet = {
 				},
 
 				updateCells: function(cellReferences, callbackOrSheet, callback) {
-					jS.getCells(cellReferences, callbackOrSheet, function() {
+					var sheet;
+
+					if (typeof callbackOrSheet === 'function') {
+						sheet = -1;
+						callback = callbackOrSheet;
+					} else {
+						sheet = callbackOrSheet;
+						if (typeof sheet === 'string') {
+							sheet = loader.getSpreadsheetIndexByTitle(sheet);
+						}
+					}
+
+					jS.getCells(cellReferences, sheet, function() {
 						var cells = arguments,
 							max = cells.length,
 							remaining = max - 1,
@@ -3725,6 +3737,7 @@ $.sheet = {
 									case key.DELETE:
 										jS.toTsv(null, true);
 										jS.obj.formula().val('');
+										jS.cellLast.isEdit = true;
 										break;
 									case key.TAB:
 										jS.evt.document.tab(e);
@@ -3850,14 +3863,14 @@ $.sheet = {
 							inPlaceEditHasFocus = $(inPlaceEdit).is(':focus'),
 							cell = jS.cellLast;
 
-						(jS.obj.inPlaceEdit().destroy || emptyFN)();
+						(inPlaceEdit.destroy || emptyFN)();
 						if (cell !== null && (cell.isEdit || force)) {
 							var formula = (inPlaceEditHasFocus ? $(inPlaceEdit) : jS.obj.formula()),
 								td = cell.td;
 
 							if (jS.isFormulaEditable(td)) {
 								//Lets ensure that the cell being edited is actually active
-								if (td && jS.cellLast.rowIndex > 0 && jS.cellLast.columnIndex > 0) {
+								if (td !== null && cell.rowIndex > 0 && cell.columnIndex > 0) {
 
 									//This should return either a val from textbox or formula, but if fails it tries once more from formula.
 									var v = formula.val(),
@@ -3886,7 +3899,8 @@ $.sheet = {
 												loader.setCellAttributes(loadedFrom, {
 													'cache': u,
 													'formula': '',
-													'value': v
+													'value': v,
+													'parsedFormula': null
 												});
 											}
 										}
@@ -3896,7 +3910,7 @@ $.sheet = {
 									jS.resolveCell(cell);
 
 									//formula.focus().select();
-									jS.cellLast.isEdit = false;
+									cell.isEdit = false;
 
 									//perform final function call
 									jS.trigger('sheetCellEdited', [cell]);

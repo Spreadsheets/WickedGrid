@@ -31,6 +31,8 @@ Sheet.Cell = (function() {
 		this.waitingCallbacks = [];
 		this.parsedFormula = null;
 		this.defer = null;
+		this.isEdit = false;
+		this.edited = false;
 	}
 
 	Constructor.prototype = {
