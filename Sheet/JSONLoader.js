@@ -287,6 +287,9 @@
 			do {
 				sheet = json[sheetIndex];
 				rows = sheet.rows;
+
+				if (rows.length < 1) continue;
+
 				rowIndex = rows.length - 1;
 				do {
 					row = rows[rowIndex];
