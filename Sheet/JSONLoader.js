@@ -397,10 +397,8 @@
 		},
 		setCellAttributes: function(cell, attributes) {
 			var i;
-			for (i in attributes) {
-				if (attributes.hasOwnProperty(i)) {
-					cell[i] = attributes[i];
-				}
+			for (i in attributes) if (i !== undefined && attributes.hasOwnProperty(i)) {
+				cell[i] = attributes[i];
 			}
 
 			return this;
