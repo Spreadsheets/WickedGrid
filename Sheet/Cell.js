@@ -108,16 +108,11 @@ Sheet.Cell = (function() {
 			var operatorFn,
 				cell = this,
 				cache,
-				stack,
 				value = this.value,
 				formula = this.formula,
 				cellType = this.cellType,
 				cellTypeHandler,
 				defer = this.defer,
-				td = this.td,
-				calcStack,
-				formulaParser,
-				typesStack,
 				callbackValue,
 				resolveFormula = function (parsedFormula) {
 					cell.parsedFormula = parsedFormula;
@@ -284,10 +279,7 @@ Sheet.Cell = (function() {
 				if (this.parsedFormula !== null) {
 					resolveFormula(this.parsedFormula);
 				} else {
-					cell.parseFormula({
-						formula: formula,
-						callback: resolveFormula
-					});
+					this.jS.parseFormula(formula, resolveFormula);
 				}
 
 			} else if (
@@ -761,75 +753,15 @@ Sheet.Cell = (function() {
 		},
 
 		type: Constructor,
-		typeName: 'Sheet.Cell',
-		parseFormula: function(item) {
-			if (!this.jS.s.useMultiThreads) {
-				var formulaParser = this.cellHandler.formulaParser(Sheet.calcStack);
-				formulaParser.yy.types = [];
-				item.callback(formulaParser.parse(item.formula));
-				return;
-			}
-			var i = Constructor.threadIndex,
-				threads = Constructor.threads,
-				thread,
-				isThreadAbsent = (typeof threads[i] === 'undefined');
-
-			if (isThreadAbsent) {
-				thread = Constructor.threads[i] = operative(function(formula) {
-					if (typeof formula === 'string') {
-						var formulaParser = parser.Formula();
-						formulaParser.yy.types = [];
-						return formulaParser.parse(formula);
-					}
-					return null;
-				}, [
-					Constructor.formulaParserUrl
-				]);
-				thread.busy = false;
-				thread.stash = [];
-			} else {
-				thread = threads[i];
-			}
-
-			Constructor.threadIndex++;
-			if (Constructor.threadIndex > Constructor.threadLimit) {
-				Constructor.threadIndex = 0;
-			}
-
-			if (thread.busy) {
-				thread.stash.push(function() {
-					thread.busy = true;
-					thread(item.formula, function(parsedFormula) {
-						thread.busy = false;
-						item.callback(parsedFormula);
-						if (thread.stash.length > 0) {
-							thread.stash.shift()();
-						}
-					});
-				});
-			} else {
-				thread.busy = true;
-				thread(item.formula, function(parsedFormula) {
-					thread.busy = false;
-					item.callback(parsedFormula);
-					if (thread.stash.length > 0) {
-						thread.stash.shift()();
-					}
-				});
-			}
-		}
+		typeName: 'Sheet.Cell'
 	};
 
-	Constructor.threads = [];
-	Constructor.threadLimit = 10;
-	Constructor.threadIndex = 0;
 
 	Constructor.thaws = [];
 	Constructor.thawLimit = 500;
 	Constructor.thawIndex = 0;
 
 	Constructor.cellLoading = null;
-	Constructor.formulaParserUrl = '../parser/formula/formula.js';
 	Constructor.maxRecursion = 10;
 
 	return Constructor;
