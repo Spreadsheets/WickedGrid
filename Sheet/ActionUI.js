@@ -8,18 +8,16 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.pane = document.createElement('div');
 		this.table = table;
 		this.max = max;
+
 		this.xIndex = 0;
 		this.yIndex = 0;
 
-		this.scrollAxis = {
-			x:{},
-			y:{}
-		};
+		this.scrollAxisX = {};
+		this.scrollAxisY = {};
 
 		this.scrollSize = {};
 
 		this.hiddenColumns = [];
-		this.hiddenRows = [];
 
 		if (!(this.frozenAt = frozenAt)) {
 			this.frozenAt = {row:0, col:0};
@@ -44,10 +42,11 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		var that = this,
 			pane = this.pane,
+			tBody = this.tBody = table.tBody,
 			cssId = '#' + table.getAttribute('id'),
 			scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
 			scrollInner = pane.scrollInner = document.createElement('div'),
-			scrollStyleX = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(index, style) {
+			scrollStyleX = this.scrollAxisX.scrollStyle = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(index, style) {
 				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
 				if (that.xIndex === index) return false;
 
@@ -66,6 +65,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				}
 
 				that.xIndex = index;
+
 				if (style === undefined) {
 					var col = that.frozenAt.col;
 					 style =
@@ -87,45 +87,9 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				that.scrolledArea.col = Math.max(index || 1, 1);
 				that.foldArea.col = endIndex;
 				return true;
-			}, max),
-			scrollStyleY = pane.scrollStyleY = this.scrollStyleY = new Sheet.StyleUpdater(function(index, style){
-				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
-				if (that.yIndex === index) return false;
+			}, max);
 
-				if (index === undefined || index === null) index = that.yIndex;
-
-
-				var endIndex = index + that.maximumVisibleRows,
-					startOfSet = arrHelpers.ofSet(that.hiddenRows, index),
-					endOfSet = arrHelpers.ofSet(that.hiddenRows, endIndex);
-
-				if (startOfSet !== null) {
-					index = startOfSet.end + (index - startOfSet.start);
-				}
-
-				if (endOfSet !== null) {
-					endIndex = endOfSet.end + (endIndex - endOfSet.start);
-				}
-
-				that.yIndex = index;
-				if (style === undefined) {
-					var row = that.frozenAt.row;
-					style =
-						//hide all previous tr elements
-						cssId + ' tr:nth-child(-n+' + index + ') {display: none;}' +
-
-						//but show those that are frozen
-						cssId + ' tr:nth-child(-n+' + (that.frozenAt.row + 1) + ') {display: table-row;}' +
-
-						//hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						cssId + ' tr:nth-child(' + (endIndex) + ') ~ tr {display: none;}';
-				}
-
-				this.setStyle(style);
-				that.scrolledArea.row = Math.max(index || 1, 1);
-				that.foldArea.row = endIndex;
-				return true;
-			});
+		this.yDetacher = new Sheet.Detacher(tBody);
 
 		scrollOuter.setAttribute('class', cl);
 		scrollOuter.appendChild(scrollInner);
@@ -133,54 +97,19 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		$(scrollOuter)
 			.disableSelectionSpecial();
 
+		scrollOuter.addEventListener('scroll', function() {
+			var total = scrollOuter.scrollTop + scrollOuter.clientHeight;
+			if (total >= (scrollInner.clientHeight - (scrollOuter.clientHeight / 2))) {
+				scrollInner.style.height = (scrollInner.clientHeight + (scrollOuter.clientHeight * 2)) + 'px';
+			}
+
+			total = scrollOuter.scrollLeft + scrollOuter.clientWidth;
+			if (total >= (scrollInner.clientWidth - (scrollOuter.clientWidth / 2))) {
+				scrollInner.style.width = (scrollInner.clientWidth + (scrollOuter.clientWidth * 2)) + 'px';
+			}
+		});
+
 		pane.appendChild(scrollStyleX.styleElement);
-		pane.appendChild(scrollStyleY.styleElement);
-
-		var xStyle,
-			yStyle,
-			tableWidth,
-			tableHeight,
-			enclosureWidth,
-			enclosureHeight,
-			firstRow = table.tBody.children[0];
-
-		pane.resizeScroll = function (justTouch) {
-			if (justTouch) {
-				xStyle = scrollStyleX.getStyle();
-				yStyle = scrollStyleY.getStyle();
-			} else {
-				xStyle = (table.clientWidth <= enclosure.clientWidth ? '' : scrollStyleX.getStyle());
-				yStyle = (table.clientHeight <= enclosure.clientHeight ? '' : scrollStyleY.getStyle());
-			}
-
-			scrollStyleX.update(null, ' ');
-			scrollStyleY.update(null, ' ');
-
-			if (firstRow === undefined) {
-				firstRow = table.tBody.children[0];
-			}
-
-			tableWidth = (firstRow.clientWidth || table.clientWidth) + 'px';
-			tableHeight = table.clientHeight + 'px';
-			enclosureWidth = enclosure.clientWidth + 'px';
-			enclosureHeight = enclosure.clientHeight + 'px';
-
-			scrollInner.style.width = tableWidth;
-			scrollInner.style.height = tableHeight;
-
-			scrollOuter.style.width = enclosureWidth;
-			scrollOuter.style.height = enclosureHeight;
-
-			that.scrollStart('x', justTouch);
-			that.scrollStart('y', justTouch);
-
-			scrollStyleX.update(null, xStyle);
-			scrollStyleY.update(null, yStyle);
-
-			if (pane.inPlaceEdit) {
-				pane.inPlaceEdit.goToTd();
-			}
-		};
 
 		new MouseWheel(pane, scrollOuter);
 	};
@@ -239,8 +168,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				if (i < 25) {
 					break;
 				}
-
-				this.scrollStop();
 			}
 		},
 
@@ -309,8 +236,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			},0);
 		},
 
-
-		hide:function (hiddenRows, hiddenColumns) {
+		hide:function (jS, hiddenColumns, hiddenRows) {
 			var cssId = '#' + this.table.getAttribute('id'),
 				pane = this.pane,
 				that = this;
@@ -323,86 +249,89 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					this.setStyle(style);
 				});
-
-				this.toggleHideStyleY = new Sheet.StyleUpdater(function () {
-					var style = this.nthCss('tr', cssId, that.hiddenRows, 0);
-
-					this.setStyle(style);
-				});
 			}
 
 			pane.appendChild(this.toggleHideStyleX.styleElement);
-			pane.appendChild(this.toggleHideStyleY.styleElement);
 
-			this.hiddenRows = (hiddenRows !== null ? hiddenRows : []);
 			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
 
-			this.hiddenRows.sort();
-			this.hiddenColumns.sort();
+			if (hiddenRows !== null && hiddenRows.length > 0) {
+				hiddenRows.sort();
+				this.toggleHideRowRange(jS, hiddenRows[0], hiddenRows[hiddenRows.length - 1], true);
+			}
 
-			this.toggleHideStyleY.update();
-			this.toggleHideStyleX.update();
+			if (this.hiddenColumns.length > 0) {
+				this.hiddenColumns.sort();
+				this.toggleHideStyleX.update();
+			}
 		},
 
 		/**
 		 * Toggles a row to be visible
-		 * @param {Number} index
+		 * @param {jQuery.sheet.instance} jS
+		 * @param {Number} rowIndex
 		 */
-		toggleHideRow: function(index) {
-			var key;
-			if ((key = this.hiddenRows.indexOf(index)) > -1) {
-				this.hiddenRows.splice(key, 1);
-			} else {
-				this.hiddenRows.push(index);
-			}
-			this.hiddenRows.sort();
-			this.toggleHideStyleY.update();
+		toggleHideRow: function(jS, rowIndex) {
+			this.toggleHideRowRange(jS, rowIndex);
 		},
 
 		/**
 		 * Toggles a range of rows to be visible starting at index of 1
+		 * @param {jQuery.sheet.instance} jS
 		 * @param {Number} startIndex
 		 * @param {Number} [endIndex]
+		 * @param {Boolean} [hide]
 		 */
-		toggleHideRowRange: function(startIndex, endIndex) {
+		toggleHideRowRange: function(jS, startIndex, endIndex, hide) {
 			if (!startIndex) return;
 			if (!endIndex) endIndex = startIndex;
 
-			var hiddenRows = this.hiddenRows,
-				newHiddenRows = [],
-				max = hiddenRows.length,
-				hiddenRow,
-				i = 0,
-				removing = null;
+			var spreadsheets = jS.spreadsheets,
+				spreadsheet = spreadsheets[jS.i],
+				tBody = this.tBody,
+				rowIndex = startIndex,
+				row,
+				tr,
+				removing = (hide !== undefined ? hide : (spreadsheet[startIndex][1].td.parentNode.parentNode !== null)),
+				lastAnchorIndex = endIndex + 1,
+				lastAnchor = null;
 
-			for(;i < max; i++){
-				hiddenRow = hiddenRows[i];
-				if (hiddenRow >= startIndex && hiddenRow <= endIndex) {
-					if (removing === null) {
-						removing = true;
+			if (removing) {
+				for(;rowIndex <= endIndex && (row = spreadsheet[rowIndex]) !== undefined; rowIndex++){
+					tr = row[1].td.parentNode;
+					if (tr.parentNode !== null) {
+						tBody.removeChild(tr);
 					}
-				} else {
-					newHiddenRows.push(hiddenRow);
+				}
+			} else {
+
+				while (lastAnchor === null && lastAnchorIndex < spreadsheet.length) {
+					row = spreadsheet[lastAnchorIndex++];
+					lastAnchor = row[1].td.parentNode;
+					if (lastAnchor.parentNode === null) {
+						lastAnchor = null;
+					}
+				}
+
+				for(;rowIndex <= endIndex && (row = spreadsheet[rowIndex]) !== undefined; rowIndex++){
+					tr = row[1].td.parentNode;
+					if (tr.parentNode !== null) {
+						tBody.insertBefore(tr, lastAnchor);
+					}
 				}
 			}
 
-			if (removing === null) {
-				for(i = startIndex; i <= endIndex; i++) {
-					newHiddenRows.push(i);
-				}
-			}
-
-			newHiddenRows.sort();
-			this.hiddenRows = newHiddenRows;
-			this.toggleHideStyleY.update();
 		},
 
 		/**
+		 * @param {jQuery.sheet.instance} jS
 		 * Makes all rows visible
 		 */
-		rowShowAll:function () {
-			this.toggleHideStyleY.setStyle('');
-			this.hiddenRows = [];
+		rowShowAll:function (jS) {
+			var spreadsheet = jS.spreadsheets[jS.i],
+				lastIndex = spreadsheet.length - 1;
+
+			this.toggleHideRowRange(jS, 1, lastIndex, false);
 		},
 
 
@@ -466,78 +395,20 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		},
 
-		/**
-		 * prepare everything needed for a scroll, needs activated every time spreadsheet changes in size
-		 * @param {String} axisName x or y
-		 * @param {Boolean} justTouch
-		 */
-		scrollStart:function (axisName, justTouch) {
-			var pane = this.pane,
-				outer = pane.scrollOuter,
-				axis = this.scrollAxis[axisName],
-				size = this.scrollSize = pane.size();
-
-			axis.v = [];
-			axis.name = axisName;
-
-			switch (axisName || 'x') {
-				case 'x':
-					axis.value = 0;
-					axis.max = size.cols;
-					axis.min = 0;
-					axis.size = size.cols;
-					if (!justTouch) {
-						pane.scrollStyleX.update();
-					}
-					axis.scrollStyle = pane.scrollStyleX;
-					axis.area = outer.scrollWidth - outer.clientWidth;
-					axis.sheetArea = pane.table.clientWidth - pane.table.corner.clientWidth;
-					axis.scrollUpdate = function () {
-						outer.scrollLeft = (axis.value) * (axis.area / axis.size);
-					};
-					axis.gridSize = 100 / axis.size;
-					break;
-				case 'y':
-					axis.value = 0;
-					axis.max = size.rows;
-					axis.min = 0;
-					axis.size = size.rows;
-					if (!justTouch) {
-						pane.scrollStyleY.update();
-					}
-					axis.scrollStyle = pane.scrollStyleY;
-					axis.area = outer.scrollHeight - outer.clientHeight;
-					axis.sheetArea = pane.table.clientHeight - pane.table.corner.clientHeight;
-					axis.scrollUpdate = function () {
-						outer.scrollTop = (axis.value) * (axis.area / axis.size);
-					};
-					axis.gridSize = 100 / axis.size;
-					break;
-			}
-
-			var i = axis.max;
-
-			do {
-				var position = new Number(axis.gridSize * i);
-				position.index = i + 1;
-				axis.v.unshift(position);
-			} while(i--);
-		},
 
 		/**
 		 * Scrolls to a position within the spreadsheet
-		 * @param {String} axisType
-		 * @param {Number} [pixel]scrollTO
-		 * @param {Number} [value]
+		 * @param {Number} pixel scrollTO
 		 */
-		scrollTo:function (axisType, pixel, value) {
-			var axis = this.scrollAxis[axisType],
+		scrollToPixelX:function (pixel) {
+			var axis = this.scrollAxisX,
 				max,
-				i;
+				i,
+				value = (pixel / this.pixelScrollDensity) >> 1,
+				offset = arrHelpers.indexOfNearestLessThan(this.hiddenColumns, value) + 1;
 
-			if (value === undefined) {
-				value = arrHelpers.closest(axis.v, Math.abs(pixel / axis.area) * 100, axis.min).index;
-				value += arrHelpers.indexOfNearestLessThan(axisType === 'x' ? this.hiddenColumns : this.hiddenRows, value) + 1;
+			if (offset > 0) {
+				value += offset;
 			}
 
 			max = axis.max;
@@ -548,15 +419,32 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		},
 
 		/**
-		 * Called after scroll is done
+		 * Scrolls to a position within the spreadsheet
+		 * @param {Number} pixel
+		 * @param {Boolean} [isUp]
 		 */
-		scrollStop:function () {
-			if (this.scrollAxis.x.scrollUpdate) {
-				this.scrollAxis.x.scrollUpdate();
+		scrollToPixelY: function(pixel, isUp) {
+			var i = (pixel / this.pixelScrollDensity) >> 1,
+				detacher = this.yDetacher;
+
+			this.yIndex = i;
+			this.scrolledArea.row = Math.max(i || 1, 1);
+
+			if (isUp === true) {
+				detacher
+					.attachAboveAfter(i)
+					.detachBelowAfter(i + this.maximumVisibleRows + 1);
+			} else {
+				detacher
+					.detachAboveBefore(i)
+					.attachBelowBefore(i + this.maximumVisibleRows + 1);
 			}
-			if (this.scrollAxis.y.scrollUpdate) {
-				this.scrollAxis.y.scrollUpdate();
-			}
+
+			return detacher.aboveChanged || detacher.belowChanged;
+		},
+
+		scrollToCell: function(axis, value) {
+			throw new Error('Not yet implemented');
 		},
 
 		/**
@@ -568,8 +456,10 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @type Sheet.StyleUpdater
 		 */
 		toggleHideStyleY: null,
-		maximumVisibleRows: 70,
-		maximumVisibleColumns: 20
+
+		pixelScrollDensity: 30,
+		maximumVisibleRows: 65,
+		maximumVisibleColumns: 35
 	};
 
 	return Constructor;

@@ -1,0 +1,515 @@
+
+var allNumericFields = "#outputModifiedBiiiRwaSpotMin, #outputModifiedBiiiRwaSpotMax, #dealVerNo, #jpmTargetHoldMin, #jpmTargetHoldMax, #jpmCommitmentMin, #jpmCommitmentMax, #arrangementFeesMin, #arrangementFeesMax, #financingRoeMin, #financingRoeMax, #financingShortfallMin, #financingShortfallMax, #dealRoeMin, #dealRoeMax, #dealShortfallMin, #dealShortfallMax, #clientRoeMin, #clientRoeMax, #proformaRoeMin, #proformaRoeMax, #busPotentialCfFeesMin, #busPotentialCfFeesMax, #busPotentialTssMin, #busPotentialTssMax, #busPotentialMarketsMin, #busPotentialMarketsMax";
+//var allNumericFields = "#busPotentialMarketsMin, #busPotentialMarketsMax, #busPotentialTssMin, #busPotentialTssMax, #busPotentialCfFeesMin, #busPotentialCfFeesMax, #outputModifiedBiiiRwaSpotMin, #outputModifiedBiiiRwaSpotMax, #jpmTargetHoldMax, #jpmTargetHoldMin, #arrangementFeesMin, #arrangementFeesMax, #financingRoeMax, #financingRoeMin, #financingShortfallMax, #financingShortfallMin, #jpmCommitment, #outputModifiedBiiiRwaSpot, #proformaRoeMin, #proformaRoeMax";
+validNumericKeycodes = [48,49,50,51,52,53,54,55,56,57,96,97,98,99,100,101,102,103,104,105],
+specialKeyCodes = [8,127,13,9,37,38,39,40,0,16,17,32,27,35,36],
+decimalKeyCodes = [110,190,46],
+defaultTxtColor = '#808080',
+selTextColor = 'black',
+vFieldBorder = '1px solid #1d8acf',
+errFieldBorder = '1px solid red',
+fromBscDate = "#targetBscFrom",
+toBscDate = "#targetBscTo",
+maxLength = false;
+
+$(document).ready(function() {
+	enableSelectBoxes();
+	
+	$(document.body).click(function(e){
+		var clicked = e.target;
+		if ($(clicked).parents('div.selectBox').length==0){
+			$('.selectOptions').css('display','none');
+		}
+		
+	});
+	
+});
+
+
+
+
+function loadSearchFunctionality(){
+
+	$(toBscDate).focus(function() {
+		if (this.value == this.defaultValue)
+			this.value = '';
+	}).blur(function() {
+		if (this.value == ''){
+			this.style.color=defaultTxtColor;
+			this.value = this.defaultValue;
+		}
+	});
+	$(fromBscDate).focus(function() {
+		if (this.value == this.defaultValue)
+			this.value = '';
+	}).blur(function() {
+		if (this.value == ''){
+			this.style.color=defaultTxtColor;
+			this.value = this.defaultValue;
+		}
+	});
+// $( "#advSearch" ).accordion({collapsible: true });
+	 $('#hideSearch').click(function(){
+		 $('.searchbox').slideToggle('slow');
+		 text = $('.closeSearchBox').text();
+		 if(text=='x'){
+			 $(this).html('<a href="#" class="closeSearchBox ">+</a>');
+		 }else{
+			 $(this).html('<a href="#" class="closeSearchBox ">x</a>');
+		 }
+	 });
+	 
+	 $(toBscDate).datepicker({
+		 format:"mm/dd/yyyy",
+         changeMonth: true,
+         changeYear: true,
+         yearRange: "2000:2030",
+         onClose : function(selectedDate) {
+        	 if(selectedDate){
+        		 $( fromBscDate ).datepicker( "option", "maxDate", selectedDate );
+        		 if(document.getElementById('targetBscFrom').value=='From' || document.getElementById('targetBscFrom').value==''){
+        			 $(fromBscDate).focus();
+        		 }
+        	 }
+	     }
+	 }).on({
+	     change : function(){
+			 $(this).css("color",selTextColor);
+			 $(this).css('border', vFieldBorder);
+	    	 if(this.value != "" && document.getElementById('targetBscFrom').value != "" && document.getElementById('targetBscFrom').value != "To"){
+	    		clearError();
+	    	 }
+		 },
+		 keydown :function(e) {
+			    if(e.keyCode == 8 || e.keyCode == 46) {
+			        this.value='';
+			    }
+			    e.preventDefault();
+			}
+	 });
+	 $(fromBscDate).keypress(function(event){
+		  if(event.keyCode != 8){
+			   return false;}
+			  });
+	 $(fromBscDate).datepicker({
+		 format:"mm/dd/yyyy",
+         changeMonth: true,
+         changeYear: true,
+         yearRange: "2000:2030",
+         onClose : function( selectedDate ) {
+        	 if (selectedDate) {
+        		 $( toBscDate ).datepicker( "option", "minDate", selectedDate );
+        		 if(document.getElementById('targetBscTo').value=='To' || document.getElementById('targetBscTo').value==''){
+        			 $(toBscDate).focus();
+        		 }
+        			 
+        	 }
+	     }
+	 }).on({
+	     change : function(){
+		   $(this).css("color",selTextColor);
+			 $(this).css('border', vFieldBorder);
+			 if(this.value != "" && document.getElementById('targetBscFrom').value != "" && document.getElementById('targetBscFrom').value != "From"){
+	    		clearError();
+	    	 }
+		 },
+		 keydown :function(e) {
+			    if(e.keyCode == 8 || e.keyCode == 46) {
+			    	this.value='';
+			    }
+			    e.preventDefault();
+			}
+	 });
+	 
+	 // Focus and Blur event handling to replace placeholder text in the
+		// fields.
+	 var id;
+	 $('input:not("#targetBscFrom, #targetBscTo")','#searchForm').on({
+		focus : function(event){
+			id = event.target;
+			if($(this).attr("type")!="submit"){
+				$(this).css("color",selTextColor);
+				if(this.value == this.defaultValue)
+					this.value = '';
+				}
+		 },
+		 blur : function(event){
+			 id=event.target;
+			 if($(this).attr("type")!="submit"){
+				 if(this.value==''){
+					 $(this).css("color",defaultTxtColor);
+					 this.value = this.defaultValue;
+				 }
+			 }
+			 if($(fromBscDate).val()==$(fromBscDate).attr("value") && $(toBscDate).val()==$(toBscDate).attr("value")){
+				 $(fromBscDate).css('border',vFieldBorder);
+				 $(toBscDate).css('border',vFieldBorder);
+			 }
+		 }
+	 });
+	 
+	 
+	 // Validation to only allow numbers and decimals in numeric input fields
+
+	 $(allNumericFields).on({
+		 keyup : function(e){ 
+			    if(this.value != this.defaultValue){
+			    	var valid = /^\d{0,8}(\.\d{0,6})?$/.test(this.value),
+			        val = this.value;
+			    
+				    if(!valid){
+				    	$(this).css('border', errFieldBorder);
+				        this.value = val.substring(0, val.length - 1);
+				        numberError();
+				    }
+				    else{
+		    		  	$(this).css('border', vFieldBorder);
+		    		  	clearError();
+			       }
+			    }
+		 }	,
+	 blur : function(){
+			 var fieldText = $(this).val();
+			 if(fieldText == "" || fieldText == $(this).attr("value") || !/\\D/g.test(fieldText)) {
+		    		  $('#errorSpan').html('&nbsp;');
+		    		  $(this).css('border', vFieldBorder);
+		    		  clearError();
+			 }
+		 },
+		 paste: function(){
+			 var $this = $(this);
+		        setTimeout(function(){
+		        	var regexp = /^[0-9]+(\.[0-9]{1,10})?$/;
+			        if(!regexp.test($this.val())){
+			         $this.val('');
+			         numberError();
+			        } 
+		        },0); 
+		 } 
+	 });
+	 
+	 // Validation for all alphanumeric fields.
+	 var alphaNumeric =/^[\w ]+$/;// /^[a-zA-Z0-9]*$/;
+	 $('input','#searchForm').not(allNumericFields).on({
+		 keyup : function(e){
+			 var keycode = e.keycode || e.which; 
+			 if( !alphaNumeric.test($(this).val()) && !specialKeyCodes.indexOf(keycode)>-1){
+				 	e.preventDefault();
+		    		$(this).css('border', errFieldBorder);
+		    		alphaNumericError();
+		    		this.value = this.value.substr(0,this.value.length-1);
+		    		$(this).trigger('keypress');
+		      }else if(keycode != 13){
+	    		  	$(this).css('border', vFieldBorder);
+	    		  	clearError();
+		      }
+		 },
+		 blur : function(){
+			 var fieldText = $(this).val();
+			 if(fieldText == "" || fieldText == $(this).attr("value") || alphaNumeric.test(fieldText)) {
+		    		  $('#errorSpan').html('&nbsp;');
+		    		  $(this).css('border', vFieldBorder);
+		    		  clearError();
+			 }
+		 }
+	 
+		 
+	 });
+	 $("#targetBscFrom, #targetBscTo").unbind( "keyup" );
+	 $('#searchFormSubmit').click(function(){
+		 $("#searchForm").trigger('submit');
+	 });
+	 $(document).keypress(function handle(e){
+		if(e.keyCode === 13){
+			$("#searchForm").trigger('submit');
+			$('#searchForm').blur();
+			e.preventDefault();
+		}
+	 });
+	 // Submit Form using Ajax call
+	 $("#searchForm").submit(function(e){
+		$('input').not(':hidden').each(function(){
+			if($(this).attr("type")!="submit"){
+				if(this.value == this.defaultValue){
+					this.value = '';
+				}
+			}
+		});
+		
+		if(ValidateDateInput()){
+			searchCriteria = $(this).serializeArray();
+			// Build key value pairs from form data
+			var data = new Object();
+			for (var i=0; i<searchCriteria.length; i++){
+				data[searchCriteria[i].name]=searchCriteria[i].value=="" ? null : searchCriteria[i].value ;
+			}
+			$("#searchResultsDiv").html("<table id='searchResultsTable'><tr><td></td></tr></table><div id='searchResultsPager'></div>");
+			loadSearchResultGrid(data);
+		}
+
+		// Reset all fields that have no data input
+		$('input').not(':hidden').each(function(){
+			if(this.value == ''){
+				$(this).val(this.defaultValue).css('color','#888');
+			}
+		});
+
+		e.preventDefault(); 
+	 });
+}
+
+function ValidateDateInput(){
+	var errCount = 0;
+	$("input[id^='target']").each(function(){
+		if($(this).val() == "") {
+			$(this).css('border', errFieldBorder);
+			dateError();
+			errCount=1;
+		}else{
+			clearError();
+			$(this).css('border',vFieldBorder);
+		}
+	});
+	return errCount>0 ? false:true;
+}
+function clearError(){
+	$('#errorSpan').html('&nbsp;');
+}
+function maxFieldInputError(){
+	$('#errorSpan').text('*Maximum field text length reached.');
+}
+function alphaNumericError(){
+	$('#errorSpan').text('*Please Enter Alphabets or Numbers Only');
+}
+function numberError(){
+	$('#errorSpan').text('*Please Enter Numbers or decimal Only');
+}
+function dateError(){
+	$('#errorSpan').html('*Target Bsc Date Range is mandatory</p>');
+}
+function loadSearchResultGrid(data){
+//	 var p=preference_text_map;
+//	 $("#searchResultsTable").GridUnload();
+	 $('#searchResultsTable').jqGrid({
+		 	url: roleContextPath+'/getSearchResults',
+			mtype: 'POST',
+		 	postData: data,
+		 	serializeGridData: function(postData){
+		 		return JSON.stringify(postData);
+		 	},
+		    ajaxGridOptions : {
+		        contentType: 'application/json; charset=utf-8'
+		    },
+		 	datatype: 'json',
+			height: '100%',
+			autowidth: true,
+		   	colNames:["", "Id", "BSC Region", "Client Sub Region", "BSC Target Date", "LRC Status", "BSC Approval Status", "Deal Contact", "Deal Id", "Deal Version Number","Industry Category",
+		   	          "Client Name",
+		   	          "CAS ID", "Industry", "Country of Assets","Client Executive", "Corporate Banker", "Transaction Type", "No of Facilities",
+		   	          "Obligor Grade", "JPM Commitment ($mm)", "JPM Target Hold ($mm)", "Tenor", "Arrangement Fees ($000's)",
+		   	          "Financing ROE (%)", "Financing Shortfall ($000's)",
+		   	          "Deal ROE (%)", "Deal Shortfall ($000's)", "Client ROE (%)", "Proforma Client ROE (%)","Basel III RWA - Spot ($mm)", "CF Promises ($mm)", "TS Promises ($mm)", "Markets Promises ($mm)"],
+		   	colModel:[
+		   	          	{name:'',index:'',align:"center",
+		   	          	width: 25,
+		   	            fixed: true,
+		   	            search: false,
+		   	            sortable: false,
+		   	     	    formatter : function(cellvalue, options,
+							rowObject) {
+						return '<p class="dealinfo"  onclick="showVersionList(\''
+								+ rowObject.dealId+ '\');" style="margin:0px;" title="History" alt="History"></p>';
+					    }
+				       },
+				   		{name:'id',index:'id',sorttype:"int",key:true, align:"center", hidden:true},
+				   		{name:'sourceRegion',index:'sourceRegion'},
+				   		{name:'subRegion',index:'subRegion'},
+				   		{name:'formattedTargetBscDate',index:'formattedTargetBscDate'},
+				   		{name:'lrcStatus',index:'lrcStatus'},
+				   		{name:'bscApproval',index:'bscApproval'},
+				   		{name:'liaison',index:'liaison'},
+				   		{name:'dealId',index:'dealId', sorttype:"string",align:"center",hidden:false,sortable:true,
+				            formatter: function (cellvalue, options, rowObject) {
+				                return '<a href='+roleContextPath+'/model?dealId='+rowObject.dealId+'&dealVer='+rowObject.dealVerNo+'>' +
+				                    cellvalue + '</a>';
+				            }
+				   		},
+			            {name:'dealVerNo',index:'dealVerNo'},
+			            {name:'industryCategory', index:'industryCategory'},
+			            {name:'clientName',index:'clientName'},
+			            {name:'clientCasId',index:'clientCasId'},
+			            {name:'clientIndustry',index:'clientIndustry'},
+			            {name:'clientCntryOfAsts',index:'clientCntryOfAsts'},
+			            {name:'clientExecutiveApprovers',index:'clientExecutiveApprovers'},
+			            {name:'corporateBankerApprovers',index:'corporateBankerApprovers'},
+			            {name:'transactionType',index:'transactionType'},
+			            {name:'numberOfFacilities',index:'numberOfFacilities'},
+			            {name:'sourceObligorGrade',index:'sourceObligorGrade'},
+			            {name:'jpmCommitment',index:'jpmCommitment',formatter:amountFormat},
+			            {name:'jpmTargetHold',index:'jpmTargetHold',formatter:amountFormat},
+			            {name:'inputTenor',index:'inputTenor'},
+			            {name:'arrangementFees',index:'arrangementFees',formatter:amountFormat},
+			            {name:'financingRoe',index:'financingRoe', formatter:percentAppend},
+			            {name:'financingShortfall',index:'financingShortfall',width: 152, formatter:amountFormat},		
+			            {name:'dealRoe',index:'dealRoe', align:"center", formatter:percentAppend},
+			            {name:'dealShortfall',index:'dealShortfall', formatter:amountFormat},
+			            {name:'clientRoe',index:'clientRoe', formatter:percentAppend},
+			            {name:'proformaRoe',index:'proformaRoe', formatter:percentAppend},
+			            {name:'outputModifiedBiiiRwaSpot',index:'outputModifiedBiiiRwaSpot', formatter:amountFormat},
+			            {name:'busPotentialCfFees',index:'busPotentialCfFees',formatter:amountFormat},
+			            {name:'busPotentialTss',index:'busPotentialTss',formatter:amountFormat},
+			            {name:'busPotentialMarkets',index:'busPotentialMarkets',formatter:amountFormat}
+				            
+				            
+				            
+				            
+				   		
+				   		/*
+						 * {name:'dealId',index:'dealId',
+						 * sorttype:"string",align:"center",hidden:false,sortable:true,
+						 * formatter: function (cellvalue, options, rowObject) {
+						 * return '<a
+						 * href="../banker/model?dealId='+rowObject.dealId+'&dealVer='+rowObject.dealVerNo+'">' +
+						 * cellvalue + '</a>'; }},
+						 * {name:'formattedTargetBscDate',index:'formattedTargetBscDate'},
+						 * {name:'clientCasId',index:'clientCasId'},
+						 * {name:'clientName',index:'clientName'},
+						 * {name:'clientCntryOfAsts',index:'clientCntryOfAsts'},
+						 * {name:'clientIndustry',index:'clientIndustry'},
+						 * {name:'lrcStatus',index:'lrcStatus'},
+						 * {name:'clientRoe',index:'clientRoe',
+						 * formatter:percentAppend},
+						 * {name:'jpmTargetHold',index:'jpmTargetHold',formatter:amountFormat},
+						 * {name:'financingRoe',index:'financingRoe',
+						 * formatter:percentAppend},
+						 * {name:'financingShortfall',index:'financingShortfall',
+						 * formatter:amountFormat},
+						 * {name:'dealRoe',index:'dealRoe', align:"center",
+						 * formatter:percentAppend},
+						 * {name:'dealShortfall',index:'dealShortfall',
+						 * formatter:amountFormat},
+						 * {name:'proformaRoe',index:'proformaRoe',
+						 * formatter:percentAppend},
+						 * {name:'liaison',index:'liaison'},
+						 * {name:'arrangementFees',index:'arrangementFees'},
+						 * {name:'busPotentialCfFees',index:'busPotentialCfFees'},
+						 * {name:'busPotentialMarkets',index:'busPotentialMarkets'},
+						 * {name:'busPotentialTss',index:'busPotentialTss'},
+						 * {name:'clientExecutiveApprovers',index:'clientExecutiveApprovers'},
+						 * {name:'corporateBankerApprovers',index:'corporateBankerApprovers'},
+						 * {name:'inputTenor',index:'inputTenor'},
+						 * {name:'jpmCommitment',index:'jpmCommitment'},
+						 * {name:'numberOfFacilities',index:'numberOfFacilities'},
+						 * {name:'outputModifiedBiiiRwaSpot',index:'outputModifiedBiiiRwaSpot'},
+						 * {name:'sourceObligorGrade',index:'sourceObligorGrade'},
+						 * {name:'transactionType',index:'transactionType'},
+						 * {name:'bscApproval',index:'bscApproval'},
+						 * {name:'sourceRegion',index:'sourceRegion'},
+						 * {name:'subRegion',index:'subRegion'}
+						 */
+		    ],
+		    cmTemplate:{
+		    	align:'center',
+		    },
+		    emptyrecords: "No records to view",
+			loadtext: 'Loading, Please wait...',
+			loadui: 'block',
+			shrinkToFit: false,
+			rowNum:20,
+		   	rowList:[20,40,60],
+		   	loadonce:false,	   	
+			resizable:true,
+		    gridview: true,
+		    viewrecords: true,
+		    ignoreCase:true,
+		   	pager: '#searchResultsPager',
+		    jsonReader: {
+				   repeatitems: false,
+				   records: function(obj) {return obj.totalRecords; },
+				   root: function (obj) { return obj.result; },
+				   page: function (obj) { return obj.page; },
+				   total: function (obj) { return obj.totalPages; },
+				   userdata: function(obj) {return obj.totalRecords; }
+				},
+			loadComplete: function(){
+				var recCount = $('#searchResultsTable').jqGrid('getGridParam','userData');
+				if (recCount > 0){
+					$("#searchResultCount").html(recCount+" Search Results Found").css('color','#5FB404');
+				}else {
+					$("#searchResultsDiv").html('');
+					$("#searchResultCount").html("Sorry, No Search Results Found").css('color','red');
+				}
+				
+			},
+		});
+	 	$("#searchResultsTable").jqGrid('navGrid','#searchResultsPager',{edit:false,add:false,del:false,refresh:true,search:false});
+		$("#searchResultsTable").setGridParam({ rowNum: 20 }).trigger("reloadGrid");
+}
+
+// Select Box functionality provided for fields "Lrc Status" and "industry
+// Category".
+function enableSelectBoxes(){
+	$('div.selectBox').each(function(){
+		$(this).children('span.selected').html($(this).children('div.selectOptions').children('span.selectOption:first').html());
+		$(this).attr('value',$(this).children('div.selectOptions').children('span.selectOption:first').attr('value'));
+		
+		$(this).children('span.selected, span.selectArrow').click(function(){
+			if($(this).parent().children('div.selectOptions').css('display') == 'none'){
+				$(".selectOptions").css('display','none');
+				$(this).parent().children('div.selectOptions').css('display','block');
+			}else{
+				$(this).parent().children('div.selectOptions').css('display','none');
+			}
+		});
+		
+		$(this).find('span.selectOption').click(function(){
+			$(this).parent().css('display','none');
+			$(this).closest('div.selectBox').attr('value',$(this).attr('value'));
+			/* $(this).parent().siblings('span.selected').html($(this).html()); */
+			
+			// code added to pick value from select box and add to field
+			// value.
+			var fieldSelected = $(this).parent().siblings('span.selected').attr('id'),
+			fieldValue = $(this).attr('value');
+			switch(fieldSelected){
+			case 'lrcStatus':
+				$('#lrcStatusVal').attr('value',fieldValue);
+				break;
+			case 'numberOfFacilitiesSpan':
+				$('#numberOfFacilities').attr('value',fieldValue);
+				break;
+			case 'sourceObligorGrade': 
+				$('#sourceObligorGradeVal').attr('value',fieldValue);
+				break;
+			case 'sourceRegion': 
+				$('#sourceRegionVal').attr('value',fieldValue);
+				break;
+			case 'industryCategory': 
+				$('#industryCategoryVal').attr('value',fieldValue);
+				break;
+			}
+			if($(this).attr('value') != ''){
+				$(this).parent().siblings('span.selected').html($(this).html()).css('color','black');
+			}else{
+				$(this).parent().siblings('span.selected').html($(this).html()).css('color','#808080');
+			}
+		});
+		
+//		$(".searchbox").on("click",function(event){
+//            var that = $(this);
+//            var ele  = event.target;
+//            if(ele.className !="selected" && ele.className !="selectArrow"){
+//                  $(".selectOptions").hide();
+//            }
+//            $(".selected").each(function(){
+//            	var $that = $(this);
+//            	if($that.attr("id")!=ele.id)
+//            			{
+//            	      	$that.parent().find(".selectOptions").hide();
+//            			}
+//         
+//            });
+//     });
+
+	});		
+}

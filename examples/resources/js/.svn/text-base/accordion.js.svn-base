@@ -1,0 +1,16 @@
+$(function() {
+		$("#accordion").accordion( {
+			autoHeight : true,
+			navigation : true,
+			heightStyle: "content"
+		});
+		$("#accordion2").accordion( {
+			autoHeight : false,
+			navigation : true
+		});
+		$("#accordion3").accordion({
+			autoHeight : true,
+			navigation : true,
+			heightStyle: "content"
+		});
+	});

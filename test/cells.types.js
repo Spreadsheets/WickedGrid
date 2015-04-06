@@ -49,7 +49,11 @@ tf.test('Cell Types: Date', function() {
 		jS = div.getSheet(),
 		td = div.find('table.jS td'),
 		cell = td[0].jSCell,
-		val = cell.updateValue();
+		val;
+
+	cell.updateValue(function(_val) {
+		val = _val;
+	});
 
 	tf.assertEquals(val.toString(), Globalize.parseDate('1/1/2020').toString(), 'valueOverride is correct');
 	tf.assertEquals(cell.value, '1/1/2020', 'value is correct');
@@ -90,13 +94,12 @@ tf.test('Cell Types: Percent Addition', function() {
 			.append('<table><tr><td data-formula="Sheet1!B1 + 1"></td><td data-celltype="percent">.1</td></tr></table>')
 			.sheet(),
 		jS = div.getSheet(),
-		td;
+		td,
+		cell = jS.getCell(0,1,1);
 
-	jS.getCell(0,1,1).updateValue();
+	cell.updateValue();
 
-	td = div.find('table.jS td').first();
-
-	tf.assertEquals(td.html(), '1.1', 'html is properly displayed');
-	tf.assertEquals(td[0].jSCell.value.valueOf(), 1.1, 'value remains a number');
+	tf.assertEquals(cell.td.innerHTML, '1.1', 'html is properly displayed');
+	tf.assertEquals(cell.value.valueOf(), 1.1, 'value remains a number');
 	div.getSheet().kill();
 });

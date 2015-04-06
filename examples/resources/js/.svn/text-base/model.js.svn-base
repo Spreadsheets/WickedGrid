@@ -1,0 +1,762 @@
+     $(function() {
+    	 $('#spinner').fadeIn("slow");
+    	  var n = isNaN,doc = document;
+    	  window.isSheetLoaded = false;
+    	  var lockFormula = false;
+    	  var sheetReadOnly = [];
+    	  var setLabelLock = true;
+    	  var isAdmin = ( role=="gadmin" || role=="radmin" )? true: false;
+    	  
+    	  window.ExistingDealEvents = [
+    	        'bHasCPProgram', // check box 
+               'Inputs.LOB',
+			  'r.Sector',
+			  'r.Industry',    	  
+			  'TransacType1',
+    		  'TransacType2',
+    		  'TransacType3',
+    		  'TransacType4',
+    		  'TransacType5',
+    		  'Fac1Tenor',
+    		   'Fac2Tenor',
+    		   'Fac3Tenor',
+    		   'Fac4Tenor',
+    		   'Fac5Tenor',
+    		   'TenorEx',
+    		   'Fac1SblcFronting',
+    		   'Fac2SblcFronting',
+    		   'Fac3SblcFronting',
+    		   'Fac4SblcFronting',
+    		   'Fac5SblcFronting',
+    		   'FacExSblcFronting',
+    		   'Fac1Type',
+    		   'Fac2Type',
+    		   'Fac3Type',
+    		   'Fac4Type',
+    		   'Fac5Type',
+    		   'FacExType',
+    		   'ShowParticipationsFac1', 
+    		   'ShowParticipationsFac2',
+    		   'ShowParticipationsFac3',
+    		   'ShowParticipationsFac4',
+    		   'ShowParticipationsFac4',
+    		   'ShowParticipationsFac5',
+    		   'ShowparticipationsEx',
+    		   'Fac1SwinglineBool',
+    		   'Fac2SwinglineBool',
+    		   'Fac3SwinglineBool',
+    		   'Fac4SwinglineBool',
+    		   'Fac5SwinglineBool',
+    		   'FacExSwinglineBool',
+    		   'Inp_Fac1_Row_28_Col_4',
+    		   'Inp_Fac2_Row_28_Col_4',
+    		   'Inp_Fac3_Row_28_Col_4',
+    		   'Inp_Fac4_Row_28_Col_4',
+    		   'Inp_Fac5_Row_28_Col_4',
+    		   'Inp_Fac0_Row_28_Col_4',
+    		   'Fac1SwinglineExposure',
+    		   'Fac2SwinglineExposure',
+    		   'Fac3SwinglineExposure',
+    		   'Fac4SwinglineExposure',
+    		   'Fac5SwinglineExposure',
+    		   'FacExSwinglineExposure',
+    		   'Fac1Prod',
+    		   'Fac1GovtSup'  
+    	  ];
+    	  var appendIdAndVer = '?dealId='+dealId+'&dealVer='+dealVer;
+    	  var inputUrl,bscUrl,bscSubUrl,profRoeUrl,profRoeSubUrl,fac1Url,fac2Url,fac3Url,fac4Url,fac5Url,exFacUrl,allFacUrl,hedgeFacUrl,tableAndAss;
+    	  var json = {};
+    	  
+    	  if(isLatest){
+    		  inputUrl = roleContextPath+'/inputJson' + appendIdAndVer;
+    		  bscUrl = roleContextPath+'/bscJson' + appendIdAndVer;
+    		  bscSubUrl = roleContextPath+'/bscSubmission' + appendIdAndVer;
+			  profRoeUrl = roleContextPath+'/proformaRoeJson' + appendIdAndVer;
+			  profRoeSubUrl = roleContextPath+'/proformaRoeSubJson' + appendIdAndVer;
+    		  fac1Url = roleContextPath+'/facility1' + appendIdAndVer;
+			  fac2Url = roleContextPath+'/facility2' + appendIdAndVer;
+			  fac3Url = roleContextPath+'/facility3' + appendIdAndVer;
+			  fac4Url = roleContextPath+'/facility4' + appendIdAndVer;
+			  fac5Url = roleContextPath+'/facility5' + appendIdAndVer;
+			  exFacUrl = roleContextPath+'/existingFacility' + appendIdAndVer;
+			  allFacUrl = roleContextPath+'/allFacilities' + appendIdAndVer;
+			  hedgeFacUrl = roleContextPath+'/hedgeImpactAllFacilities' + appendIdAndVer;
+	    	  tableAndAss = roleContextPath+'/tableAndAssumption'+ appendIdAndVer;
+    	  }else {
+    		  inputUrl = roleContextPath+'/inputHistJson' + appendIdAndVer;
+    		  bscUrl = roleContextPath+'/bscHistJson' + appendIdAndVer;
+    		  bscSubUrl = roleContextPath+'/bscSubmissionHist' + appendIdAndVer;
+    		  profRoeUrl = roleContextPath+'/proformaRoeHistJson' + appendIdAndVer;
+    		  profRoeSubUrl = roleContextPath+'/proformaRoeSubHistJson' + appendIdAndVer;
+    		  fac1Url = roleContextPath+'/facilityHist1' + appendIdAndVer;
+			  fac2Url = roleContextPath+'/facilityHist2' + appendIdAndVer;
+			  fac3Url = roleContextPath+'/facilityHist3' + appendIdAndVer;
+			  fac4Url = roleContextPath+'/facilityHist4' + appendIdAndVer;
+			  fac5Url = roleContextPath+'/facilityHist5' + appendIdAndVer;
+			  exFacUrl = roleContextPath+'/existingFacilityHist' + appendIdAndVer;
+			  allFacUrl = roleContextPath+'/allFacilitiesHist' + appendIdAndVer;
+			  hedgeFacUrl = roleContextPath+'/hedgeImpactAllFacilitiesHist' + appendIdAndVer;
+	    	  tableAndAss = roleContextPath+'/tableAndAssumptionHist'+ appendIdAndVer;
+    	  }
+    	  
+    	  json["Facility 1"] = fac1Url;
+    	  json["Facility 2"] = fac2Url;
+    	  json["Facility 3"] = fac3Url;
+    	  json["Facility 4"] = fac4Url;
+    	  json["Facility 5"] = fac5Url;
+    	  json["All Facilities"] = allFacUrl;
+    	  json["Existing Facility"] = exFacUrl;
+    	  json["Hedge Impact All Facilities"] = hedgeFacUrl;
+    	  
+    	  $.when(
+		            $.getJSON(inputUrl),
+    				$.getJSON(bscUrl),
+    				$.getJSON(profRoeUrl),
+					$.getJSON(bscSubUrl),
+					$.getJSON(profRoeSubUrl),
+					$.getJSON(fac1Url),
+					//$.getJSON(allFacUrl),
+    				$.getJSON(tableAndAss)
+    				//$.getJSON(fac2Url),
+					//$.getJSON(fac3Url)
+					//$.getJSON(fac4Url),
+					//$.getJSON(fac5Url),
+					//$.getJSON(exFacUrl),
+					//$.getJSON(allFacUrl),
+					//$.getJSON(hedgeFacUrl)
+					
+    			).done(function() {
+    				
+    				var args = arguments,
+    					loader = new Sheet.JSONLoader([]),
+    					i = 0,
+    					edited = [];
+    				while (i<args.length) {
+    					loader.addSpreadsheet(args[i][0][0]);
+    					
+    					var title = (loader.json[i].title != "Inputs" && loader.json[i].title != "BSC Request" && loader.json[i].title != "Proforma ROE Inputs" );
+    					
+    					if(!isAdmin && title){
+    						sheetReadOnly.push(true);
+    			    	}else if(isAdmin && !isDealEditable && title){
+    			    		sheetReadOnly.push(true);
+    			    	}else if(isAdmin && isDealEditable ){
+    			    		sheetReadOnly.push(false);
+    			    	}else{
+    			    		sheetReadOnly.push(false);
+    			    	}
+    					i++;
+    				}
+    				
+    				if(!isAdmin && !isDealEditable){
+			    		  lockFormula = true;
+			    	}else if(!isAdmin && isDealEditable){
+			    		  lockFormula = false;
+			    	}else if(isAdmin && !isDealEditable){
+			    		  lockFormula = false;
+			    	}else if(isAdmin && isDealEditable){
+			    		  lockFormula = false;
+			    		  setLabelLock = false;
+			    	}
+    				
+    				if(dealStatus == "Dead" || dealStatus == "Approved" || dealStatus == "Deferred" ){
+    					for(var idx =0;idx<sheetReadOnly.length; idx++){
+    						sheetReadOnly[idx] = true;
+    					}
+    				}
+    				
+    				
+    				$('#sheet')
+    					.sheet({
+    						loader: loader,
+    						readOnlySheetsList : sheetReadOnly,
+    						lockLabels: setLabelLock,
+    						lockFormulas : lockFormula,
+    						minSize: {
+    							rows:100,
+    							cols: 40
+    						},
+							initCalcCols:40,
+    						sheetCellEdited: function(event, jS, cell) {
+    							var len = $.sheet.instance.length;
+    							
+	    						if(len > 0)
+	    							isSheetLoaded = true;
+	    						
+	    							var CellVal = cell.oldValue;
+	    							var CellId = cell.id;
+	    						switch (CellId) { 
+	    						
+/************************************************************************************************************************************/			    		
+	    						    //Inputs Events
+/************************************************************************************************************************************/		    						
+	    						
+		    						case 'c.DealWorksID': 
+		    							Event_DealId(CellVal);
+	    								break;
+		    						case 'bHasCPProgram': 
+	    								Event_CPProgram(CellVal);
+	    								break;
+	    							case 'Inputs.LOB': 
+	    								Event_ProductType(CellVal);
+	    								break;
+	    							case 'r.Industry': 
+	    								Event_Industry(CellVal);
+	    								break;
+	    							case 'r.Sector': 
+	    								//CellVal = cell.oldValue;
+	    								Event_Sector(CellVal); 	    							
+	    								break;
+	    							case 'TransacType1': 
+	    								Event_TransacType(CellVal); 
+	    								break;
+	    							case 'TransacType2': 
+	    								Event_TransacType(CellVal); 
+	    								break;
+	    							case 'TransacType3': 
+	    								Event_TransacType(CellVal); 
+	    								break;
+	    							case 'TransacType4': 
+	    								Event_TransacType(CellVal); 
+	    								break;
+	    							case 'TransacType5': 
+	    								Event_TransacType(CellVal); 
+	    								break;
+	    							case 'Fac1Tenor': 
+	    								Event_Tenor(1,CellVal); //Facility1 Tenor
+	    								break;
+	    							case 'Fac2Tenor':
+	    								Event_Tenor(2,CellVal);  //Facility2 Tenor
+	    								break;
+	    							case 'Fac3Tenor':
+	    								Event_Tenor(3,CellVal);  //Facility3 Tenor
+	    								break;
+	    							case 'Fac4Tenor':
+	    								Event_Tenor(4,CellVal);  //Facility4 Tenor
+	    								break;
+	    							case 'Fac5Tenor':
+	    								Event_Tenor(5,CellVal);  //Facility5 Tenor
+	    								break;
+	    							case 'TenorEx':
+	    								Event_Tenor(0,CellVal);  //Existing Facility Tenor
+	    								break;
+	    							case 'Fac1SblcFronting':
+	    								Event_FacSblcFronting(CellVal,1); //Sblc Fac1
+	    								break;
+	    							case 'Fac2SblcFronting':
+	    								Event_FacSblcFronting(CellVal,2); //Sblc Fac2
+	    								break;
+	    							case 'Fac3SblcFronting':
+	    								Event_FacSblcFronting(CellVal,3); //Sblc Fac3
+	    								break;
+	    							case 'Fac4SblcFronting':
+	    								Event_FacSblcFronting(CellVal,4); //Sblc Fac4
+	    								break;
+	    							case 'Fac5SblcFronting':
+	    								Event_FacSblcFronting(CellVal,5); //Sblc Fac5
+	    								break;
+	    							case 'FacExSblcFronting':
+	    								Event_FacSblcFronting(CellVal,0); //Sblc FacEx
+	    								break;
+	    								
+	    							case 'Fac1Type':
+	    								Event_FacType(CellVal,1); // Type of facility faclity1
+	    								break;
+	    							case 'Fac2Type':
+	    								Event_FacType(CellVal,2); // Type of facility faclity2
+	    								break;
+	    							case 'Fac3Type':
+	    								Event_FacType(CellVal,3); // Type of facility faclity3
+	    								break;
+	    							case 'Fac4Type':
+	    								Event_FacType(CellVal,4); // Type of facility faclity4
+	    								break;
+	    							case 'Fac5Type':
+	    								Event_FacType(CellVal,5); // Type of facility faclity5
+	    								break;
+	    							case 'FacExType':
+	    								Event_FacType(CellVal,"Ex"); // Type of facility faclityEx
+	    								break;
+	    							case 'ShowParticipationsFac1':	    								
+	    								Event_Participations(1, CellVal); // facility1 Participations 'dropdown
+	    								break;
+	    							case 'ShowParticipationsFac2':
+	    								Event_Participations(2, CellVal); // facility2 Participations 'dropdown
+	    								break;
+	    							case 'ShowParticipationsFac3':
+	    								Event_Participations(3, CellVal); // facility3 Participations 'dropdown
+	    								break;
+	    							case 'ShowParticipationsFac4':
+	    								Event_Participations(4, CellVal); // facility4 Participations 'dropdown
+	    								break;
+	    							case 'ShowParticipationsFac5':
+	    								Event_Participations(5, CellVal); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'ShowparticipationsEx':
+	    								Event_Participations(0, CellVal); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac1SwinglineBool':
+	    								Event_JPM_Swingline_Exposure(1, CellVal,'Fac1Tenor'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac2SwinglineBool':
+	    								Event_JPM_Swingline_Exposure(2, CellVal,'Fac2Tenor'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac3SwinglineBool':
+	    								Event_JPM_Swingline_Exposure(3, CellVal,'Fac3Tenor'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac4SwinglineBool':
+	    								Event_JPM_Swingline_Exposure(4, CellVal,'Fac4Tenor'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac5SwinglineBool':
+	    								Event_JPM_Swingline_Exposure(5, CellVal,'Fac5Tenor'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'FacExSwinglineBool':
+	    								Event_JPM_Swingline_Exposure(0, CellVal,'TenorEx'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Inp_Fac1_Row_28_Col_4':
+	    								Event_L_C_Availability(1, CellVal,'Fac1Tenor'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Inp_Fac2_Row_28_Col_4':
+	    								Event_L_C_Availability(2, CellVal,'Fac2Tenor'); // facility5 Participations dropdown
+	    								break;
+	    							case 'Inp_Fac3_Row_28_Col_4':
+	    								Event_L_C_Availability(3, CellVal,'Fac3Tenor'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Inp_Fac4_Row_28_Col_4':
+	    								Event_L_C_Availability(4, CellVal,'Fac4Tenor'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Inp_Fac5_Row_28_Col_4':
+	    								Event_L_C_Availability(5, CellVal,'Fac5Tenor'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Inp_Fac0_Row_28_Col_4':
+	    								Event_L_C_Availability(0, CellVal,'TenorEx'); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac1SwinglineExposure':
+	    								Event_Swingline_Exposure(1, CellVal); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac2SwinglineExposure':
+	    								Event_Swingline_Exposure(2, CellVal); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac3SwinglineExposure':
+	    								Event_Swingline_Exposure(3, CellVal); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac4SwinglineExposure':
+	    								Event_Swingline_Exposure(4, CellVal); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'Fac5SwinglineExposure':
+	    								Event_Swingline_Exposure(5, CellVal); // facility5 Participations 'dropdown
+	    								break;
+	    							case 'FacExSwinglineExposure':
+	    								Event_Swingline_Exposure(0, CellVal); // facility5 Participations 'dropdown
+	    								break;
+	    							/*case "Fac2Amt":
+                                        Event_FacAmt(2,CellVal);
+                                        break;
+                                  case "Fac3Amt":
+                                        Event_FacAmt(3,CellVal);
+                                        break;
+                                  case "Fac4Amt":
+                                        Event_FacAmt(4,CellVal);
+                                        break;
+                                  case "Fac5Amt":
+                                        Event_FacAmt(5,CellVal);
+                                        break;*/
+
+	    							case 'Fac1Prod':
+	    								Event_product(CellVal); // Product Facility 'dropdown
+	    								break;
+	    							case 'Fac1GovtSup':
+	    								Event_Govt(CellVal); // Govt Support 'dropdown
+	    								break;
+	    							case 'Inp_ClientName_Search':  
+	                                    ClientNameSearch();
+		    						     break;
+	    							case 'ViewCurrFacs':  
+	    								facilityLRCPopup();
+		    						     break;
+	    							case 'LOB_Button':
+                                        jS.toggleHideRowRange(9,12);
+                                        Flags.g_Flag1 = (Flags.g_Flag1 === true)? false : true;
+                                        Event_AccordianPlusMinus('LOB_Button', 'g_Flag1');
+                                        break;
+	    							case 'CPD_Button':
+                                        jS.toggleHideRowRange(16,46);
+                                        Flags.g_Flag2 = (Flags.g_Flag2 === true)? false : true;
+                                        Event_AccordianPlusMinus('CPD_Button', 'g_Flag2');
+                                        break;                                                                                                                                   
+    								case 'Facilities_Button':
+                                        jS.toggleHideRowRange(55,113);                                                                                                                                              
+                                        Flags.g_Flag3 = (Flags.g_Flag3 === true)? false : true;                                                                                                                                      
+                                        Event_AccordianPlusMinus('Facilities_Button', 'g_Flag3');
+                                        break;
+                                    /*case 'Pricing_Button':
+                                        //jS.toggleHideRowRange(55,113);
+                                        //Flags.g_Flag4 = (Flags.g_Flag4 === true)? false : true;
+                                        //Event_AccordianPlusMinus('Pricing_Button', 4);
+                                        break;*/
+    								case 'Facility1_Button':
+                                        jS.toggleHideRowRange(121,228);
+                                        Flags.g_Flag5 = (Flags.g_Flag5 === true)? false : true;
+                                        Event_AccordianPlusMinus('Facility1_Button', 'g_Flag5');
+                                        break;
+    								case 'Facility2_Button':
+                                        jS.toggleHideRowRange(230,337);
+                                        Flags.g_Flag6 = (Flags.g_Flag6 === true)? false : true;
+                                        Event_AccordianPlusMinus('Facility2_Button', 'g_Flag6');
+                                        break;
+    								case 'Facility3_Button':
+                                        jS.toggleHideRowRange(339,445);
+                                        Flags.g_Flag7 = (Flags.g_Flag7 === true)? false : true;
+                                        Event_AccordianPlusMinus('Facility3_Button', 'g_Flag7');
+                                        break;
+    								case 'Facility4_Button':
+                                        jS.toggleHideRowRange(448,555);
+                                        Flags.g_Flag8 = (Flags.g_Flag8 === true)? false : true;
+                                       Event_AccordianPlusMinus('Facility4_Button', 'g_Flag8');
+                                        break;
+    								case 'Facility5_Button':
+                                        jS.toggleHideRowRange(557,663);
+                                        Flags.g_Flag9 = (Flags.g_Flag9 === true)? false : true;
+                                        Event_AccordianPlusMinus('Facility5_Button', 'g_Flag9');
+                                        break;
+    								case 'Existing_Facility_Button':
+                                        jS.toggleHideRowRange(666,770);
+                                        Flags.g_Flag10 = (Flags.g_Flag10 === true)? false : true;
+                                        Event_AccordianPlusMinus('Existing_Facility_Button', 'g_Flag10');
+                                        break;
+    								case 'All_Facilities_Button':
+                                        jS.toggleHideRowRange(773,787);
+                                        Flags.g_Flag11 = (Flags.g_Flag11 === true)? false : true;
+                                        Event_AccordianPlusMinus('All_Facilities_Button', 'g_Flag11');
+                                        break;
+    								case 'Risk_Mitigation_Button':
+                                        jS.toggleHideRowRange(789,801);
+                                        Flags.g_Flag12 = (Flags.g_Flag12 === true)? false : true;
+                                        Event_AccordianPlusMinus('Risk_Mitigation_Button', 'g_Flag12');
+                                        break;
+    								case 'Summary_Metrics_Button':
+                                        jS.toggleHideRowRange(803,856);
+                                        Flags.g_Flag13 = (Flags.g_Flag13 === true)? false : true;
+                                        Event_AccordianPlusMinus('Summary_Metrics_Button', 'g_Flag13');
+                                        break;
+
+    								case 'Bsc_HideButton':
+		    						     jS.toggleHideRowRange(159,187);
+		    						     Flags.g_Flag14 = (Flags.g_Flag14 === true)? false : true;
+	                                     Event_AccordianPlusMinus('Summary_Metrics_Button', 'g_Flag14');
+		    						     break;
+    								
+    								//Commented Event - coz its having cell reference formula
+    								/* 
+    								case 'Anc2Title':
+    									BSC_ROESUBM_HideOrUnhide(CellVal, 2);
+    									break;*/
+    								
+		    						//Reset     
+    								case 'ResetFac1':    									
+                                        if(Flags.g_Flag5 === true){
+                                        	Flags.g_Flag5 = false;
+                                        	jS.toggleHideRowRange(121,228);
+                                        	Event_AccordianPlusMinus('Facility1_Button', 'g_Flag5');
+                                        }
+    									ResetFacility(1);
+    									break;		 
+    								case 'ResetFac2':
+                                        if(Flags.g_Flag6 === true){
+                                        	Flags.g_Flag6 = false;
+                                        	jS.toggleHideRowRange(230,337);
+                                        	Event_AccordianPlusMinus('Facility2_Button', 'g_Flag6');
+                                        }
+    									ResetFacility(2);    									
+    									break;
+    								case 'ResetFac3':
+    									 if(Flags.g_Flag7 === true){
+                                         	Flags.g_Flag7 = false;
+                                         	jS.toggleHideRowRange(339,445);
+                                         	Event_AccordianPlusMinus('Facility3_Button', 'g_Flag7');
+                                         }
+    									ResetFacility(3);
+    									break;
+    								case 'ResetFac4':
+    									 if(Flags.g_Flag8 === true){
+                                          	Flags.g_Flag8 = false;
+                                          	jS.toggleHideRowRange(448,555);
+                                          	Event_AccordianPlusMinus('Facility4_Button', 'g_Flag8');
+                                          }
+    									ResetFacility(4);
+    									break;
+    								case 'ResetFac5':
+    									 if(Flags.g_Flag9 === true){
+                                           	Flags.g_Flag9 = false;
+                                           	jS.toggleHideRowRange(557,663);
+                                           	Event_AccordianPlusMinus('Facility5_Button', 'g_Flag9');
+                                        }
+    									ResetFacility(5);
+    									break;
+		    			
+    								case 'ResetFacEx':    									
+									 	if(Flags.g_Flag10 === true){
+	                                          	Flags.g_Flag10 = false;
+	                                          	jS.toggleHideRowRange(666,770);
+	                                          	Event_AccordianPlusMinus('Existing Facility_Button', 'g_Flag10');
+									 	}
+	   									ResetFacility('Ex');
+	   									break;
+/************************************************************************************************************************************/			    		
+		    						//BSC Request Events
+/************************************************************************************************************************************/			    						     
+    								
+					    			case 'Total_Jpm_Revenue':
+					    				jS.toggleHideRowRange(44, 49);
+					    				Flags.g_Flag15 = (Flags.g_Flag15 == true)? false : true;
+					    				AccFlag = true;
+                                        Event_AccordianPlusMinus('Total_Jpm_Revenue', 'g_Flag15');
+					    				break;
+					    			case 'Trading_Revenues':
+					    				jS.toggleHideRowRange(34, 37);
+					    				AccFlag = true;
+					    				Flags.g_Flag16 = (Flags.g_Flag16 == true)? false : true;
+                                        Event_AccordianPlusMinus('Trading_Revenues', 'g_Flag16');
+					    				break;
+					    			case 'TS_Revenues':
+					    				jS.toggleHideRowRange(24, 27);
+					    				Flags.g_Flag17 = (Flags.g_Flag17 == true)? false : true;
+					    				AccFlag = true;
+                                        Event_AccordianPlusMinus('TS_Revenues', 'g_Flag17');
+					    				break;
+		    				
+/************************************************************************************************************************************/			    		
+					    			//Preforma ROE Events					    			
+/************************************************************************************************************************************/		
+				    				
+					    			case 'annuityProdType1':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					annuityProdType1 = false;
+					    				else
+					    					annuityProdType1 = true;
+					    				CheckPreforma_ProductType_AnnuityRevenue(1, CellVal);
+					    				break;
+					    			case 'annuityProdType2':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					annuityProdType2 = false;
+					    				else
+					    					annuityProdType2 = true;
+					    				CheckPreforma_ProductType_AnnuityRevenue(2, CellVal);
+					    				break;
+					    			case 'annuityProdType3':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					annuityProdType3 = false;
+					    				else
+					    					annuityProdType3 = true;
+					    				CheckPreforma_ProductType_AnnuityRevenue(3, CellVal);
+					    				break;
+					    			case 'annuityProdType4':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					annuityProdType4 = false;
+					    				else
+					    					annuityProdType4 = true;
+					    				CheckPreforma_ProductType_AnnuityRevenue(4, CellVal);
+					    				break;
+					    			case 'annuityProdType5':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					annuityProdType5 = false;
+					    				else
+					    					annuityProdType5 = true;
+					    				CheckPreforma_ProductType_AnnuityRevenue(5, CellVal);
+					    				break;
+					    			
+					    			case 'annuityProdType6':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					annuityProdType6 = false;
+					    				else
+					    					annuityProdType6 = true;
+					    				CheckPreforma_ProductType_AnnuityRevenue(6, CellVal);
+					    				break;
+					    				
+					    			case 'episodicProdType1':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					episodicProdType1 = false;
+					    				else
+					    					episodicProdType1 = true;
+					    				CheckPreforma_ProductType_EpisodicFee(1, CellVal);
+					    				break;
+					    			case 'episodicProdType2':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					episodicProdType2 = false;
+					    				else
+					    					episodicProdType2 = true;
+					    				CheckPreforma_ProductType_EpisodicFee(2, CellVal);
+					    				break;
+					    			case 'episodicProdType3':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					episodicProdType3 = false;
+					    				else
+					    					episodicProdType3 = true;
+					    				CheckPreforma_ProductType_EpisodicFee(3, CellVal);
+					    				break;
+					    			case 'episodicProdType4':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					episodicProdType4 = false;
+					    				else
+					    					episodicProdType4 = true;
+					    				CheckPreforma_ProductType_EpisodicFee(4, CellVal);
+					    				break;
+					    			case 'episodicProdType5':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					episodicProdType5 = false;
+					    				else
+					    					episodicProdType5 = true;
+					    				CheckPreforma_ProductType_EpisodicFee(5, CellVal);
+					    				break;
+					    			case 'episodicProdType6':
+					    				if(CellVal == '' || CellVal == ' ')
+					    					episodicProdType6 = false;
+					    				else
+					    					episodicProdType6 = true;
+					    				CheckPreforma_ProductType_EpisodicFee(6, CellVal);
+					    				break;
+		    						default:
+	    								break;
+	    							}
+/************************************************************************************************************************************/			    		
+	    						//Conditional Formatting
+/************************************************************************************************************************************/
+			    				//conditionalFormatting(jS,cell);	    						
+	    						//}
+    						},    						
+    					 //cellTypeHandlers: cellTypes,
+                          formulaFunctions :formulaFunctions
+                          
+    					});
+    				
+    				if(dealId!=""){
+    					
+    				$.each(JSON.parse(noOfFacilities),function(key,value){
+    					
+    					if(value==0){
+    						
+    						addSprdSheet("Existing Facility",json["Existing Facility"]);
+    					}
+    					
+    					else{
+    						
+    						addSprdSheet("Facility "+value,json["Facility "+value]);
+    					}
+    					
+    				});
+    				
+    				if(noOfFacilities>0){
+	    				addSprdSheet("All Facilities",json["All Facilities"]);
+	    				
+	    				addSprdSheet("Hedge Impact All Facilities",json["Hedge Impact All Facilities"]);
+    				}
+    				
+    			}	
+    				
+    				 $('#spinner').fadeOut();
+    				 
+    				  jS=$('#sheet').getSheet();
+    				  /*jS.toggleHideRowRange(1,4);
+    				 jS.toggleHideRowRange(9,12);
+    				  jS.toggleHideRowRange(16,46);
+    				  jS.toggleHideRowRange(55,113);
+    				  jS.toggleHideRowRange(121,228);
+    				  jS.toggleHideRowRange(230,337);
+    				  jS.toggleHideRowRange(339,445);
+    				  jS.toggleHideRowRange(448,555);
+    				  jS.toggleHideRowRange(557,663);
+    				  jS.toggleHideRowRange(666,770);
+    				  jS.toggleHideRowRange(773,787);
+    				  jS.toggleHideRowRange(789,801);
+    				  jS.toggleHideRowRange(803,856);*/
+    				  
+    				  Flags.g_Flag1 = (Flags.g_Flag1 === true)? false : true;
+                      Event_AccordianPlusMinus('LOB_Button', 'g_Flag1');
+    				  
+                      Flags.g_Flag2 = (Flags.g_Flag2 === true)? false : true;
+                      Event_AccordianPlusMinus('CPD_Button', 'g_Flag2');
+    				  
+                      //All Facilitites & Risk Mitigation
+                      Event_AllFacAndRiskMit();
+                      
+                      CheckPreforma_AnnuityRevenue();
+                      CheckPreforma_EpisodicFee();
+                      
+					  $( ".tab-id" ).change(function() {
+					  
+					         if($(this).val()!=null||$(this).val()!="" )
+							 {
+										var selectedValue=$(this).val();
+										var jS = $('#sheet').getSheet();
+										if(!isAdmin){
+											jS.s.readOnlySheetsList.push(true);
+										}else if(isAdmin && !isDealEditable){
+											jS.s.readOnlySheetsList.push(true);
+								    	}else if(isAdmin && isDealEditable){
+								    		jS.s.readOnlySheetsList.push(false);
+								    	}
+	
+										
+										loadSheet(selectedValue, json[selectedValue]);
+
+						}
+					});
+					
+					 
+					  $( ".tab-id-output" ).change(function() {
+					  
+					         if($(this).val()!=null||$(this).val()!="" )
+							 {
+										var selectedValue=$(this).val();
+
+										loadSheet(selectedValue, json[selectedValue]);
+								}
+						});
+					});
+				
+	 $('#apprv_sub_refresh').addClass("hiderowsOrColumn");
+    	 
+    	  if(role=='banker')
+    		  $('#approve_btn').addClass("hiderowsOrColumn");
+    	  else
+    		  $('#approve_btn').removeClass("hiderowsOrColumn");          
+ });
+     
+     
+ function loadSheet(title, SheetUrl){
+	  
+		var index = jS.getSpreadsheetIndexByTitle(title);
+	 
+		if(index!=-1){
+			alert("Sheet already Exist");
+		   return;
+		}
+		
+		$('#spinner').show();
+		$.when($.getJSON(SheetUrl)).done(function() {
+		var args1 = arguments,
+		i = 0;	
+		$('#sheet').getSheet().insertSheet(args1[i][0]);
+		$('#spinner').fadeOut();
+		
+		}); 
+			
+ }
+ 
+ function addSprdSheet(title, SheetUrl){
+	 
+		var index = jS.getSpreadsheetIndexByTitle(title);
+		 
+		if(index!=-1){
+		   return;
+		}
+		
+		$.when($.getJSON(SheetUrl)).done(function() {
+		var args1 = arguments,
+		i = 0;
+		$('#sheet').getSheet().insertSheet(args1[i][0],null,false);
+		
+		}); 
+	 
+	 
+ }

@@ -319,16 +319,26 @@ var jFN = $.sheet.fn = {
 	 */
 	SUM:function () {
 		var sum = 0,
-			v = arrHelpers.toNumbers(arguments),
-			i = v.length - 1;
+			values = arrHelpers.flatten(arguments),
+			v,
+			i = 0,
+			max = values.length,
+			_isNaN = isNaN;
 
-		if (i < 0) {
-			return 0;
+		for(; i < max; i++) {
+			v = values[i];
+			if (v === null || v === undefined) continue;
+			v = v.valueOf();
+			if (!_isNaN(v)) {
+				switch (typeof v) {
+					case 'string':
+						sum += (v * 1);
+						break;
+					default:
+						sum += v;
+				}
+			}
 		}
-
-		do {
-			sum += v[i] * 1;
-		} while (i--);
 
 		return sum;
 	},
@@ -574,6 +584,7 @@ var jFN = $.sheet.fn = {
 	 * @memberOf jFN
 	 */
 	LEFT:function (v, numberOfChars) {
+		v = v.valueOf().toString();
 		numberOfChars = numberOfChars || 1;
 		return v.substring(0, numberOfChars);
 	},
@@ -1170,11 +1181,41 @@ var jFN = $.sheet.fn = {
 	 * @memberOf jFN
 	 */
 	IF:function (expression, resultTrue, resultFalse) {
-		if (expression.valueOf()) {
-			return resultTrue;
-		} else {
-			return resultFalse;
+		var primitiveExpression = expression.valueOf(),
+			str;
+
+		switch (typeof primitiveExpression) {
+			case 'boolean':
+				if (primitiveExpression === true) {
+					return resultTrue;
+				} else {
+					return resultFalse;
+				}
+				break;
+			case 'number':
+				if (primitiveExpression !== 0) {
+					return resultTrue;
+				} else {
+					return resultFalse;
+				}
+				break;
+			case 'string':
+				str = primitiveExpression.toUpperCase();
+				if (str === 'TRUE') {
+					return resultTrue;
+				} else if (str === 'FALSE') {
+					return resultFalse;
+				} else if (str.replace(/ /g, '').length > 0) {
+					return resultTrue;
+				}
+				break;
 		}
+
+		if (primitiveExpression) {
+			return resultTrue;
+		}
+
+		return resultTrue;
 	},
 	/**
 	 * logical function
@@ -1277,9 +1318,18 @@ var jFN = $.sheet.fn = {
 	 * @memberOf jFN
 	 */
 	EQUAL: function(left, right) {
-		var result;
+		var result,
+			leftAsString,
+			rightAsString;
 
-		if (left.toString() === right.toString()) {
+		if (left === undefined || left === null) left = '';
+		if (right === undefined || right === null) right = '';
+
+		//We need to cast, because an internal value may just be a primitive
+		leftAsString = left + '';
+		rightAsString = right + '';
+
+		if (leftAsString == rightAsString) {
 			result = new Boolean(true);
 			result.html = 'TRUE';
 		} else {
@@ -1356,7 +1406,7 @@ var jFN = $.sheet.fn = {
 	},
 	/**
 	 * html function
-	 * @param href
+	 * @param link
 	 * @param [name]
 	 * @returns {String}
 	 * @memberOf jFN
@@ -1382,6 +1432,7 @@ var jFN = $.sheet.fn = {
 		var cell = this,
 			jS = this.jS,
 			td = this.td,
+			value,
 			v,
 			html,
 			select,
@@ -1391,7 +1442,8 @@ var jFN = $.sheet.fn = {
 			max;
 
 		if (td !== null) {
-			html = $(td).children().detach();
+			$(td).children().detach();
+			html = cell.value.html;
 		}
 
 		if (html === undefined || cell.needsUpdated || html.length < 1) {
@@ -1416,13 +1468,14 @@ var jFN = $.sheet.fn = {
 				}
 			};
 			select.onchange = function () {
-				cell.value = this.value;
-				cell.setNeedsUpdated();
-				jS.calcDependencies.call(cell);
+				value = new String(this.value);
+				value.html = select;
+				value.cell = cell;
+				cell.value = value;
+				cell.setNeedsUpdated(false);
+				jS.resolveCell(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
-
-			jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
 
 			max = (v.length <= 50 ? v.length : 50);
 			for (; i < max; i++) {
@@ -1438,7 +1491,7 @@ var jFN = $.sheet.fn = {
 				select.setAttribute('disabled', true);
 			} else {
 				jS.s.parent.bind('sheetKill', function() {
-					td.innerText = td.textContent = cell.value = select.value;
+					td.innerText = td.textContent = cell.value.valueOf();
 				});
 			}
 
@@ -1464,21 +1517,20 @@ var jFN = $.sheet.fn = {
 			jS = this.jS,
 			td = this.td,
 			v,
+			value,
 			html,
-			inputs,
-			$inputs,
 			radio,
 			id,
 			result;
 
 		if (td !== null) {
-			html = $(td).children().detach();
+			html = cell.value.html;
+			$(td).children().detach();
 		}
 
 		if (html === undefined || html.length < 1 || cell.needsUpdated) {
 			v = arrHelpers.flatten(arguments);
 			v = arrHelpers.unique(v);
-			inputs = [];
 
 			if (this.id !== null) {
 				id = this.id + '-radio';
@@ -1490,12 +1542,10 @@ var jFN = $.sheet.fn = {
 			html.className = 'jSRadio';
 			html.onmousedown = function () {
 				if (this.cell.td !== null) {
-					jS.cellEdit(this.cell.td);
+					jS.cellEdit(cell.td);
 				}
 			};
 			html.cell = cell;
-
-			jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
 
 			for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
 				if (v[i]) {
@@ -1506,40 +1556,36 @@ var jFN = $.sheet.fn = {
 					input.setAttribute('name', id);
 					input.className = id;
 					input.value = v[i];
+					if (!jS.s.editable) {
+						input.setAttribute('disabled', 'disabled');
+					}
 					input.onchange = function() {
-						cell.value = this.value;
-						cell.setNeedsUpdated();
-						jS.calcDependencies.call(cell);
+						value = new String(this.value);
+						value.html = html;
+						value.cell = cell;
+						cell.value = value;
+						cell.setNeedsUpdated(false);
+						jS.resolveCell(cell);
 						jS.trigger('sheetCellEdited', [cell]);
 					};
 
-					inputs.push(input);
-
-					if (v[i] == cell.value) {
-						input.setAttribute('checked', 'true');
+					if (v[i].valueOf() === cell.value.valueOf()) {
+						input.checked = true;
 					}
 					label.textContent = label.innerText = v[i];
 					html.appendChild(input);
-					html.input = input;
-					label.onclick = function () {
-						$(this).prev().click();
+					label.input = input;
+					label.onmousedown = function () {
+						$(this.input).click();
 					};
 					html.appendChild(label);
 					html.appendChild(document.createElement('br'));
 				}
 			}
 
-			$inputs = $(inputs);
-
-			if (!jS.s.editable) {
-				cell.value = $inputs.filter(':checked').val();
-				$inputs.attr('disabled', true);
-			} else {
-				jS.s.parent.bind('sheetKill', function() {
-					cell.value = $inputs.filter(':checked').val();
-					td.textContent = td.innerText = cell.value;
-				});
-			}
+			jS.s.parent.bind('sheetKill', function() {
+				td.textContent = td.innerText = cell.value.valueOf();
+			});
 		}
 
 		if (typeof cell.value !== 'object') {
@@ -1568,17 +1614,19 @@ var jFN = $.sheet.fn = {
 			label,
 			checkbox,
 			id,
+			value,
 			result;
 
 		if (td !== null) {
-			html = $(td).children().detach();
+			html = cell.value.html;
+			$(td).children().detach();
 		}
 
 		if (html === undefined || html.length < 1 || cell.needsUpdated) {
 			if (this.id !== null) {
 				id = this.id + '-checkbox';
 			} else if (td !== null) {
-				id = "checkbox" + this.sheet + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
+				id = "checkbox" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
 			}
 
 			checkbox = document.createElement('input');
@@ -1588,13 +1636,16 @@ var jFN = $.sheet.fn = {
 			checkbox.className = id;
 			checkbox.value = v;
 			checkbox.onchange = function () {
-				if ($(this).is(':checked')) {
-					cell.value = v;
+				if (this.checked) {
+					value = new String(v);
 				} else {
-					cell.value = '';
+					value = new String('');
 				}
-				cell.setNeedsUpdated();
-				jS.calcDependencies.call(cell);
+				value.html = html;
+				value.cell = cell;
+				cell.value = value;
+				cell.setNeedsUpdated(false);
+				jS.resolveCell(cell);
 				jS.trigger('sheetCellEdited', [cell]);
 			};
 
@@ -1602,9 +1653,9 @@ var jFN = $.sheet.fn = {
 				checkbox.setAttribute('disabled', 'true');
 			} else {
 				jS.s.parent.bind('sheetKill', function() {
-					cell.value = (cell.value == 'true' || $(checkbox).is(':checked') ? v : '');
+					cell.value = (cell.value == 'true' || checkbox.checked ? v : '');
 					if (cell.td !== null) {
-						cell.td.innerText = cell.td.textContent = cell.cell.value;
+						cell.td.innerText = cell.td.textContent = cell.value.valueOf();
 					}
 				});
 			}
@@ -1623,17 +1674,17 @@ var jFN = $.sheet.fn = {
 			};
 			html.cell = cell;
 
-			jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
-
-			if (v == cell.value || cell.value === 'true') {
-				checkbox.checked =  true;
+			switch (cell.value.valueOf()) {
+				case v.valueOf():
+				case 'true':
+					checkbox.checked = true;
 			}
 		}
 
 		//when spreadsheet initiates, this will be the value, otherwise we are dependent on the checkbox being checked
 		if (
 			cell.value === 'true'
-			|| $(checkbox).is(':checked')
+			|| checkbox.checked
 		) {
 			result = new String(v);
 		}
@@ -1883,7 +1934,7 @@ var jFN = $.sheet.fn = {
 			foundCell = found.cell;
 			foundCell = jS.getCell(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
 			if (foundCell !== null) {
-				result = foundCell.updateValue();
+				result = foundCell.value;
 			} else {
 				result = '';
 			}
@@ -1909,7 +1960,6 @@ var jFN = $.sheet.fn = {
 			columnIndex,
 			cell,
 			cells = [],
-			cellValue,
 			transposedCell,
 			transposedCells = [],
 			value,
@@ -1945,16 +1995,14 @@ var jFN = $.sheet.fn = {
 			transposedCell = transposedCells[i];
 			if (transposedCell !== this) {
 				cell = cells[i];
-				transposedCell.defer = cell;
 				transposedCell.setNeedsUpdated();
-				cellValue = transposedCell.updateValue();
+				transposedCell.defer = cell;
+				transposedCell.updateValue();
 				transposedCell.addDependency(this);
-				transposedCell.td.innerHTML = cellValue;
-
 			}
 		}
 
-		return firstValue;
+		return firstValue.valueOf();
 	},
 	/**
 	 * cell function

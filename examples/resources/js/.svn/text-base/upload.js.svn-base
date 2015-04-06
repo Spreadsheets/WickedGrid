@@ -1,0 +1,110 @@
+
+$(document).ready(function() {
+	
+	$("#Upload_btn").click(function() {
+
+		
+		var file = document.getElementById("file").files[0];
+		ajaxUpload(file);
+		closeDialog();
+		document.getElementById("file").value = "";
+		
+	});
+	
+});	
+
+
+function ajaxUpload(file) {
+
+	try {
+		
+		$('#spinner').show();
+		
+		 var form = new FormData();
+		 form.append("file", file);
+
+		$.ajax({
+					url : roleContextPath +'/importExcel',
+					type : 'POST',
+					dataType: 'json',
+				    processData: false,
+				    contentType: false,
+					data : form,
+					success : function(data) {	
+						if(data.status == "failure")
+							console.log(data.exception);
+
+						$('#messagePop').html(data.responseTxt);
+						messagePopUp();
+					},
+					error : function(response) {
+
+						if (response.status == 403)
+							$('#messagePop').html("Access Forbidden...Please try again ");
+						else
+							$('#messagePop').html("Unable to process your request...Please try again ");
+						messagePopUp();
+					},
+					complete : function(data) {
+						$('#spinner').fadeOut();
+					}
+
+				});
+
+	} catch (e) {
+
+		$('#spinner').fadeOut();
+		$('#messagePop').html("Unable to process your request due to script error...Please try again");
+		messagePopUp();
+		console.log(e);
+	}
+
+}
+
+function openUploadPopup(){
+	$("#uploadPopup").dialog(
+			{
+				title : 'File Upload',
+				modal : true,
+				draggable : false,
+				resizable : false,
+				width : '95%',
+				open : function(event, ui) {
+					$("#uploadPopup").parent().find(
+							".ui-dialog-titlebar").hide();
+					$('#dialogHeader').html('File Upload');
+				}
+			});
+}
+
+function closeDialog(){
+    $("#uploadPopup").dialog( "close" );
+   
+}
+
+function fileValidator(name){
+	
+	var fileExt = name.split(".");
+	var fName = name.split("\\");
+	
+	var fileName = fName[fName.length-1].split("_");
+	
+	if(fileExt[fileExt.length-1] != "xlsm"){
+		$('#messagePop').html("Only Excel of type <b>.xlsm</b> is allowed");
+		messagePopUp();
+		document.getElementById("file").value = "";
+		return false;
+	}
+	
+	
+	if(fileName.length<=2){
+		
+		$('#messagePop').html("Invalid File Name. File name should in the Format: <br><b>DealId_DealStatus_ModelId<b>");
+		messagePopUp();
+		document.getElementById("file").value = "";
+		return false;
+		
+	}
+	
+}
+

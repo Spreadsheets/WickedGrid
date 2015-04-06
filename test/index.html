@@ -10,29 +10,35 @@
 	<script src="../utilities/tableify.js"></script>
 	<script>
 		$.sheet.preLoad('../');
+		$.sheet.defaults.useMultiThreads = false;
+		$.sheet.defaults.useStack = false;
 
 		var tf = new Testify("jQuery.sheet / Sheet");
 	</script>
 
 	<script src="cells.adding.js"></script>
 	<script src="cells.deleting.js"></script>
+	<script src="cells.formula_financial.js"></script>
 	<script src="cells.formula_shifting.js"></script>
 	<script src="cells.disappearing_dependency.js"></script>
 	<script src="cells.hidden.js"></script>
-	<script src="cells.value_behaviour.js"></script>
+	<script src="cells.inputs.js"></script>
 	<script src="cells.types.js"></script>
+	<script src="cells.value_behaviour.js"></script>
 	<script src="formula.js"></script>
 	<script src="formula.functions.js"></script>
 	<script src="loader.json.js"></script>
-	<script>
-		$(function() {
-			tf.run();
+	<script src="sheet.instantiation.js"></script>
 
-			document.body.innerHTML = Testify.report.html.ui;
-			Testify.report.html(tf);
-
-		});
-	</script>
 </head>
 <body></body>
+<script>
+	$(function() {
+		tf.run();
+
+		document.body.innerHTML = Testify.report.html.ui;
+		Testify.report.html(tf);
+
+	});
+</script>
 </html>

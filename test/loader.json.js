@@ -31,16 +31,19 @@ tf.test('Loader (json) : Cache updating', function() {
 				}
 			}),
 		jS = div.getSheet(),
-		cell;
+		cell = jS.getCell(1,1,2),
+		jsonCell = cell.loadedFrom;
 
+	cell.updateValue();
 
-	loader.jitCell(1, 1, 2, jS, jS.cellHandler).updateValue();
-	cell = loader.getCell(1, 1, 2);
-	tf.assertEquals(cell.cache, '$1,000.00', 'loader cell cache');
+	tf.assertEquals(jsonCell.cache, '$1,000.00', 'loader cell cache');
 	tf.assertEquals(cell.value, "1000", 'leader cell value');
-	loader.jitCell(1, 1, 1, jS, jS.cellHandler).updateValue();
-	cell = loader.getCell(1, 1, 1);
-	tf.assertEquals(cell.cache, '$1.00', 'loader cell cache');
+
+	cell = jS.getCell(1, 1, 1);
+	jsonCell = cell.loadedFrom;
+	cell.updateValue();
+
+	tf.assertEquals(jsonCell.cache, '$1.00', 'loader cell cache');
 	tf.assertEquals(cell.value, "1", 'leader cell value');
 	div.getSheet().kill();
 
@@ -268,14 +271,15 @@ tf.test('Cell Operator: Percent Addition', function() {
 	div.getSheet().kill();
 });
 
-tf.test('Calc All', function() {
+
+tf.test('Loader (json): Missing Sheet & Cell', function() {
 	var loader = new Sheet.JSONLoader([{
 			rows: [{
-				columns: [{value:900}]
+				columns: [{formula: 'Sheet2!A1 + "Missing Sheet"!A1 +  + "Missing Sheet"!A2 +  + "Missing Sheet"!A3 +  + "Missing Sheet"!A4'}]
 			}]
 		},{
 			rows: [{
-				columns: [{formula:'SHEET1!A1'}]
+				columns: [{value: '60 %'}]
 			}]
 		}]),
 		div = $('<div>')
@@ -283,26 +287,23 @@ tf.test('Calc All', function() {
 				loader: loader
 			}),
 		jS = div.getSheet(),
-		cell,
-		dependencies,
-		dependency;
+		td,
+		cell = jS.getCell(0,1,1);
 
-	jS.calcAll(true);
-
-	cell = jS.getCell(0,1,1);
 	cell.updateValue();
-	dependencies = cell.loadedFrom.dependencies;
-	dependency = dependencies[0];
-	tf.assertEquals(dependencies.length, 1, 'Expected dependency count');
-	tf.assertEquals([dependency.sheet, dependency.row, dependency.column].join(','), '1,1,1', 'Expected dependency');
-	jS.kill();
+
+	td = cell.td;
+
+	tf.assertEquals(td.innerHTML, '0.6', 'html is properly displayed');
+	tf.assertEquals(cell.value.valueOf(), 0.6, 'value remains a number');
+	div.getSheet().kill();
 });
 
 tf.test('Loader (json): Hidden Rows', function() {
 	var rowsRaw = '[' +
-			(new Array(99)).join('\n {"columns": [{},{},{},{},{}]},') +
-			'\n {"columns": [{},{},{},{},{}]}' +
-			']',
+			(new Array(99)).join('\n  {"columns": [{},{},{},{},{}]},') +
+			'\n  {"columns": [{},{},{},{},{}]}' +
+		']',
 		rows = JSON.parse(rowsRaw),
 		loader = new Sheet.JSONLoader([{
 			metadata: {
@@ -323,10 +324,11 @@ tf.test('Loader (json): Hidden Rows', function() {
 		tr,
 		style,
 		cell = jS.getCell(0,5,1);
+
 	tr = cell.td.parentNode;
-	style = getComputedStyle(tr);
+
 	tf.assertEquals(cell.rowIndex, 5, 'Proper row is selected');
-	tf.assertEquals(style['display'], 'none', 'Row is hidden');
+	tf.assertEquals(tr.parentNode, null, 'Row is hidden');
 	div.detach();
 	div.getSheet().kill();
 });
@@ -334,8 +336,8 @@ tf.test('Loader (json): Hidden Rows', function() {
 tf.test('Loader (json): Hidden Columns', function() {
 	var columnsRaw = '[' + (new Array(99)).join('{},') + '{}' + ']',
 		rowsRaw = '[' +
-			(new Array(99)).join('\n {"columns": ' + columnsRaw + '},') +
-			'\n {"columns": ' + columnsRaw + '}' +
+			(new Array(99)).join('\n  {"columns": ' + columnsRaw + '},') +
+			'\n  {"columns": ' + columnsRaw + '}' +
 			']',
 		rows = JSON.parse(rowsRaw),
 		loader = new Sheet.JSONLoader([{
@@ -357,8 +359,10 @@ tf.test('Loader (json): Hidden Columns', function() {
 		td,
 		style,
 		cell = jS.getCell(0,1,5);
+
 	td = cell.td;
 	style = getComputedStyle(td);
+
 	tf.assertEquals(cell.columnIndex, 5, 'Proper column is selected');
 	tf.assertEquals(style['display'], 'none', 'Column is hidden');
 	div.detach();
@@ -367,8 +371,8 @@ tf.test('Loader (json): Hidden Columns', function() {
 
 tf.test('Loader (json): Scroll Offset with Hidden Rows', function() {
 	var rowsRaw = '[' +
-			(new Array(99)).join('\n {"columns": [{},{},{},{},{}]},') +
-			'\n {"columns": [{},{},{},{},{}]}' +
+			(new Array(99)).join('\n  {"columns": [{},{},{},{},{}]},') +
+			'\n  {"columns": [{},{},{},{},{}]}' +
 			']',
 		rows = JSON.parse(rowsRaw),
 		loader = new Sheet.JSONLoader([{
@@ -389,16 +393,19 @@ tf.test('Loader (json): Scroll Offset with Hidden Rows', function() {
 		jS = div.getSheet(),
 		tr,
 		td,
-		style,
-		cell = jS.getCell(0,29,1);
+		cell = jS.getCell(0,25,1);
+
 	td = cell.td || {};
 	tr = td.parentNode || null;
-	style = tr ? getComputedStyle(tr) : {};
-	tf.assertEquals(cell.rowIndex, 29, 'Proper row is selected');
-	tf.assertEquals(style['display'] || '', 'table-row', 'Row is displayed');
-	cell = jS.getCell(0,30,1);
-	tf.assertEquals(cell.rowIndex, 30, 'Following row is selected');
-	tf.assertEquals(typeof cell.td, 'undefined', 'Following row is not yet displayed/created');
+
+	tf.assertEquals(cell.rowIndex, 25, 'Proper row is selected');
+	tf.assertNotEquals(tr.parentNode, null, 'Row is displayed');
+
+	cell = jS.getCell(0,26,1);
+
+	tf.assertEquals(cell.rowIndex, 26, 'Following row is selected');
+	tf.assertEquals(cell.td, null, 'Following row is not yet displayed/created');
+
 	div.detach();
 	div.getSheet().kill();
 });
@@ -406,8 +413,8 @@ tf.test('Loader (json): Scroll Offset with Hidden Rows', function() {
 tf.test('Loader (json): Scroll Offset with Hidden Columns', function() {
 	var columnsRaw = '[' + (new Array(99)).join('{},') + '{}' + ']',
 		rowsRaw = '[' +
-			(new Array(99)).join('\n {"columns": ' + columnsRaw + '},') +
-			'\n {"columns": ' + columnsRaw + '}' +
+			(new Array(99)).join('\n  {"columns": ' + columnsRaw + '},') +
+			'\n  {"columns": ' + columnsRaw + '}' +
 			']',
 		rows = JSON.parse(rowsRaw),
 		loader = new Sheet.JSONLoader([{
@@ -430,13 +437,18 @@ tf.test('Loader (json): Scroll Offset with Hidden Columns', function() {
 		td,
 		style,
 		cell = jS.getCell(0,1,29);
+
 	td = cell.td || null;
 	style = td ? getComputedStyle(td) : {};
+
 	tf.assertEquals(cell.columnIndex, 29, 'Proper column is selected');
 	tf.assertEquals(style['display'] || '', 'table-cell', 'Column is displayed');
+
 	cell = jS.getCell(0,1,30);
+
 	tf.assertEquals(cell.columnIndex, 30, 'Following column is selected');
-	tf.assertEquals(typeof cell.td, 'undefined', 'Following column is not yet displayed/created');
+	tf.assertEquals(cell.td, null, 'Following column is not yet displayed/created');
+
 	div.detach();
 	div.getSheet().kill();
 });

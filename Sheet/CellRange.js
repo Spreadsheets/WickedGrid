@@ -14,26 +14,7 @@ Sheet.CellRange = (function() {
 			for(var i = 0; i < max;i++) {
 				cell = cells[i];
 
-				clone = {
-					value:cell.value,
-					formula:cell.formula,
-					td: cell.td,
-					dependencies: cell.dependencies,
-					needsUpdated: cell.needsUpdated,
-					calcCount: cell.calcCount,
-					sheetIndex: cell.sheetIndex,
-					rowIndex: cell.rowIndex,
-					columnIndex: cell.columnIndex,
-					html: cell.html,
-					state: cell.state,
-					jS: cell.jS,
-					style: cell.style,
-					cl: cell.cl,
-					id: cell.id,
-					cellType: cell.cellType,
-					type: cell.type,
-					uneditable: cell.uneditable
-				};
+				clone = cell.clone();
 
 				clones.push(clone);
 			}

@@ -1,0 +1,217 @@
+//$(document).ready(function(){
+//	$(document).ready(function(){
+//		
+//		dealStatusChanged=false;
+//		
+//		$('.myMenu > li').bind('mouseover', openSubMenu);
+//		$('.myMenu > li').bind('mouseout', closeSubMenu);
+//		function openSubMenu() {
+//			$(this).find('ul').css('visibility', 'visible');
+//		};
+//		function closeSubMenu() {
+//			$(this).find('ul').css('visibility', 'hidden');
+//		};
+//		
+//		$(".hide, #moreStatusOptions").hide();
+//		createMoreLinks(dealStatus, role);
+//		
+//		$('li.hide').on('click',function(){
+//			dealStatusChanged = true;
+//			var status = $(this).attr('value');
+//			$('#newStatus').val(status);
+//			openCommentsPopup(dealId, dealVer);
+//		});
+//
+//	});
+//});
+
+function createMoreLinks(dealStatus, role){
+	
+	//If Deal is a History Version, it wond have a dealStatus value, hide all buttons for deal change for History view
+	if(dealStatus !== '')
+		$('#moreStatusOptions').show();
+		// Code to show links for Banker		
+		if(role == 'banker'){
+			switch (dealStatus) {
+			case 'In Progress':
+				$('#dead, #Save_btn, #Submit_btn').show();
+				break;
+			case 'Request for Reopen':
+				$('#dead').show();
+				break;
+			case 'Request for Change':
+				$('#dead, #Save_btn, #Submit_btn').show();
+				break;
+			case 'Reopened':
+				$('#dead, #Save_btn, #Submit_btn').show();
+				break;
+			case 'Dead':
+				$('#requestForReopen').show();
+				break;
+			case 'Conditionally Approved':
+				$('#dead, #requestForReopen').show();
+				break;
+			case 'Deferred':
+				$('#requestForReopen').show();
+				break;
+			case 'Submitted':
+				$('#dead , #Submit_btn').show();
+				break;
+			case 'Ready for Approval':
+				$('#dead, #requestForReopen').show();
+				break;
+			case 'Approved':
+				$('#dead, #requestForReopen').show();
+				break;
+			case 'historyDeal':
+				break;
+			default:
+				$('#Save_btn, #Submit_btn').show();
+				break;
+			}
+		// Code to show links for Admin view
+		}else if(role == 'gadmin' || role == 'radmin'){
+			switch (dealStatus) {
+			case 'In Progress':
+				$('#dead, #Save_btn, #Submit_btn, #conditionallyApprove, #readyForApproval, #Approve_btn, #defer, #dead').show();
+				break;
+			case 'Request for Reopen':
+				$('#dead, #reopen, #defer').show();
+				break;
+			case 'Request for Change':
+				$('#Save_btn, #Submit_btn, #conditionallyApprove, #readyForApproval, #Approve_btn, #defer, #dead, #requestForChange').show();
+				break;
+			case 'Reopened':
+				$('#Save_btn, #Submit_btn, #conditionallyApprove, #readyForApproval, #Approve_btn, #defer, #dead, #requestForChange').show();
+				break;
+			case 'Dead':
+				$('#reopen').show();
+				break;
+			case 'Conditionally Approved':
+				$('#dead, #Save_btn, #requestForChange, #readyForApproval, #defer, #Approve_btn').show();
+				break;
+			case 'Deferred':
+				$('#reopen').show();
+				break;
+			case 'Submitted':
+				$('#dead, #Save_btn, #Submit_btn, #conditionallyApprove, #readyForApproval, #Approve_btn, #defer, #dead, #requestForChange').show();
+				break;
+			case 'Ready for Approval':
+				$('#dead, #Save_btn, #requestForChange, #Approve_btn, #defer').show();
+				break;
+			case 'Approved':
+				$('#dead, #reopen, #defer').show();
+				break;
+			case 'historyDeal':
+				break;
+			default:
+				$('#Save_btn, #Submit_btn').show();
+				break;
+			}
+		}
+				
+	}
+	
+	function openCommentsPopup(dealId) {
+		
+		if(dealId == undefined || dealId.trim() == ""){
+			$('#messagePop').html("Please Save your changes before adding Comments !");
+			messagePopUp();
+			return;
+		}
+			
+		var newStatus = $('#newStatus').val();
+		
+		$("#commentsDialog").dialog(
+				{
+					title : 'Deal Id - ' +dealId,
+					modal : true,
+					draggable : false,
+					resizable : false,
+					width : '80%',
+					top: 0,
+					position: { my: 'top', at: 'top+110' },
+					open : function(event, ui) {
+						$("#commentsDialog").parent().find(
+								".ui-dialog-titlebar").hide();
+						$('#commentDialogHeader').html('Comments for Deal Id - ' +dealId);
+					},
+					close: function( event, ui ){
+						var urlString = window.location.href;
+						if(urlString.indexOf("model") > -1 || urlString.indexOf("newModel") > -1 || urlString.indexOf("dashboard") > -1 || urlString.indexOf("search") > -1)
+							if(dealStatusChanged && newStatus !== undefined){
+								saveStatusChange(newStatus);
+							}else if(newStatus == undefined){
+								newStatus = $("#radio input[name=radio]:checked").val();
+								saveDealStatus(newStatus,dealId,"")
+							}
+								
+					}
+				});
+		applyTiny();
+		$('#commentsText_ifr').contents().find('#tinymce').empty();
+		getComments(dealId);
+	}
+	
+	function applyTiny(){
+		tinymce.init({
+	        selector:"#commentsText",
+			plugins: [
+	        "advlist autolink lists link image charmap print preview anchor",
+	        "searchreplace visualblocks code fullscreen",
+	        "insertdatetime media table contextmenu paste"
+			],
+			menubar : false,
+			toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent "
+		});
+	}
+	
+	function getComments(dealId){
+		$.ajax({
+			url : roleContextPath + '/getDealComments?dealId=' + dealId,
+			dataType : 'html',
+			success : function(data) {
+				$(".commentContainer").html(data);
+			}
+		});
+	}
+	
+	function closeDialogComments(){
+		 $("#commentsDialog").dialog( "close" );
+	}
+	
+	function saveComments(dealId){
+		var comments = $('#commentsText_ifr').contents().find('#tinymce'),
+			commentsText = comments.text().trim(),
+			commentsHTML = comments.html();
+		
+		if(commentsText==""){
+			alert("Please insert some comments");
+		}else{
+			saveDealComments(dealId,commentsHTML);
+		}
+	}
+	
+	/**
+	Saving deal comments
+	@param dealId 
+	@param dealVer
+	@param comments
+	**/
+	function saveDealComments(dealId, commentsData){
+			$.ajax({
+				url : roleContextPath + '/saveDealComments?dealId=' + dealId+'&comments='+commentsData,
+				dataType : 'text',
+				success : function(result) {
+					openCommentsPopup(dealId);
+					$('#errors').show().html("<span style='color:green;'>"+result+"</span>");
+					$("#errors").delay(3000).fadeOut('slow','swing');
+					
+					var urlString = window.location.href;
+					if(urlString.indexOf("model") > -1 || urlString.indexOf("newModel") > -1 || urlString.indexOf("dashboard") > -1 || urlString.indexOf("search") > -1)
+						if(dealStatusChanged)
+							setTimeout(closeDialogComments,1000);
+				}
+			}); 
+	}
+	

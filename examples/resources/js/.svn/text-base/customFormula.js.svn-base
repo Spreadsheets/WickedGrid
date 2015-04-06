@@ -1,0 +1,1582 @@
+var n = isNaN,
+	doc = document,
+	formulaFunctions = {
+		CHECKBOX: function (v) {
+			if ($.isArray(v)) v = v[0];
+
+			var cell = this,
+				jS = this.jS,
+				td = this.td,
+				html,
+				checkbox,
+				label,
+				id,
+				result,
+				isUpdate = false;
+
+			if (td !== null) {
+				html = $(td).children().detach();
+			}
+			
+			if(jQuery.inArray( cell.id, ExistingDealEvents ) != -1){	
+				if(html){
+					if(html.length < 1)
+						isUpdate = true;
+				}
+			}
+
+			if (html === undefined || html.length < 1 || cell.needsUpdated) {
+				id =  this.id + "_ck";
+				checkbox = doc.createElement('input');
+				checkbox.setAttribute('type', 'checkbox');
+				checkbox.setAttribute('name', id);
+				checkbox.setAttribute('id', id);
+				checkbox.className = id;
+				checkbox.value = v;
+				checkbox.onchange = function () {
+					if ($(this).is(':checked')) {
+						cell.value = 'true';
+					} else {
+						cell.value = 'false';
+					}
+					
+					cell.setNeedsUpdated();
+					jS.calcDependencies.call(cell);
+					jS.trigger('sheetCellEdited', [cell]);
+				};
+
+				if (!jS.s.editable) {
+					checkbox.setAttribute('disabled', 'true');
+				} else {
+					jS.s.parent.bind('sheetKill', function() {
+											cell.value = (cell.value == 'true' || $(checkbox).is(':checked') ? 'true' : 'false');
+						if (cell.td !== null) {
+							cell.td.innerText = cell.td.textContent = cell.value;
+						}
+					});
+				}
+
+				html = doc.createElement('span');
+				html.className='SCheckbox';
+				html.appendChild(checkbox);
+				label = doc.createElement('span');
+				label.textContent = label.innerText = v;
+				html.appendChild(label);
+				html.appendChild(doc.createElement('br'));
+				html.onmousedown = function () {
+					jS.cellEdit(this.cell.td);
+				};
+				html.cell = cell;
+
+				jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
+
+				if (cell.value=='true') {
+					checkbox.setAttribute('checked', true);
+					//checkbox.onchange();
+				}
+				
+				if(isUpdate){
+					if (cell.value=='true') {
+						checkbox.setAttribute('checked', true);
+						checkbox.onchange();
+					}
+				}
+				
+			}
+
+			result = new String(cell.value == 'true' || $(checkbox).is(':checked') ? 'true' : 'false');
+			result.html = html;
+			return result;
+		},
+		DROPDOWN: function () {/*
+			var cell = this,
+				jS = this.jS,
+				td = this.td,
+				v,
+				html,
+				select,
+				id = this.id + "_DrpDwn",
+				result,
+				opt,
+				i;
+
+			if (td !== null) {
+				html = $(td).children().detach();
+			}
+
+			if (html === undefined || html.length < 1 || cell.needsUpdated) {
+				v = arrHelpers.flatten(arguments);
+				v = arrHelpers.unique(v);
+				select = doc.createElement('select');
+				select.setAttribute('name', id);
+				select.setAttribute('id', id);
+				select.className = 'jSDropdown';
+				select.cell = this;
+
+				select.onmouseup = function () {
+					if (this.cell.td !== null) {
+						jS.cellEdit(this.cell.td);
+					}
+				};
+
+				select.onchange = function () {
+					cell.value = this.value;
+					jS.setCellNeedsUpdated(cell);
+					jS.calcDependencies.call(cell);
+					jS.trigger('sheetCellEdited', [cell]);
+				};
+
+				jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
+
+				for (i = 0; i < (v.length <= 50 ? v.length : 50); i++) {
+					if (v[i]) {
+						opt = doc.createElement('option');
+						if (v[i].indexOf !== undefined && v[i].indexOf('yrs') != -1) {
+							opt.setAttribute('value', v[i].split(' ')[0]);
+						} else {
+							opt.setAttribute('value', v[i]);
+						}
+						opt.text = opt.innerText = v[i];
+						select.appendChild(opt);
+					}
+				}
+
+				if (!jS.s.editable) {
+					select.setAttribute('disabled', true);
+				} else {
+					jS.s.parent.bind('sheetKill', function () {
+						if (select.cell.td !== null) {
+							select.cell.td.innerText = td.textContent = cell.value = select.value;
+						}
+					});
+				}
+
+				select.value = cell.value || v[0];
+			}
+		result = cell.value;
+		if (typeof result != 'object') {
+			result = new String(result);
+		}
+		result.html = select;
+		return result;
+	*/
+
+			var cell = this,
+			jS = this.jS,
+			td = this.td,
+			v,
+			html,
+			select,
+			id = this.id + "_DrpDwn",
+			result,
+			opt,
+			i,
+			isUpdate = false;
+
+		if (td !== null) {
+			html = $(td).children().detach();
+		}
+
+		if(jQuery.inArray( cell.id, ExistingDealEvents ) != -1){	
+			if(html){
+				if(html.length < 1)
+					isUpdate = true;
+			}
+		}
+		
+		if (html === undefined || html.length < 1 || cell.needsUpdated) {
+			v = arrHelpers.flatten(arguments);
+			v = arrHelpers.unique(v);
+			select = doc.createElement('select');
+			select.setAttribute('name', id);
+			select.setAttribute('id', id);
+			select.className = 'jSDropdown';
+			select.cell = this;
+			
+			select.onmouseup = function () {
+				jS.cellEdit(this.cell.td);
+			};
+
+			select.onchange = function () {
+					cell.value = this.value;
+					cell.setNeedsUpdated();
+					jS.calcDependencies.call(cell);
+					jS.trigger('sheetCellEdited', [cell]);
+				};
+		
+			jS.controls.inputs[jS.i] = jS.obj.inputs().add(select);
+
+			for (i = 0; i < (v.length <= 50 ? v.length : 50); i++) {
+				if (v[i]) {
+					opt = doc.createElement('option');
+					if (v[i].indexOf !== undefined && v[i].indexOf('yrs') != -1) {
+						opt.setAttribute('value', v[i].split(' ')[0]);
+					} else {
+						opt.setAttribute('value', v[i]);
+					}
+					opt.text = opt.innerText = v[i];
+					select.appendChild(opt);
+				}
+			}
+
+			if (!jS.s.editable) {
+				select.setAttribute('disabled', true);
+			} else {
+				jS.s.parent.bind('sheetKill', function () {
+					if (select.cell.td !== null) {
+						select.cell.td.innerText = td.textContent = cell.value = select.value;
+					}
+				});
+			}
+
+			
+			if(cell.id == 'Fac1LGD' && ($.trim(cell.value).length > 0 ) && ((cell.value).indexOf('%') < 0)){
+				var val = cell.value;	
+				val = val * 100;
+				
+				if(val.toString().indexOf('.') >= 0)
+					val = val + '0';				
+				val = val + '%';	
+				select.value = val;						
+			}
+			else
+				select.value = cell.value || v[0];
+			
+			if(isUpdate){
+					if(jQuery.inArray( cell.id, ExistingDealEvents ) != -1){						
+						if(cell.value != '' && cell.value != ' ' && cell.value != null)
+							select.onchange();
+					}
+			}			
+		}
+		result = cell.value;
+		
+		if (typeof result != 'object') {
+			result = new String(result);
+		}
+		
+		result.html = select;	
+		return result;
+		},
+		NA: function () {
+			var result = new String('');
+			result.html = '#N/A';
+			return result;
+		},
+		ISNA: function (value) {
+			var result;
+			if (value.html == '#N/A') {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+			}
+			return result;
+		},
+
+		/*Returns a reference offset from a given reference*/
+		OFFSET: function (reference, rows, columns, height, width) {
+			height = height !== undefined ? parseInt(height) : 1;
+			width = width !== undefined ? parseInt(width) : 1;
+
+			var startCell = reference.cell !== undefined ? reference.cell : reference[0].cell,
+				endCell = reference.cell !== undefined ? reference.cell : reference[reference.length - 1].cell,
+				sheetIndex = startCell.sheetIndex,
+				startRow = startCell.rowIndex + rows,
+				startCol = startCell.columnIndex + columns,
+				jS = this.jS,
+				result,
+				colIndex,
+				rowIndex,
+				maxRowIndex = endCell.rowIndex + rows + height,
+				maxColIndex = endCell.columnIndex + columns + width,
+				cell,
+				value;
+
+			//if error, show first
+			if (
+				startRow < 1
+				|| startCol < 1
+				|| height < 1
+				|| width < 1
+				|| (startCol + startRow + width + height - 2) < 2
+			) {
+				result = new String('');
+				result.html = '#REF!';
+				return result;
+			}
+
+			//set iterable rowIndex
+			rowIndex = startRow;
+
+			//if expected result is a single value;
+			if (height === 1 && width === 1) {
+				colIndex = startCol;
+				cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+				result = cell.updateValue();
+				cell.addDependency(this);
+				return result;
+			}
+
+
+			//if expected result is a range
+			result = [];
+			result.html = '#VALUE!'; //if referenced direction, not allowed, show #VALUE!
+			for(;rowIndex < maxRowIndex; rowIndex++) {
+				colIndex = startCol;
+				for(;colIndex < maxColIndex; colIndex++) {
+					cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+					if (cell !== null) {
+						result.push(value = cell.updateValue());
+						cell.addDependency(this);
+					}
+				}
+			}
+
+			return result;
+		},
+		/* Looks up values in a reference or array */
+		MATCH: function (lookupValue, lookupArray, matchType) {
+			var result,
+				item,
+				max = lookupArray.length,
+				pattern,
+				i = 0,
+				unsortedArrayAsString,
+				sortedArrayAsString,
+				found;
+
+			matchType = (matchType === undefined ? 1 : parseInt(matchType));
+
+			if (lookupValue.rowCount !== undefined) {
+				result = new String('');
+				result.html = '#VALUE!';
+				return result;
+			}
+
+			if (lookupArray.columnCount > 1 && lookupArray.rowCount > 1  ) {
+				result = new String('');
+				result.html = '#N/A';
+				return result;
+			}
+
+
+			switch (matchType) {
+				case 0:
+					// to find the exact match for the value
+					if (lookupValue.toString().match(/[?*]/) != null) {
+						lookupValue = lookupValue
+							.replace(/\?/g, ".")
+							.replace(/~\./g, "\\?")
+							.replace(/\*/g, ".+")
+							.replace(/~\.\+/g, "\\*");
+
+						pattern = new RegExp(lookupValue);
+						for (; i < lookupArray.length; i++) {
+							item = lookupArray[i];
+							if (pattern.test(item.toString())) {
+								return i + 1;
+							}
+						}
+					} else {/*
+						for (; i < max; i++) {
+							item = lookupArray[i];
+							if (item.toString()=== lookupValue.toString() || (parseFloat(item.valueOf()) ===parseFloat(lookupValue.valueOf()) && !isNaN(parseFloat(item.valueOf())) )) {
+								return i + 1;
+							}
+						}
+					*/
+						
+                        for (; i < max; i++) {
+                            item = lookupArray[i];
+                            if( isNaN(item.valueOf()) || isNaN(lookupValue)) {
+                                   if (item.toString()=== lookupValue.toString() ) {
+                                          return i + 1;
+                                   }
+                            }else if ( parseFloat(item.valueOf()) === parseFloat(lookupValue.valueOf()) ) {
+                                   return i + 1;
+                            }
+
+                     }
+
+					}
+					break;
+				case 1:
+					unsortedArrayAsString = lookupArray.join('');
+					// find a greatest match less than or equal to the value
+					lookupArray.sort(function(a, b){return a-b});
+
+					sortedArrayAsString = lookupArray.join('');
+
+					if (sortedArrayAsString == unsortedArrayAsString) {
+						result = matchValueInArray(lookupValue, lookupArray, matchType);
+						/*
+						for (; i < max; i++) {
+							item = lookupArray[i];
+							if (item.toString().match(lookupValue.toString()) || item < lookupValue) {
+								if (item > found || found === undefined) {
+									found = item;
+									result = i + 1;
+								}
+							}
+						}*/
+					}
+					break;
+				case -1:
+					unsortedArrayAsString = lookupArray.join('');
+					// find a smallest match greater than or equal to the value
+					lookupArray.sort(function(a, b){return b-a});
+					sortedArrayAsString = lookupArray.join('');
+
+					if (sortedArrayAsString == unsortedArrayAsString) {
+						result = matchValueInArray(lookupValue, lookupArray, matchType);
+						/*for (; i < max; i++) {
+							item = lookupArray[i];
+							if (item.toString().match(lookupValue) || item > lookupValue) {
+								if (item < found || found === undefined) {
+									found = item;
+									result = i + 1;
+								}
+							}
+						}*/
+					}
+			}
+
+			if (result === undefined) {
+				result = new String('');
+				result.html = '#N/A';
+			}
+
+			return result;
+		},
+		/*Formats a number and converts it to text*/
+		TEXT: function (valueOrig, format) {
+			var validDateFormats = ["DD-MM-YY", "MM-DD-YY", "YY-MM-DD", "MM-DD-YYYY", "DD-MM-YYYY", "YYYY-MM-DD", "DD-MMM-YY", "MMM-DD-YY", "YY-MMM-DD"],
+				value = valueOrig.toString();
+
+			if (value.length < 1) {
+				return '';
+			}
+			if (format == "#"){
+                return !isNaN(Math.round(value)) ? (Math.round(value)!=0 ? Math.round(value) : '') : value;
+          }
+	          if (format == "@"){
+	                if(isNaN(value)){
+	                      return value;
+	                }else{
+	                      return value === Math.abs(value) ? Math.abs(value) : value;
+	                }
+	          }
+
+			format = format.toUpperCase();
+
+			if (typeof value === 'string') {
+				if (!format) {
+					return '';
+				}
+				return (format.indexOf('0') >= 0) ? numeral(value).format(format) : moment(value, validDateFormats).format(format);
+			}
+			if (value.toString && typeof value.toString === 'function') {
+				return value.toString();
+			}
+			return '';
+		},
+		//Returns the column number of a reference
+		COLUMN: function (column) {
+			if (column === undefined) {
+				return this.columnIndex;
+			} else {
+				return column.cell.columnIndex;
+			}
+		},
+		//Returns the number of columns in a reference
+		COLUMNS: function (range) {
+			var columnCount = 1,
+				alreadyCountedColumns = [range[0].cell.columnIndex],
+				cell,
+				i = 0,
+				max = range.length;
+
+			for (; i < max; i++) {
+				cell = range[i].cell;
+				if (alreadyCountedColumns.indexOf(cell.columnIndex) < 0) {
+					alreadyCountedColumns.push(cell.columnIndex);
+					columnCount++;
+				}
+			}
+
+			return columnCount;
+		},
+		/*Finds one text value within another (case-sensitive)*/
+		FIND: function (findText, withinText, startNum) {
+			startNum = startNum || 0;
+			var position = 0,
+				index;
+
+			withinText = withinText.toString();
+			if (startNum > 0) {
+				withinText = withinText.substring(startNum);
+				position += startNum;
+			}
+
+			index = withinText.indexOf(findText.toString());
+
+			if (index < 0) {
+				var result = new String('');
+				result.html = '#VALUE!';
+				return result;
+			}
+
+			return position + index + 1;
+		},
+		/*Multiplies its arguments*/
+		PRODUCT: function () {
+			var result = 1,
+				args = arrHelpers.flatten(arguments),
+				i = 0;
+
+			for (; i < args.length; i++) {
+				args[i] = (!isNaN(args[i]) && args[i] != "") ? args[i] : NaN;
+				result *= args[i];
+			}
+
+			if (isNaN(result)) {
+				result = new String('');
+				result.html = '#NAME?';
+			}
+			return result;
+		},
+		/*Adds the cells specified by a given criteria*/
+		SUMIF: function (range, criteria, sumRange) {
+			var length = 0,
+				arrToSum = {},
+				value = "",
+				result = 0,
+				i;
+
+			sumRange = sumRange || {};
+			range = arrHelpers.flatten(range);
+			arrToSum = (sumRange.length > 0) ? arrHelpers.flatten(sumRange) : range // identify if sumRange is provided seperately, select if yes
+			if (criteria.toString().match(/[A-z]/)) {
+				for (i = 0; i < range.length; i++) {
+					arrToSum[i] = arrToSum[i] || 0;
+					value = range[i];
+					result += (value.search(criteria) > -1) ? parseFloat(arrToSum[i]) : 0;
+				}
+			} else {
+				criteria = criteria.toString().match(/\D/g) ? criteria : "===" + criteria;
+				for (i = 0; i < range.length; i++) {
+					arrToSum[i] = arrToSum[i] || 0;
+					result += (eval(range[i] + criteria)) ? parseFloat(arrToSum[i]) : 0;
+				}
+			}
+			return result.toFixed(2);
+		},
+		/*Returns the sum of the products of corresponding array components*/
+		SUMPRODUCT : function (range) {
+ 			  var arrays = arguments.length;
+	   	      var arrlength = 0 ;
+	   	      if (arrays > 0) {
+		   	      for (var i = 0; i < arrays-1; i++) {
+		   	    	arrlength = arguments[i].length != arguments[i+1].length ? -1 : 0;
+		   	      }
+		   	      if (arrlength < 0) {return this.jS.s.error({error:'#VALUE!'});};
+	   	      } 
+	   	      var result = 0;
+		   	   for (var i = 0; i < arguments[0].length; i++) {
+		   		  var product = 1;
+		   		  for (var j = 0; j < arguments.length; j++){
+		   		    product *= isNaN(arguments[j][i]) ? 0 : arguments[j][i];
+		   		  }
+		   		  result += product;
+		   	   }
+	   	      return result;
+	    },
+		/*Returns the sum of the products of corresponding array components*/
+		/*SUMPRODUCT: function (rangeOne) {
+			var argumentLength = arguments.length,
+				arrayLength = rangeOne.length,
+				multiplied = 0,
+				sum = 0,
+				result,
+				i = 1,
+				j = 0;
+
+			//if there is only one argument
+			if (argumentLength === 1) {
+				multiplied = 0;
+				for (; j < arrayLength; j++) {
+					multiplied += rangeOne[j] * 1;
+				}
+
+				sum = multiplied;
+			}
+
+			//if there are multiple arguments
+			else {
+
+				for (; i < argumentLength; i++) {
+					j = 0;
+					multiplied = 0;
+					for (; j < arrayLength; j++) {
+						multiplied += (arguments[i - 1][j] * 1) * (arguments[i][j] * 1);
+					}
+
+					sum += multiplied;
+				}
+			}
+
+			result = sum;
+
+			return result;
+		},*/
+		ALIAS: function () {
+			var cell = this,
+				jS = this.jS,
+				args = arrHelpers.flatten(arguments);
+
+			if (args.length > 2) {
+				return arguments[1];
+			} else {
+				return arguments[1];
+			}
+
+
+		},
+		ISBLANK: function (value) {
+			var result;
+			if (value !== undefined && value.constructor !== undefined) {
+				value = value + '';
+			}
+			switch (value) {
+				case undefined:
+				case null:
+				case '':
+					result = new Boolean(true);
+					result.html = 'TRUE';
+					break;
+				default:
+					result = new Boolean(false);
+					result.html = 'FALSE';
+					break;
+			}
+			return result;
+		},
+		/* I/p- value ,msg .Returns log value of the value. */
+		LN: function (x, base) {
+			var result;
+//			if (x.match(/[^$,.\d]/)) {
+//				//alert("The formula contains error");
+//			}
+			if (x < 0 || x == 0) {
+				result = new String('');
+				result.html = '#NUM!';
+				return result;
+			}
+			/*if (x == "" || parseInt(x) == 0 || parseInt(x) < 0 || parseInt(x) == "") {
+				result = new String('');
+				result.html = '#VALUE!';
+				return result;
+			}*/
+			Math.ln = Math.log;
+			switch (arguments.length) {
+				case 0:
+				//alert("There is some error in function");
+				case 1:
+					return Math.ln(x);
+				default:
+					return Math.ln(x) / Math.ln(base);
+			}
+		},
+		/* I/p- array .Returns the count of the array. */
+		COUNTA: function () {
+			var count = 0,
+				args = arrHelpers.flatten(arguments),
+				i = 0;
+					for (; i < args.length; i++) {
+				if (args[i].length !=0 ) {
+					count++;
+				}
+			}
+
+			return count;
+		},
+		/* I/p- value.Returns true if the value contains error else false. */
+		ISERROR:function (value) {
+
+            var jS = this.jS,
+                  args = arrHelpers.flatten(arguments),
+                  result,
+                  i = 0,
+                  resp;
+            for (; i < args.length; i++) {
+
+                  try {
+                         resp = args[i];
+                         if ((typeof (resp) == 'string' || Object.prototype.toString.call(resp) === '[object String]' ) && (resp.html != undefined && resp.html.indexOf("#")==0)) {
+                                result = new Boolean(true);
+                                result.html = 'TRUE';
+                                return result;
+                         }else{
+                        	 result = new Boolean(false);
+                             result.html = 'FALSE';
+                             return result;
+                         }
+                  } catch (e) {
+                         // console.log(e +"catch ---> e");
+
+                         result = new Boolean(true);
+
+                         result.html = 'TRUE';
+
+                         return result;
+                  }
+            }
+           
+
+    },
+		/* I/p- value .Returns true if the value contains error else false except for N/A. */
+		ISERR: function (value) {
+
+               var jS = this.jS,
+
+                     args = arrHelpers.flatten(arguments),
+
+                     i = 0,
+
+                     resp;
+
+                     result = new Boolean(false);
+
+                     result.html = 'FALSE';
+
+               for (; i < args.length; i++) {
+
+                     try {
+                            resp = args[i];
+
+                            /*if (typeof (resp) == 'string' && (resp.match(/^E:\s+.*$/) || resp.match(/error/g) || resp.match(/Error/g)) && resp != 'E: #N/A') {
+
+                                   result = new Boolean(true);
+
+                                   result.html = 'TRUE';
+
+                            }*/
+
+                            if((typeof (resp) == 'string' || Object.prototype.toString.call(resp) === '[object String]' ) && resp.indexOf("#")==0 && resp != '#N/A' ){
+                                   result = new Boolean(true);
+                                   result.html = 'TRUE';
+                                   return result;
+                            }else{
+                            	  result = new Boolean(false);
+                                  result.html = 'FALSE';
+                                return result;
+                            }
+
+                     } catch (e) {
+
+                            //   console.log(e +"catch ---> e");
+                            result = new Boolean(true);
+                            result.html = 'TRUE';
+                            return result;
+
+                     }
+
+               }
+               
+
+       },
+		/* I/p- value ,msg .Returns msg if the value contains error else value. . */
+		IFERROR: function (value, msg) {
+               var jS = this.jS,
+                     args = arrHelpers.flatten(arguments),
+                     resp = value,
+                     i = 0;
+
+               for (;i < args.length - 1; i++) {
+
+                     try {
+                            resp = args[i];
+                           /* if(value == '' && msg.match(/^Y[0-15]/)){
+                            	return msg;
+                            }
+                        else*/
+                            if(Object.prototype.toString.call(resp) != '[object Boolean]'  &&
+                                    ((typeof (resp) == 'string' || typeof (resp) == 'object' || Object.prototype.toString.call(resp) === '[object String]' )
+                                    && resp.toString().indexOf("#")==0)){
+                              return msg;
+                            }else{
+                            	 return args[0];
+                            }
+                          
+
+                     } catch (e) {
+                            return msg;
+                     }
+               }
+       },
+		/* I/p- reference array,expression .Returns the count if the conditions is satisfied for the reference array. */
+		/*COUNTIF: function (value, expression) {
+			var count = 0,
+				jS = this.jS,
+				args = arrHelpers.flatten(value),
+				match_string = false,
+				i = 0,
+				match;
+
+			for (; i < args.length; i++) {
+				if (expression == "") {
+					match_string = true;
+				}
+				if (args[i]) {
+					if (/^[a-zA-Z0-9- ]*$/.test(expression) == true) {
+						match_string = true;
+					} else {
+						try {
+							match = args[i] + expression;
+							if (jS.formulaParser.parse(match) == true) {
+								count++; // should be evaluated;
+							}
+						} catch (e) {
+							match_string = true;
+						}
+					}
+				}
+				// king the pattern
+				if (match_string) {
+					if (args[i] == expression) {
+						count++;
+					}
+				}
+			}
+			return count;
+		},*/
+       COUNTIF: function (range, expression) { 
+           var length = 0;
+           var arrToSum = {};
+           var value = "";                                                             
+           var result = 0;
+//         expression = isNaN(expression) ? expression.replace(/(<>)/g,"!=").replace(/^=/g,"==") : expression;
+           var op ;
+           range = arrHelpers.flatten(range); 
+           if ( expression.match(/(<>|^=)/g) ) {
+              op =  expression.match(/(<>|^=)/g);
+                 for (var i = 0; i < range.length; i++) {
+                        value = range[i];
+                        if(value != " " && value.length !=0){
+                        	 if(op == "<>"){
+                                 expression = expression.replace(new RegExp(op),"");
+                                 result += ( value != expression ) ? 1 : 0;
+                              }else{
+                                 expression = expression.replace(new RegExp(op),"");
+                                 result += ( value == expression ) ? 1 : 0;
+                               }
+                        }
+                       
+//                      result += ( value.match(expression)> -1 ) ? 1 : 0;
+                 }
+           } else {
+                 expression = expression.toString().match(/\D/g) ? expression : "==="+expression;
+                 for (var i = 0; i < range.length; i++) {
+                        result += (eval(range[i] + expression)) ? 1 : 0;  
+                 }
+           }                                                                               
+                         return parseInt(result);
+       },
+    
+		SEARCH: function (find, body, start) {
+			start = start || 0;
+			if (start) {
+				body = body.split('');
+				body.splice(0, start - 1);
+				body = body.join('');
+			}
+			var i = body.search(find),
+				result;
+
+			if (i < 0) {
+				result = new String('');
+				result.html = '#VALUE!';
+				return result;
+			}
+
+			return start + (start ? 0 : 1) + i;
+		},
+		DATE_FORMAT: function (value) {
+			var date = "";
+			if (value != "") {
+				date = Globalize.parseDate(value);
+				date.html = Globalize.format(date, 'MM/dd/yyyy');
+			}
+			return date;
+		},
+		NORMSINV: function () {
+			var args = arrHelpers.flatten(arguments),
+				p = args[0],
+				a1 = -39.6968302866538,
+				a2 = 220.946098424521,
+				a3 = -275.928510446969,
+				a4 = 138.357751867269,
+				a5 = -30.6647980661472,
+				a6 = 2.50662827745924,
+				b1 = -54.4760987982241,
+				b2 = 161.585836858041,
+				b3 = -155.698979859887,
+				b4 = 66.8013118877197,
+				b5 = -13.2806815528857,
+				c1 = -7.78489400243029E-03,
+				c2 = -0.322396458041136,
+				c3 = -2.40075827716184,
+				c4 = -2.54973253934373,
+				c5 = 4.37466414146497,
+				c6 = 2.93816398269878,
+				d1 = 7.78469570904146E-03,
+				d2 = 0.32246712907004,
+				d3 = 2.445134137143,
+				d4 = 3.75440866190742,
+				p_low = 0.02425,
+				p_high = 1 - p_low,
+				q, r,
+				retVal;
+
+			if ((p <= 0) || (p >= 1)) {
+				//alert("NORMSINV: Argument out of range.");
+				return this.jS.s.error({
+					error: '#NUM!'
+				});
+			} else if (p < p_low) {
+				q = Math.sqrt(-2 * Math.log(p));
+				retVal = (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+			} else if (p <= p_high) {
+				q = p - 0.5;
+				r = q * q;
+				retVal = (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q / (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
+			} else {
+				q = Math.sqrt(-2 * Math.log(1 - p));
+				retVal = -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+			}
+			var amt = parseFloat(retVal);
+			return Math.round(amt.toFixed(9) * 1000000000) / 1000000000;
+			// return retVal.toFixed(9);
+		},
+		NORMSDIST: function (z) {
+			function erf(x) {
+				x = Math.abs(x);
+				//A&S formula 7.1.26
+				var a1 = 0.254829592,
+					a2 = -0.284496736,
+					a3 = 1.421413741,
+					a4 = -1.453152027,
+					a5 = 1.061405429,
+					p = 0.3275911,
+					t = 1 / (1 + p * x);
+
+				//Direct calculation using formula 7.1.26 is absolutely correct
+				//But calculation of nth order polynomial takes O(n^2) operations
+				//return 1 - (a1 * t + a2 * t * t + a3 * t * t * t + a4 * t * t * t * t + a5 * t * t * t * t * t) * Math.Exp(-1 * x * x);
+
+				//Horner's method, takes O(n) operations for nth order polynomial
+				return 1 - ((((((a5 * t + a4) * t) + a3) * t + a2) * t) + a1) * t * Math.exp(-1 * x * x);
+			}
+			var sign = 1;
+			if (z < 0) sign = -1;
+			return (0.5 * (1.0 + sign * erf(Math.abs(z)/Math.sqrt(2)))).toFixed(9);
+		},
+		CELL: function(infoType, reference){
+			var val,
+				cell = (reference !== undefined && reference.constructor === Sheet.Cell ? reference : this);
+
+			switch(infoType){
+
+				case "address":
+					val = "$"+reference.cell.columnIndex+"$"+reference.cell.rowIndex;
+					break;
+				case "col":
+					val = reference.cell.columnIndex;
+					break;
+				case "color":
+					break;
+				case "contents":
+					val= args[1];
+					break;
+				case "filename":
+
+					break;
+
+				case "format":
+
+					break;
+
+				case "parentheses":
+
+					break;
+
+				case "prefix":
+
+					break;
+
+				case "protect":
+
+					break;
+
+				case "row":
+
+					val = reference.cell.rowIndex;
+
+					break;
+
+				case "type": // v - integers,date
+//					var a = reference.cell.value;
+
+					if(reference == "") val="b";
+					
+					else if(Object.prototype.toString.call(reference) === '[object Boolean]' || Object.prototype.toString.call(reference) === '[object Number]'
+
+						|| Object.prototype.toString.call(reference) === "[object Date]" /*|| new Date(reference) != undefined*/)
+
+						val = "v";
+
+					else val = "i";
+
+					break;
+
+				case "width":
+
+					break;
+
+			}
+
+			return val;
+
+		},
+		NORMDIST: function (x, mean, sd, cumulative) {
+			// Check parameters
+			var args = arrHelpers.flatten(arguments),
+				result,
+				amt;
+
+			x = args[0];
+			mean = args[1];
+			sd = args[2];
+			cumulative = args[3];
+
+			if (isNaN(x) || isNaN(mean) || isNaN(sd)) {
+				result = new String('');
+				result.html = '#VALUE!';
+				return result;
+			}
+
+			if (sd <= 0) {
+				result = new String('');
+				result.html = '#NUM!';
+				return result;
+			}
+
+			//download jstat.js file and use the reference in the file
+			amt = parseFloat((cumulative) ? jStat.normal.cdf(x, mean, sd) : jStat.normal.pdf(x, mean, sd));
+			return (amt.toFixed(9));
+		},
+		/* Returns the value if the type of value is Sring else null. Ip- value*/
+		T: function (value) {
+			//debugger;
+			/*if (parseInt(value)) {
+				return '';
+			} else*/ var i;
+			if (Object.prototype.toString.call(value) === '[object Boolean]' || Object.prototype.toString.call(value) === '[object Number]' 
+				|| !isNaN(parseInt(value))) {
+				return '';
+			} else {
+				return value;
+			}
+		},
+		/* Gets the adjucent value for the reference array. Ip- reference array*/
+		TRANSPOSE: function (range) {
+			var i = 0,
+				jS = this.jS,
+				sheetIndex = this.sheetIndex,
+				firstValue = range[0],
+				firstCell = firstValue.cell,
+				lastValue = range[range.length - 1],
+				lastCell = lastValue.cell,
+				startRow = firstCell.rowIndex,
+				startColumn = firstCell.columnIndex,
+				rowIndex,
+				columnIndex,
+				cell,
+				cells = [],
+				cellValue,
+				transposedCell,
+				transposedCells = [],
+				value,
+				max = range.length,
+				error,
+				isOverwrite = false;
+
+			for(;i<max;i++) {
+				value = range[i];
+				cell = value.cell;
+				rowIndex = this.rowIndex + (cell.columnIndex - startColumn);
+				columnIndex = this.columnIndex + (cell.rowIndex - startRow);
+
+				transposedCell = jS.getCell(this.sheetIndex, rowIndex, columnIndex);
+				if (transposedCell !== null && transposedCell !== this) {
+					delete transposedCell.defer;
+					if (transposedCell.value != '') {
+						isOverwrite = true;
+					}
+					transposedCells.push(transposedCell);
+					cells.push(cell);
+				}
+			}
+
+			if (isOverwrite) {
+				error = new String('');
+				error.html = '#REF!';
+				return error;
+			}
+
+			i = 0;
+			max = transposedCells.length;
+			for(;i<max;i++) {
+				transposedCell = transposedCells[i];
+				if (transposedCell !== this) {
+					cell = cells[i];
+					transposedCell.defer = cell;
+					transposedCell.setNeedsUpdated();
+					cellValue = transposedCell.updateValue();
+					transposedCell.addDependency(this);
+					transposedCell.td.innerHTML = cellValue;
+
+				}
+			}
+
+			return firstValue.valueOf();
+		},
+		/* Gets the value based on col and ow no. in reference array.I/p- reference array , row and col no. */
+		INDEXNEW: function (arr, row_num, column_num, area_num) {
+			var args = arrHelpers.flatten(arr),
+				formula = this.formula.split('INDEX')[1],
+				substrng = formula.substring(formula.indexOf("(") + 1, formula.indexOf(")")),
+				result,
+
+				//console.log("formula"+formula);
+				//cell_loc = substrng.split(':'),
+				//obj1 = getCellLocByName(cell_loc[0]),
+				//obj2 = getCellLocByName(cell_loc[1]),
+				val = null;
+
+			if (row_num == 0 && column_num == 0) {
+				result = new String('');
+				result.html = '#VALUE!';
+				return result;
+			}
+			// if its a single cell, no range supplied example =INDEX(H9,1,0)
+			if(arr.length==1)
+			{
+				return args[0];
+			}
+			if ((arr[0].cell.rowIndex - arr[arr.length-1].cell.rowIndex) == 0 || 
+					(arr[0].cell.columnIndex - arr[arr.length-1].cell.columnIndex) == 0 ) {
+				val = arrHelpers.flatten(arr);
+				return val[row_num-1];
+			} else/* if (row_num != "" && column_num != "")*/ {
+				var rno = Math.abs(arr[0].cell.rowIndex - arr[arr.length-1].cell.rowIndex) + 1,
+					cno = Math.abs(arr[0].cell.columnIndex - arr[arr.length-1].cell.columnIndex) + 1,
+					i = 0,
+					j = 0,
+					len = args.length,
+					twoDimensionalArray = [],
+					index = 0,
+					data,
+					k;
+				if (column_num == 0 || column_num == undefined) {
+					column_num =1;
+				}
+
+				for (; index < len; index++) {
+					for (j = 0; j < rno; j++) {
+						data = [];
+
+						for (k = 0; k < cno; k++) {
+							// console.log("i,j "+i+"j"+j);
+							data.push(args[i]);
+
+							i++;
+						}
+						twoDimensionalArray.push(data);
+					}
+					return twoDimensionalArray[row_num - 1][column_num - 1];
+				}
+			} /*else {
+				result = new String('');
+				result.html = 'incorrect inputs';
+				return result;
+			}*/
+
+		},
+		
+		/* Gets the value based on col and row no. in reference array.I/p- reference array , row and col no. */
+		INDEX : function(arr, rowNum, colNum, area_num){
+			var jS = this.jS, 
+				result,
+				i = 0,
+				formula,
+				cellRange,
+				lBound,
+				uBound,
+				sheetIndex,
+				withoutAlias,
+				withAlias,
+				foundCell;
+				
+			if(arr.length < 1 || (rowNum==0 && colNum==0) || (rowNum == undefined && colNum == undefined)){
+				result = new String();
+				result.html = arr.length <1 ? '#N/A!' : '#VALUE!';
+				return result;
+			}		
+			
+			rowNum = rowNum == undefined ? 0 : rowNum;
+			colNum = colNum == undefined ? 0 : colNum;
+			
+			if(rowNum == '#N/A' || colNum == '#N/A' || rowNum.html == '#N/A' || colNum.html == '#N/A'){
+				result = new String();
+				result.html = '#N/A!';
+				return result;
+			}
+				
+			
+			if(arr.length==1)
+			{
+				return args[0];
+			}
+			
+/*			//Split the formula based on index and extract the part after INDEX
+//			formula = this.formula.split('INDEX')[1];
+			formula = this.formula;
+			//Extract the first parameter after index that lies between "(" and ","
+			if(formula.toString().match(/^\(?INDEX\(ALIAS\(/g))
+				withoutAlias = formula.toString().match(/INDEX\((.*?)\)/g).toString();
+			else
+				withoutAlias = formula.toString().match(/INDEX\((.*?),/g).toString();
+			
+			//if first parameter uses a sheet name reference, it will be followed by "!"
+			//and our array indexes will come after that
+			if(withoutAlias.indexOf('!')>-1){
+				withAlias = withoutAlias.match(/!([^,]+)/g).toString().replace(/\$/g, "");
+				cellRange = withAlias.toString().split(':')
+			}else{
+				cellRange = withoutAlias.toString().split(':')
+			}*/
+			
+			lBound = {
+						row : arr[0].cell.rowIndex,
+						col : arr[0].cell.columnIndex,
+						sheet : arr[0].cell.sheetIndex
+					 };
+			uBound = {
+					row : arr[arr.length-1].cell.rowIndex,
+					col : arr[arr.length-1].cell.columnIndex,
+					sheet : arr[arr.length-1].cell.sheetIndex
+				 	};
+			
+//			sheetIndex = arr[0].cell.sheetIndex;
+			
+			rowNum = rowNum > 0 ? rowNum-1 : rowNum;
+			colNum = colNum > 0 ? colNum-1 : colNum;
+			
+			if(rowNum !== undefined && colNum !== undefined){
+				if((lBound.row+rowNum <= uBound.row) && (lBound.col+colNum <= uBound.col))
+					foundCell = jS.getCell(lBound.sheet, lBound.row+rowNum, lBound.col+colNum);
+				else
+					foundCell = null;
+			} 
+			
+			if (foundCell !== null) {
+				result = foundCell.updateValue();
+			} else {
+				result = new String();
+				result.html = '#N/A';
+			}
+
+			
+			return result
+		},
+		/*INDEX: function (arr, row_num, column_num, area_num) {
+		
+			var args = arrHelpers.flatten(arr);			
+			if (row_num == 0 && column_num == 0) {
+							result = new String('');
+							result.html = '#VALUE!';
+							return result;
+			}
+			
+			if(arr.length==1)
+			{
+				return args[0];
+			}
+			//console.log("formula"+formula);
+			
+			
+			var result,
+			cell_loc,
+			obj1,
+			obj2,
+			val = null,
+			withoutAlias,
+			withAlias;
+			
+			var formula = this.formula.split('INDEX')[1];
+			var	withoutAlias = formula.substring(formula.indexOf("(") + 1, formula.indexOf(")"));
+
+			if(formula.indexOf('!')>-1){
+				withAlias = formula.match(/!([^,]+)/g).toString().replace(/\$/g, "");
+				cell_loc = withAlias.split(':')
+			}else{
+				cell_loc = withoutAlias.split(':')
+			}
+			
+			obj1 = getCellLocByName(cell_loc[0]),
+			obj2 = getCellLocByName(cell_loc[1])
+			
+			var formula = this.formula.split('INDEX')[1],
+			substrng = formula.substring(formula.indexOf("(") + 1, formula.indexOf(")")),
+			result,
+			cell_loc = substrng.split(':'),
+			obj1 = getCellLocByName(cell_loc[0]),
+			obj2 = getCellLocByName(cell_loc[1]),
+			val = null;
+
+			if (Math.abs(obj2.row - obj1.row) == 0 || Math.abs(obj2.col - obj1.col) == 0) {
+							val = arrHelpers.flatten(arr);
+							return val[row_num-1];
+			} else if (row_num != "" && column_num != "") {
+							var rno = Math.abs(obj2.row - obj1.row) + 1,
+											cno = Math.abs(obj2.col - obj1.col) + 1,
+											i = 0,
+											j = 0,
+											len = args.length,
+											twoDimensionalArray = [],
+											index = 0,
+											data,
+											k;
+
+							for (; index < len; index++) {
+											for (j = 0; j < rno; j++) {
+															data = [];
+
+															for (k = 0; k < cno; k++) {
+																			// console.log("i,j "+i+"j"+j);
+																			data.push(args[i]);
+
+																			i++;
+															}
+															twoDimensionalArray.push(data);
+											}
+											return twoDimensionalArray[row_num - 1][column_num - 1];
+							}
+			} else {
+							result = new String('');
+							result.html = '#VALUE!';
+							return result;
+			}
+
+		},*/
+		
+		FSPLIT:function (arr) {
+            var  args = arrHelpers.flatten(arr),
+                  count =0,result="",jS = this.jS,
+                  i = 0;
+            for (;i < args.length; i++) {
+                         resp = args[i];
+                         count = count+1;
+                         if(resp.length!=0){
+                        	 if(!((typeof (resp) == 'string' || Object.prototype.toString.call(resp) === '[object String]' ) && 
+             						resp.indexOf("#")==0) ){
+                        		 result += resp;
+                        		 if(i != args.length-1) result += ',';
+                        	 }
+                         }
+            }
+            if(count == args.length && result == ""){return args[0];}
+            return result;
+		},
+		
+		FSPLITMETRICS:function (arr) {
+            var args = arrHelpers.flatten(arr),
+            count =0,result="",//temp = [],
+            i = 0;
+            for (;i < args.length; i++) {
+            	count = count+1;
+                resp = args[i];
+               //temp = args[i]
+               	 if(!((typeof (resp) == 'string' || Object.prototype.toString.call(resp) === '[object String]' ) && 
+    						resp.indexOf("#")==0)){
+               		 result += resp;
+               		 if(i != args.length-1) result += ',';
+                }
+      }
+            if(count == args.length && result == ""){return args[0];}
+      return result;
+	},
+	FGETMETRICBYPRODUCT:function (value,range,index) {
+        var jS = this.jS, 
+        i=0, cell,refCell,
+        columnIndex ;
+        for(;i<range.length;i++){
+               //columnIndex=columnIndex-index;
+               refCell = range[i].cell;
+               rowIndex = refCell.rowIndex;
+               columnIndex = refCell.columnIndex-index ;
+               cell = jS.getCell(refCell.sheetIndex, rowIndex, columnIndex);
+               if(value.html ==cell.html){
+                     return range[i];
+                     //console.log(value);
+               }
+               if(i==range.length) {
+                     return '#N/A';
+               }
+        }
+        //return '#N/A';
+},
+
+		/*
+		BUTTON: function () {
+			var name = arguments[0],
+				onclickAction = arguments[1],
+				td = this.td,
+				cell = this,
+				jS = this.jS,
+				html,
+				button,
+				result = cell.value,
+				id = this.id + "_btn";
+
+			if (td !== null) {
+				html = $(td).children().detach();
+			}
+
+			if (html === undefined || html.length < 1 || cell.needsUpdated) {
+				html = document.createElement('button');
+				// button.setAttribute('name', name);
+				html .setAttribute('id', id);
+				//  button.className = 'jsButton';
+				html.cell = this;
+				//   button.width=100%;
+				// button.height=100%; 
+				//  button.setAttribute("style","height:20px; width:26px; background-image:url('<c:url value='/resources/images/right_arrow.png'/>');");
+				html.setAttribute("style", "height:20px; width:26px; background-image:url('" + contextPath + "/resources/images/right_arrow.png');");
+				html.innerHTML = name;
+				// button.addEventListener('click',sayHi);
+				jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
+			}
+
+			result.html = html;
+
+			if (!result.hasOwnProperty('html')) {
+				result = new String(result);
+				result.html = html;
+			}
+
+			return result;
+		},
+		*/
+		
+		BUTTON: function () {
+			var name = arguments[0],
+				onclickAction = arguments[1],
+				td = this.td,
+				cell = this,
+				jS = this.jS,
+				html,
+				button,
+				result = cell.value,
+				id = this.id + "_btn";
+
+			if (td !== null) {
+				html = $(td).children().detach();
+			}
+
+			if (html === undefined || html.length < 1 || cell.needsUpdated) {
+						button = doc.createElement('input');
+						button.setAttribute('type', 'button');
+						button.setAttribute('name', id);
+						button.setAttribute('id', id);
+						button.setAttribute("style", "height:20px; width:26px; background-image:url('" + contextPath + "/resources/images/pluse-w.png');");
+						button.className = id;
+						button.onclick = function () {
+							jS.trigger('sheetCellEdited', [cell]);
+						};
+
+						html = doc.createElement('span');
+						html.className='SButton';
+						html.appendChild(button);
+						//html.onmousedown = function () {
+							//jS.cellEdit(this.cell.td);
+						//};
+						html.cell = cell;
+
+						//html.appendChild(button);
+						//html.onmousedown = function () {
+							//jS.cellEdit(this.cell.td);
+							//jS.trigger('sheetCellEdited', [cell]);
+						//};
+						html.cell = cell;
+						jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
+			}
+
+			result.html = html;
+
+			if (!result.hasOwnProperty('html')) {
+				result = new String(result);
+				result.html = html;
+			}
+
+			return result;
+		},
+		NORMBUTTON: function () {
+
+			var name = arguments[0],
+				onclickAction = arguments[1],
+				cell = this,
+				jS = this.jS,
+				td = this.td,
+				html,
+				result = cell.value,
+				id = cell.id + "_btn",
+				rel = id + "_rel";
+
+			if (td !== null) {
+				html = $(td).children().detach();
+			}
+
+			if (html === undefined || html.length < 1 || cell.needsUpdated) {
+				html = document.createElement('button');
+				// button.setAttribute('name', name);
+				html.setAttribute('id', id);
+				html.setAttribute('rel', rel);
+				//  button.className = 'jsButton';
+				html.cell = this;
+				/*   button.width=100%;
+				 button.height=100%; */
+
+				html.setAttribute("style", "height:26px; width:100px;");
+				html.setAttribute("class", "button");
+				html.innerHTML = name;
+				// button.addEventListener('click',sayHi);
+   html.onclick = function () {
+                    jS.trigger('sheetCellEdited', [cell]);
+             };				jS.controls.inputs[jS.i] = jS.obj.inputs().add(html);
+			}
+
+			result.html = html;
+
+			if (!result.hasOwnProperty('html')) {
+				result = new String(result);
+				result.html = html;
+			}
+
+			return result;
+
+		}
+	};

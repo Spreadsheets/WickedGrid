@@ -1,0 +1,515 @@
+var btnAction, btnStatus;
+
+$(document).ready(function() {
+	
+	$("#Save_btn").click(function() {
+
+	var url = roleContextPath + '/saveModel?dealId='+dealId+"&jCount="+jsonCount;
+
+		btnAction = "Save";
+		
+		//Validation for User Region
+		if (validateUserRegion() && validateBscDate())
+			if(sendJsonList())
+				ajaxCall(url);
+		
+	});
+	
+	function getCellValueById(tdId, jS) {
+		
+		var td = $("#" + $(jS.obj.tables()[jS.i]).attr('id') + "").find('td[id="' + tdId + '"]');
+		var col = td.index();
+		var row = td.parent().index();
+		return $('#sheet').getCellValue(row, col);
+
+	}
+	
+	$("#Submit_btn").click(function() {
+		var jS = $('#sheet').getSheet();
+		console.log(getCellValueById("c.DealWorksID",jS));
+		
+		//Validation for User Region
+		if (validateUserRegion() && validateBscDate())
+			if(getCellValueById("c.DealWorksID",jS) == "" || getCellValueById("c.DealWorksID",jS) == null){
+				$("#linktoDeals").dialog(
+						{
+							title : 'Deals -',
+							modal : true,
+							draggable : false,
+							resizable : false,
+							width : '70%',
+							open : function(event, ui) {
+								$("#commentsDialog").parent().find(
+										".ui-dialog-titlebar").hide();
+								
+								//$('#commentDialogHeader').html('Comments for Deal Id - ' +dealId+ ' Deal Version - ' + dealVerNo);
+							}
+						});
+				
+				
+				linkTdeals(casId);
+				
+			}else{
+				confirmPopUp();
+			}
+			
+		
+	});
+	
+	
+	
+
+function linkTdeals(casId){
+	
+	$.ajax({
+		url : roleContextPath + '/linkToDeals',//$('#add_casID').html(),
+		dataType : 'html',
+		success : function(html) {
+			$(".dealContainer").html(html);
+		}
+//	closePopUp();
+	});
+	
+}
+
+	$("#Approve_btn").click(function() {
+				
+		btnAction = "Approve";
+		
+		btnStatus = "Approved";
+
+		var url = roleContextPath + '/approveModel?dealId='+dealId+"&jCount="+jsonCount;
+
+		//Validation for User Region
+		if (validateUserRegion() && validateBscDate())
+			if(sendJsonList())
+			   ajaxCall(url);
+		
+
+
+	});
+	
+});
+
+function validateBscDate(){
+	//var bsc_date=getCellValueById("LBscDate",jS);
+/*	var td = $("#" + $(jS.obj.tables()[2]).attr('id') + "").find(
+            'td[id="LBscDate"]');*/
+	
+	var cell =jS.getCell(1,135,34);
+	console.log("bsc_date"+cell.value.toString());
+	if(cell.value.toString() !="" || cell.value.toString() != undefined){
+		return true;
+	}
+	$('#messagePop').html("Please enter BSC Date");
+	messagePopUp();
+	return false;
+	
+}
+
+
+function validateUserRegion(){
+	
+	var selectedRegion = document.getElementById('Inputs.Region_DrpDwn').value;
+	 
+	if(role !== 'gadmin')
+		if(region !== "" || region !== null){
+			if(selectedRegion !== region){
+				$('#messagePop').html("Please select a valid region - Your SID is mapped to "+region);	
+				messagePopUp();
+				return false;
+			}
+		}
+	return true;
+}
+
+function saveStatusChange(status) {
+	
+	btnAction = "";
+	
+	var status = $('#newStatus').attr('value');
+
+	var url = roleContextPath + '/modelAction?dealId='+dealId+"&jCount="+jsonCount+"&dealStatus="+status;
+
+	//Validation for User Region
+	if (validateUserRegion() && validateBscDate())
+		if(sendJsonList())
+		   ajaxCall(url);
+	
+
+	
+}
+
+function submitModel() {
+
+	closePopUp();
+	
+	btnAction = "Submit";
+
+	var url = roleContextPath + '/submitModel?dealId='+dealId+"&jCount="+jsonCount;
+
+	if(sendJsonList())
+	   ajaxCall(url);
+
+}
+
+
+
+function sendJsonList() {
+	
+	try{
+		
+		$('#spinner').show();
+		
+		var jS = $('#sheet').getSheet();
+		
+		var map1,map2,map3;
+		
+    	$('#' + btnAction + '_btn').attr('value', 'wait...');
+		$('#' + btnAction + '_btn').attr('disabled', 'disabled');
+		
+		map1 = defaultJsonMap(jS);
+						
+		if(parseInt(jsonCount)>3){
+		
+			map2 = adminJsonMap1(jS);
+			map3 = adminJsonMap2(jS);
+	  }
+		
+	if(dealStatus == "In Progress" || dealStatus == "Submitted" || dealStatus == "Approved" || dealStatus == ""){
+
+		 if (!isDealEditable && (role == "radmin" || role == "gadmin") && btnStatus == "Approved") {
+			   
+			    map2 = adminJsonMap1(jS);
+				map3 = adminJsonMap2(jS);
+			
+		}
+		else if (isDealEditable && (role == "radmin" || role == "gadmin")) {
+			
+		        map2 = adminJsonMap1(jS);
+				map3 = adminJsonMap2(jS);
+
+			}
+	}
+	
+	
+	   btnStatus="";
+	   	
+	    if(map1!=undefined)
+		  sendJson(map1);
+		if(map2!=undefined)
+		  sendJson(map2);
+		if(map3!=undefined)
+		  sendJson(map3);
+	
+		
+		return true;
+
+	} catch(err){
+			
+		$('#spinner').fadeOut();
+		
+		$('#' + btnAction + '_btn').removeAttr('disabled');
+		$('#' + btnAction + '_btn').attr('value', btnAction);
+		
+		console.log(err);
+		
+		return false;
+		
+	}
+	
+}
+
+function sendJson(map) {
+
+	try {
+
+		var jsons = {};
+
+		for ( var x in map) {
+
+			jsons[x] = "["+ JSON.stringify(jS.s.loader.json[map[x]]) + "]";
+		}
+
+		$.ajax({
+					async : false,
+					url : roleContextPath + '/sendJson',
+					type : 'POST',
+					contentType : 'application/json',
+					data : JSON.stringify(jsons),
+					success : function(data) {
+					},
+					error : function(response) {
+						
+					$('#spinner').fadeOut();
+					
+					$('#' + btnAction + '_btn').removeAttr('disabled');
+					$('#' + btnAction + '_btn').attr('value', btnAction);
+						
+					if (response.status == 403)
+						$('#messagePop').html("Access Forbidden...Please try again ");
+					else
+						$('#messagePop').html("Unable to process your request...Please try again ");
+						messagePopUp();
+					}
+				});
+		
+		return true;
+
+	} catch (e) {
+
+		$('#spinner').fadeOut();
+		
+		$('#' + btnAction + '_btn').removeAttr('disabled');
+		$('#' + btnAction + '_btn').attr('value', btnAction);
+		
+		if (e == "out of memory")
+			$('#messagePop').html("Out of Memory error...Please try again");
+		else
+			$('#messagePop').html("Unable to process your request due to script error...Please try again");
+		messagePopUp();
+		console.log(e);
+		throw false;
+
+	}
+
+}
+
+function ajaxCall(cUrl) {
+
+	try {
+
+		$.ajax({
+					url : cUrl,
+					type : 'POST',
+					contentType : 'application/json',
+					//data : JSON.stringify(jsons),
+					success : function(data) {
+						if (data.status == "success")
+							updateAllKeys(data);
+						
+						if(data.status == "failure")
+							console.log(data.exception);
+
+						$('#messagePop').html(data.responseTxt);
+						messagePopUp();
+					},
+					error : function(response) {
+
+						if (response.status == 403)
+							$('#messagePop').html("Access Forbidden...Please try again ");
+						else
+							$('#messagePop').html("Unable to process your request...Please try again ");
+						messagePopUp();
+					},
+					complete : function(data) {
+						$('#spinner').fadeOut();
+						$('#' + btnAction + '_btn').removeAttr('disabled');
+						$('#' + btnAction + '_btn').attr('value', btnAction);
+					}
+
+				});
+
+	} catch (e) {
+
+		$('#spinner').fadeOut();
+		$('#messagePop').html("Unable to process your request due to script error...Please try again");
+		messagePopUp();
+		console.log(e);
+	}
+
+}
+
+
+function defaultJsonMap(jS) {
+
+	var dJsonMap = {};
+
+	dJsonMap["JSON_INPUTS"] = getSheetIndex(jS,"Inputs");
+	dJsonMap["JSON_BSC_REQUEST"] = getSheetIndex(jS,"BSC Request");
+	dJsonMap["JSON_PROFORMA_ROE_INPUTS"] = getSheetIndex(jS,"Proforma ROE Inputs");
+	dJsonMap["JSON_BSC_ROE_SUBMISSION_FORMAT"] = getSheetIndex(jS,"BSC ROE (SUBMISSION FORMAT)");
+
+	return dJsonMap;
+
+}
+
+function adminJsonMap1(jS) {
+
+	var aJsonMap = {};
+
+	aJsonMap["JSON_BSC_REQUEST_SUBMISSION_FORMAT"] = getSheetIndex(jS,"BSC Request (SUBMISSION FORMAT)");
+	aJsonMap["JSON_ALL_FACILITIES"] = getSheetIndex(jS,"All Facilities");
+	aJsonMap["JSON_HEDGE_IMPACT_ALL_FACILITIES"] = getSheetIndex(jS,"Hedge Impact All Facilities");
+
+	return aJsonMap;
+
+}
+
+function adminJsonMap2(jS) {
+	
+	var aJsonMap = {}, exFlag=false, transType;
+
+	for(var i=1;i<=5;i++){
+		
+	transType =	$("#TransacType"+i+"_DrpDwn").val();
+	
+	if(transType!=' ')
+	   aJsonMap["JSON_FACILITY_"+i] = getSheetIndex(jS,"Facility "+i);
+
+	if(transType == 'Rollover' || transType == 'Amendment')
+		exFlag=true;
+	}
+	
+	if(exFlag)
+	aJsonMap["JSON_EXISTING_FACILITY"] = getSheetIndex(jS,"Existing Facility");
+	
+	aJsonMap["JSON_TABLESANDASSUMPTIONS"] = getSheetIndex(jS,"TablesAndAssumptions");
+
+	return aJsonMap;
+
+}
+
+function getSheetIndex(jS, title) {
+
+	var index = jS.getSpreadsheetIndexByTitle(title);
+
+	if (index == -1) {
+		alert(title + " Sheet not found");
+		throw "Sheet not found";
+	}
+
+	else
+		return index;
+}
+
+function updateAllKeys(data) {
+
+	var jS = $('#sheet').getSheet();
+
+	dealId = data.input.dealId;
+	dealVer = data.input.dealVer;
+	jsonCount = data.input.jCount;
+
+	updateInputKeys(jS, data.input);
+	updateBscKeys(jS, data.bsc);
+	updateProformaKeys(jS, data.proforma);
+	updateBscRoeKeys(jS, data.bscRoe);
+}
+
+function updateInputKeys(jS, inputKeys) {
+
+	var eRow = [ 13, 15, 52, 53, 113, 114 ];
+
+	var json = jS.s.loader.json[getSheetIndex(jS, "Inputs")];
+
+	updateJsonWithKeys(jS, eRow, inputKeys, json);
+}
+
+function updateBscKeys(jS, bscKeys) {
+
+	var eRow = [ 18, 74, 81, 117 ];
+
+	var json = jS.s.loader.json[getSheetIndex(jS, "BSC Request")];
+
+	updateJsonWithKeys(jS, eRow, bscKeys, json);
+}
+
+function updateProformaKeys(jS, proformaKeys) {
+
+	var eRow = [ 4, 5, 7, 13, 82 ];
+
+	var json = jS.s.loader.json[getSheetIndex(jS, "Proforma ROE Inputs")];
+
+	updateJsonWithKeys(jS, eRow, proformaKeys, json);
+}
+
+function updateBscRoeKeys(jS, bscRoeKeys) {
+
+	var eRow = [ 1, 5, 7, 17, 23, 25 ];
+
+	var json = jS.s.loader.json[getSheetIndex(jS, "BSC ROE (SUBMISSION FORMAT)")];
+
+	updateJsonWithKeys(jS, eRow, bscRoeKeys, json);
+}
+
+function updateJsonWithKeys(jS, eRow, data, json) {
+
+	var colNo = 0, rowNo = 0;
+
+	var row = json["rows"][eRow[rowNo] - 1];
+
+	var columns = row["columns"];
+
+	var column;
+
+	var map = data;
+
+	for ( var key in map) {
+
+		if (colNo > columns.length - 1) {
+			rowNo++;
+			colNo = 0;
+			row = json["rows"][eRow[rowNo] - 1];
+			columns = row["columns"];
+		}
+
+		while (colNo <= columns.length - 1) {
+
+			column = columns[colNo];
+
+			if (column["cellType"] == null) {
+
+				column["id"] = key;
+				column["value"] = map[key];
+				column["class"] = "visibilityHidden";
+				colNo++;
+				break;
+			} else {
+
+				colNo++;
+
+				if (colNo > columns.length - 1) {
+					rowNo++;
+					colNo = 0;
+					row = json["rows"][eRow[rowNo] - 1];
+					columns = row["columns"];
+				}
+
+			}
+		}
+	}
+}
+
+(function(console) {
+
+	console.save = function(data, filename) {
+
+		if (!data) {
+			console.error('Console.save: No data');
+			return;
+		}
+
+		if (!filename)
+			filename = 'console.json';
+
+		if (typeof data === "object") {
+			// pretty print
+			// data = JSON.stringify(data, undefined, 4)
+			// print with no spaces
+			data = JSON.stringify(data);
+		}
+
+		var blob = new Blob([ data ], {
+			type : 'text/json'
+		}), e = document.createEvent('MouseEvents'), a = document
+				.createElement('a');
+
+		a.download = filename;
+		a.href = window.URL.createObjectURL(blob);
+		a.dataset.downloadurl = [ 'text/json', a.download, a.href ].join(':');
+		e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false,
+				false, false, false, 0, null);
+		a.dispatchEvent(e);
+	};
+})(console);

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="../../resources/js/jquery.js"></script>
+<script src="http://tinymce.cachefly.net/4.0/tinymce.min.js"></script>		
+<style type="text/css">
+/* button {
+	background-color: #336699;
+    border: medium none;
+    color: #FFFFFF;
+    cursor: pointer;
+    font-weight: bold;
+} */
+.button {
+	height: 25px;
+	-moz-border-radius: 25px;
+	background-color: #0066be;
+	border: 2px solid #2d6ca2;
+	color: #fff;
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, 0 1px 1px rgba(0, 0, 0, 0.075);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+    cursor:pointer;
+}
+
+.button:hover {
+	height: 25px;
+	-moz-border-radius: 25px;
+	background-color: #3276b1;
+	border: 2px solid #285e8e;
+	color: #fff;
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, 0 1px 1px rgba(0, 0, 0, 0.075);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+    cursor:pointer;
+}
+</style>			
+<script type="application/x-javascript">
+$(document).ready(function(){
+	$("#addComments, #cancel").on("click",function(){
+		var that = $(this);
+		if (window.opener != null && !window.opener.closed) {
+		     var holder = $(window.opener.document);
+		     if(that.attr("id")=="addComments"){
+		    	 var commentsData = $('#TypeHere_ifr').contents().find('#tinymce').html();
+			     holder.find("#commentsData").val(commentsData);
+		     }
+		     holder.find("#saveComments").trigger("click");
+			 window.close();
+		}
+		
+	});
+});
+tinymce.init({
+        selector: '#TypeHere',
+		plugins: [
+        "advlist autolink lists link image charmap print preview anchor",
+        "searchreplace visualblocks code fullscreen",
+        "insertdatetime media table contextmenu paste"
+		],
+		toolbar: "insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image"
+});
+</script>
+</head>
+<body>
+       <textarea id="TypeHere">Model Comments...</textarea>
+       <button id="addComments" class="button" >Add</button>&nbsp;<button id="cancel" class="button"  >Cancel</button>
+       
+</body>
+</html>

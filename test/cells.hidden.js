@@ -26,7 +26,7 @@ tf.test('Cells Hidden: Using Options (hiddenRows, hiddenColumns)', function() {
 		tdsHidden = tables.find('td:hidden'),
 		tdsVisible = tables.find('td:visible');
 
-	tf.assertEquals(tdsHidden.length, 25);
+	tf.assertEquals(tdsHidden.length, 10);
 	tf.assertEquals(tdsVisible.length, 50);
 	div.getSheet().kill();
 	tables.remove();
@@ -68,7 +68,7 @@ tf.test('Cells Hidden: Using attributes (data-hiddenrows, data-hiddencolumns)', 
 		tdsHidden = tables.find('td:hidden'),
 		tdsVisible = tables.find('td:visible');
 
-	tf.assertEquals(tdsHidden.length, 25);
+	tf.assertEquals(tdsHidden.length, 10);
 	tf.assertEquals(tdsVisible.length, 50);
 	div.getSheet().kill();
 	tables.remove();
@@ -96,9 +96,7 @@ tf.test('Cells Hidden: Using row toggle', function() {
 
 	tr = cell.td.parentNode;
 
-	style = getComputedStyle(tr);
-
-	tf.assertEquals(style['display'], 'none');
+	tf.assertEquals(tr.parentNode, null);
 
 	div.getSheet().kill();
 	div.remove();
@@ -142,21 +140,17 @@ tf.test('Cells Hidden: Using row range toggle', function() {
 			.sheet(),
 		jS = div.getSheet(),
 		cell1 = jS.getCell(0, 1, 1),
-		cell2 = jS.getCell(0, 5, 1),
-		style1,
-		style2;
+		cell2 = jS.getCell(0, 5, 1);
 
 	jS.toggleHideRowRange(1,10);
 
-	style1 = getComputedStyle(cell1.td.parentNode);
-	style2 = getComputedStyle(cell2.td.parentNode);
-
-	tf.assertEquals(style1['display'], 'none', 'Row 1 is correctly hidden');
-	tf.assertEquals(style2['display'], 'none', 'Row 2 is correctly hidden');
+	tf.assertEquals(cell1.td.parentNode.parentNode, null, 'Row 1 is correctly hidden');
+	tf.assertEquals(cell2.td.parentNode.parentNode, null, 'Row 2 is correctly hidden');
 
 	div.getSheet().kill();
 	div.remove();
 });
+
 
 tf.test('Cells Hidden: Using column range toggle', function() {
 	var table1 = tableify(' \t \t \t \t \n\
@@ -186,6 +180,7 @@ tf.test('Cells Hidden: Using column range toggle', function() {
 	div.getSheet().kill();
 	div.remove();
 });
+
 
 tf.test('Cells Hidden: Using Json (hiddenRows, hiddenColumns)', function() {
 	var spreadsheets = [{
@@ -269,8 +264,8 @@ tf.test('Cells Hidden: Using Json (hiddenRows, hiddenColumns)', function() {
 		tdsHidden = tables.find('td:hidden'),
 		tdsVisible = tables.find('td:visible');
 
-	tf.assertEquals(tdsHidden.length, 25);
-	tf.assertEquals(tdsVisible.length, 50);
+	tf.assertEquals(tdsHidden.length, 13);
+	tf.assertEquals(tdsVisible.length, 70);
 	div.getSheet().kill();
 	tables.remove();
 	div.remove();

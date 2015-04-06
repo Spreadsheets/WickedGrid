@@ -1,0 +1,302 @@
+var chartLabelMap = new Object();
+chartLabelMap['inProgress'] = "In Progress";
+chartLabelMap['submitted'] = "Submitted";
+chartLabelMap['readyForApproval'] = "Ready for Approval";
+chartLabelMap['dealShortfall'] = "Deal Shortfall";
+chartLabelMap['financingShortfall'] = "Financing Shortfall";
+chartLabelMap['dealRoe'] = "Deal ROE";
+chartLabelMap['financingRoe'] = "Financing ROE";
+
+function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results == null ? null : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+$(document).ready(function() {
+	//getting region from URL
+	 var chartRegion = getParameterByName('region');
+	//Function call for Creating Charts
+	 if(chartRegion == null){
+		 createChart('Model Status',['NA', 'EMEA', 'APAC', 'LATAM'],"../getStatusGraphData?region=null",['inProgress','submitted','readyForApproval'],"chart1");
+			createChart('Shortfall',['NA', 'EMEA', 'APAC', 'LATAM'],"../getShortfallGraphData?region=null",['dealShortfall','financingShortfall'],"chart2");
+			createChart('RoE',['NA', 'EMEA', 'APAC', 'LATAM'],"../getRoeGraphData?region=null",['dealRoe','financingRoe'],"chart3");
+			$("#chart1, #chart2, #chart3").show();
+			$("#adSearch").hide();
+	 }else if(chartRegion == 'AP'){
+		 createChart('Model Status',['AUS', 'GC', 'IND', 'JAP','KOR','MONG','SEA'],"../getStatusGraphData?region="+chartRegion,['inProgress','submitted','readyForApproval'],"chart1");
+			createChart('Shortfall',['AUS', 'GC', 'IND', 'JAP','KOR','MONG','SEA'],"../getShortfallGraphData?region="+chartRegion,['dealShortfall','financingShortfall'],"chart2");
+			createChart('RoE',['AUS', 'GC', 'IND', 'JAP','KOR','MONG','SEA'],"../getRoeGraphData?region="+chartRegion,['dealRoe','financingRoe'],"chart3");
+			$("#chart1, #chart2, #chart3").show();
+			$("#adSearch").hide();
+	 }else if(chartRegion == 'NA' || chartRegion == 'LATAM'){
+		 createChart('Model Status',['CONS RET', 'DIV IND', 'ENERGY', 'FINANCE','Gov,CB,PS','HEALTHCARE','INSURANCE','REAL EST'],"../getStatusGraphData?region="+chartRegion,['inProgress','submitted','readyForApproval'],"chart1");
+			createChart('Shortfall',['CONS RET', 'DIV IND', 'ENERGY', 'FINANCE','Gov,CB,PS','HEALTHCARE','INSURANCE','REAL EST'],"../getShortfallGraphData?region="+chartRegion,['dealShortfall','financingShortfall'],"chart2");
+			createChart('RoE',['CONS RET', 'DIV IND', 'ENERGY', 'FINANCE','Gov,CB,PS','HEALTHCARE','INSURANCE','REAL EST'],"../getRoeGraphData?region="+chartRegion,['dealRoe','financingRoe'],"chart3");
+			$("#chart1, #chart2, #chart3").show();
+			$("#adSearch").hide();
+	 }
+	
+});
+
+$(function() {
+	$("#adSearchButton").click(function() {
+		$("#adSearch").show("slow");
+	});
+	$("#cross").click(function() {
+		$("#adSearch").hide("slow");
+	});
+	$("#dialog-message").dialog({
+		autoOpen : false,
+		modal : true,
+		buttons : {
+			Ok : function() {
+				$(this).dialog("close");
+			}
+		}
+	});
+	$("#compVersion").click(function() {
+		$("#dialog-message").dialog("open");
+	});
+	$('.pref').mousedown(function() {
+		if ($(this).is(":checked")) {
+			$("#dealTable").jqGrid('hideCol', [ $(this).attr('id') ]);
+		} else {
+			$("#dealTable").jqGrid('showCol', [ $(this).attr('id') ]);
+		}
+	});
+
+	$('.ui-icon-seek-prev').click(function(e) {
+		//e.stopPropagation();
+		//e.preventDefault();
+		bindPopUp();
+	});
+
+	$('.ui-icon-seek-next').click(function(e) {
+		//e.stopPropagation();
+		//e.preventDefault();
+		bindPopUp();
+	});
+	function bindPopUp() {
+		$('.sgcollapsed .ui-icon-plus').on('click', function(e) {
+			e.stopPropagation();
+			e.preventDefault();
+
+			// Here we will describe a variable popupid which gets the
+			// rel attribute from the clicked link
+			// var popupid = $(this).attr('rel');
+			var popupid = 'popuprel';
+
+			// Now we need to popup the marked which belongs to the rel
+			// attribute
+			// Suppose the rel attribute of click link is popuprel then here in
+			// below code
+			// #popuprel will fadein
+			$('#' + popupid).fadeIn();
+
+			// append div with id fade into the bottom of body tag
+			// and we allready styled it in our step 2 : CSS
+			$('body').append('<div id="fade"></div>');
+			$('#fade').css({
+				'filter' : 'alpha(opacity=80)'
+			}).fadeIn();
+
+			// Now here we need to have our popup box in center of
+			// webpage when its fadein. so we add 10px to height and width
+			var popuptopmargin = ($('#' + popupid).height() + 10) / 2;
+			var popupleftmargin = ($('#' + popupid).width() + 10) / 2;
+
+			// Then using .css function style our popup box for center
+			// allignment
+			$('#' + popupid).css({
+				'margin-top' : -popuptopmargin,
+				'margin-left' : -popupleftmargin
+			});
+		});
+
+		// Now define one more function which is used to fadeout the
+		// fade layer and popup window as soon as we click on fade layer
+		$('#fade').click(function() {
+
+			// Add markup ids of all custom popup box here
+			$('#fade , #popuprel , #popuprel2 , #popuprel3').fadeOut()
+			return false;
+
+		});
+	}
+	bindPopUp();
+
+});
+
+$(document).ready(function() {
+	enableSelectBoxes();
+});
+
+function enableSelectBoxes() {
+	$('div.selectBox').each(
+			function() {
+				$(this).children('span.selected').html(
+						$(this).children('div.selectOptions').children(
+								'span.selectOption:first').html());
+				$(this).attr(
+						'value',
+						$(this).children('div.selectOptions').children(
+								'span.selectOption:first').attr('value'));
+
+				$(this).children('span.selected,span.selectArrow').click(
+						function() {
+							if ($(this).parent().children('div.selectOptions')
+									.css('display') == 'none') {
+								$(this).parent().children('div.selectOptions')
+										.css('display', 'block');
+							} else {
+								$(this).parent().children('div.selectOptions')
+										.css('display', 'none');
+							}
+						});
+
+				$(this).find('span.selectOption').click(
+						function() {
+							$(this).parent().css('display', 'none');
+							$(this).closest('div.selectBox').attr('value',
+									$(this).attr('value'));
+							$(this).parent().siblings('span.selected').html(
+									$(this).html());
+						});
+			});
+}// -->
+
+/*$(function() {
+	var moveLeft = 20;
+	var moveDown = 10;
+
+	
+	 * $('#popupWindow').hover(function(e) { $('div#pop-up').show(); },
+	 * function() { $('div#pop-up').hide(); });
+	 
+	$('#popupWindow').click(function(e) {
+		$('div#pop-up').show();
+	});
+	$('.advanced-srch .header-text-close').click(function(e) {
+		e.preventDefault();
+		$('div#pop-up').hide();
+	});
+	
+	 * $('#popupWindow').mousemove(function(e) { $("div#pop-up").css('top',
+	 * e.pageY + moveDown).css('left', e.pageX + moveLeft); });
+	 
+
+});*/
+
+$(function() {
+	var moveLeft = 20;
+	var moveDown = 10;
+
+	$('#popupWindow1').hover(function(e) {
+		$('div#pop-up1').show();
+	}, function() {
+		$('div#pop-up1').hide();
+	});
+
+	/*
+	 * $('#popupWindow').mousemove(function(e) { $("div#pop-up").css('top',
+	 * e.pageY + moveDown).css('left', e.pageX + moveLeft); });
+	 */
+
+});
+
+function createChart(chartTitle,xAxis,dataUrl, dataAttr, chartId){
+	 // Our ajax data renderer which here retrieves a json.
+	  // The options argument isn't used in this renderer.
+	  var chartSeries = [], setColors = [];
+	  var colorSet = ['#80C4C4', '#DFAA75', '#93C196'];
+	  var ajaxDataRenderer = function(url, plot, options) {
+	    var ret = [];
+	    $.ajax({
+	      // have to use synchronous here, else the function 
+	      // will return before the data is fetched
+	      async: false,
+	      url: url,
+	      dataType:"json",
+	      success: function(data) {
+	    	  for(var i=0; i<dataAttr.length; i++) {
+	    		  ret.push(data[dataAttr[i]]);
+	    		  chartSeries[i] = { label : chartLabelMap[dataAttr[i]]};
+	    		  setColors[i] =  colorSet[i];
+	    	  }
+	      }
+	    });
+	    return ret;
+	  };
+	  
+	// The url for our json data
+	  var jsonurl = dataUrl;
+	  
+  // Can specify a custom tick Array.
+  // Ticks should match up one for each y value (category) in the series.
+  var ticks = xAxis;
+  if($('#'+chartId).length != 0){
+  var plot1 = $.jqplot(chartId, jsonurl, {
+		title: chartTitle,
+		dataRenderer: ajaxDataRenderer,
+	    dataRendererOptions: {
+	      unusedOptionalUrl: jsonurl
+	    },
+      // The "seriesDefaults" option is an options object that will
+      // be applied to all series in the chart.
+      seriesDefaults:{
+          renderer:$.jqplot.BarRenderer,
+          rendererOptions: {fillToZero: true}
+			//rendererOptions:{ varyBarColor : true },
+      },
+      seriesColors : setColors,
+      // Custom labels for the series are specified with the "label"
+      // option on the series option.  Here a series option object
+      // is specified for each series.
+      series: chartSeries,
+      // Show the legend and put it outside the grid, but inside the
+      // plot container, shrinking the grid to accomodate the legend.
+      // A value of "outside" would not shrink the grid and allow
+      // the legend to overflow the container.
+      legend: {
+          show: true,
+			location: 'n',
+			fontFamily: 'amplitude, arial, verdana',
+          //placement: 'outsideGrid'
+			placement: 'inside',
+			renderer: $.jqplot.EnhancedLegendRenderer,
+			rendererOptions: {
+			numberRows: 1
+			},
+      },
+      axes: {
+          // Use a category axis on the x axis and use our custom ticks.
+          xaxis: {
+              renderer: $.jqplot.CategoryAxisRenderer,
+              ticks: ticks
+          },
+          // Pad the y axis just a little so bars can get close to, but
+          // not touch, the grid boundaries.  1.2 is the default padding.
+          yaxis: {
+              pad: 1.05,
+              tickOptions: {formatString: '%d#'},
+              min:0
+          }
+      },
+		grid: {
+		drawGridLines: true,        // wether to draw lines across the grid or not.
+		gridLineColor: '#cccccc',   // CSS color spec of the grid lines.
+		background: '#EBF2F5',      // CSS color spec for background color of grid.
+		borderColor: '#EBF2F5',     // CSS color spec for border around grid.
+		borderWidth: 2.0,           // pixel width of border around grid.
+		shadow: true,               // draw a shadow for grid.
+		shadowAngle: 45,            // angle of the shadow.  Clockwise from x axis.
+		shadowOffset: 1.5,          // offset from the line of the shadow.
+		shadowWidth: 3,             // width of the stroke for the shadow.
+		shadowDepth: 3
+		}, 
+  	});
+  }	
+  $('#'+chartId).hide();
+}

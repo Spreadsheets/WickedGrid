@@ -1,0 +1,1056 @@
+var n = isNaN;
+cellTypes = {/*
+	 Pattern '0%'
+	Fmt1 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatPercent(cell, value, "p0");
+		}
+		return value;
+	},
+	 Pattern '0.00%'
+	Fmt2 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatPercent(cell, value, "p2");
+		}
+		return value;
+	},
+	 Pattern '0'
+	Fmt3 : function(value) {
+		var result, num; 
+		if(value){
+			if (typeof(value)=="string"){		    							
+			
+				if (isNaN(Globalize.parseFloat(value))) 
+                    return value;                                         
+				value = Globalize.parseFloat(value);
+			}
+			
+			num = (n(value) ?  value * 1 : value), result;		
+			
+			if (!n(num)) {
+				result = new Number(num);
+				result.html = result.toFixed(0);		    								
+				return result;
+			}
+		}	    							
+		return value;
+	},
+	 Pattern ' [$$-409]#,##0'
+	Fmt4 : function(value) {
+		cell = this;
+		if(value){
+			value = FormatCurrency(cell,value, 'c0');
+		}
+		return value;
+	},
+	 Pattern ' _-* #,##0.00_-;\-* #,##0.00_-;_-* "-"??_-;_-@_-'	
+	Fmt5 : function(value) {
+		return cellTypes.Fmt51.call(this,value);
+	},
+	 Pattern ' _-* #,##0.0000_-;\-* #,##0.0000_-;_-* "-"??_-;_-@_-'	
+	Fmt6 : function(value) {
+		return cellTypes.Fmt61.call(this,value);
+	},
+	 Pattern ' _(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'
+	Fmt7 : function(value) {
+
+		var result, num;
+		if (value) {
+			if (typeof (value) == "string") {
+
+				if (isNaN(Globalize.parseFloat(value)))
+					return value;
+				value = Globalize.parseFloat(value);
+			}
+
+			num = (n(value) ? value * 1 : value), result;
+
+			if (!n(num)) {
+				result = new Number(num);
+				if (num < 0) {
+					var temp = num.toString().split('-')[1];
+					temp = Globalize.parseFloat(temp.toString());
+					var prec = temp.toFixed(2).toString().split('.')[1];
+					var numVal = temp.toFixed(2).toString().split('.')[0];
+					var finalVal = FormatNumberWithCommas(numVal).html + '.'
+							+ prec;
+					result.html = '(' + finalVal + ')';
+				} else {
+					var temp = Globalize.parseFloat(result.toString());
+					var prec = temp.toFixed(2).toString().split('.')[1];
+					var numVal = temp.toFixed(2).toString().split('.')[0];
+					var finalVal = FormatNumberWithCommas(numVal).html + '.'
+							+ prec;
+					result.html = finalVal;
+				}
+				return result;
+			}
+			return value;
+		}
+		return value;
+	},
+	 Pattern ' #,##0_);[Red](#,##0)' 
+	Fmt8 : function(value) {
+		return cellTypes.Fmt24.call(this,value);
+	},
+	 Pattern ' _(* #,##0_);_(* \(#,##0\);_(* "-"??_);_(@_)' 
+	Fmt9 : function(value) {
+		return cellTypes.Fmt24.call(this,value);
+	},
+	 Pattern ' 0\ "bps"' 
+	Fmt10 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatBPS(cell,value,0);
+		}
+		return value;
+	},
+	 Pattern ' _(* #,##0.0_);_(* \(#,##0.0\);_(* "-"_);_(@_)' 
+	Fmt11 : function(value) {
+		return cellTypes.Fmt28.call(this,value);
+	},
+	 Pattern ' @'
+	Fmt12 : function(value) {
+		if (value != null) {
+			var result = new String(value);
+			return result;
+		}
+		return '';
+	},
+	 Pattern ' #.0\ "bps"'
+	Fmt13 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatBPS(cell,value,1);
+		}
+		return value;
+	},
+	 Pattern ' 0.00\ "yrs"'
+	Fmt14 : function(value) {
+		var cell = this;
+		if(!(cell.formula.contains('DROPDOWN') || cell.formula.contains('dropdown') || cell.formula.contains('Dropdown'))){
+			//console.log("value +"+value);
+			var num = (n(value) ? Globalize.parseFloat(value) : value * 1),result;
+			if (!n(num)) {//success
+				result = new Number(num);
+				result.html = num.toFixed(2)+" yrs";
+				return result;
+		    }
+		}
+		return value;
+
+	},
+	 Pattern ' 0.0\ "bps"'
+	Fmt15 : function(value) {
+		var cell = this;				
+		if(value){
+			value = FormatBPS(cell,value,1);
+		}
+		return value;
+	},
+	 Pattern ' ;;;'
+	Fmt16 : function(value) {
+	},
+	 Pattern ' 0.00\ "yr(s)"'
+	Fmt17 : function(value) {
+		var cell = this;
+		if(!(cell.formula.contains('DROPDOWN') || cell.formula.contains('dropdown') || cell.formula.contains('Dropdown'))){
+			//console.log("value +"+value);
+			var num = (n(value) ? Globalize.parseFloat(value) : value * 1),result;
+			if (!n(num)) {//success
+				result = new Number(num);
+				result.html = num.toFixed(2)+" yrs";
+				return result;
+		    }
+		}
+		return value;
+	},
+	 Pattern ' #\ "yrs"'
+	Fmt18 : function(value) {
+		var cell = this;
+		if(!(cell.formula.contains('DROPDOWN') || cell.formula.contains('dropdown') || cell.formula.contains('Dropdown'))){
+			var num = (n(value) ? Globalize.parseFloat(value) : value * 1),result;
+			if (!n(num)) {//success
+				result = new Number(num);
+				result.html = num.toFixed(0)+" yrs";
+				return result;
+		    }
+		}
+		return value;
+	},
+	 Pattern ' _-* #,##0_-;\-* #,##0_-;_-* "-"??_-;_-@_-'
+	Fmt19 : function(value) {
+		return cellTypes.Fmt25.call(this,value);
+	},	
+	 Pattern ' _(* #,##0.0_);_(* \(#,##0.0\);_(* ""_);_(@_)'
+	Fmt20 : function(value) {
+		return cellTypes.Fmt28.call(this,value);
+	},
+	 Pattern ' 0.0%;\(0.0%\)'
+	Fmt21 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatPercent(cell, value, "p1");
+		}
+		return value;
+	},
+	 Pattern ' [$-409]d\-mmm\-yy;@'
+	Fmt22 : function(value) {
+		
+		if(value && this.formula == ""){
+			var date = Globalize.parseDate(value);
+			// date.html = Globalize.format(date,'mm/dd/yyy');
+			if (value != null && date != null) {
+				months = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+						'Sep', 'Oct', 'Nov', 'Dec' ];
+				var formattedDAte = date.getFullYear() + "-"
+						+ months[date.getMonth()] + "-" + date.getDate();
+				// date.html=formattedDAte;
+	
+				var result = new String(value);
+				result.html = formattedDAte
+				// return date.toISOString();
+				return result;
+			} else {
+				if(value!= ""){
+					alert("Not a valid date");
+				}
+				return "";
+			}
+		}
+	},
+	 Pattern ' #,##0.0'
+	Fmt23 : function(value) {
+		var result, num; 
+		if(value){
+			if (typeof(value)=="string"){		    							
+			
+				if (isNaN(Globalize.parseFloat(value))) 
+                    return value;                                         
+				value = Globalize.parseFloat(value);
+			}
+			
+			num = (n(value) ?  value * 1 : value), result;		
+			
+			if (!n(num)) {
+				result = new Number(num);
+				var temp = result.toFixed(1); // FormatNumberWithCommas(num);
+				var finalVal = FormatNumberWithCommas(temp.toString().split('.')[0]).html;
+				result.html = finalVal + '.' + temp.toString().split('.')[1];		    								
+				return result;
+			}
+		}	    							
+		return value;
+	},
+	 Pattern ' * #,##0;\(#,##0\);_-* "-"??_-;_-@_-'
+	Fmt24 : function(value) {
+		var result, num; 
+		if(value){
+			if (typeof(value)=="string"){		    							
+			
+				if (isNaN(Globalize.parseFloat(value))) 
+                    return value;                                         
+				value = Globalize.parseFloat(value);
+			}
+			
+			num = (n(value) ?  value * 1 : value), result;		
+			
+			if (!n(num)) {
+				result = new Number(num);
+				if(num < 0){
+					var temp = result.toString().split('-')[1];
+					temp = Globalize.parseFloat(temp.toString());
+					result.html = '(' + FormatNumberWithCommas(temp.toFixed(0)).html + ')';
+				}else{
+					var temp = Globalize.parseFloat(result.toString());
+					result.html = FormatNumberWithCommas(temp.toFixed(0)).html;
+				}
+				return result;
+			}
+			return result;
+		}	    							
+		return value;
+	},
+	 Pattern ' #,##0'
+	Fmt25 : function(value) {
+		var res = FormatNumberWithCommas(value);
+		if(res)
+			return res;
+		else
+			return value;
+	},
+	 Pattern ' #,##0_);(#,##0)'
+	Fmt26 : function(value) {
+		return cellTypes.Fmt24.call(this,value);
+	},
+	 Pattern ' [$-409]mmm\-yy;@'
+	Fmt27 : function(value) {
+		return cellTypes.Fmt22.call(this,value);
+	},
+	 Pattern ' * #,##0.0;\(#,##0.0\);_-* "-"??_-;_-@_-'
+	Fmt28 : function(value) {    								
+		var result, num; 
+		if(value){
+			if (typeof(value)=="string"){		    							
+			
+				if (isNaN(Globalize.parseFloat(value))) 
+                    return value;                                         
+				value = Globalize.parseFloat(value);
+			}
+			
+			num = (n(value) ?  value * 1 : value), result;		
+			
+			if (!n(num)) {
+				result = new Number(num);
+				if(num < 0){
+					var temp = num.toString().split('-')[1];
+					temp = Globalize.parseFloat(temp.toString());
+					var prec = temp.toFixed(1).toString().split('.')[1];
+					var numVal = temp.toFixed(1).toString().split('.')[0];
+					var finalVal = FormatNumberWithCommas(numVal).html + '.' + prec;
+					result.html = '(' + finalVal + ')';
+				}else{
+					temp = Globalize.parseFloat(result.toString());
+					var prec = temp.toFixed(1).toString().split('.')[1];
+					var numVal = temp.toFixed(1).toString().split('.')[0];
+					var finalVal = FormatNumberWithCommas(numVal).html + '.' + prec;
+					result.html =  finalVal ;
+				}
+				return result;
+			}
+		}	    							
+		return value;    								
+	},
+	 Pattern ' _(* #,##0_);_(* \(#,##0\);_(* "-"_);_(@_)'
+	Fmt29 : function(value) {
+		return cellTypes.Fmt24.call(this,value);
+	},
+	 Pattern ' _-* #,##0.0_-;\-* #,##0.0_-;_-* "-"??_-;_-@_-'
+	Fmt30 : function(value) {
+		return cellTypes.Fmt23.call(this,value);
+	},
+	 Pattern ' "$"#,##0'
+	Fmt31 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatCurrency(cell,value, 'c0');
+		}
+		return value;
+	},
+	 Pattern ' 0.00\ "Years"'
+	Fmt32 : function(value) {
+		//console.log("value +"+value);
+		var num = (n(value) ? Globalize.parseFloat(value) : value * 1),result;
+		if (!n(num)) {//success
+			result = new Number(num);
+			result.html = num.toFixed(2)+" years";
+			return result;
+	    }
+		return value;
+	},
+	 Pattern ' "Must be empty!";"Must be empty!";"Must be empty!";"Must be empty!"'
+	Fmt33 : function(value) {
+	},
+	 Pattern ' [$-409]yyyy\-mmm\-dd;@'
+	Fmt34 : function(value) {
+		return cellTypes.Fmt22.call(this,value);
+	},
+	 Pattern ' _(* #,##0.0_);_(* \(#,##0.0\);_(* "-"??_);_(@_)'
+	Fmt35 : function(value) {
+		return cellTypes.Fmt28.call(this,value);
+	},
+	 Pattern ' m/d/yy'
+	Fmt36 : function(value) {
+		return cellTypes.Fmt22.call(this,value);
+	},
+	 Pattern ' #,##0.000'
+	Fmt37 : function(value) {
+		var result, num; 
+		if(value){
+			if (typeof(value)=="string"){		    							
+			
+				if (isNaN(Globalize.parseFloat(value))) 
+                    return value;                                         
+				value = Globalize.parseFloat(value);
+			}
+			
+			num = (n(value) ?  value * 1 : value), result;		
+			
+			if (!n(num)) {
+				result = new Number(num);
+				var temp = result.toFixed(3); // FormatNumberWithCommas(num);
+				var finalVal = FormatNumberWithCommas(temp.toString().split('.')[0]).html;
+				result.html = finalVal + '.' + temp.toString().split('.')[1];		    								
+				return result;
+			}
+		}	    							
+		return value;
+	},
+	 Pattern ' 0.0%;\-0;;@'
+	Fmt38 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatPercent(cell, value, "p1");
+		}
+		return value;
+	},
+	 Pattern ' [$$-409]#,##0_);[Red]\([$$-409]#,##0\)'
+	Fmt39 : function(value) {
+		if(value){
+			value = FormatCurrency(value, "c0");
+		}
+		return value;
+		return cellTypes.Fmt4.call(this,value);
+	},
+	 Pattern ' d-mmm-yy'
+	Fmt40 : function(value) {
+		return cellTypes.Fmt22.call(this,value);
+	},
+	 Pattern ' #,##0.00_);[Red](#,##0.00)'
+	Fmt41 : function(value) {    								
+		var result, num; 
+		if(value){
+			if (typeof(value)=="string"){		    							
+			
+				if (isNaN(Globalize.parseFloat(value))) 
+                    return value;                                         
+				value = Globalize.parseFloat(value);
+			}
+			
+			num = (n(value) ?  value * 1 : value), result;		
+			
+			if (!n(num)) {
+				result = new Number(num);
+				if(num < 0){
+					var temp = num.toString().split('-')[1];
+					temp = Globalize.parseFloat(temp.toString());
+					var prec = temp.toFixed(2).toString().split('.')[1];
+					var numVal = temp.toFixed(2).toString().split('.')[0];
+					var finalVal = FormatNumberWithCommas(numVal).html + '.' + prec;
+					result.html = '(' + finalVal + ')';
+				}else{
+					temp = Globalize.parseFloat(result.toString());
+					var prec = temp.toFixed(2).toString().split('.')[1];
+					var numVal = temp.toFixed(2).toString().split('.')[0];
+					var finalVal = FormatNumberWithCommas(numVal).html + '.' + prec;
+					result.html =  finalVal ;
+				}
+				return result;
+			}
+		}	    							
+		return value;    								
+	},
+	 Pattern ' #,##0.0_);\(#,##0.0\)'
+	Fmt42 : function(value) {
+		return cellTypes.Fmt28.call(this,value);
+	},
+	 Pattern ' 0.0%;\(0.0%\);_-* "-"??_-;_-@_-'
+	Fmt43 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatPercent(cell, value, "p1");
+		}
+		return value;
+	},
+	 Pattern ' _(* #,##0.0_);_(* \(#,##0.0\);_(* "-"?_);_(@_)'
+	Fmt44 : function(value) {
+		return cellTypes.Fmt28.call(this,value);
+	},
+	 Pattern ' 0.0_);\(0.0\)'
+	Fmt45 : function(value) {    								
+		var result, num; 
+		if(value){
+			if (typeof(value)=="string"){		    							
+			
+				if (isNaN(Globalize.parseFloat(value))) 
+                    return value;                                         
+				value = Globalize.parseFloat(value);
+			}
+			
+			num = (n(value) ?  value * 1 : value), result;		
+			
+			if (!n(num)) {
+				result = new Number(num);
+				if(num < 0){
+					var temp = num.toString().split('-')[1];
+					temp = Globalize.parseFloat(temp.toString());
+					var prec = temp.toFixed(1).toString().split('.')[1];
+					var numVal = temp.toFixed(1).toString().split('.')[0];
+					var finalVal = numVal + '.' + prec;
+					result.html = '(' + finalVal + ')';
+				}else{
+					temp = Globalize.parseFloat(result.toString());
+					var prec = temp.toFixed(1).toString().split('.')[1];
+					var numVal = temp.toFixed(1).toString().split('.')[0];
+					var finalVal = numVal + '.' + prec;
+					result.html =  finalVal ;
+				}
+				return result;
+			}
+		}	    							
+		return value;    								
+	},
+	 Pattern ' #,##0.0_);\(#,##0.0\);_-* "-"??_-;_-@_-'
+	Fmt46 : function(value) {
+		return cellTypes.Fmt28.call(this,value);
+	},
+	 Pattern ' #,##0.0_);\(#,##0.0\);_-* "-"??_-;@'
+	Fmt47 : function(value) {
+		return cellTypes.Fmt28.call(this,value);
+	},
+	 Pattern ' _("$"* #,##0.0_);_("$"* \(#,##0.0\);_("$"* "-"??_);_(@_)'
+	Fmt48 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatCurrency(cell,value, "c1");
+		}
+		return value;
+	},
+	 Pattern ' #,##0.0_);[Red]\(#,##0.0\)'
+	Fmt49 : function(value) {
+		return cellTypes.Fmt28.call(this,value);
+	},
+	 Pattern ' [$$-409]#,##0_);\([$$-409]#,##0\)'
+	Fmt50 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatCurrency(cell,value, "c0");
+		}
+		return value;
+	},
+	 Pattern ' #,##0.00'
+	Fmt51 : function(value) {
+		var result, num; 
+		if(value){
+			if (typeof(value)=="string"){		    							
+			
+				if (isNaN(Globalize.parseFloat(value))) 
+                    return value;                                         
+				value = Globalize.parseFloat(value);
+			}
+			
+			num = (n(value) ?  value * 1 : value), result;		
+			
+			if (!n(num)) {
+				result = new Number(num);
+				var temp = result.toFixed(2); // FormatNumberWithCommas(num);
+				var finalVal = FormatNumberWithCommas(temp.toString().split('.')[0]).html;
+				result.html = finalVal + '.' + temp.toString().split('.')[1];		    								
+				return result;
+			}
+		}	    							
+		return value;
+	},
+	 Pattern ' 0_);\(0\)'
+	Fmt52 : function(value) {
+		var result, num;
+		if (value) {
+			if (typeof (value) == "string") {
+
+				if (isNaN(Globalize.parseFloat(value)))
+					return value;
+				value = Globalize.parseFloat(value);
+			}
+
+			num = (n(value) ? value * 1 : value), result;
+
+			if (!n(num)) {
+				result = new Number(num);
+				if (num < 0) {
+					var temp = result.toString().split('-')[1];
+					temp = Globalize.parseFloat(temp.toString());
+					result.html = '(' + temp.toFixed(0) + ')';
+				}else{
+					var temp = Globalize.parseFloat(result.toString());
+					result.html = temp.toFixed(0);
+				}
+				return result;
+			}
+		}
+		return value;
+	},
+	 Pattern ' _-* #,##0.000_-;\-* #,##0.000_-;_-* "-"??_-;_-@_-' 
+	Fmt53 : function(value) {
+		return cellTypes.Fmt37.call(this,value);
+	},
+	 Pattern ' "FI";;"CORP";' 
+	Fmt54 : function(value) {
+	},
+	 Pattern ' mm/dd/yy;@' 
+	Fmt55 : function(value) {
+		return cellTypes.Fmt22.call(this,value);
+	},
+	 Pattern ' _(* #,##0.000000_);_(* \(#,##0.000000\);_(* "-"??_);_(@_)'
+	Fmt56 : function(value) {
+		return cellTypes.Fmt64.call(this,value);
+	},
+	 Pattern '0.0%'
+	Fmt57 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatPercent(cell, value, "p1");
+		}
+		return value;	
+	},
+	 Pattern '0.00'
+	Fmt58 : function(value) {
+	},
+	 Pattern '0.0000%'
+	Fmt59 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatPercent(cell, value, "p4");
+		}
+		return value;	
+	},
+	 Pattern '0.00000'
+	Fmt60 : function(value) {
+	},
+	 Pattern '0.0000'
+	Fmt61 : function(value) {
+
+		var result, num;
+		if (value) {
+			if (typeof (value) == "string") {
+
+				if (isNaN(Globalize.parseFloat(value)))
+					return value;
+				value = Globalize.parseFloat(value);
+			}
+
+			num = (n(value) ? value * 1 : value), result;
+
+			if (!n(num)) {
+				result = new Number(num);
+				var temp = result.toFixed(4); // FormatNumberWithCommas(num);
+				var finalVal = FormatNumberWithCommas(temp.toString()
+						.split('.')[0]).html;
+				result.html = finalVal + '.' + temp.toString().split('.')[1];
+				return result;
+			}
+		}
+		return value;
+
+	},
+	 Pattern '0.000000' 
+	Fmt62 : function(value) {
+	},
+	 Pattern '0.000%' 
+	Fmt63 : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatPercent(cell, value, "p3");
+		}
+		return value;		
+	},
+	 Pattern '0.000' 
+	Fmt64 : function(value) {
+		var result, num;
+		if (value) {
+			if (typeof (value) == "string") {
+
+				if (isNaN(Globalize.parseFloat(value)))
+					return value;
+				value = Globalize.parseFloat(value);
+			}
+
+			num = (n(value) ? value * 1 : value), result;
+
+			if (!n(num)) {
+				result = new Number(num);
+				if (num < 0) {
+					var temp = num.toString().split('-')[1];
+					temp = Globalize.parseFloat(temp.toString());
+					var prec = temp.toFixed(6).toString().split('.')[1];
+					var numVal = temp.toFixed(6).toString().split('.')[0];
+					var finalVal = FormatNumberWithCommas(numVal).html + '.'
+							+ prec;
+					result.html = '(' + finalVal + ')';
+				}else{
+					var temp = Globalize.parseFloat(result.toString());
+					var prec = temp.toFixed(6).toString().split('.')[1];
+					var numVal = temp.toFixed(6).toString().split('.')[0];
+					var finalVal = FormatNumberWithCommas(numVal).html + '.'+ prec;
+					result.html = finalVal;
+				}
+				return result;
+			}
+		}
+		return value;
+	},
+	 Pattern 'FI;;"NON-FI";' 
+	Fmt65 : function(value) {
+	},
+	
+	percentOne : function(value) {
+		var cell = this;
+		if(value){
+			value = FormatPercent(cell, value, "p1");
+		}
+		return value;
+	},
+	percentTwo : function(value) {
+		var cell = this;
+		value = FormatPercent(cell, value, "p2");
+		return value;
+	},
+	percent : function(value) {
+		var cell = this;
+		value = FormatPercent(cell, value, "p0");
+		return value;
+	},
+	date : function(value) {
+		if(value && this.formula == ""){
+			var date = Globalize.parseDate(value);
+			if (value != null && date != null) {
+				months = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+						'Sep', 'Oct', 'Nov', 'Dec' ];
+				var formattedDAte = date.getFullYear() + "-"
+						+ months[date.getMonth()] + "-" + date.getDate();
+	
+				var result = new String(value);
+				result.html = formattedDAte
+				return result;
+			} else {
+				if(value!= ""){
+					alert("Not a valid date");
+				}
+				return "";
+			}
+		}
+	},
+	time : function(value) {
+		var date = Globalize.parseDate(value);
+		date.html = Globalize.format(date, 't');
+		return date;
+	},
+	currency : function(value) {
+		if (typeof (value) == "string") {
+			if (isNaN(Globalize.parseFloat(value))) {
+				return value;
+			}
+			value = Globalize.parseFloat(value);
+		}		
+		var num = (n(value) ? value * 1 : value), result;
+		if(value.html){
+			num = value.html;
+		}
+		if (!n(num)) {// success
+			result = new Number(num);
+			result.html = Globalize.format(num, 'c0');
+			return result;
+		}
+		return value;
+	},
+	number : function(value) {
+		var radix, result;
+		if (!settings.endOfNumber) {
+			radix = Globalize.culture().numberFormat['.'];
+			settings.endOfNumber = new RegExp("(["
+					+ (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
+		}
+		if (!n(value)) {// success
+			result = new Number(value);
+			result.html = Globalize.format(value + '', "n10").replace(
+					settings.endOfNumber, function(orig, radix, num) {
+						return (num ? radix : '') + (num || '');
+					});
+			return result;
+		}
+		return value;
+	},
+	bps : function(value) {
+		if (value) {
+			var num;
+			var result = new Number(value);
+			if (typeof (value) != "string") {
+				if (value.html || value.html == "") {
+					if (isNaN(Globalize.parseFloat(value.html))) {
+						return value;
+					}
+					num = Globalize.parseFloat(String(value.html)).toFixed(1);
+				} else {
+					if (isNaN(Globalize.parseFloat(value))) {
+						return value;
+					}
+					num = Globalize.parseFloat(String(value)).toFixed(1);
+				}
+			} else {
+				if (isNaN(Globalize.parseFloat(value))) {
+					result.html = "";
+					return result;
+				} else {
+					num = Globalize.parseFloat(value).toFixed(1);
+				}
+			}
+
+			if (isNaN(num)) {
+				result.html = "";
+			} else {
+				result.html = num + ' bps';
+			}
+			return result;
+		}
+		return value;
+	},
+	yrs : function(value) {
+		var cell = this;
+		if(!(cell.formula.contains('DROPDOWN') || cell.formula.contains('dropdown') || cell.formula.contains('Dropdown'))){
+			var num = (n(value) ? Globalize.parseFloat(value) : value * 1), result;
+			if (!n(num)) {// success
+				result = new Number(num);
+				result.html = value + " yrs";
+				return result;
+			}
+		}
+		return value;
+	}
+*/}
+
+function FormatPercent(cell,value,roundoff){
+	//if(!(cell.formula.contains('DROPDOWN') || cell.formula.contains('dropdown') || cell.formula.contains('Dropdown'))){
+	    if (value !== value) return 0;
+	    if (typeof (value) == "string") {
+	           if (isNaN(Globalize.parseFloat(value))) {
+	                  return value;
+	           }
+	           value = Globalize.parseFloat(value);
+	    }
+	    
+	    var num = (n(value) ? Globalize.parseFloat(value) : value * 1),result;
+	    if (!n(num)) {
+	           if(cell.formula!=""){
+	           //     value = value/100;
+	                  result = new Number(value);
+	                  result.html = Globalize.format(num, roundoff);
+	                //Dropdown with percentage
+                      if((cell.formula.contains('DROPDOWN') || cell.formula.contains('dropdown') || cell.formula.contains('Dropdown'))){
+                           num=num/100;
+                           drp =new Number(num);
+                           drp.html=value.html;
+                           return drp;
+                      }
+                      else if(value<0){
+	                	  var temp = result.html;
+	                	  temp = temp.replace("-", "");
+	                	  result.html = "("+temp+")";
+	                  }
+	           }else{
+	                  num=num/100;
+	                  result = new Number(num);
+	                  result.html = Globalize.format(num,roundoff);
+	                  if(value<0){
+	                	  var temp = result.html;
+	                	  temp = temp.replace("-", "");
+	                	  result.html = "("+temp+")";
+	                  }
+	           }
+	           return result;
+	    }
+	
+}
+
+function FormatCurrency(cell,value,roundoff){
+	var num,result;
+	value = String(value);
+	if(!(cell.formula.contains('DROPDOWN') || cell.formula.contains('dropdown') || cell.formula.contains('Dropdown'))){
+		if (typeof (value) == "string") {
+			if (isNaN(Globalize.parseFloat(value))) {
+				return value;
+			}
+			value = Globalize.parseFloat(value);
+		}
+		if(value.html){
+			if (isNaN(Globalize.parseFloat(value.html))) {
+				return value;
+			}
+			num = Globalize.parseFloat(value.html);
+		}else{
+			num = (n(value) ? value * 1 : value), result;
+		}
+		if (!n(num)) {// success
+			result = new Number(num);
+			result.html = Globalize.format(num, roundoff);
+			return result;
+		}
+		return value;
+	}
+}
+
+function FormatBPS(cell,value,roundoff){ 
+	var num;
+	if(!(cell.formula.contains('DROPDOWN') || cell.formula.contains('dropdown') || cell.formula.contains('Dropdown'))){
+		var result = new Number(value);
+		if (typeof (value) != "string") {
+			if (value.html || value.html == "") {
+				if (isNaN(Globalize.parseFloat(value.html))) {
+					return value;
+				}
+				num = Globalize.parseFloat(String(value.html)).toFixed(roundoff);
+			} else {
+				if (isNaN(Globalize.parseFloat(String(value)))) {
+					return value;
+				}
+				num = Globalize.parseFloat(String(value)).toFixed(roundoff);
+			}
+		} else {
+			if (isNaN(Globalize.parseFloat(String(value)))) {
+				result.html = "";
+				return result;
+			} else {
+				num = Globalize.parseFloat(String(value)).toFixed(roundoff);
+			}
+		}
+		
+		if (isNaN(num)) {
+			result.html = "";
+		} else {
+			result.html = num + ' bps';
+		}
+		return result;
+	}
+	return value;
+}
+
+/*Start From model event*/
+/*function FormatNumberWithCommas(value){
+	var result, num; var IsNegative = false; 
+	
+	if(value){
+		if (typeof(value)=="string"){		    							
+		
+			if (isNaN(Globalize.parseFloat(value))) 
+                return value;                                         
+			value = Globalize.parseFloat(value);
+		}
+		
+		num = (n(value) ?  value * 1 : value), result;		
+		
+		if (!n(num)) {
+			result = new Number(num);
+			if(num < 0){
+				IsNegative = true;
+				num = num.toString().split('-')[1];
+			}
+			
+				var a = 1000;
+				var b = num;
+				var c,d; var finalVal = '';
+				
+				while(b > 1000){													
+					c = parseInt(b/a).toFixed(3);
+					d = b%a;
+					finalVal = ',' + d + finalVal;
+					b = c;
+				}
+				
+				
+				if(IsNegative)
+					finalVal = '-' + parseInt(b) + finalVal;
+				else
+					finalVal = parseInt(b) + finalVal;
+				
+				result.html = finalVal;
+			
+			return result;
+		}
+	}	    							
+	return "";
+}*/
+/*end From model event*/ 
+function FormatNumberWithCommas(value){
+    var result, num; var IsNegative = false; 
+    
+    if(value){
+           if (typeof(value)=="string"){                                                            
+           
+                  if (isNaN(Globalize.parseFloat(value))) 
+             return value;                                         
+                  value = Globalize.parseFloat(value);
+           }
+           
+           num = (n(value) ?  value * 1 : value), result;         
+           
+           if (!n(num)) {
+                  result = new Number(num);
+                  if(num < 0){
+                        IsNegative = true;
+                        num = num.toString().split('-')[1];
+                  }
+                  
+                        var a = 1000;
+                        var b = num;
+                        var c,d; var finalVal = '';
+                        
+                        while(b > 999){                                                                                      
+                               c = parseInt(b/a).toFixed(3);
+                               d = b%a;
+                              // d = (d == 0) ? '000' : d;
+                               d = (d == 0) ? '000' : (d < 100) ? '0' + d : (d < 10) ? '00' + d : d;
+                               finalVal = ',' + d + finalVal;
+                               b = c;
+                        }
+                        
+                        
+                        if(IsNegative)
+                               finalVal = '-' + parseInt(b) + finalVal;
+                        else
+                               finalVal = parseInt(b) + finalVal;
+                        
+                        result.html = finalVal;
+                  
+                  return result;
+           }
+    }                                                      
+    return "";
+}
+
+function replaceAll(find, replace, str) {
+    return str.replace(new RegExp(find, 'g'), replace);
+  }
+
+function formatNumbers(value,roundOff,seperation){
+	try {
+		var result, num; 
+		if(value){
+			if (typeof(value)=="string"){		    							
+			
+				if (isNaN(Globalize.parseFloat(value))) 
+                    return value;                                         
+				value = Globalize.parseFloat(value);
+			}
+			
+			num = (n(value) ?  value * 1 : value), result;		
+			
+			if (!n(num)) {
+				result = new Number(num);
+				var temp = result.toFixed(roundOff); 
+				if(temp.indexOf(".") > 0){
+					var finalVal = "";
+					if(seperation){
+						finalVal = FormatNumberWithCommas(temp.toString().split('.')[0]).html;
+					}else{
+						finalVal = temp.toString().split('.')[0];
+					}
+					result.html = finalVal + '.' + temp.toString().split('.')[1];	
+				}else{
+					if(seperation){
+						result.html = FormatNumberWithCommas(temp).html;
+					}else{
+						result.html = temp;
+					}
+				}
+				if(num < 0){
+					result.html = "("+ result.html.split("-")[1] +")";
+					return result;
+				}else{
+					return result;
+				}
+				
+			}
+		}	    							
+	} catch (e) {}
+	return value;
+}
