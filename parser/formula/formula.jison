@@ -642,7 +642,7 @@ number :
 ;
 
 %%
-var Formula = function(handler) {
+var Formula = function() {
 	var formulaLexer = function () {};
 	formulaLexer.prototype = parser.lexer;
 
