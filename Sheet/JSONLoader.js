@@ -267,9 +267,11 @@
 			return jitCell;
 		},
 		jitCellById: function(id, sheetIndex, callback) {
-			if (this.cellIds[id] !== undefined) {
-				callback(this.cellIds[id].requestCell());
-				return this;
+			switch(this.cellIds[id]) {
+				case undefined:
+					callback(this.cellIds[id].requestCell());
+					return this;
+				case null: return this;
 			}
 
 			var loader = this,
@@ -325,6 +327,8 @@
 
 			if (this.cellIds[id] !== undefined) {
 				callback(this.cellIds[id].requestCell());
+			} else {
+				this.cellIds[id] = null;
 			}
 
 			return this;
