@@ -36,7 +36,68 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	defaultColumnWidth: 120,
 	defaultRowHeight: 20,
 
-	calcStack: 0
+	calcStack: 0,
+
+	formulaParserUrl: '../parser/formula/formula.js',
+	threadScopeUrl: '../Sheet/threadScope.js',
+
+	defaultFormulaParser: null,
+
+	formulaParser: function(callStack) {
+		var formulaParser;
+		//we prevent parsers from overwriting each other
+		if (callStack > -1) {
+			//cut down on un-needed parser creation
+			formulaParser = this.spareFormulaParsers[callStack];
+			if (formulaParser === undefined) {
+				formulaParser = this.spareFormulaParsers[callStack] = Formula();
+			}
+		}
+
+		//use the sheet's parser if there aren't many calls in the callStack
+		else {
+			formulaParser = Sheet.defaultFormulaParser;
+		}
+
+		formulaParser.yy.types = [];
+
+		return formulaParser;
+	},
+
+	parseFormulaSlow: function(formula, callback) {
+		if (Sheet.defaultFormulaParser === null) {
+			Sheet.defaultFormulaParser = Formula();
+		}
+
+		var formulaParser = Sheet.formulaParser(Sheet.calcStack);
+		callback(formulaParser.parse(formula));
+	},
+
+	parseFormula: function(formula, callback) {
+		var thread = Sheet.thread();
+
+		if (thread.busy) {
+			thread.stash.push(function() {
+				thread.busy = true;
+				thread.parseFormula(formula, function(parsedFormula) {
+					thread.busy = false;
+					callback(parsedFormula);
+					if (thread.stash.length > 0) {
+						thread.stash.shift()();
+					}
+				});
+			});
+		} else {
+			thread.busy = true;
+			thread.parseFormula(formula, function(parsedFormula) {
+				thread.busy = false;
+				callback(parsedFormula);
+				if (thread.stash.length > 0) {
+					thread.stash.shift()();
+				}
+			});
+		}
+	}
 };Sheet.Cell = (function() {
 	var u = undefined;
 
@@ -147,16 +208,11 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			var operatorFn,
 				cell = this,
 				cache,
-				stack,
 				value = this.value,
 				formula = this.formula,
 				cellType = this.cellType,
 				cellTypeHandler,
 				defer = this.defer,
-				td = this.td,
-				calcStack,
-				formulaParser,
-				typesStack,
 				callbackValue,
 				resolveFormula = function (parsedFormula) {
 					cell.parsedFormula = parsedFormula;
@@ -323,10 +379,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				if (this.parsedFormula !== null) {
 					resolveFormula(this.parsedFormula);
 				} else {
-					cell.parseFormula({
-						formula: formula,
-						callback: resolveFormula
-					});
+					this.jS.parseFormula(formula, resolveFormula);
 				}
 
 			} else if (
@@ -800,75 +853,15 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		},
 
 		type: Constructor,
-		typeName: 'Sheet.Cell',
-		parseFormula: function(item) {
-			if (!this.jS.s.useMultiThreads) {
-				var formulaParser = this.cellHandler.formulaParser(Sheet.calcStack);
-				formulaParser.yy.types = [];
-				item.callback(formulaParser.parse(item.formula));
-				return;
-			}
-			var i = Constructor.threadIndex,
-				threads = Constructor.threads,
-				thread,
-				isThreadAbsent = (typeof threads[i] === 'undefined');
-
-			if (isThreadAbsent) {
-				thread = Constructor.threads[i] = operative(function(formula) {
-					if (typeof formula === 'string') {
-						var formulaParser = parser.Formula();
-						formulaParser.yy.types = [];
-						return formulaParser.parse(formula);
-					}
-					return null;
-				}, [
-					Constructor.formulaParserUrl
-				]);
-				thread.busy = false;
-				thread.stash = [];
-			} else {
-				thread = threads[i];
-			}
-
-			Constructor.threadIndex++;
-			if (Constructor.threadIndex > Constructor.threadLimit) {
-				Constructor.threadIndex = 0;
-			}
-
-			if (thread.busy) {
-				thread.stash.push(function() {
-					thread.busy = true;
-					thread(item.formula, function(parsedFormula) {
-						thread.busy = false;
-						item.callback(parsedFormula);
-						if (thread.stash.length > 0) {
-							thread.stash.shift()();
-						}
-					});
-				});
-			} else {
-				thread.busy = true;
-				thread(item.formula, function(parsedFormula) {
-					thread.busy = false;
-					item.callback(parsedFormula);
-					if (thread.stash.length > 0) {
-						thread.stash.shift()();
-					}
-				});
-			}
-		}
+		typeName: 'Sheet.Cell'
 	};
 
-	Constructor.threads = [];
-	Constructor.threadLimit = 10;
-	Constructor.threadIndex = 0;
 
 	Constructor.thaws = [];
 	Constructor.thawLimit = 500;
 	Constructor.thawIndex = 0;
 
 	Constructor.cellLoading = null;
-	Constructor.formulaParserUrl = '../parser/formula/formula.js';
 	Constructor.maxRecursion = 10;
 
 	return Constructor;
@@ -2062,7 +2055,179 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 	};
 
 	return Constructor;
-})(jQuery);
+})(jQuery);Sheet.thread = (function (operative) {
+	var i = 0,
+		threads = [];
+
+	function thread() {
+		var t = threads[i],
+			limit = thread.limit;
+
+		if (t === undefined) {
+			t = threads[i] = thread.create();
+			t.busy = false;
+			t.stash = [];
+		} else {
+			t = threads[i];
+		}
+
+		i++;
+		if (i > limit) {
+			i = 0;
+		}
+
+		return t;
+	}
+
+	thread.limit = 10;
+
+	thread.create = function() {
+		var t = operative({
+			pedantic: true,
+			parseFormula: function(formula) {
+				formulaParser.yy.types = [];
+				return formulaParser.parse(formula);
+			},
+			streamJSONSheet: function(location, url, callback) {
+				gR(location + url, function(jsons) {
+					var sheet = JSON.parse(jsons),
+						rows = sheet.rows,
+						max = rows.length,
+						i = 0;
+
+					sheet.rows = [];
+					callback('sheet', JSON.stringify(sheet));
+
+					for(;i<max;i++) {
+						callback('row', JSON.stringify(rows[i]));
+					}
+
+					callback();
+				});
+			},
+			streamJSONSheets: function(location, urls, callback) {
+				var i = 0,
+					max = urls.length,
+					getting = [];
+
+				if (typeof urls === 'string') {
+					getting.push(gR(location + urls));
+				} else {
+					for (; i < max; i++) {
+						getting.push(gR(location + urls[i]));
+					}
+				}
+
+				Promise
+					.all(getting)
+					.then(function(jsons) {
+						var i = 0,
+							sheetJsons = jsons,
+							max = sheetJsons.length;
+
+						for(;i<max;i++) {
+							callback('sheet', sheetJsons[i]);
+						}
+
+						callback();
+					});
+			},
+			streamJSONRows: function(location, urls, callback) {
+				var i = 0,
+					max = urls.length,
+					getting = [];
+
+				if (typeof urls === 'string') {
+					getting.push(gR(location + urls));
+				} else {
+					for (; i < max; i++) {
+						getting.push(gR(location + urls[i]));
+					}
+				}
+
+				Promise
+					.all(getting)
+					.then(function(jsons) {
+						var i = 0,
+							j,
+							row,
+							rowSet,
+							rowSets = jsons,
+							iMax = rowSets.length,
+							jMax;
+
+						for(;i<iMax;i++) {
+							rowSet = JSON.parse(rowSets[i]);
+							jMax = rowSet.length;
+							for(j = 0;j<jMax;j++) {
+								row = rowSet[j];
+								callback('row', JSON.stringify(row));
+							}
+						}
+
+						callback();
+					});
+			},
+			streamJSONSheetRows: function(location, sheetUrl, rowsUrls, callback) {
+				var i = 0,
+					max = rowsUrls.length,
+					getting = [gR(location + sheetUrl)];
+
+				if (typeof rowsUrls === 'string') {
+					getting.push(gR(location + rowsUrls));
+				} else {
+					for (; i < max; i++) {
+						getting.push(gR(location + rowsUrls[i]));
+					}
+				}
+
+				Promise
+					.all(getting)
+					.then(function(jsons) {
+						callback('sheet', jsons[0]);
+
+						var i = 1,
+							j,
+							row,
+							rowSet,
+							rowSets = jsons,
+							iMax = rowSets.length,
+							jMax;
+
+						for(;i<iMax;i++) {
+							rowSet = JSON.parse(rowSets[i]);
+							jMax = rowSet.length;
+							for(j = 0;j<jMax;j++) {
+								row = rowSet[j];
+								callback('row', JSON.stringify(row));
+							}
+						}
+
+						callback();
+					});
+			}
+		}, [
+			Sheet.formulaParserUrl,
+			Sheet.threadScopeUrl
+		]);
+
+		t.stash = [];
+		t.busy = false;
+
+		return t;
+	};
+
+	thread.kill = function() {
+		var i = 0,
+			max = threads.length;
+
+		for(;i < max; i++) {
+			threads[i].terminate();
+		}
+	};
+
+	return thread;
+})(operative);
 /**
  * Creates the scrolling system used by each spreadsheet
  */
@@ -2921,9 +3086,11 @@ Sheet.StyleUpdater = (function(document) {
 			return jitCell;
 		},
 		jitCellById: function(id, sheetIndex, callback) {
-			if (this.cellIds[id] !== undefined) {
-				callback(this.cellIds[id].requestCell());
-				return this;
+			switch(this.cellIds[id]) {
+				case undefined:
+					callback(this.cellIds[id].requestCell());
+					return this;
+				case null: return this;
 			}
 
 			var loader = this,
@@ -2979,6 +3146,8 @@ Sheet.StyleUpdater = (function(document) {
 
 			if (this.cellIds[id] !== undefined) {
 				callback(this.cellIds[id].requestCell());
+			} else {
+				this.cellIds[id] = null;
 			}
 
 			return this;
@@ -10274,7 +10443,7 @@ $.sheet = {
 									each: function() {
 										if (this.row === u || (this.row = spreadsheet[this.rowIndex]) === u) {
 											if (spreadsheet[this.rowIndex] === u) {
-												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.columnIndex, this.columnIndex);
+												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex + 1, this.columnIndex, this.columnIndex);
 												this.row = spreadsheet[this.rowIndex];
 											}
 										} else {
@@ -10319,7 +10488,7 @@ $.sheet = {
 						stack = [],
 						each = function() {
 							if (this.row === u || this.cell === u) {
-								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex);
+								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex + 1);
 								this.row = spreadsheet[this.rowIndex];
 							}
 
@@ -12259,8 +12428,9 @@ $.sheet = {
 
 				/**
 				 * @memberOf jS
+				 * @type Function
 				 */
-				formulaParser: null,
+				parseFormula: null,
 
 				/**
 				 *
@@ -12383,13 +12553,7 @@ $.sheet = {
 				}
 			})
 			.unload(function() {
-				var threads = Sheet.Cell.threads,
-					i = 0,
-					max = threads.length;
-
-				for (;i<max;i++) {
-					threads[i].terminate();
-				}
+				Sheet.thread.kill();
 			});
 
 
@@ -12411,6 +12575,8 @@ $.sheet = {
 		s.title = s.title || s.parent.attr('title') || '';
 
 		jS.s = s;
+
+		jS.parseFormula = (s.useMultiThreads ? Sheet.parseFormula : Sheet.parseFormulaSlow);
 
 		s.parent.addClass(jS.theme.parent);
 
@@ -16528,7 +16694,7 @@ _handle_error:
     return true;
 }};
 
-var Formula = function(handler) {
+var Formula = function() {
 	var formulaLexer = function () {};
 	formulaLexer.prototype = parser.lexer;
 

@@ -6214,7 +6214,7 @@ $.sheet = {
 									each: function() {
 										if (this.row === u || (this.row = spreadsheet[this.rowIndex]) === u) {
 											if (spreadsheet[this.rowIndex] === u) {
-												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.columnIndex, this.columnIndex);
+												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex + 1, this.columnIndex, this.columnIndex);
 												this.row = spreadsheet[this.rowIndex];
 											}
 										} else {
@@ -6259,7 +6259,7 @@ $.sheet = {
 						stack = [],
 						each = function() {
 							if (this.row === u || this.cell === u) {
-								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex);
+								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex + 1);
 								this.row = spreadsheet[this.rowIndex];
 							}
 
@@ -8199,8 +8199,9 @@ $.sheet = {
 
 				/**
 				 * @memberOf jS
+				 * @type Function
 				 */
-				formulaParser: null,
+				parseFormula: null,
 
 				/**
 				 *
@@ -8323,13 +8324,7 @@ $.sheet = {
 				}
 			})
 			.unload(function() {
-				var threads = Sheet.Cell.threads,
-					i = 0,
-					max = threads.length;
-
-				for (;i<max;i++) {
-					threads[i].terminate();
-				}
+				Sheet.thread.kill();
 			});
 
 
@@ -8351,6 +8346,8 @@ $.sheet = {
 		s.title = s.title || s.parent.attr('title') || '';
 
 		jS.s = s;
+
+		jS.parseFormula = (s.useMultiThreads ? Sheet.parseFormula : Sheet.parseFormulaSlow);
 
 		s.parent.addClass(jS.theme.parent);
 
