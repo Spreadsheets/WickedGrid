@@ -3,10 +3,13 @@
 <head>
 	<title>({{pass}}|{{fail}}) {{title}} · Testify Suite</title>
 	<meta charset="utf-8" />
-	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
+	<script src="../bower_components/jquery/dist/jquery.js"></script>
 	<script src="../jquery.sheet.js"></script>
 	<script src="../utilities/tableify.js"></script>
 	<script>
+		$.sheet.defaults.useMultiThreads = false;
+		$.sheet.defaults.useStack = false;
+
 		$.sheet.preLoad('../');
 
 	</script>
@@ -14,6 +17,19 @@
 	<script>
 		$(function() {
 
+			var table = tableify('=FV(7.5%/12, 2*12, -250, -5000, 1)'),
+					div = $('<div>')
+							.appendTo('body')
+							.append(table)
+							.sheet(),
+					jS = div.getSheet(),
+					A1 = jS.getCell(0, 1, 1);
+
+			A1.updateValue();
+
+			console.log(A1.parsedFormula);
+			//tf.assertEquals(A1.value.valueOf(), 385.50, 'Correct value');
+			//div.getSheet().kill();
 		});
 	</script>
 </head>

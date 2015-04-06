@@ -21,9 +21,19 @@
 		}
 
 		this.cellIds = {};
+		this.jS = null;
+		this.handler = null;
 	}
 
 	Constructor.prototype = {
+		bindJS: function(jS) {
+			this.jS = jS;
+			return this;
+		},
+		bindHandler: function(handler) {
+			this.handler = handler;
+			return this;
+		},
 		size: function(spreadsheetIndex) {
 			var size = {
 					cols: 0,
@@ -82,9 +92,9 @@
 
 			return this;
 		},
-		setupCell: function(sheetIndex, rowIndex, columnIndex, jS) {
+		setupCell: function(sheetIndex, rowIndex, columnIndex) {
 			var td = document.createElement('td'),
-				cell = this.jitCell(sheetIndex, rowIndex, columnIndex, jS, jS.cellHandler),
+				cell = this.jitCell(sheetIndex, rowIndex, columnIndex),
 				jsonCell,
 				html;
 
@@ -95,7 +105,7 @@
 
 			if (cell.hasOwnProperty('formula')) {
 				td.setAttribute('data-formula', cell['formula'] || '');
-				if (cell.hasOwnProperty('value') && cell.value !== null) {
+				/*if (cell.hasOwnProperty('value') && cell.value !== null) {
 					html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
 					switch (typeof html) {
 						case 'object':
@@ -108,9 +118,11 @@
 							td.innerHTML = html;
 							break;
 					}
-				}
+				}*/
 				if (jsonCell.hasOwnProperty('cache')) {
-					td.innerHTML = jsonCell['cache'];
+					if (jsonCell['cache'] !== null && jsonCell['cache'] !== '') {
+						td.innerHTML = jsonCell['cache'];
+					}
 				}
 			} else if (jsonCell['cellType'] !== undefined) {
 				td.setAttribute('data-celltype', jsonCell['cellType']);
@@ -157,7 +169,7 @@
 
 			return cell;
 		},
-		jitCell: function(sheetIndex, rowIndex, columnIndex, jS, cellHandler) {
+		jitCell: function(sheetIndex, rowIndex, columnIndex) {
 			var jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
 
 			if (jsonCell === null) return null;
@@ -173,16 +185,17 @@
 				value,
 				cache,
 				formula,
+				parsedFormula,
 				cellType,
 				uneditable,
 				dependency,
 				dependencies,
 				jsonDependency,
 				hasId,
-				hasTd,
 				hasValue,
 				hasCache,
 				hasFormula,
+				hasParsedFormula,
 				hasCellType,
 				hasUneditable,
 				hasDependencies;
@@ -191,19 +204,21 @@
 			value = jsonCell['value'];
 			cache = jsonCell['cache'];
 			formula = jsonCell['formula'];
+			parsedFormula = jsonCell['parsedFormula'];
 			cellType = jsonCell['cellType'];
 			uneditable = jsonCell['uneditable'];
 			dependencies = jsonCell['dependencies'];
 
 			hasId = (id !== undefined && id !== null);
 			hasValue = (value !== undefined && value !== null);
-			hasCache = (cache !== undefined && cache !== null && cache !== '');
-			hasFormula = (formula !== undefined && formula !== null);
+			hasCache = (cache !== undefined && cache !== null && (cache + '').length > 0);
+			hasFormula = (formula !== undefined && formula !== null && formula !== '');
+			hasParsedFormula = (parsedFormula !== undefined && parsedFormula !== null);
 			hasCellType = (cellType !== undefined && cellType !== null);
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
 			hasDependencies = (dependencies !== undefined && dependencies !== null);
 
-			jitCell = new Sheet.Cell(sheetIndex, null, jS, cellHandler);
+			jitCell = new Sheet.Cell(sheetIndex, null, this.jS, this.handler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = jsonCell;
@@ -211,14 +226,8 @@
 
 			if (hasId) jitCell.id = id;
 
-			if (hasCache) {
-				jitCell.html = cache;
-				jitCell.needsUpdated = false;
-			} else {
-				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
-			}
-
 			if (hasFormula) jitCell.formula = formula;
+			if (hasParsedFormula) jitCell.parsedFormula = parsedFormula;
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasUneditable) jitCell.uneditable = uneditable;
 
@@ -230,11 +239,18 @@
 				jitCell.value = new String();
 			}
 
+			if (hasCache) {
+				jitCell.value.html = cache;
+				jitCell.needsUpdated = false;
+			} else {
+				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
+			}
+
 			if (hasDependencies) {
 				max = dependencies.length;
 				for (i = 0; i < max; i++) {
 					jsonDependency = dependencies[i];
-					dependency = this.jitCell(jsonDependency['sheet'], jsonDependency['row'], jsonDependency['column'], jS, cellHandler);
+					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c']);
 					if (dependency !== null) {
 						jitCell.dependencies.push(dependency);
 					}
@@ -250,37 +266,52 @@
 
 			return jitCell;
 		},
-		jitCellById: function(id) {
-			if (this.cellIds[id] !== undefined) {
-				return this.cellIds[id].requestCell();
+		jitCellById: function(id, sheetIndex, callback) {
+			switch(this.cellIds[id]) {
+				case undefined:
+					callback(this.cellIds[id].requestCell());
+					return this;
+				case null: return this;
 			}
 
 			var loader = this,
 				json = this.json,
-				sheetIndex = json.length - 1,
+				sheetMax = (sheetIndex < 0 ? json.length - 1: sheetIndex + 1),
 				sheet,
 				rowIndex,
+				rowMax,
 				rows,
 				row,
 				columnIndex,
+				columnMax,
 				columns,
 				column;
 
-			if (sheetIndex < 0) return null;
+			if (sheetIndex < 0) {
+				sheetIndex = 0;
+			}
 
-			do {
+			for(;sheetIndex < sheetMax;sheetIndex++) {
 				sheet = json[sheetIndex];
 				rows = sheet.rows;
-				rowIndex = rows.length - 1;
-				do {
+				if (rows.length < 1) continue;
+				rowIndex = 0;
+				rowMax = rows.length;
+
+				for (; rowIndex < rowMax; rowIndex++) {
+
 					row = rows[rowIndex];
 					columns = row.columns;
-					columnIndex = columns.length - 1;
+					columnIndex = 0;
+					columnMax = columns.length;
 
-					do {
+					for (; columnIndex < columnMax; columnIndex++) {
 						column = columns[columnIndex];
-						if (typeof column['id'] == 'string') {
-							this.cellIds[id] = {
+
+						if (column === null) continue;
+
+						if (typeof column['id'] === 'string') {
+							this.cellIds[column['id']] = {
 								cell: column,
 								sheetIndex: sheetIndex,
 								rowIndex: rowIndex,
@@ -290,14 +321,17 @@
 								}
 							};
 						}
-					} while(columnIndex-- > 0);
-				} while(rowIndex-- > 0);
-			} while(sheetIndex-- > 0);
+					}
+				}
+			}
 
 			if (this.cellIds[id] !== undefined) {
-				return this.cellIds[id].requestCell();
+				callback(this.cellIds[id].requestCell());
+			} else {
+				this.cellIds[id] = null;
 			}
-			return this.cellIds[id] = null;
+
+			return this;
 		},
 		title: function(sheetIndex) {
 			var json = this.json,
@@ -341,9 +375,11 @@
 			title = title.toLowerCase();
 
 			for(;i < max; i++) {
-				jsonTitle = json[i].title;
-				if (jsonTitle !== undefined && jsonTitle !== null && jsonTitle.toLowerCase() == title) {
-					return i;
+				if (json[i] !== undefined) {
+					jsonTitle = json[i].title;
+					if (jsonTitle !== undefined && jsonTitle !== null && jsonTitle.toLowerCase() == title) {
+						return i;
+					}
 				}
 			}
 
@@ -365,10 +401,8 @@
 		},
 		setCellAttributes: function(cell, attributes) {
 			var i;
-			for (i in attributes) {
-				if (attributes.hasOwnProperty(i)) {
-					cell[i] = attributes[i];
-				}
+			for (i in attributes) if (i !== undefined && attributes.hasOwnProperty(i)) {
+				cell[i] = attributes[i];
 			}
 
 			return this;
@@ -380,19 +414,26 @@
 		 * @param {Sheet.Cell} cell
 		 */
 		setDependencies: function(cell) {
+			//TODO: need to handle the cell's cache that are dependent on this one so that it changes when it is in view
+			//some cells just have a ridiculous amount of dependencies
+			if (cell.dependencies.length > Constructor.maxStoredDependencies) {
+				delete cell.loadedFrom['dependencies'];
+				return this;
+			}
+
 			var i = 0,
 				loadedFrom = cell.loadedFrom,
 				dependencies = cell.dependencies,
 				dependency,
 				max = dependencies.length,
-				jsonDependencies = loadedFrom.dependencies = [];
+				jsonDependencies = loadedFrom['dependencies'] = [];
 
 			for(;i<max;i++) {
 				dependency = dependencies[i];
 				jsonDependencies.push({
-					sheet: dependency.sheetIndex,
-					row: dependency.rowIndex,
-					column: dependency.columnIndex
+					s: dependency.sheetIndex,
+					r: dependency.rowIndex,
+					c: dependency.columnIndex
 				});
 			}
 
@@ -407,12 +448,12 @@
 			}
 
 			loadedFrom.dependencies.push({
-				sheet: dependencyCell.sheetIndex,
-				row: dependencyCell.rowIndex,
-				column: dependencyCell.columnIndex
+				s: dependencyCell.sheetIndex,
+				r: dependencyCell.rowIndex,
+				c: dependencyCell.columnIndex
 			});
 
-			return this;
+		    return this;
 		},
 
 		cycleCells: function(sheetIndex, fn) {
@@ -605,7 +646,6 @@
 
 		/**
 		 * Create json from jQuery.sheet Sheet instance
-		 * @param {Object} jS required, the jQuery.sheet instance
 		 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
 		 * @returns {Array}  - schema:<pre>
 		 * [{ // sheet 1, can repeat
@@ -656,10 +696,11 @@
 				 * }]</pre>
 		 * @memberOf Sheet.JSONLoader
 		 */
-		fromSheet: function(jS, doNotTrim) {
+		fromSheet: function(doNotTrim) {
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
 
 			var output = [],
+				jS = this.jS,
 				i = 1 * jS.i,
 				pane,
 				sheet = jS.spreadsheets.length - 1,
@@ -702,7 +743,7 @@
 				spreadsheet = jS.spreadsheets[sheet];
 				row = spreadsheet.length - 1;
 				do {
-					parentEle = spreadsheet[row][1].td[0].parentNode;
+					parentEle = spreadsheet[row][1].td.parentNode;
 					parentHeight = parentEle.style['height'];
 					jsonRow = {
 						"columns": [],
@@ -713,7 +754,7 @@
 					do {
 						cell = spreadsheet[row][column];
 						jsonColumn = {};
-						attr = cell.td[0].attributes;
+						attr = cell.td.attributes;
 
 						if (doNotTrim || rowHasValues || attr['class'] || cell['formula'] || cell['value'] || attr['style']) {
 							rowHasValues = true;
@@ -724,7 +765,7 @@
 									.replace(jS.cl.uiCellHighlighted, '')
 							) : '');
 
-							parent = cell.td[0].parentNode;
+							parent = cell.td.parentNode;
 
 							jsonRow.columns.unshift(jsonColumn);
 
@@ -764,8 +805,156 @@
 			return this.json = output;
 		},
 		type: Constructor,
-		typeName: 'Sheet.JSONLoader'
+		typeName: 'Sheet.JSONLoader',
+
+		clearCaching: function() {
+			var json = this.json,
+				spreadsheet,
+				row,
+				rows,
+				column,
+				columns,
+				sheetIndex = 0,
+				rowIndex,
+				columnIndex,
+				sheetMax = json.length,
+				rowMax,
+				columnMax;
+
+			for (;sheetIndex < sheetMax; sheetIndex++) {
+				spreadsheet = json[sheetIndex];
+				rows = spreadsheet['rows'];
+				rowMax = rows.length;
+
+				for (rowIndex = 0; rowIndex < rowMax; rowIndex++) {
+					row = rows[rowIndex];
+					columns = row['columns'];
+					columnMax = columns.length;
+
+					for (columnIndex = 0; columnIndex < columnMax; columnIndex++) {
+						column = columns[columnIndex];
+
+						delete column['cache'];
+						delete column['dependencies'];
+						delete column['parsedFormula'];
+					}
+				}
+			}
+
+			return this;
+		},
+		/**
+		 *
+		 */
+		download: function(rowSplitAt) {
+			rowSplitAt = rowSplitAt || 500;
+
+			var w = window.open(),
+				d,
+				entry,
+				json = this.json,
+				i = 0,
+				max = json.length - 1,
+				spreadsheet;
+
+
+			//popup blockers
+			if (w !== undefined) {
+				d = w.document;
+				d.write('<html>\
+	<head id="head"></head>\
+	<body>\
+		<div id="entry">\
+		</div>\
+	</body>\
+</html>');
+
+				entry = $(d.getElementById('entry'));
+
+				while (i <= max) {
+					spreadsheet = json[i];
+
+					//strategy: slice spreadsheet into parts so JSON doesn't get overloaded and bloated
+					if (spreadsheet.rows.length > rowSplitAt) {
+						var spreadsheetPart = {
+								title: spreadsheet.title,
+								metadata: spreadsheet.metadata,
+								rows: []
+							},
+							rowParts = [],
+							rowIndex = 0,
+							row,
+							rows = spreadsheet.rows,
+							rowCount = rows.length,
+							fileIndex = 1,
+							setIndex = 0,
+							addFile = function(json, index) {
+								entry.append(document.createElement('br'));
+								entry
+									.append(
+										$(document.createElement('a'))
+											.attr('download', spreadsheet.title + '-part' + index +'.json')
+											.attr('href', URL.createObjectURL(new Blob([JSON.stringify(json)], {type: "application/json"})))
+											.text(spreadsheet.title + ' - part ' + index)
+									);
+							};
+
+						addFile(spreadsheetPart, fileIndex);
+						/*entry
+							.append(
+								document.createElement('br')
+							)
+							.append(
+								$(document.createElement('a'))
+									.attr('download', spreadsheet.title + '-part' + fileIndex +'.json')
+									.attr('href', new Blob([JSON.stringify()], {type: "application/json"}))
+									.text(spreadsheet.title + ' part:' + fileIndex)
+							);*/
+
+						while (rowIndex < rowCount) {
+							if (setIndex === rowSplitAt) {
+								setIndex = 0;
+								fileIndex++;
+
+								addFile(rowParts, fileIndex);
+
+								rowParts = [];
+							}
+							rowParts.push(rows[rowIndex]);
+							setIndex++;
+							rowIndex++
+						}
+
+						if (rowParts.length > 0) {
+							fileIndex++;
+							addFile(rowParts, fileIndex);
+						}
+					}
+
+					//strategy: stringify sheet and output
+					else {
+						entry
+							.append(
+								document.createElement('br')
+							)
+							.append(
+								$(document.createElement('a'))
+									.attr('download', spreadsheet.title + '.json')
+									.attr('href', URL.createObjectURL(new Blob([JSON.stringify(spreadsheet)], {type: "application/json"})))
+									.text(spreadsheet.title)
+							);
+					}
+					i++;
+				}
+
+
+				d.close();
+				w.focus();
+			}
+		}
 	};
+
+	Constructor.maxStoredDependencies = 100;
 
 	return Constructor;
 })(jQuery, document, String);

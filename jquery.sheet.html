@@ -14,139 +14,146 @@
             <link rel="stylesheet" type="text/css" href="bower_components/jquery-ui/themes/start/jquery-ui.min.css">
             <link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap.css">
             <link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap-theme.css">
-            <script type="text/javascript" src="bower_components/jquery-legacy/dist/jquery.min.js"></script>
-            <script type="text/javascript" src="bower_components/globalize/lib/globalize.js"></script>
-            <script type="text/javascript" src="bower_components/MouseWheel/MouseWheel.js"></script>
-            <script type="text/javascript" src="bower_components/thaw.js/thaw.js"></script>
-            <script type="text/javascript" src="jquery.sheet.js"></script>
+            <script src="bower_components/jquery-legacy/dist/jquery.min.js"></script>
+            <script src="bower_components/globalize/lib/globalize.js"></script>
+            <script src="bower_components/MouseWheel/MouseWheel.js"></script>
+            <script src="bower_components/thaw.js/thaw.js"></script>
+            <script src="jquery.sheet.js"></script>
 
 		<!--optional-->
             <!--Nearest-->
-            <script type="text/javascript" src="bower_components/jquery-nearest/src/jquery.nearest.min.js"></script>
+            <script src="bower_components/jquery-nearest/src/jquery.nearest.min.js"></script>
             <!--/Nearest-->
 			<!--jQuery UI-->
-				<script type="text/javascript" src="bower_components/jquery-ui/jquery-ui.min.js"></script>
+				<script src="bower_components/jquery-ui/jquery-ui.min.js"></script>
 			<!--/jQuery UI-->
 			<!--Raphaeljs - for charts-->
-				<script type="text/javascript" src="bower_components/raphael/raphael-min.js"></script>
-				<script type="text/javascript" src="bower_components/graphael/g.raphael.js"></script>
-				<script type="text/javascript" src="bower_components/graphael/g.bar.js"></script>
-				<script type="text/javascript" src="bower_components/graphael/g.dot.js"></script>
-				<script type="text/javascript" src="bower_components/graphael/g.line.js"></script>
-				<script type="text/javascript" src="bower_components/graphael/g.pie.js"></script>
+				<script src="bower_components/raphael/raphael-min.js"></script>
+				<script src="bower_components/graphael/g.raphael.js"></script>
+				<script src="bower_components/graphael/g.bar.js"></script>
+				<script src="bower_components/graphael/g.dot.js"></script>
+				<script src="bower_components/graphael/g.line.js"></script>
+				<script src="bower_components/graphael/g.pie.js"></script>
 			<!--/Raphaeljs-->
 			<!--ColorPicker-->
 				<link rel="stylesheet" type="text/css" href="bower_components/really-simple-color-picker/colorPicker.css" />
-				<script type="text/javascript" src="bower_components/really-simple-color-picker/jquery.colorPicker.min.js"></script>
+				<script src="bower_components/really-simple-color-picker/jquery.colorPicker.min.js"></script>
 			<!--/ColorPicker-->
 			<!--Elastic-->
-				<script type="text/javascript" src="bower_components/jquery-elastic/jquery.elastic.source.js"></script>
+				<script src="bower_components/jquery-elastic/jquery.elastic.source.js"></script>
 			<!--/Elastic-->
 			<!--Advanced_Math-->
-				<script type="text/javascript" src="plugins/jquery.sheet.advancedfn.js"></script>
+				<script src="plugins/jquery.sheet.advancedfn.js"></script>
 			<!--/Advanced_Math-->
 			<!--Finance-->
-				<script type="text/javascript" src="plugins/jquery.sheet.financefn.js"></script>
+				<script src="plugins/jquery.sheet.financefn.js"></script>
 			<!--/Finance-->
 	        <!--Undo-->
-	            <script type="text/javascript" src="bower_components/Javascript-Undo-Manager/js/undomanager.js"></script>
+	            <script src="bower_components/Javascript-Undo-Manager/js/undomanager.js"></script>
 	        <!--/Undo-->
             <!--Zero Clipboard-->
-            <script type="text/javascript" src="bower_components/zeroclipboard/dist/ZeroClipboard.min.js"></script>
+            <script src="bower_components/zeroclipboard/dist/ZeroClipboard.min.js"></script>
             <!--/Zero Clipboard-->
-        <script type="text/javascript">
+        <script>
             $(function(){
 
-                /*$('#themeSwitcher').themeswitcher({
-                    imgpath: "plugins/jquery.themeswitcher.images/",
-                    loadTheme: "start"
-                });*/
-                //Here is where we initiate the sheets
-                //every time sheet is created it creates a new jQuery.sheet.instance (array), to manipulate each sheet, the jQuery object is returned
-
-	            window.loadSheet = function (obj, url) {
-                    var urls = {sheet: url || $(obj).attr('href'), menuLeft: 'menu.left.html', menuRight: 'menu.right.html'}, results = {}, loadCount = 3, loaded = 0;
-
-                    for(var type in urls) {
-                        var tempUrl = urls[type] + (type == 'sheet' ? ' #sheetParent' : '');
-                        $(document.createElement('div'))
-                                .data('type', type)
-                                .load(tempUrl, function() {
-                            results[$(this).data('type')] = this.children[0];
-                            loaded++;
-                            if (loadCount == loaded) {
-                                $('#sheet')
-                                    .attr('class', results.sheet.className)
-                                    .html(results.sheet.children)
-                                    .sheet({
-                                        title: 'Demo',
-                                        menuLeft: function() {
-                                            var jS = this,
-                                                menu = $(results.menuLeft),
-                                                copy = menu.find('.jSCopy').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
-                                                cut = menu.find('.jSCut').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
-                                                paste = menu.find('.jSPaste').click(function() {
-                                                    alert('Press Ctrl + V to paste over highlighted cells');
-                                                });
-
-                                            //Give anchors access to jS them
-                                            menu.find('a').each(function() {
-                                                this.jS = jS;
-                                            });
-
-                                            var clip = new ZeroClipboard(copy.add(cut), {
-                                                moviePath: "plugins/ZeroClipboard.swf"
-                                            });
-
-                                            clip.on('mousedown', function(client) {
-                                                clip.setText(jS.tdsToTsv());
-                                                $(this).mousedown();
-                                            });
-
-                                            cut.mousedown(function() {
-                                                jS.tdsToTsv(null, true);
-                                            });
-
-                                            return menu;
-                                        },
-                                        menuRight: function (){
-                                            var jS = this,
-                                            //we want to be able to edit the html for the menu to make them multi-instance
-                                                menu = $(results.menuRight);
-
-                                            //Give anchors access to jS them
-                                            menu.find('a').each(function() {
-                                                this.jS = jS;
-                                            });
-
-                                            //The following is just so you get an idea of how to style cells
-                                            var colorPickerCell = menu.find('.colorPickerCell')
-			                                        .colorPicker()
-		                                            .change(function(){
-	                                                    jS.cellChangeStyle('background-color', $(this).val());
-	                                                }),
-
-                                                colorPickerFont = menu.find('.colorPickerFont')
-	                                                .colorPicker()
-	                                                .change(function(){
-                                                        jS.cellChangeStyle('color', $(this).val());
-                                                    });
-
-	                                        colorPickerCell.next()
-			                                        .html($('<img>').attr('src', colorPickerCell.attr('data-img')));
-
-	                                        colorPickerFont.next()
-			                                        .html($('<img>').attr('src', colorPickerFont.attr('data-img')));
-
-                                            return menu;
-                                        }
-                                    });
-                            }
-                        });
-                    }
+	            var parseHtml = function(html, selector) {
+		            var parent = document.createElement('div');
+		            parent.innerHTML = html;
+		            if (selector) {
+			            return parent.querySelector(selector);
+		            }
+		            return parent.children;
 	            };
 
-	            loadSheet({}, 'examples/charts.html');
+                //Here is where we initiate the sheets
+                //every time sheet is created it creates a new jQuery.sheet.instance (array), to manipulate each sheet, the jQuery object is returned
+	            window.loadSheet = function (loadWhat) {
+		            var url;
+
+		            switch (typeof loadWhat) {
+			            case 'object':
+				            url = $(loadWhat).attr('href');
+				            break;
+			            case 'string':
+				            url = loadWhat;
+				            break;
+		            }
+
+		            $.when(
+			            $.get(url),
+			            $.get('menu.left.html'),
+			            $.get('menu.right.html')
+		            ).done(function(sheet, menuLeft, menuRight) {
+			            $('#sheet')
+				            .html(parseHtml(sheet[0], 'div#sheetParent table'))
+				            .sheet({
+					            title: 'Demo',
+					            menuLeft: function() {
+						            var jS = this,
+							            menu = $(menuLeft[0]),
+							            copy = menu.find('.jSCopy').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
+							            cut = menu.find('.jSCut').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
+							            paste = menu.find('.jSPaste').click(function() {
+								            alert('Press Ctrl + V to paste over highlighted cells');
+							            });
+
+						            //Give anchors access to jS them
+						            menu.find('a').each(function() {
+							            this.jS = jS;
+						            });
+
+						            var clip = new ZeroClipboard(copy.add(cut), {
+							            moviePath: "plugins/ZeroClipboard.swf"
+						            });
+
+						            clip.on('mousedown', function(client) {
+							            clip.setText(jS.tdsToTsv());
+							            $(this).mousedown();
+						            });
+
+						            cut.mousedown(function() {
+							            jS.tdsToTsv(null, true);
+						            });
+
+						            return menu;
+					            },
+					            menuRight: function (){
+						            var jS = this,
+						            //we want to be able to edit the html for the menu to make them multi-instance
+							            menu = $(menuRight[0]);
+
+						            //Give anchors access to jS them
+						            menu.find('a').each(function() {
+							            this.jS = jS;
+						            });
+
+						            //The following is just so you get an idea of how to style cells
+						            var colorPickerCell = menu.find('.colorPickerCell')
+								            .colorPicker()
+								            .change(function(){
+									            jS.cellChangeStyle('background-color', $(this).val());
+								            }),
+
+							            colorPickerFont = menu.find('.colorPickerFont')
+								            .colorPicker()
+								            .change(function(){
+									            jS.cellChangeStyle('color', $(this).val());
+								            });
+
+						            colorPickerCell.next()
+							            .html($('<img>').attr('src', colorPickerCell.attr('data-img')));
+
+						            colorPickerFont.next()
+							            .html($('<img>').attr('src', colorPickerFont.attr('data-img')));
+
+						            return menu;
+					            }
+				            });
+		            });
+	            };
+
+	            loadSheet('examples/charts.html');
 
                 $('#pseudoSheetsMoreInfo').click(function() {
                     $(this).next().dialog({

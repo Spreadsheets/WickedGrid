@@ -17,26 +17,26 @@
 		}*/
 	</style>
 	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
-	<script type="text/javascript" src="jmc/customFormula.js"></script>
+
 	<script src="../jquery.sheet.js"></script>
 	<script>
 		$.sheet.preLoad('../');
 		$(function() {
 			$.when(
-				$.ajax({url: '../utilities/Base%20data1.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Base%20data2.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Calc1.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Calc2.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Calc3.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Calc4.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Calc5.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Calc6.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Calc7.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Input2.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Inputs1.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Inputs3.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Output1.json', dataType: 'text'}),
-				$.ajax({url: '../utilities/Output2.json', dataType: 'text'})
+				$.getJSON('../utilities/Base%20data1.json'),
+				$.getJSON('../utilities/Base%20data2.json'),
+				$.getJSON('../utilities/Calc1.json'),
+				$.getJSON('../utilities/Calc2.json'),
+				$.getJSON('../utilities/Calc3.json'),
+				$.getJSON('../utilities/Calc4.json'),
+				$.getJSON('../utilities/Calc5.json'),
+				$.getJSON('../utilities/Calc6.json'),
+				$.getJSON('../utilities/Calc7.json'),
+				$.getJSON('../utilities/Input2.json'),
+				$.getJSON('../utilities/Inputs1.json'),
+				$.getJSON('../utilities/Inputs3.json'),
+				$.getJSON('../utilities/Output1.json'),
+				$.getJSON('../utilities/Output2.json')
 			).done(function() {
 				var args = arguments,
 					loader = new Sheet.JSONLoader([]),
@@ -44,7 +44,7 @@
 					edited = [];
 
 				while (i<args.length) {
-					loader.addSpreadsheet(JSON.parse(args[i][0])[0]);
+					loader.addSpreadsheet(args[i][0][0]);
 					i++;
 				}
 

@@ -212,10 +212,19 @@
 	height: inherit;
 	width: inherit;
 }
-
+.jSParent .jSScroll > div {
+	min-height: 1000%;
+	min-width: 500%;
+	height: 1000%;
+	width: 500%;
+	-webkit-transition: 0.2s; /* For Safari 3.1 to 6.0 */
+	transition: 0.2s;
+}
 /* Sheet styling */
 .jSParent .jS
 {
+	left: 0;
+	top: 0;
 	position: absolute;
     table-layout: fixed;
     empty-cells: show;

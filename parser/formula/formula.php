@@ -2176,7 +2176,9 @@ case 1:
 break;
 case 2:
 
-        return $s[$o-1];
+    	var types = yy->types;
+    	yy->types = [];
+        return types;
     
 break;
 case 3:
@@ -2216,9 +2218,13 @@ case 8:
         
     
 break;
-case 9: case 57:
+case 9:
 
-        $thisS = $s[$o];
+        var type = {
+        	t: 'v',
+        	v: $s[$o]
+        };
+        yy->types.push(type);
     
 break;
 case 10:
@@ -2266,9 +2272,10 @@ case 15:
 break;
 case 16:
 
-        $thisS = ($s[$o-3]) != ($s[$o]);
-
-            
+		
+        	$thisS = ($s[$o-3]) != ($s[$o]);
+		
+    
 break;
 case 17:
 
@@ -2317,14 +2324,14 @@ case 23:
 		
             $thisS = $s[$o-1] * 1;
         
-		
+	
 break;
 case 24:
 
 	    
             $thisS = $s[$o-1] * 1;
         
-		
+	
 break;
 case 25:
 /*$thisS = Math.E;*/;
@@ -2407,6 +2414,11 @@ case 56:
         
     
 break;
+case 57:
+
+        $thisS = $s[$o];
+    
+break;
 case 58:
 
         
@@ -2416,7 +2428,9 @@ case 58:
 break;
 case 59:
 
-        $thisS = $s[$o-1] * 0.01;
+		
+        	$thisS = ($s[$o-1] * 0.01) . '';
+        
     
 break;
 }
@@ -2840,17 +2854,13 @@ break;
 case 3:return 8;
 break;
 case 4:
-	
-		if ($this->typeName == 'Sheet.Cell') return 30;
-		return 37;
-	
+	return 30;
 
 break;
 case 5:
     
         $this->yy->text = substr($this->yy->text, 1, -1);
-        if ($this->typeName == 'Sheet.Cell') return 30;
-        return 37;
+        return 30;
     
 
 break;

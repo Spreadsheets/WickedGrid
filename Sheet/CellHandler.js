@@ -22,8 +22,8 @@ Sheet.CellHandler = (function(Math) {
 		 */
 		variable:function (parentCell, variable) {
 			if (arguments.length) {
-				var name = arguments[0],
-					attr = arguments[1],
+				var name = variable[0],
+					attr = variable[1],
 					formulaVariables = this.jS.s.formulaVariables,
 					formulaVariable,
 					result;
@@ -32,10 +32,12 @@ Sheet.CellHandler = (function(Math) {
 					case 'true':
 						result = new Boolean(true);
 						result.html = 'TRUE';
+						result.cell = parentCell;
 						return result;
 					case 'false':
 						result = new Boolean(false);
 						result.html = 'FALSE';
+						result.cell = parentCell;
 						return result;
 				}
 
@@ -67,6 +69,10 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Number}
 		 */
 		number:function (parentCell, num) {
+			if (isNaN(num) || num === null) {
+				num = 0;
+			}
+
 			switch (typeof num) {
 				case 'number':
 					return num;
@@ -88,12 +94,17 @@ Sheet.CellHandler = (function(Math) {
 		 * @param {*} _num
 		 * @returns {Number}
 		 */
-		numberInverted: function(parentCell, _num) {
+		invertNumber: function(parentCell, _num) {
+			if (isNaN(_num)) {
+				_num = 0;
+			}
+
 			var num = this.number(parentCell, _num),
 				inverted = new Number(num.valueOf() * -1);
 			if (num.html) {
 				inverted.html = num.html;
 			}
+
 			return inverted;
 		},
 
@@ -214,26 +225,51 @@ Sheet.CellHandler = (function(Math) {
 			return output(value);
 		},
 
+		not: function(parentCell, value1, value2) {
+			var result;
+
+			if (value1.valueOf() != value2.valueOf()) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+				result.cell = parentCell;
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+				result.cell = parentCell;
+			}
+
+			return result;
+		},
+
+		concatenate: function(parentCell, value1, value2) {
+			if (value1 === null) value1 = '';
+			if (value2 === null) value2 = '';
+
+			return value1.toString() + value2.toString();
+		},
+
 		/**
 		 * Get cell value
 		 * @param {Sheet.Cell} parentCell
 		 * @param {Object} cellRef
-		 * @returns {*}
+		 * @param {Function} [callback]
+		 * @returns {Sheet.CellHandler}
 		 */
-		cellValue:function (parentCell, cellRef) {
+		cellValue:function (parentCell, cellRef, callback) {
 			var jS = this.jS,
-				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
+				loc = jSE.parseLocation(cellRef.c, cellRef.r),
 				cell,
 				value;
 
 			cell = jS.getCell(parentCell.sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
-				value = cell.updateValue();
-				return value;
-			} else {
-				return '';
+				cell.updateValue(callback);
+			} else if (callback !== u) {
+				callback.call(parentCell, 0);
 			}
+
+			return this;
 		},
 
 
@@ -242,25 +278,110 @@ Sheet.CellHandler = (function(Math) {
 		 * @param {Sheet.Cell} parentCell
 		 * @param {Object} start
 		 * @param {Object} end
+		 * @param {Function} [callback]
+		 * @returns {Sheet.CellHandler}
+		 */
+		cellRangeValue:function (parentCell, start, end, callback) {
+			return this.remoteCellRangeValue(parentCell, parentCell.sheetIndex, start, end, callback);
+		},
+
+
+		/**
+		 * Get cell value from a different sheet within an instance
+		 * @param {Sheet.Cell} parentCell
+		 * @param {String} sheet example "SHEET1"
+		 * @param {Object} cellRef
+		 * @param {Function} [callback]
+		 * @returns {Sheet.CellHandler}
+		 */
+		remoteCellValue:function (parentCell, sheet, cellRef, callback) {
+			var jSE = this.jSE,
+				jS = this.jS,
+				loc = jSE.parseLocation(cellRef.c, cellRef.r),
+				sheetIndex = jSE.parseSheetLocation(sheet),
+				cell;
+
+			if (sheetIndex < 0) {
+				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
+			}
+
+			cell = jS.getCell(sheetIndex, loc.row, loc.col);
+			if (cell !== null) {
+				cell.addDependency(parentCell);
+				cell.updateValue(callback);
+			} else if (callback !== u) {
+				callback.call(parentCell, 0);
+			}
+
+			return this;
+		},
+
+		/**
+		 * Get cell values as an array from a different sheet within an instance
+		 * @param {Sheet.Cell} parentCell
+		 * @param {String} sheetTitle example "SHEET1"
+		 * @param {Object} start
+		 * @param {Object} end
+		 * @param {Function} [callback]
 		 * @returns {Array}
 		 */
-		cellRangeValue:function (parentCell, start, end) {
-			var sheetIndex = parentCell.sheetIndex,
-				_start = jSE.parseLocation(start.colString, start.rowString),
-				_end = jSE.parseLocation(end.colString, end.rowString),
+		remoteCellRangeValue:function (parentCell, sheetTitle, start, end, callback) {
+			var sheetIndex = (typeof sheetTitle === 'string' ? jSE.parseSheetLocation(sheetTitle) : sheetTitle),
+				_start = jSE.parseLocation(start.c, start.r),
+				_end = jSE.parseLocation(end.c, end.r),
 				rowIndex = Math.max(_start.row, _end.row),
 				rowIndexEnd = Math.min(_start.row, _end.row),
 				colIndexStart = Math.max(_start.col, _end.col),
 				colIndexEnd = Math.min(_start.col, _end.col),
 				jS = this.jS,
-				sheet = jS.spreadsheets[sheetIndex],
 				result = [],
 				colIndex,
 				cell,
-				row;
+				row,
+				stack = [],
+				key = sheetIndex + '!' + start.c + start.r + ':' + end.c + end.r,
+				cachedRange = Constructor.cellRangeCache[key],
+				i,
+				max,
+				useCache,
+				that = this,
+				remaining = ((colIndexEnd - 1) - colIndexStart) * ((rowIndexEnd - 1) - rowIndex),
+				detected = remaining + 0,
+				count = 0,
+				sheet;
+
+			if (sheetIndex < 0) {
+				sheetIndex = jS.getSpreadsheetIndexByTitle(sheetTitle);
+			}
+
+			//can't find spreadsheet here
+			if (sheetIndex < 0) {
+				result = new String('');
+				result.html = '#NAME?';
+				callback.call(parentCell, result);
+
+				return this;
+			}
+
+			/*if (cachedRange !== u) {
+			 useCache = true;
+			 max = cachedRange.length;
+			 for (i = 0; i < max; i++) {
+			 if (cachedRange[i].needsUpdated) {
+			 useCache = false
+			 }
+			 }
+
+			 if (useCache) {
+			 callback.call(parentCell, Constructor.cellRangeCache[key]);
+			 return this;
+			 }
+			 }*/
+
+			sheet = jS.spreadsheets[sheetIndex];
 
 			if (sheet === u) {
-				jS.spreadsheets[sheetIndex] = sheet = {};
+				jS.spreadsheets[sheetIndex] = sheet = [];
 			}
 
 			if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
@@ -281,106 +402,21 @@ Sheet.CellHandler = (function(Math) {
 
 						if (cell !== null) {
 							cell.addDependency(parentCell);
-							result.unshift(cell.updateValue());
+							cell.updateValue(function(value) {
+								result.unshift(value);
+								remaining--;
+								if (remaining < 1) {
+									Constructor.cellRangeCache[key] = result;
+									callback.call(parentCell, result);
+								}
+							});
+							count++;
 						}
 					} while(colIndex-- > colIndexEnd);
 				} while (rowIndex-- > rowIndexEnd);
-
-				return result;
 			}
 
-			return result;
-		},
-
-		/**
-		 * Get cell value
-		 * @param {Sheet.Cell} parentCell
-		 * @param {Object} start
-		 * @returns {*}
-		 */
-		fixedCellValue:function (parentCell, start) {
-			return this.cellValue(parentCell, start);
-		},
-
-		/**
-		 * Get cell values as an array
-		 * @param {Sheet.Cell} parentCell
-		 * @param {Object} start
-		 * @param {Object} end
-		 * @returns {Array}
-		 */
-		fixedCellRangeValue:function (parentCell, start, end) {
-			return this.cellRangeValue(parentCell, start, end);
-		},
-
-		/**
-		 * Get cell value from a different sheet within an instance
-		 * @param {Sheet.Cell} parentCell
-		 * @param {String} sheet example "SHEET1"
-		 * @param {Object} cellRef
-		 * @returns {*}
-		 */
-		remoteCellValue:function (parentCell, sheet, cellRef) {
-			var jSE = this.jSE,
-				jS = this.jS,
-				loc = jSE.parseLocation(cellRef.colString, cellRef.rowString),
-				sheetIndex = jSE.parseSheetLocation(sheet),
-				cell,
-				value;
-
-			if (sheetIndex < 0) {
-				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
-			}
-
-			cell = jS.getCell(sheetIndex, loc.row, loc.col);
-			if (cell !== null) {
-				cell.addDependency(parentCell);
-				value = cell.updateValue();
-
-				return value;
-			} else {
-				return '';
-			}
-		},
-
-		/**
-		 * Get cell values as an array from a different sheet within an instance
-		 * @param {Sheet.Cell} parentCell
-		 * @param {String} sheet example "SHEET1"
-		 * @param {Object} start
-		 * @param {Object} end
-		 * @returns {Array}
-		 */
-		remoteCellRangeValue:function (parentCell, sheet, start, end) {
-			var jS = this.jS,
-				jSE = this.jSE,
-				_start = jSE.parseLocation(start.colString, start.rowString),
-				_end = jSE.parseLocation(end.colString, end.rowString),
-				sheetIndex = jSE.parseSheetLocation(sheet),
-				colIndex,
-				maxColIndex = _end.col,
-				rowIndex,
-				maxRowIndex = _end.row,
-				result = [],
-				cell;
-
-			if (sheetIndex < 0) {
-				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
-			}
-
-			result.rowCount = (maxRowIndex - _start.row) + 1;
-			result.columnCount = (maxColIndex - _start.col) + 1;
-			for (colIndex = _start.col; colIndex <= maxColIndex; colIndex++) {
-				for (rowIndex = _start.row; rowIndex <= maxRowIndex; rowIndex++) {
-					cell = jS.getCell(sheetIndex, rowIndex, colIndex);
-					if (cell !== null) {
-						result.push(cell.updateValue());
-						cell.addDependency(parentCell);
-					}
-				}
-			}
-
-			return result;
+			return this;
 		},
 
 		/**
@@ -429,6 +465,8 @@ Sheet.CellHandler = (function(Math) {
 			return formulaParser;
 		}
 	};
+
+	Constructor.cellRangeCache = {};
 
 	return Constructor;
 })(Math);

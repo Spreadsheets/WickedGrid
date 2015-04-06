@@ -33,7 +33,7 @@
             var tdsHorizontal = $('#jS_0_0 tr:eq(1) td:first').nextAll();
             tdsHorizontal.length = 5;
 
-            jS.themeRoller.cell.setHighlighted(tdsHorizontal);
+            jS.highlighter.set(tdsHorizontal);
             jS.sortHorizontal();
 
             //sort horizontal reverse
@@ -41,7 +41,7 @@
             tdsHorizontal = $('#jS_0_1 tr:eq(1) td:first').nextAll();
             tdsHorizontal.length = 5;
 
-            jS.themeRoller.cell.setHighlighted(tdsHorizontal);
+            jS.highlighter.set(tdsHorizontal);
             jS.sortHorizontal(true);
 
             //sort vertical
@@ -52,7 +52,7 @@
             trsVertical.each(function() {
                 tdsVertical.push($(this).find('td:eq(3)')[0]);
             });
-            jS.themeRoller.cell.setHighlighted(tdsVertical);
+            jS.highlighter.set(tdsVertical);
             jS.sortVertical();
 
             //sort vertical
@@ -63,7 +63,7 @@
             trsVertical.each(function() {
                 tdsVertical.push($(this).find('td:eq(3)')[0]);
             });
-            jS.themeRoller.cell.setHighlighted(tdsVertical);
+            jS.highlighter.set(tdsVertical);
             jS.sortVertical(true);
         });
     </script>

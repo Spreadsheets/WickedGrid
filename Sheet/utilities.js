@@ -92,16 +92,19 @@ var arrHelpers = window.arrHelpers = {
 	},
 	indexOfNearestLessThan: function (array, needle) {
 		if (array.length === 0) return -1;
+
 		var high = array.length - 1,
 			low = 0,
 			mid,
 			item,
 			target = -1;
+
 		if (array[high] < needle) {
 			return high;
 		}
+
 		while (low <= high) {
-			mid = ((low + high) / 2) >> 1;
+			mid = (low + high) >> 1;
 			item = array[mid];
 			if (item > needle) {
 				high = mid - 1;
@@ -113,10 +116,12 @@ var arrHelpers = window.arrHelpers = {
 				break;
 			}
 		}
+
 		return target;
 	},
 	ofSet: function (array, needle) {
 		if (array.length === 0) return null;
+
 		var high = array.length - 1,
 			lastIndex = high,
 			biggest = array[high],
@@ -128,9 +133,11 @@ var arrHelpers = window.arrHelpers = {
 			i,
 			highSet = -1,
 			lowSet = -1;
+
 		if (array[high] < needle || array[0] > needle) {
 			return null;
 		} else {
+
 			while (low <= high) {
 				mid = (low + high) >> 1;
 				item = array[mid];
@@ -145,6 +152,7 @@ var arrHelpers = window.arrHelpers = {
 				}
 			}
 		}
+
 		if (target > -1) {
 			i = target;
 			while (i <= lastIndex) {
@@ -155,9 +163,11 @@ var arrHelpers = window.arrHelpers = {
 					break;
 				}
 			}
+
 			if (highSet === -1) {
 				highSet = biggest;
 			}
+
 			i = target;
 			while (i >= 0) {
 				if (array[i] - 1 === array[i - 1]) {
@@ -167,10 +177,12 @@ var arrHelpers = window.arrHelpers = {
 					break;
 				}
 			}
+
 			if (lowSet === -1) {
 				lowSet = smallest;
 			}
 		}
+
 		return {
 			start: lowSet,
 			end: highSet

@@ -31,9 +31,11 @@ JS_FILES=(
 	ActionUI.js
 	SpreadsheetUI.js
 	Theme.js
+	thread.js
 	Highlighter.js
 	ColumnAdder.js
 	RowAdder.js
+	Detacher.js
 	StyleUpdater.js
 	JSONLoader.js
 	XMLLoader.js

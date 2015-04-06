@@ -4,25 +4,64 @@ tf.test('Formula: Dependencies', function() {
 		tableHtml = $(table).html(),
 		div = $('<div>')
 			.append(table)
-			.sheet(),
+			.sheet({
+				initCalcRows: 2,
+				initCalcCols: 3
+			}),
 		jS = div.getSheet(),
 		A1 = jS.spreadsheets[0][1][1], B1 = jS.spreadsheets[0][1][2], C1 = jS.spreadsheets[0][1][3],
 		A2 = jS.spreadsheets[0][2][1], B2 = jS.spreadsheets[0][2][2], C2 = jS.spreadsheets[0][2][3];
 
-	//thawing, so force values to resolve
-	A1.updateValue();
-	A2.updateValue();
-	B1.updateValue();
-	B2.updateValue();
-	C1.updateValue();
-	C2.updateValue();
-
 	tf.assertEquals(A1.dependencies[0], B1, 'A1 is a dependency of B1');
-	tf.assertEquals(A2.dependencies[0], B1, 'A2 is a dependency of B1');
+	tf.assertEquals(B1.dependencies[0], C1, 'C1 is a dependency of B1');
 	tf.assertEquals(B1.dependencies[0], C1, 'B1 is a dependency of C1');
 	div.getSheet().kill();
 });
 
+
+tf.test('Formula: Proper number parsing', function() {
+	var table = tableify('=SUM(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)'),
+		div = $('<div>')
+			.append(table)
+			.sheet(),
+		jS = div.getSheet(),
+		A1 = jS.getCell(0, 1, 1);
+
+	A1.updateValue();
+
+	tf.assertEquals(A1.value.valueOf(), 20, 'Correct value');
+	div.getSheet().kill();
+});
+
+
+tf.test('Formula: Proper cell parsing', function() {
+	var table = tableify('=SUM(B1)\t185.50'),
+		div = $('<div>')
+			.append(table)
+			.sheet(),
+		jS = div.getSheet(),
+		A1 = jS.getCell(0, 1, 1);
+
+	A1.updateValue();
+
+	tf.assertEquals(A1.value.valueOf(), 185.50, 'Correct value');
+	div.getSheet().kill();
+});
+
+
+tf.test('Formula: Proper cell & value parsing', function() {
+	var table = tableify('=SUM(B1, 200)\t185.50'),
+		div = $('<div>')
+			.append(table)
+			.sheet(),
+		jS = div.getSheet(),
+		A1 = jS.getCell(0, 1, 1);
+
+	A1.updateValue();
+
+	tf.assertEquals(A1.value.valueOf(), 385.50, 'Correct value');
+	div.getSheet().kill();
+});
 
 tf.test('Formula: Dependencies from JSON', function() {
 	var spreadsheets = [{
@@ -33,44 +72,33 @@ tf.test('Formula: Dependencies from JSON', function() {
 		},{
 			title: '2',
 			rows: [{
-				columns: [{},{formula:'Sheet1!A1 + 100'}]
+				columns: [{},{formula:'Sheet1!A1 + 33'}]
 			}]
 		},{
 			title: '3',
 			rows: [{
-				columns: [{},{formula:'Sheet1!A1 + 100'}]
+				columns: [{},{formula:'Sheet1!A1 + 66'}]
 			}]
 		}],
 		loader = new Sheet.JSONLoader(spreadsheets),
 		div = $('<div>')
 			.sheet({
-				loader: loader,
-				minSize: {
-					rows: 1,
-					cols: 1
-				}
+				loader: loader
 			}),
 		jS = div.getSheet(),
-		sheet1A1 = jS.getCell(0, 1, 1), sheet1B1 = jS.getCell(0, 1, 2),
-		sheet2A1 = jS.getCell(1, 1, 1), sheet2B1 = jS.getCell(1, 1, 2),
-		sheet3A1 = jS.getCell(2, 1, 1), sheet3B1 = jS.getCell(2, 1, 2);
+		sheet1B1 = jS.getCell(0, 1, 2),
+		sheet2B1 = jS.getCell(1, 1, 2),
+		sheet3B1 = jS.getCell(2, 1, 2);
 
-	sheet1A1.updateValue();
 	sheet1B1.updateValue();
-	sheet2A1.updateValue();
 	sheet2B1.updateValue();
-	sheet3A1.updateValue();
 	sheet3B1.updateValue();
-	//thawing, so force values to resolve
-	sheet1A1.value = 100;
-	sheet1A1.setNeedsUpdated();
-	sheet1A1.updateValue();
 
-	tf.assertSame(sheet1B1.value.valueOf(), 101, 'value is correct');
-	tf.assertSame(sheet1B1.loadedFrom.cache, 101, 'cache is correct');
-	tf.assertSame(sheet2B1.value.valueOf(), 200, 'value is correct');
-	tf.assertSame(sheet2B1.loadedFrom.cache, 200, 'cache is correct');
-	tf.assertSame(sheet3B1.value.valueOf(), 200, 'value is correct');
-	tf.assertSame(sheet3B1.loadedFrom.cache, 200, 'cache is correct');
+	tf.assertSame(sheet1B1.value.valueOf(), 1, 'sheet1B1 value is correct');
+	tf.assertSame(sheet1B1.loadedFrom.cache, 1, 'sheet1B1 cache is correct');
+	tf.assertSame(sheet2B1.value.valueOf(), 33, 'sheet2B1 value is correct');
+	tf.assertSame(sheet2B1.loadedFrom.cache, 33, 'sheet2B1 cache is correct');
+	tf.assertSame(sheet3B1.value.valueOf(), 66, 'sheet3B1 value is correct');
+	tf.assertSame(sheet3B1.loadedFrom.cache, 66, 'sheet3B1 cache is correct');
 	div.getSheet().kill();
 });

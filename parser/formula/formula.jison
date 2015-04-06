@@ -20,25 +20,16 @@ STRING                              [A-Za-z0-9]+
 									{return 'TIME_24';}
 
 ({STRING})(?=[!]) {
-	//js
-		if (yy.obj.typeName == 'Sheet.Cell') return 'SHEET';
-		return 'VARIABLE';
-
-	/*php
-		if ($this->typeName == 'Sheet.Cell') return 'SHEET';
-		return 'VARIABLE';
-	*/
+	return 'SHEET';
 }
 ({SINGLE_QUOTED_STRING}|{DOUBLE_QUOTED_STRING})(?=[!]) {
     //js
         yytext = yytext.substring(1, yytext.length - 1);
-        if (yy.obj.typeName == 'Sheet.Cell') return 'SHEET';
-        return 'VARIABLE';
+        return 'SHEET';
 
     /*php
         $yytext = substr($yytext, 1, -1);
-        if ($this->typeName == 'Sheet.Cell') return 'SHEET';
-        return 'VARIABLE';
+        return 'SHEET';
     */
 }
 ({SINGLE_QUOTED_STRING})			{return 'STRING';}
@@ -101,15 +92,23 @@ expressions
         return null;
     }
     | expression EOF {
-        return $1;
+    	var types = yy.types;
+    	yy.types = [];
+        return types;
     }
 ;
 
 expression
     : variableSequence {
         //js
-            
-		    $$ = yy.handler.variable.apply(yy.obj, $1);
+
+			var type = {
+		    	t: 'm',
+		    	m: 'variable',
+		    	a: [$1]
+		    };
+		    $$ = yy.types.length;
+		    yy.types.push(type);
 
         /*php
             $$ = $this->variable($1);
@@ -117,21 +116,39 @@ expression
     }
 	| TIME_AMPM {
 	    //js
-	        
-            $$ = yy.handler.time(yy.obj, $1, true);
+
+            var type = {
+            	t: 'm',
+                m: 'time',
+            	a: [$1, true]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
         //
     }
 	| TIME_24 {
         //js
             
-            $$ = yy.handler.time(yy.obj, $1);
+            var type = {
+            	t: 'm',
+                m: 'time',
+            	a: [$1]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
         //
 
     }
 	| number {
 	    //js
 	        
-            $$ = yy.handler.number(yy.obj, $1);
+            var type = {
+            	t: 'm',
+            	m: 'number',
+            	a: [$1]
+            };
+            $$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             $$ = $1 * 1;
@@ -140,7 +157,13 @@ expression
 	| STRING {
         //js
             
-            $$ = yy.escape($1.substring(1, $1.length - 1));
+            var type = {
+            	t: 'v',
+            	v: yy.escape($1.substring(1, $1.length - 1))
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
+
         /*php
 	        $$ = substr($1, 1, -1);
         */
@@ -148,18 +171,34 @@ expression
     | ESCAPED_STRING {
         //js
 
-            $$ = yy.escape($1.substring(2, $1.length - 2));
+            var type = {
+            	t: 'v',
+            	v: yy.escape($1.substring(2, $1.length - 2))
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
+
         /*php
             $$ = substr($1, 2, -2);
         */
     }
     | LETTERS {
-        $$ = $1;
+        var type = {
+        	t: 'v',
+        	v: $1
+        };
+        yy.types.push(type);
     }
     | expression '&' expression {
         //js
             
-            $$ = $1.toString() + $3.toString();
+            var type = {
+            	t: 'm',
+            	m: 'concatenate',
+            	a: [$1, $3]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             $$ = $1 . '' . $3;
@@ -168,7 +207,13 @@ expression
 	| expression '=' expression {
 	    //js
 	        
-            $$ = yy.handler.callFunction(yy.obj, 'EQUAL', [$1, $3]);
+            var type = {
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['EQUAL', [$1, $3]]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             $$ = $1 == $3;
@@ -177,7 +222,13 @@ expression
 	| expression '+' expression {
 	    //js
 
-			$$ = yy.handler.performMath(yy.obj, '+', $1, $3);
+			var type = {
+				t: 'm',
+				m: 'performMath',
+				a: ['+', $1, $3]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
 			if (is_numeric($1) && is_numeric($3)) {
@@ -196,7 +247,13 @@ expression
 	| expression '<' '=' expression {
         //js
             
-            $$ = yy.handler.callFunction(yy.obj, 'LESS_EQUAL', [$1, $4]);
+            var type = {
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['LESS_EQUAL', [$1, $4]]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             $$ = ($1 * 1) <= ($4 * 1);
@@ -205,26 +262,43 @@ expression
     | expression '>' '=' expression {
         //js
             
-            $$ = yy.handler.callFunction(yy.obj, 'GREATER_EQUAL', [$1, $4]);
+            var type = {
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['GREATER_EQUAL', [$1, $4]]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             $$ = ($1 * 1) >= ($4 * 1);
         */
     }
 	| expression '<' '>' expression {
-        $$ = ($1) != ($4);
+		//js
 
-        //js
-            
-			if (isNaN($$)) {
-			    $$ = 0;
-			}
-        //
+			var type = {
+				t: 'm',
+				m: 'not',
+				a: [$1, $4]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
+
+		/*php
+        	$$ = ($1) != ($4);
+		*/
     }
 	| expression '>' expression {
 	    //js
 	        
-			$$ = yy.handler.callFunction(yy.obj, 'GREATER', [$1, $3]);
+			var type = {
+				t: 'm',
+				m: 'callFunction',
+				a: ['GREATER', [$1, $3]]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 
 		/*php
 		    $$ = ($1 * 1) > ($3 * 1);
@@ -233,7 +307,13 @@ expression
 	| expression '<' expression {
         //js
             
-            $$ = yy.handler.callFunction(yy.obj, 'LESS', [$1, $3]);
+            var type = {
+            	t: 'm',
+            	m: 'callFunction',
+            	a: ['LESS', [$1, $3]]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             $$ = ($1 * 1) < ($3 * 1);
@@ -242,7 +322,13 @@ expression
 	| expression '-' expression {
         //js
             
-            $$ = yy.handler.performMath(yy.obj, '-', $1, $3);
+            var type = {
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['-', $1, $3]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             $$ = ($1 * 1) - ($3 * 1);
@@ -251,7 +337,13 @@ expression
 	| expression '*' expression {
 	    //js
 	        
-            $$ = yy.handler.performMath(yy.obj, '*', $1, $3);
+            var type = {
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['*', $1, $3]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             $$ = ($1 * 1) * ($3 * 1);
@@ -260,7 +352,13 @@ expression
 	| expression '/' expression {
 	    //js
 	        
-            $$ = yy.handler.performMath(yy.obj, '/', $1, $3);
+            var type = {
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['/', $1, $3]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             $$ = ($1 * 1) / ($3 * 1);
@@ -268,11 +366,14 @@ expression
     }
 	| expression '^' expression {
         //js
-            
-            var n1 = yy.handler.number($1),
-                n2 = yy.handler.number($3);
 
-            $$ = yy.handler.performMath(yy.obj, '^', $1, $3);
+            var type = {
+            	t: 'm',
+            	m: 'performMath',
+            	a: ['^', $1, $3]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             $$ = pow(($1 * 1), ($3 * 1));
@@ -280,35 +381,45 @@ expression
     }
 	| '-' expression {
 		//js
-			
-			var n1 = yy.handler.numberInverted(yy.obj, $2);
-			$$ = n1;
-			if (isNaN($$)) {
-			    $$ = 0;
-			}
+
+			var type = {
+				t: 'm',
+				m: 'invertNumber',
+				a: [$2]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             $$ = $1 * 1;
         */
-		}
+	}
 	| '+' expression {
 	    //js
-	        
-			var n1 = yy.handler.number(yy.obj, $2);
-			$$ = n1;
-			if (isNaN($$)) {
-			    $$ = 0;
-			}
+
+	        var type = {
+	        	t: 'm',
+				m: 'number',
+				a: [$2]
+	        };
+	        $$ = yy.types.length;
+	        yy.types.push(type);
 
         /*php
             $$ = $1 * 1;
         */
-		}
+	}
 	| E {/*$$ = Math.E;*/;}
 	| FUNCTION '(' ')' {
 	    //js
 	        
-			$$ = yy.handler.callFunction(yy.obj, $1);
+			var type = {
+				t: 'm',
+				m: 'callFunction',
+				a: [$1]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 
 		/*php
 		    $$ = $this->callFunction($1);
@@ -317,7 +428,13 @@ expression
 	| FUNCTION '(' expseq ')' {
 	    //js
 	        
-			$$ = yy.handler.callFunction(yy.obj, $1, $3);
+			var type = {
+				t: 'm',
+				m: 'callFunction',
+				a: [$1, $3]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             $$ = $this->callFunction($1, $3);
@@ -330,7 +447,13 @@ cellRange :
 	cell {
 	    //js
 	        
-			$$ = yy.handler.cellValue(yy.obj, $1);
+			var type = {
+				t: 'l',
+				m: 'cellValue',
+				a: [$1]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             $$ = $this->cellValue($1);
@@ -338,7 +461,14 @@ cellRange :
     }
 	| cell ':' cell {
 	    //js
-			$$ = yy.handler.cellRangeValue(yy.obj, $1, $3);
+
+			var type = {
+				t: 'l',
+				m: 'cellRangeValue',
+				a: [$1, $3]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             $$ = $this->cellRangeValue($1, $3);
@@ -346,7 +476,13 @@ cellRange :
     }
 	| SHEET '!' cell {
 	    //js
-			$$ = yy.handler.remoteCellValue(yy.obj, $1, $3);
+			var type = {
+				t: 'l',
+				m: 'remoteCellValue',
+				a: [$1, $3]
+			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 
         /*php
             $$ = $this->remoteCellValue($1, $3);
@@ -354,7 +490,13 @@ cellRange :
     }
 	| SHEET '!' cell ':' cell {
 	    //js
-            $$ = yy.handler.remoteCellRangeValue(yy.obj, $1, $3, $5);
+            var type = {
+            	t: 'l',
+            	m: 'remoteCellRangeValue',
+            	a: [$1, $3, $5]
+            };
+            $$ = yy.types.length;
+            yy.types.push(type);
 
         /*php
             $$ = $this->remoteCellRangeValue($1, $3, $5);
@@ -366,31 +508,43 @@ cell
 	//valid first
 	: LETTERS NUMBER {
 		//js
-			$$ = {
-				colString: $1,
-				rowString: $2
+			var type = {
+				t: 'cell',
+				c: $1,
+				r: $2
 			};
+			$$ = yy.types.length;
+			yy.types.push(type);
 	}
 	| '$' LETTERS NUMBER {
 		//js
-            $$ = {
-                colString: $2,
-                rowString: $3
+            var type = {
+            	t: 'cell',
+                c: $2,
+                r: $3
             };
+            $$ = yy.types.length;
+            yy.types.push(type);
 	}
 	| LETTERS '$' NUMBER {
         //js
-            $$ = {
-                colString: $1,
-                rowString: $3
+            var type = {
+            	t: 'cell',
+                c: $1,
+                r: $3
             };
+            $$ = yy.types.length;
+            yy.types.push(type);
     }
 	| '$' LETTERS '$' NUMBER {
         //js
-            $$ = {
-                colString: $2,
-                rowString: $4
+            var type = {
+            	t: 'cell',
+                c: $2,
+                r: $4
             };
+            $$ = yy.types.length;
+            yy.types.push(type);
     }
 
 	//invalid
@@ -455,7 +609,7 @@ variableSequence :
     }
 	| variableSequence DECIMAL VARIABLE {
         //js
-            $$ = ($.isArray($1) ? $1 : [$1]);
+            $$ = ($1 instanceof Array ? $1 : [$1]);
             $$.push($3);
 
         /*php
@@ -471,51 +625,56 @@ number :
     }
 	| NUMBER DECIMAL NUMBER {
         //js
-            $$ = ($1 + '.' + $3) * 1;
+            $$ = $1 + '.' + $3;
 
         /*php
             $$ = $1 . '.' . $3;
         */
     }
 	| number '%' {
-        $$ = $1 * 0.01;
+		//js
+        	$$ = ($1 * 0.01) + '';
+
+        /*php
+        	$$ = ($1 * 0.01) . '';
+        */
     }
 ;
 
 %%
-if (typeof(window) !== 'undefined') {
-	window.Formula = function(handler) {
-		var formulaLexer = function () {};
-		formulaLexer.prototype = parser.lexer;
+var Formula = function() {
+	var formulaLexer = function () {};
+	formulaLexer.prototype = parser.lexer;
 
-		var formulaParser = function () {
-			this.lexer = new formulaLexer();
-			this.yy = {
-				escape: function(value) {
-					return value
-						.replace(/&/gi, '&amp;')
-						.replace(/>/gi, '&gt;')
-						.replace(/</gi, '&lt;')
-						.replace(/\n/g, '\n<br>')
-						.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
-						.replace(/  /g, '&nbsp; ');
-				},
-				parseError: function(msg, hash) {
-					this.done = true;
-					var result = new String();
-					result.html = '<pre>' + msg + '</pre>';
-					result.hash = hash;
-					return result;
-				}
-			};
+	var formulaParser = function () {
+		this.lexer = new formulaLexer();
+		this.yy = {
+			types: [],
+			escape: function(value) {
+				return value
+					.replace(/&/gi, '&amp;')
+					.replace(/>/gi, '&gt;')
+					.replace(/</gi, '&lt;')
+					.replace(/\n/g, '\n<br>')
+					.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
+					.replace(/  /g, '&nbsp; ');
+			},
+			parseError: function(msg, hash) {
+				this.done = true;
+				var result = new String();
+				result.html = '<pre>' + msg + '</pre>';
+				result.hash = hash;
+				return result;
+			}
 		};
-
-		formulaParser.prototype = parser;
-		var newParser = new formulaParser();
-		newParser.setObj = function(obj) {
-			this.yy.obj = obj;
-		};
-		newParser.yy.handler = handler;
-		return newParser;
 	};
+
+	formulaParser.prototype = parser;
+	var newParser = new formulaParser();
+	return newParser;
+};
+if (typeof(window) !== 'undefined') {
+	window.Formula = Formula;
+} else {
+	parser.Formula = Formula;
 }
