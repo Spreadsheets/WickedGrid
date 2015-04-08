@@ -170,4 +170,4 @@ Sheet.thread = (function (operative) {
 	};
 
 	return thread;
-})(operative);
+})(window.operative);

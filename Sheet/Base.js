@@ -18,6 +18,8 @@ var Sheet = {
 
 	defaultFormulaParser: null,
 
+	spareFormulaParsers: [],
+
 	formulaParser: function(callStack) {
 		var formulaParser;
 		//we prevent parsers from overwriting each other
