@@ -10,7 +10,6 @@ Sheet.CellHandler = (function(Math) {
 		this.jS = jS;
 		this.jSE = jSE;
 		this.fn = fn;
-		this.spareFormulaParsers = {};
 	}
 
 	Constructor.prototype = {

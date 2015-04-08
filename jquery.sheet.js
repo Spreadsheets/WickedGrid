@@ -43,6 +43,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 	defaultFormulaParser: null,
 
+	spareFormulaParsers: [],
+
 	formulaParser: function(callStack) {
 		var formulaParser;
 		//we prevent parsers from overwriting each other
@@ -877,7 +879,6 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		this.jS = jS;
 		this.jSE = jSE;
 		this.fn = fn;
-		this.spareFormulaParsers = {};
 	}
 
 	Constructor.prototype = {
@@ -2227,7 +2228,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 	};
 
 	return thread;
-})(operative);
+})(window.operative);
 /**
  * Creates the scrolling system used by each spreadsheet
  */
