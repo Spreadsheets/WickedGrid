@@ -3088,10 +3088,14 @@ Sheet.StyleUpdater = (function(document) {
 		},
 		jitCellById: function(id, sheetIndex, callback) {
 			switch(this.cellIds[id]) {
-				case undefined:
-					callback(this.cellIds[id].requestCell());
-					return this;
+				//we do want this function to run, we have not defined anything yet
+				case undefined:break;
+				//we do not want this function to run, we've already tried to look for this cell, and assigned it null
 				case null: return this;
+				//we already have this cell, lets return it
+				default:
+					callback(this.cellIds[id].requestCell());
+					break;
 			}
 
 			var loader = this,
