@@ -7523,10 +7523,8 @@ $.sheet = {
 						textarea.goToTd();
 						textarea.onkeydown = jS.evt.inPlaceEdit.keydown;
 						textarea.onchange =
-						textarea.onkeyup = function() {
-							formula[0].value = textarea.value;
-							jS.cellLast.isEdit = (textarea.value != val);
-						};
+							textarea.onkeyup =
+								function() { formula[0].value = textarea.value; };
 
 						textarea.onfocus = function () { jS.setNav(false); };
 
@@ -7718,8 +7716,6 @@ $.sheet = {
 							if (e.shiftKey) {
 								return true;
 							}
-
-							e.stopPropagation();
 							return jS.evt.cellSetActiveFromKeyCode(e, true);
 						},
 
@@ -7988,11 +7984,7 @@ $.sheet = {
 										jS.evt.document.tab(e);
 										break;
 									case key.ENTER:
-										if (jS.cellLast.isEdit) {
-											jS.evt.cellSetActiveFromKeyCode(e);
-										} else {
-											$(td).trigger('cellEdit');
-										}
+										jS.evt.cellSetActiveFromKeyCode(e);
 										break;
 									case key.LEFT:
 									case key.UP:
