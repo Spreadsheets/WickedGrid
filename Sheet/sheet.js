@@ -3861,10 +3861,12 @@ $.sheet = {
 					cellEditDone:function (force) {
 						var inPlaceEdit = jS.obj.inPlaceEdit(),
 							inPlaceEditHasFocus = $(inPlaceEdit).is(':focus'),
-							cell = jS.cellLast;
+							cellLast = jS.cellLast,
+							cell;
 
 						(inPlaceEdit.destroy || emptyFN)();
-						if (cell !== null && (cell.isEdit || force)) {
+						if (cellLast !== null && (cellLast.isEdit || force)) {
+							cell = jS.getCell(cellLast.sheetIndex, cellLast.rowIndex, cellLast.columnIndex);
 							var formula = (inPlaceEditHasFocus ? $(inPlaceEdit) : jS.obj.formula()),
 								td = cell.td;
 

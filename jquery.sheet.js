@@ -141,8 +141,15 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		clone: function() {
 			var clone = new Constructor(this.sheetIndex, this.td, this.jS, this.cellHandler),
 				prop;
-			for (prop in this) if (this.hasOwnProperty(prop)) {
-				clone[prop] = this[prop];
+			for (prop in this) if (
+				prop !== undefined
+				&& this.hasOwnProperty(prop)
+			) {
+				if (this[prop] !== null && this[prop].call === undefined) {
+					clone[prop] = this[prop];
+				} else if (this[prop] === null) {
+					clone[prop] = this[prop];
+				}
 			}
 
 			return clone;
@@ -196,8 +203,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					}
 					this.value = new String(this.value);
 					this.value.cell = this;
-					this.updateDependencies();
 					this.needsUpdated = false;
+					this.updateDependencies();
 
 					if (callback !== u) {
 						callback.call(this, this.value);
@@ -7516,8 +7523,10 @@ $.sheet = {
 						textarea.goToTd();
 						textarea.onkeydown = jS.evt.inPlaceEdit.keydown;
 						textarea.onchange =
-							textarea.onkeyup =
-								function() { formula[0].value = textarea.value; };
+						textarea.onkeyup = function() {
+							formula[0].value = textarea.value;
+							jS.cellLast.isEdit = (textarea.value != val);
+						};
 
 						textarea.onfocus = function () { jS.setNav(false); };
 
@@ -7709,6 +7718,8 @@ $.sheet = {
 							if (e.shiftKey) {
 								return true;
 							}
+
+							e.stopPropagation();
 							return jS.evt.cellSetActiveFromKeyCode(e, true);
 						},
 
@@ -7977,7 +7988,11 @@ $.sheet = {
 										jS.evt.document.tab(e);
 										break;
 									case key.ENTER:
-										jS.evt.cellSetActiveFromKeyCode(e);
+										if (jS.cellLast.isEdit) {
+											jS.evt.cellSetActiveFromKeyCode(e);
+										} else {
+											$(td).trigger('cellEdit');
+										}
 										break;
 									case key.LEFT:
 									case key.UP:
@@ -8095,10 +8110,12 @@ $.sheet = {
 					cellEditDone:function (force) {
 						var inPlaceEdit = jS.obj.inPlaceEdit(),
 							inPlaceEditHasFocus = $(inPlaceEdit).is(':focus'),
-							cell = jS.cellLast;
+							cellLast = jS.cellLast,
+							cell;
 
 						(inPlaceEdit.destroy || emptyFN)();
-						if (cell !== null && (cell.isEdit || force)) {
+						if (cellLast !== null && (cellLast.isEdit || force)) {
+							cell = jS.getCell(cellLast.sheetIndex, cellLast.rowIndex, cellLast.columnIndex);
 							var formula = (inPlaceEditHasFocus ? $(inPlaceEdit) : jS.obj.formula()),
 								td = cell.td;
 

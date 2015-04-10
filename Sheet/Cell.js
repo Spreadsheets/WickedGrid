@@ -39,8 +39,15 @@ Sheet.Cell = (function() {
 		clone: function() {
 			var clone = new Constructor(this.sheetIndex, this.td, this.jS, this.cellHandler),
 				prop;
-			for (prop in this) if (this.hasOwnProperty(prop)) {
-				clone[prop] = this[prop];
+			for (prop in this) if (
+				prop !== undefined
+				&& this.hasOwnProperty(prop)
+			) {
+				if (this[prop] !== null && this[prop].call === undefined) {
+					clone[prop] = this[prop];
+				} else if (this[prop] === null) {
+					clone[prop] = this[prop];
+				}
 			}
 
 			return clone;
@@ -94,8 +101,8 @@ Sheet.Cell = (function() {
 					}
 					this.value = new String(this.value);
 					this.value.cell = this;
-					this.updateDependencies();
 					this.needsUpdated = false;
+					this.updateDependencies();
 
 					if (callback !== u) {
 						callback.call(this, this.value);
