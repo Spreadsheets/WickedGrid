@@ -44,6 +44,6 @@
     "bootstrap": "~3.2.0",
     "thaw.js": "~1.2.0",
     "testify.js": "*",
-    "operative": "~0.3.1"
+    "operative": "~0.4.0"
   }
 }

@@ -8,8 +8,6 @@ Sheet.thread = (function (operative) {
 
 		if (t === undefined) {
 			t = threads[i] = thread.create();
-			t.busy = false;
-			t.stash = [];
 		} else {
 			t = threads[i];
 		}
@@ -26,27 +24,28 @@ Sheet.thread = (function (operative) {
 
 	thread.create = function() {
 		var t = operative({
-			pedantic: true,
 			parseFormula: function(formula) {
 				formulaParser.yy.types = [];
 				return formulaParser.parse(formula);
 			},
 			streamJSONSheet: function(location, url, callback) {
-				gR(location + url, function(jsons) {
-					var sheet = JSON.parse(jsons),
-						rows = sheet.rows,
-						max = rows.length,
-						i = 0;
+				Promise
+					.all([gR(location + url)])
+					.then(function(json) {
+						var sheet = JSON.parse(json),
+							rows = sheet.rows,
+							max = rows.length,
+							i = 0;
 
-					sheet.rows = [];
-					callback('sheet', JSON.stringify(sheet));
+						sheet.rows = [];
+						callback('sheet', JSON.stringify(sheet));
 
-					for(;i<max;i++) {
-						callback('row', JSON.stringify(rows[i]));
-					}
+						for(;i<max;i++) {
+							callback('row', JSON.stringify(rows[i]));
+						}
 
-					callback();
-				});
+						callback();
+					});
 			},
 			streamJSONSheets: function(location, urls, callback) {
 				var i = 0,
