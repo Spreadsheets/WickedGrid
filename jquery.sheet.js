@@ -2110,6 +2110,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						}
 
 						callback();
+					}, function(err) {
+						callback('error', err);
 					});
 			},
 			streamJSONSheets: function(location, urls, callback) {
@@ -2137,6 +2139,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						}
 
 						callback();
+					}, function(err) {
+						callback('error', err);
 					});
 			},
 			streamJSONRows: function(location, urls, callback) {
@@ -2173,6 +2177,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						}
 
 						callback();
+					}, function(err) {
+						callback('error', err);
 					});
 			},
 			streamJSONSheetRows: function(location, sheetUrl, rowsUrls, callback) {
@@ -2211,6 +2217,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						}
 
 						callback();
+					}, function(err) {
+						callback('error', err);
 					});
 			}
 		}, [
