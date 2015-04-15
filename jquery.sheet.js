@@ -2096,49 +2096,29 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			streamJSONSheet: function(location, url, callback) {
 				Promise
 					.all([gR(location + url)])
-					.then(function(json) {
-						var sheet = JSON.parse(json),
-							rows = sheet.rows,
-							max = rows.length,
+					.then(function(sheetSets) {
+						var json = sheetSets[0],
+							sheet = JSON.parse(json),
+							rows,
+							max,
 							i = 0;
+
+						if (sheet.pop !== undefined) {
+							sheet = sheet[0];
+						}
+
+						rows = sheet.rows;
+						max = rows.length;
 
 						sheet.rows = [];
 						callback('sheet', JSON.stringify(sheet));
 
-						for(;i<max;i++) {
+						for (; i < max; i++) {
 							callback('row', JSON.stringify(rows[i]));
 						}
 
 						callback();
-					}, function(err) {
-						callback('error', err);
-					});
-			},
-			streamJSONSheets: function(location, urls, callback) {
-				var i = 0,
-					max = urls.length,
-					getting = [];
 
-				if (typeof urls === 'string') {
-					getting.push(gR(location + urls));
-				} else {
-					for (; i < max; i++) {
-						getting.push(gR(location + urls[i]));
-					}
-				}
-
-				Promise
-					.all(getting)
-					.then(function(jsons) {
-						var i = 0,
-							sheetJsons = jsons,
-							max = sheetJsons.length;
-
-						for(;i<max;i++) {
-							callback('sheet', sheetJsons[i]);
-						}
-
-						callback();
 					}, function(err) {
 						callback('error', err);
 					});
