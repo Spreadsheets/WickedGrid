@@ -6,13 +6,13 @@ Sheet.CellHandler = (function(Math) {
 	var u = undefined,
 		nAN = NaN;
 
-	function Constructor(jS, jSE, fn) {
+	function CellHandler(jS, jSE, fn) {
 		this.jS = jS;
 		this.jSE = jSE;
 		this.fn = fn;
 	}
 
-	Constructor.prototype = {
+	CellHandler.prototype = {
 		/**
 		 * Variable handler for formulaParser, arguments are the variable split by '.'.  Expose variables by using jQuery.sheet setting formulaVariables
 		 * @param {Sheet.Cell} parentCell
@@ -328,25 +328,22 @@ Sheet.CellHandler = (function(Math) {
 			var sheetIndex = (typeof sheetTitle === 'string' ? jSE.parseSheetLocation(sheetTitle) : sheetTitle),
 				_start = jSE.parseLocation(start.c, start.r),
 				_end = jSE.parseLocation(end.c, end.r),
-				rowIndex = Math.max(_start.row, _end.row),
-				rowIndexEnd = Math.min(_start.row, _end.row),
-				colIndexStart = Math.max(_start.col, _end.col),
-				colIndexEnd = Math.min(_start.col, _end.col),
+				rowIndex = (_start.row < _end.row ? _start.row : _end.row),
+				rowIndexEnd = (_start.row < _end.row ? _end.row : _start.row),
+				colIndexStart = (_start.col < _end.col ? _start.col : _end.col),
+				colIndex = colIndexStart,
+				colIndexEnd = (_start.col < _end.col ? _end.col : _start.col),
+				totalNeedResolved = (colIndexEnd - (colIndexStart - 1)) * (rowIndexEnd - (rowIndex - 1)),
+				currentlyResolve = 0,
 				jS = this.jS,
 				result = [],
-				colIndex,
+				cachedRange,
+				useCache,
 				cell,
 				row,
-				stack = [],
-				key = sheetIndex + '!' + start.c + start.r + ':' + end.c + end.r,
-				cachedRange = Constructor.cellRangeCache[key],
-				i,
+				key,
+				i = 0,
 				max,
-				useCache,
-				that = this,
-				remaining = ((colIndexEnd - 1) - colIndexStart) * ((rowIndexEnd - 1) - rowIndex),
-				detected = remaining + 0,
-				count = 0,
 				sheet;
 
 			if (sheetIndex < 0) {
@@ -362,20 +359,23 @@ Sheet.CellHandler = (function(Math) {
 				return this;
 			}
 
-			/*if (cachedRange !== u) {
-			 useCache = true;
-			 max = cachedRange.length;
-			 for (i = 0; i < max; i++) {
-			 if (cachedRange[i].needsUpdated) {
-			 useCache = false
-			 }
-			 }
+			key = sheetIndex + '!' + start.c + start.r + ':' + end.c + end.r;
+			cachedRange = CellHandler.cellRangeCache[key];
 
-			 if (useCache) {
-			 callback.call(parentCell, Constructor.cellRangeCache[key]);
-			 return this;
-			 }
-			 }*/
+			if (cachedRange !== u) {
+				useCache = true;
+				max = cachedRange.length;
+				for (i = 0; i < max; i++) {
+					if (cachedRange[i].needsUpdated) {
+						useCache = false
+					}
+				}
+
+				if (useCache) {
+					callback.call(parentCell, CellHandler.cellRangeCache[key]);
+					return this;
+				}
+			}
 
 			sheet = jS.spreadsheets[sheetIndex];
 
@@ -383,36 +383,39 @@ Sheet.CellHandler = (function(Math) {
 				jS.spreadsheets[sheetIndex] = sheet = [];
 			}
 
-			if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
-				result.rowCount = (rowIndexEnd - rowIndex) + 1;
-				result.columnCount = (colIndexEnd - colIndexStart) + 1;
+			result.rowCount = (rowIndexEnd - rowIndex) + 1;
+			result.columnCount = (colIndexEnd - colIndex) + 1;
 
-				do {
-					colIndex = colIndexStart;
-					row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
-					do {
-						if (row === null || (cell = row[colIndex]) === u) {
-							cell = jS.getCell(sheetIndex, rowIndex, colIndex);
-						} else {
-							cell.sheetIndex = sheetIndex;
-							cell.rowIndex = rowIndex;
-							cell.columnIndex = colIndex;
-						}
+			for (;rowIndex <= rowIndexEnd;rowIndex++) {
+				colIndex = colIndexStart;
+				row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
+				for (; colIndex <= colIndexEnd;colIndex++) {
+					if (row === null || (cell = row[colIndex]) === u) {
+						cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+					} else {
+						cell.sheetIndex = sheetIndex;
+						cell.rowIndex = rowIndex;
+						cell.columnIndex = colIndex;
+					}
 
-						if (cell !== null) {
-							cell.addDependency(parentCell);
+					if (cell !== null) {
+						cell.addDependency(parentCell);
+						(function(i) {
 							cell.updateValue(function(value) {
-								result.unshift(value);
-								remaining--;
-								if (remaining < 1) {
-									Constructor.cellRangeCache[key] = result;
+								result[i] = value;
+								currentlyResolve++;
+								if (currentlyResolve === totalNeedResolved) {
+									CellHandler.cellRangeCache[key] = result;
 									callback.call(parentCell, result);
 								}
 							});
-							count++;
-						}
-					} while(colIndex-- > colIndexEnd);
-				} while (rowIndex-- > rowIndexEnd);
+						})(i++);
+					}
+				}
+			}
+
+			if (i !== totalNeedResolved) {
+				throw new Error('Not all cells were found and added to range');
 			}
 
 			return this;
@@ -465,7 +468,7 @@ Sheet.CellHandler = (function(Math) {
 		}
 	};
 
-	Constructor.cellRangeCache = {};
+	CellHandler.cellRangeCache = {};
 
-	return Constructor;
+	return CellHandler;
 })(Math);

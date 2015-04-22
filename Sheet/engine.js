@@ -12,7 +12,7 @@ var jSE = $.sheet.engine = {
 	 * @param {Function} ignite function to run on every cell
 	 * @memberOf jSE
 	 */
-	calc:function (sheet, spreadsheet, ignite) {
+	calc:function (sheet, spreadsheet) {
 		spreadsheet = spreadsheet || [];
 
 		var rowIndex = spreadsheet.length - 1,
@@ -127,23 +127,6 @@ var jSE = $.sheet.engine = {
 			}
 		}
 		return this.columnIndexes[index] || '';
-	},
-
-	/**
-	 * Regular expressions cache
-	 * @memberOf jQuery.sheet.engine
-	 */
-	regEx: {
-		n: 				/[\$,\s]/g,
-		cell: 			/(\$?[a-zA-Z]+|[#]REF[!])(\$?[0-9]+|[#]REF[!])/gi, //a1
-		range: 			/(\$?[a-zA-Z]+)\$?([0-9]+):(\$?[a-zA-Z]+)(\$?[0-9]+)/gi, //a1:a4
-		remoteCell:		/\$?(SHEET+)(\$?[0-9]+)[:!](\$?[a-zA-Z]+)(\$?[0-9]+)/gi, //sheet1:a1
-		remoteCellRange:/\$?(SHEET+)(\$?[0-9]+)[:!](\$?[a-zA-Z]+)(\$?[0-9]+):(\$?[a-zA-Z]+)(\$?[0-9]+)/gi, //sheet1:a1:b4
-		sheet:			/SHEET/i,
-		amp: 			/&/g,
-		gt: 			/</g,
-		lt: 			/>/g,
-		nbsp: 			/&nbsp;/g
 	},
 
 	/**

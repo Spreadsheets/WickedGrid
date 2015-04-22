@@ -103,9 +103,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 };Sheet.Cell = (function() {
 	var u = undefined;
 
-	function Constructor(sheetIndex, td, jS, cellHandler) {
-		if (Constructor.cellLoading === null) {
-			Constructor.cellLoading = jS.msg.cellLoading;
+	function Cell(sheetIndex, td, jS, cellHandler) {
+		if (Cell.cellLoading === null) {
+			Cell.cellLoading = jS.msg.cellLoading;
 		}
 		if (td !== undefined && td !== null) {
 			this.td = td;
@@ -137,9 +137,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		this.edited = false;
 	}
 
-	Constructor.prototype = {
+	Cell.prototype = {
 		clone: function() {
-			var clone = new Constructor(this.sheetIndex, this.td, this.jS, this.cellHandler),
+			var clone = new Cell(this.sheetIndex, this.td, this.jS, this.cellHandler),
 				prop;
 			for (prop in this) if (
 				prop !== undefined
@@ -154,11 +154,12 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			return clone;
 		},
+
 		addDependency:function(cell) {
 			if (cell === undefined || cell === null) return;
 
 			if (cell.type !== Sheet.Cell) {
-				throw new Exception('Wrong Type');
+				throw new Error('Wrong Type');
 			}
 
 			if (this.dependencies.indexOf(cell) < 0 && this !== cell) {
@@ -380,7 +381,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 				//visual feedback
 				if (cell.td !== null) {
-					cell.td.innerHTML = Constructor.cellLoading;
+					cell.td.innerHTML = Cell.cellLoading;
 				}
 
 				Sheet.calcStack++;
@@ -585,20 +586,20 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 			if (cell.jS.s.useStack) {
 				doneFn = function(value) {
-					var j = Constructor.thawIndex,
-						thaws = Constructor.thaws,
+					var j = Cell.thawIndex,
+						thaws = Cell.thaws,
 						_thaw,
 						isThawAbsent = (typeof thaws[j] === 'undefined');
 
 					if (isThawAbsent) {
-						_thaw = Constructor.thaws[j] = new Thaw([]);
+						_thaw = Cell.thaws[j] = new Thaw([]);
 					} else {
 						_thaw = thaws[j];
 					}
 
-					Constructor.thawIndex++;
-					if (Constructor.thawIndex > Constructor.thawLimit) {
-						Constructor.thawIndex = 0;
+					Cell.thawIndex++;
+					if (Cell.thawIndex > Cell.thawLimit) {
+						Cell.thawIndex = 0;
 					}
 
 					_thaw.add(function() {
@@ -679,7 +680,7 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 		recurseDependencies: function (fn, depth) {
 
-			if (depth > Constructor.maxRecursion) {
+			if (depth > Cell.maxRecursion) {
 				this.recurseDependenciesFlat(fn);
 				return this;
 			}
@@ -861,19 +862,19 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			}
 		},
 
-		type: Constructor,
+		type: Cell,
 		typeName: 'Sheet.Cell'
 	};
 
 
-	Constructor.thaws = [];
-	Constructor.thawLimit = 500;
-	Constructor.thawIndex = 0;
+	Cell.thaws = [];
+	Cell.thawLimit = 500;
+	Cell.thawIndex = 0;
 
-	Constructor.cellLoading = null;
-	Constructor.maxRecursion = 10;
+	Cell.cellLoading = null;
+	Cell.maxRecursion = 10;
 
-	return Constructor;
+	return Cell;
 })();Sheet.CellHandler = (function(Math) {
 	function isNum(num) {
 		return !isNaN(num);
@@ -882,13 +883,13 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 	var u = undefined,
 		nAN = NaN;
 
-	function Constructor(jS, jSE, fn) {
+	function CellHandler(jS, jSE, fn) {
 		this.jS = jS;
 		this.jSE = jSE;
 		this.fn = fn;
 	}
 
-	Constructor.prototype = {
+	CellHandler.prototype = {
 		/**
 		 * Variable handler for formulaParser, arguments are the variable split by '.'.  Expose variables by using jQuery.sheet setting formulaVariables
 		 * @param {Sheet.Cell} parentCell
@@ -1204,25 +1205,22 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			var sheetIndex = (typeof sheetTitle === 'string' ? jSE.parseSheetLocation(sheetTitle) : sheetTitle),
 				_start = jSE.parseLocation(start.c, start.r),
 				_end = jSE.parseLocation(end.c, end.r),
-				rowIndex = Math.max(_start.row, _end.row),
-				rowIndexEnd = Math.min(_start.row, _end.row),
-				colIndexStart = Math.max(_start.col, _end.col),
-				colIndexEnd = Math.min(_start.col, _end.col),
+				rowIndex = (_start.row < _end.row ? _start.row : _end.row),
+				rowIndexEnd = (_start.row < _end.row ? _end.row : _start.row),
+				colIndexStart = (_start.col < _end.col ? _start.col : _end.col),
+				colIndex = colIndexStart,
+				colIndexEnd = (_start.col < _end.col ? _end.col : _start.col),
+				totalNeedResolved = (colIndexEnd - (colIndexStart - 1)) * (rowIndexEnd - (rowIndex - 1)),
+				currentlyResolve = 0,
 				jS = this.jS,
 				result = [],
-				colIndex,
+				cachedRange,
+				useCache,
 				cell,
 				row,
-				stack = [],
-				key = sheetIndex + '!' + start.c + start.r + ':' + end.c + end.r,
-				cachedRange = Constructor.cellRangeCache[key],
-				i,
+				key,
+				i = 0,
 				max,
-				useCache,
-				that = this,
-				remaining = ((colIndexEnd - 1) - colIndexStart) * ((rowIndexEnd - 1) - rowIndex),
-				detected = remaining + 0,
-				count = 0,
 				sheet;
 
 			if (sheetIndex < 0) {
@@ -1238,20 +1236,23 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				return this;
 			}
 
-			/*if (cachedRange !== u) {
-			 useCache = true;
-			 max = cachedRange.length;
-			 for (i = 0; i < max; i++) {
-			 if (cachedRange[i].needsUpdated) {
-			 useCache = false
-			 }
-			 }
+			key = sheetIndex + '!' + start.c + start.r + ':' + end.c + end.r;
+			cachedRange = CellHandler.cellRangeCache[key];
 
-			 if (useCache) {
-			 callback.call(parentCell, Constructor.cellRangeCache[key]);
-			 return this;
-			 }
-			 }*/
+			if (cachedRange !== u) {
+				useCache = true;
+				max = cachedRange.length;
+				for (i = 0; i < max; i++) {
+					if (cachedRange[i].needsUpdated) {
+						useCache = false
+					}
+				}
+
+				if (useCache) {
+					callback.call(parentCell, CellHandler.cellRangeCache[key]);
+					return this;
+				}
+			}
 
 			sheet = jS.spreadsheets[sheetIndex];
 
@@ -1259,36 +1260,39 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 				jS.spreadsheets[sheetIndex] = sheet = [];
 			}
 
-			if (rowIndex >= rowIndexEnd || colIndexStart >= colIndexEnd) {
-				result.rowCount = (rowIndexEnd - rowIndex) + 1;
-				result.columnCount = (colIndexEnd - colIndexStart) + 1;
+			result.rowCount = (rowIndexEnd - rowIndex) + 1;
+			result.columnCount = (colIndexEnd - colIndex) + 1;
 
-				do {
-					colIndex = colIndexStart;
-					row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
-					do {
-						if (row === null || (cell = row[colIndex]) === u) {
-							cell = jS.getCell(sheetIndex, rowIndex, colIndex);
-						} else {
-							cell.sheetIndex = sheetIndex;
-							cell.rowIndex = rowIndex;
-							cell.columnIndex = colIndex;
-						}
+			for (;rowIndex <= rowIndexEnd;rowIndex++) {
+				colIndex = colIndexStart;
+				row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
+				for (; colIndex <= colIndexEnd;colIndex++) {
+					if (row === null || (cell = row[colIndex]) === u) {
+						cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+					} else {
+						cell.sheetIndex = sheetIndex;
+						cell.rowIndex = rowIndex;
+						cell.columnIndex = colIndex;
+					}
 
-						if (cell !== null) {
-							cell.addDependency(parentCell);
+					if (cell !== null) {
+						cell.addDependency(parentCell);
+						(function(i) {
 							cell.updateValue(function(value) {
-								result.unshift(value);
-								remaining--;
-								if (remaining < 1) {
-									Constructor.cellRangeCache[key] = result;
+								result[i] = value;
+								currentlyResolve++;
+								if (currentlyResolve === totalNeedResolved) {
+									CellHandler.cellRangeCache[key] = result;
 									callback.call(parentCell, result);
 								}
 							});
-							count++;
-						}
-					} while(colIndex-- > colIndexEnd);
-				} while (rowIndex-- > rowIndexEnd);
+						})(i++);
+					}
+				}
+			}
+
+			if (i !== totalNeedResolved) {
+				throw new Error('Not all cells were found and added to range');
 			}
 
 			return this;
@@ -1341,9 +1345,9 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 		}
 	};
 
-	Constructor.cellRangeCache = {};
+	CellHandler.cellRangeCache = {};
 
-	return Constructor;
+	return CellHandler;
 })(Math);Sheet.CellTypeHandlers = (function() {
 	var n = isNaN,
 		CellTypeHandlers = {
@@ -9319,6 +9323,7 @@ $.sheet = {
 					jS.evt.cellEditDone();
 				},
 
+				cellRegex: /(\$?[a-zA-Z]+|[#]REF[!])(\$?[0-9]+|[#]REF[!])/gi,
 				/**
 				 * Re-parses a formula
 				 * @param formula
@@ -9330,7 +9335,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				reparseFormula:function (formula, offset, loc, isBefore, wasDeleted) {
-					return formula.replace(jSE.regEx.cell, function (ignored, col, row, pos) {
+					return formula.replace(this.cellRegex, function (ignored, col, row, pos) {
 						if (col == "SHEET") return ignored;
 						offset = offset || {loc: 0, row: 0};
 
@@ -11052,6 +11057,22 @@ $.sheet = {
 					return null;
 				},
 
+				getSpreadsheetTitleByIndex: function(index) {
+					if (s.loader !== null) {
+						return s.loader.json[index].title;
+					}
+
+					var tables = jS.obj.tables(),
+						title;
+
+					if (tables[index]) {
+						title = tables[index].getAttribute('title');
+						return title;
+					}
+
+					return null;
+				},
+
 
 				/**
 				 * opens a spreadsheet into the active sheet instance
@@ -12748,7 +12769,7 @@ var jSE = $.sheet.engine = {
 	 * @param {Function} ignite function to run on every cell
 	 * @memberOf jSE
 	 */
-	calc:function (sheet, spreadsheet, ignite) {
+	calc:function (sheet, spreadsheet) {
 		spreadsheet = spreadsheet || [];
 
 		var rowIndex = spreadsheet.length - 1,
@@ -12863,23 +12884,6 @@ var jSE = $.sheet.engine = {
 			}
 		}
 		return this.columnIndexes[index] || '';
-	},
-
-	/**
-	 * Regular expressions cache
-	 * @memberOf jQuery.sheet.engine
-	 */
-	regEx: {
-		n: 				/[\$,\s]/g,
-		cell: 			/(\$?[a-zA-Z]+|[#]REF[!])(\$?[0-9]+|[#]REF[!])/gi, //a1
-		range: 			/(\$?[a-zA-Z]+)\$?([0-9]+):(\$?[a-zA-Z]+)(\$?[0-9]+)/gi, //a1:a4
-		remoteCell:		/\$?(SHEET+)(\$?[0-9]+)[:!](\$?[a-zA-Z]+)(\$?[0-9]+)/gi, //sheet1:a1
-		remoteCellRange:/\$?(SHEET+)(\$?[0-9]+)[:!](\$?[a-zA-Z]+)(\$?[0-9]+):(\$?[a-zA-Z]+)(\$?[0-9]+)/gi, //sheet1:a1:b4
-		sheet:			/SHEET/i,
-		amp: 			/&/g,
-		gt: 			/</g,
-		lt: 			/>/g,
-		nbsp: 			/&nbsp;/g
 	},
 
 	/**
@@ -13112,7 +13116,7 @@ var jFN = $.sheet.fn = {
 			v = v.toString();
 		}
 		if (typeof(v) == 'string') {
-			v = parseFloat(v.replace(jSE.regEx.n, ''));
+			v = parseFloat(v.replace(/[\$,\s]/g, ''));
 		}
 		if (isNaN(v)) {
 			return 0;

@@ -5091,6 +5091,7 @@ $.sheet = {
 					jS.evt.cellEditDone();
 				},
 
+				cellRegex: /(\$?[a-zA-Z]+|[#]REF[!])(\$?[0-9]+|[#]REF[!])/gi,
 				/**
 				 * Re-parses a formula
 				 * @param formula
@@ -5102,7 +5103,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				reparseFormula:function (formula, offset, loc, isBefore, wasDeleted) {
-					return formula.replace(jSE.regEx.cell, function (ignored, col, row, pos) {
+					return formula.replace(this.cellRegex, function (ignored, col, row, pos) {
 						if (col == "SHEET") return ignored;
 						offset = offset || {loc: 0, row: 0};
 
@@ -6819,6 +6820,22 @@ $.sheet = {
 						if (table.getAttribute('title') == title) {
 							return table.spreadsheetIndex;
 						}
+					}
+
+					return null;
+				},
+
+				getSpreadsheetTitleByIndex: function(index) {
+					if (s.loader !== null) {
+						return s.loader.json[index].title;
+					}
+
+					var tables = jS.obj.tables(),
+						title;
+
+					if (tables[index]) {
+						title = tables[index].getAttribute('title');
+						return title;
 					}
 
 					return null;

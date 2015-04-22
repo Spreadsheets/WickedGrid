@@ -40,7 +40,7 @@ var jFN = $.sheet.fn = {
 			v = v.toString();
 		}
 		if (typeof(v) == 'string') {
-			v = parseFloat(v.replace(jSE.regEx.n, ''));
+			v = parseFloat(v.replace(/[\$,\s]/g, ''));
 		}
 		if (isNaN(v)) {
 			return 0;

@@ -1,9 +1,9 @@
 Sheet.Cell = (function() {
 	var u = undefined;
 
-	function Constructor(sheetIndex, td, jS, cellHandler) {
-		if (Constructor.cellLoading === null) {
-			Constructor.cellLoading = jS.msg.cellLoading;
+	function Cell(sheetIndex, td, jS, cellHandler) {
+		if (Cell.cellLoading === null) {
+			Cell.cellLoading = jS.msg.cellLoading;
 		}
 		if (td !== undefined && td !== null) {
 			this.td = td;
@@ -35,9 +35,9 @@ Sheet.Cell = (function() {
 		this.edited = false;
 	}
 
-	Constructor.prototype = {
+	Cell.prototype = {
 		clone: function() {
-			var clone = new Constructor(this.sheetIndex, this.td, this.jS, this.cellHandler),
+			var clone = new Cell(this.sheetIndex, this.td, this.jS, this.cellHandler),
 				prop;
 			for (prop in this) if (
 				prop !== undefined
@@ -52,11 +52,12 @@ Sheet.Cell = (function() {
 
 			return clone;
 		},
+
 		addDependency:function(cell) {
 			if (cell === undefined || cell === null) return;
 
 			if (cell.type !== Sheet.Cell) {
-				throw new Exception('Wrong Type');
+				throw new Error('Wrong Type');
 			}
 
 			if (this.dependencies.indexOf(cell) < 0 && this !== cell) {
@@ -278,7 +279,7 @@ Sheet.Cell = (function() {
 
 				//visual feedback
 				if (cell.td !== null) {
-					cell.td.innerHTML = Constructor.cellLoading;
+					cell.td.innerHTML = Cell.cellLoading;
 				}
 
 				Sheet.calcStack++;
@@ -483,20 +484,20 @@ Sheet.Cell = (function() {
 
 			if (cell.jS.s.useStack) {
 				doneFn = function(value) {
-					var j = Constructor.thawIndex,
-						thaws = Constructor.thaws,
+					var j = Cell.thawIndex,
+						thaws = Cell.thaws,
 						_thaw,
 						isThawAbsent = (typeof thaws[j] === 'undefined');
 
 					if (isThawAbsent) {
-						_thaw = Constructor.thaws[j] = new Thaw([]);
+						_thaw = Cell.thaws[j] = new Thaw([]);
 					} else {
 						_thaw = thaws[j];
 					}
 
-					Constructor.thawIndex++;
-					if (Constructor.thawIndex > Constructor.thawLimit) {
-						Constructor.thawIndex = 0;
+					Cell.thawIndex++;
+					if (Cell.thawIndex > Cell.thawLimit) {
+						Cell.thawIndex = 0;
 					}
 
 					_thaw.add(function() {
@@ -577,7 +578,7 @@ Sheet.Cell = (function() {
 
 		recurseDependencies: function (fn, depth) {
 
-			if (depth > Constructor.maxRecursion) {
+			if (depth > Cell.maxRecursion) {
 				this.recurseDependenciesFlat(fn);
 				return this;
 			}
@@ -759,17 +760,17 @@ Sheet.Cell = (function() {
 			}
 		},
 
-		type: Constructor,
+		type: Cell,
 		typeName: 'Sheet.Cell'
 	};
 
 
-	Constructor.thaws = [];
-	Constructor.thawLimit = 500;
-	Constructor.thawIndex = 0;
+	Cell.thaws = [];
+	Cell.thawLimit = 500;
+	Cell.thawIndex = 0;
 
-	Constructor.cellLoading = null;
-	Constructor.maxRecursion = 10;
+	Cell.cellLoading = null;
+	Cell.maxRecursion = 10;
 
-	return Constructor;
+	return Cell;
 })();
