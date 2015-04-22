@@ -2829,7 +2829,7 @@ Sheet.StyleUpdater = (function(document) {
 
 ;Sheet.JSONLoader = (function($, document, String) {
 	"use strict";
-	function Constructor(json) {
+	function JSONLoader(json) {
 		if (json !== undefined) {
 			this.json = json;
 			this.count = json.length;
@@ -2843,7 +2843,7 @@ Sheet.StyleUpdater = (function(document) {
 		this.handler = null;
 	}
 
-	Constructor.prototype = {
+	JSONLoader.prototype = {
 		bindJS: function(jS) {
 			this.jS = jS;
 			return this;
@@ -3069,8 +3069,17 @@ Sheet.StyleUpdater = (function(document) {
 				for (i = 0; i < max; i++) {
 					jsonDependency = dependencies[i];
 					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c']);
+					//dependency was found
 					if (dependency !== null) {
 						jitCell.dependencies.push(dependency);
+					}
+
+					//dependency was not found, so cache cannot be accurate, so reset it and remove all dependencies
+					else {
+						jitCell.dependencies = [];
+						jsonCell['dependencies'] = [];
+						jitCell.setNeedsUpdated(true);
+						jitCell.value = 0;
 					}
 				}
 			}
@@ -3238,7 +3247,7 @@ Sheet.StyleUpdater = (function(document) {
 		setDependencies: function(cell) {
 			//TODO: need to handle the cell's cache that are dependent on this one so that it changes when it is in view
 			//some cells just have a ridiculous amount of dependencies
-			if (cell.dependencies.length > Constructor.maxStoredDependencies) {
+			if (cell.dependencies.length > JSONLoader.maxStoredDependencies) {
 				delete cell.loadedFrom['dependencies'];
 				return this;
 			}
@@ -3626,7 +3635,7 @@ Sheet.StyleUpdater = (function(document) {
 
 			return this.json = output;
 		},
-		type: Constructor,
+		type: JSONLoader,
 		typeName: 'Sheet.JSONLoader',
 
 		clearCaching: function() {
@@ -3776,9 +3785,9 @@ Sheet.StyleUpdater = (function(document) {
 		}
 	};
 
-	Constructor.maxStoredDependencies = 100;
+	JSONLoader.maxStoredDependencies = 100;
 
-	return Constructor;
+	return JSONLoader;
 })(jQuery, document, String);/**
  * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
  * @author RobertLeePlummerJr@gmail.com

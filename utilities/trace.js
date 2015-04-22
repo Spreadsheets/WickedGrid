@@ -21,8 +21,8 @@
 	Sheet.Cell.prototype.traceRoute = function(callback, rootSheetIndex) {
 		if (rootSheetIndex === undefined) {
 			rootSheetIndex = this.sheetIndex;
+			this.setNeedsUpdated(true);
 		}
-		this.setNeedsUpdated(true);
 		this.updateValue(function() {
 
 			this.trace = this.trace || [];
