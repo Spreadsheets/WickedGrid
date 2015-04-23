@@ -3079,7 +3079,7 @@ Sheet.StyleUpdater = (function(document) {
 						jitCell.dependencies = [];
 						jsonCell['dependencies'] = [];
 						jitCell.setNeedsUpdated(true);
-						jitCell.value = 0;
+						jitCell.value = new String();
 					}
 				}
 			}
