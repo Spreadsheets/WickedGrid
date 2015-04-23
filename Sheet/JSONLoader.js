@@ -162,17 +162,22 @@
 				row,
 				cell;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
-			if ((row = rows[rowIndex - 1]) === undefined) return null;
-			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return;
+			if ((row = rows[rowIndex - 1]) === undefined) return;
+			if ((cell = row.columns[columnIndex - 1]) === undefined) return;
+
+			//null is faster in json, so here turn null into an object
+			if (cell === null) {
+				cell = row.columns[columnIndex - 1] = {};
+			}
 
 			return cell;
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex) {
 			var jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
 
-			if (jsonCell === null) return null;
+			if (jsonCell === undefined) return null;
 
 			if (jsonCell.getCell !== undefined) {
 				return jsonCell.getCell();
@@ -847,6 +852,8 @@
 					for (columnIndex = 0; columnIndex < columnMax; columnIndex++) {
 						column = columns[columnIndex];
 
+						if (column === null) continue;
+
 						delete column['cache'];
 						delete column['dependencies'];
 						delete column['parsedFormula'];
@@ -856,6 +863,7 @@
 
 			return this;
 		},
+
 		/**
 		 *
 		 */
