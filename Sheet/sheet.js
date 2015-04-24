@@ -414,6 +414,16 @@ $.fn.extend({
 				}
 			}
 
+			me.children().each(function(i) {
+				//override frozenAt settings with table's data-frozenatrow and data-frozenatcol
+				var frozenAtRow = this.getAttribute('data-frozenatrow') * 1,
+					frozenAtCol = this.getAttribute('data-frozenatcol') * 1;
+
+				if (!chosenSettings.frozenAt[i]) chosenSettings.frozenAt[i] = {row:0, col:0};
+				if (frozenAtRow) chosenSettings.frozenAt[jS.i].row = frozenAtRow;
+				if (frozenAtCol) chosenSettings.frozenAt[jS.i].col = frozenAtCol;
+			});
+
 			if (!$.sheet.instance.length) $.sheet.instance = [];
 
 			this.jS = jS = $.sheet.createInstance(chosenSettings, $.sheet.instance.length);
@@ -999,22 +1009,7 @@ $.sheet = {
 	 */
 	createInstance:function (s, I) {
 
-		var self = this,
-		//create function, it expects 2 values.
-			insertAfter = function (newElement, targetElement) {
-				//target is what you want it to go after. Look for this elements parent.
-				var parent = targetElement.parentNode;
-
-				//if the parents lastchild is the targetElement...
-				if(parent.lastchild == targetElement) {
-					//add the newElement after the target element.
-					parent.appendChild(newElement);
-				} else {
-					// else the target has siblings, insert the new element between the target and it's next sibling.
-					parent.insertBefore(newElement, targetElement.nextSibling);
-				}
-			},
-			$window = $(window),
+		var $window = $(window),
 			$document = $(document),
 			body = document.body,
 			$body = $(body),
@@ -1045,7 +1040,6 @@ $.sheet = {
 					done();
 				}
 			}),
-			createCellsIfNeeded = (s.loader !== null),
 
 			/**
 			 * A single instance of a spreadsheet, shorthand, also accessible from jQuery.sheet.instance[index].
@@ -1161,8 +1155,6 @@ $.sheet = {
 					panes:null,
 					scrolls:null,
 					sheetAdder:null,
-					table:[],
-					tables:null,
 					tab:[],
 					tabContainer:null,
 					tabs:null,
@@ -1290,12 +1282,6 @@ $.sheet = {
 					},
 					sheetAdder:function () {
 						return jS.controls.sheetAdder || $([]);
-					},
-					table:function () {
-						return jS.controls.table[jS.i] || $([]);
-					},
-					tables:function () {
-						return jS.controls.tables || $([]);
 					},
 					tab:function () {
 						return jS.controls.tab[jS.i] || $([]);
@@ -1470,6 +1456,8 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				createCell:function (sheetIndex, rowIndex, colIndex, calcCount) {
+					throw new Error('Being refactored');
+
 					//first create cell
 					var sheet,
 						row,
@@ -2191,90 +2179,6 @@ $.sheet = {
 					},
 
 					/**
-					 * Creates all the bars to the left of the spreadsheet, if they exist, they are first removed
-					 * @param {jQuery|HTMLElement} table Table of spreadsheet
-					 * @memberOf jS.controlFactory
-					 */
-					barLeft:function (table) {
-						var tr = table.tBody.children,
-							th,
-							i = tr.length - 1,
-							barLeft = jS.controls.bar.y.th[jS.i] = [];
-
-						//table / tBody / tr
-						if (i > 0) {
-							do {
-								th = document.createElement('th');
-								barLeft[i] = th;
-								tr[i].insertBefore(th, tr[i].children[0]);
-							} while(i-- > 1); //We only go till row 1, row 0 is handled by barTop with corner etc
-						}
-					},
-
-					/**
-					 * Creates all the bars to the top of the spreadsheet on colGroup col elements, if they exist, they are first removed
-					 * @param {HTMLElement} table representing spreadsheet
-					 * @memberOf jS.controlFactory
-					 */
-					barTop:function (table) {
-						var colGroup = table.colGroup,
-							cols = colGroup.children,
-							i,
-							trFirst = table.tBody.children[0],
-
-							colCorner = document.createElement('col'), //left column & corner
-							thCorner = document.createElement('th'),
-
-							barTopParent = document.createElement('tr'),
-							existingTdsInFirstRow = 0,
-							barTop = jS.controls.bar.x.th[jS.i] = [];
-
-						if (trFirst === u) {
-							colGroup.innerHTML = '';
-						} else {
-							existingTdsInFirstRow = trFirst.children.length;
-							//If the col elements outnumber the td's, get rid of the extra as it messes with the ui
-							while (cols.length > existingTdsInFirstRow) {
-								colGroup.removeChild(cols[cols.length -1]);
-							}
-						}
-
-						colCorner.style.width = colCorner.style.minWidth = s.colMargin + 'px';
-						colGroup.insertBefore(colCorner, colGroup.children[0]); //end col corner
-
-						barTopParent.appendChild(thCorner);
-
-						barTopParent.className = jS.cl.barTopParent;
-						table.tBody.insertBefore(barTopParent, table.tBody.children[0]);
-						table.barTopParent = barTopParent;
-						table.corner = thCorner;
-						thCorner.col = colCorner;
-						jS.controls.barTopParent[jS.i] = $(barTopParent);
-
-						i = Math.min(existingTdsInFirstRow, s.initCalcCols);
-
-						if (i > 0) {
-							do {
-								var th = document.createElement('th');
-								barTop[i] = th;
-								if (!cols[i]) {
-									cols[i] = document.createElement('col');
-									colGroup.insertBefore(cols[i], colCorner.nextSibling);
-
-								}
-
-								cols[i].bar = th;
-								th.col = cols[i];
-								barTopParent.insertBefore(th, thCorner.nextSibling);
-							} while (i-- > 1);
-						}
-
-						table.barTop = jS.controls.barTopParent[jS.i].children();
-
-						return barTopParent;
-					},
-
-					/**
 					 * Creates the draggable objects for freezing cells
 					 * @type {Object}
 					 * @memberOf jS.controlFactory
@@ -2903,8 +2807,6 @@ $.sheet = {
 					sheetUI:function (ui, table, i) {
 						jS.i = i;
 
-						jS.tuneTableForSheetUse(table);
-
 						jS.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
 
 						var hasChildren = table.tBody.children.length > 0,
@@ -3135,7 +3037,6 @@ $.sheet = {
 						pane.updateY = function () {
 							if (yUpdated) {
 								jS.calcVisibleRow(actionUI);
-								jS.updateYBarWidthToCorner(actionUI);
 							}
 						};
 
@@ -4505,38 +4406,6 @@ $.sheet = {
 				},
 
 				/**
-				 * Makes table object usable by sheet
-				 * @param {jQuery|HTMLElement} table
-				 * @returns {*}
-				 * @memberOf jS
-				 */
-				tuneTableForSheetUse:function (table) {
-					var $table = $(table);
-					jS.controls.table[jS.i] = $table
-						.addClass(jS.cl.table)
-						.addClass(jS.theme.table)
-						.attr('id', jS.id + jS.i)
-						.attr('border', '1px')
-						.attr('cellpadding', '0')
-						.attr('cellspacing', '0');
-
-					table.spreadsheetIndex = jS.i;
-
-					jS.formatTable(table);
-					jS.sheetDecorateRemove(false, $table);
-
-					jS.controls.tables = jS.obj.tables().add(table);
-
-					//override frozenAt settings with table's data-frozenatrow and data-frozenatcol
-					var frozenAtRow = $table.attr('data-frozenatrow') * 1,
-						frozenAtCol = $table.attr('data-frozenatcol') * 1;
-
-					if (!jS.s.frozenAt[jS.i]) jS.s.frozenAt[jS.i] = {row:0, col:0};
-					if (frozenAtRow) jS.s.frozenAt[jS.i].row = frozenAtRow;
-					if (frozenAtCol) jS.s.frozenAt[jS.i].col = frozenAtCol;
-				},
-
-				/**
 				 * Cycles through all the td's and turns table into spreadsheet
 				 * @param {HTMLElement} table spreadsheet
 				 * @param {Number} i spreadsheet index within instance
@@ -4671,38 +4540,7 @@ $.sheet = {
 						}
 					}
 				},
-				updateYBarWidthToCorner: function(actionUI) {
-					var scrolledArea = actionUI.scrolledArea,
-						table = actionUI.table,
-						tBody = table.tBody,
-						corner = table.corner,
-						target = Math.min(s.initCalcRows + scrolledArea.row, scrolledArea.row + 20, tBody.lastChild.rowIndex),
-						tr = tBody.children[target],
-						th,
-						text,
-						newWidth,
-						minWidth = 20,
-						col = corner.col;
 
-					if (tr === u) {
-						return;
-					}
-
-					th = tr.children[0];
-
-					if (th.label === u) return;
-
-					text = th.label + '';
-
-					newWidth = window.defaultCharSize.width * text.length;
-					//set a miniumum width, because css doesn't respect this on col in FF
-					newWidth = (newWidth > minWidth ? newWidth : minWidth);
-
-					if (newWidth !== col._width || col._width === u) {
-						col._width = newWidth;
-						col.style.width = (newWidth) + 'px';
-					}
-				},
 
 				toggleHideRow: function(i) {
 					i = i || jS.rowLast;
@@ -5311,84 +5149,7 @@ $.sheet = {
 				},
 
 
-				/**
-				 * Adds tBody, colGroup, heights and widths to different parts of a spreadsheet
-				 * @param {HTMLElement} table table object
-				 * @memberOf jS
-				 */
-				formatTable:function (table) {
-					var w = s.newColumnWidth + 'px',
-						h = s.colMargin + 'px',
-						children = table.children,
-						i = children.length - 1,
-						j,
-						col,
-						tBody,
-						colGroup,
-						firstTr,
-						hasTBody,
-						hasColGroup,
-						loader = (s.loader !== null ? s.loader : null),
-						getWidth = (loader !== null ? loader.getWidth : function(sheetIndex, columnIndex) {
-							return s.newColumnWidth;
-						});
 
-					if (i > -1) {
-						do {
-							switch (children[i].nodeName) {
-								case 'TBODY':
-									hasTBody = true;
-									tBody = children[i];
-									break;
-								case 'COLGROUP':
-									hasColGroup = true;
-									colGroup = children[i];
-									break;
-							}
-						} while (i--);
-					} else {
-						/*var child = document.createElement('tr');
-						table.appendChild(child);
-						children = table.children;*/
-					}
-
-					if (!tBody) {
-						tBody = document.createElement('tbody');
-
-						if (children.length > 0) {
-							do {
-								tBody.appendChild(children[0]);
-							} while (children.length);
-						}
-					}
-
-					if (!colGroup || colGroup.children.length < 1) {
-						colGroup = document.createElement('colgroup');
-
-						table.appendChild(colGroup);
-						table.appendChild(tBody);
-
-						if (tBody.children.length > 0) {
-							firstTr = tBody.children[0];
-
-							for (i = 0, j = Math.min(firstTr.children.length, s.initCalcCols); i < j; i++) {
-								col = document.createElement('col');
-								col.style.width = getWidth(jS.i, i) + 'px';
-
-								colGroup.appendChild(col);
-
-							}
-							for (i = 0, j = Math.min(tBody.children.length, s.initCalcRows); i < j; i++) {
-								tBody.children[i].style.height = h;
-							}
-						}
-					}
-
-					table.tBody = tBody;
-					table.colGroup = colGroup;
-					table.removeAttribute('width');
-					table.style.width = '';
-				},
 
 				/**
 				 * Ensure sheet minimums have been met, if not add columns and rows
@@ -5657,26 +5418,6 @@ $.sheet = {
 					 */
 					corner:function () {
 					}
-				},
-
-				/**
-				 * Removes sheet decorations
-				 * @param {Boolean} makeClone creates a clone rather than the actual object
-				 * @param {jQuery|HTMLElement} sheets spreadsheet table object to remove decorations from
-				 * @returns {jQuery|HTMLElement}
-				 * @memberOf jS
-				 */
-				sheetDecorateRemove:function (makeClone, sheets) {
-					sheets = sheets || jS.obj.tables();
-					sheets = (makeClone ? sheets.clone() : sheets);
-
-					//Get rid of highlighted cells and active cells
-					sheets.find('td.' + jS.theme.tdActive)
-						.removeClass(jS.theme.tdActive);
-
-					sheets.find('td.' + jS.theme.tdHighlighted)
-						.removeClass(jS.theme.tdHighlighted);
-					return sheets;
 				},
 
 				/**
@@ -7106,9 +6847,7 @@ $.sheet = {
 					jS.obj.tabContainer().children().each(function(i) {
 						$(this).show();
 						if (s.loader !== null) {
-							s.loader.setMetadata(i, {
-								hidden: false
-							});
+							s.loader.setHidden(i, false);
 						}
 					});
 				},
@@ -7116,18 +6855,14 @@ $.sheet = {
 				showSheet: function(sheetIndex) {
 					jS.obj.tabContainer().children().eq(sheetIndex).show();
 					if (s.loader !== null) {
-						s.loader.setMetadata(sheetIndex, {
-							hidden: false
-						});
+						s.loader.setHidden(sheetIndex, false);
 					}
 				},
 
 				hideSheet: function(sheetIndex) {
 					jS.obj.tabContainer().children().eq(sheetIndex).hide();
 					if (s.loader !== null) {
-						s.loader.setMetadata(sheetIndex, {
-							hidden: true
-						});
+						s.loader.setHidden(sheetIndex, true);
 					}
 				},
 
@@ -7712,6 +7447,7 @@ $.sheet = {
 						clonedTables[i] = table;
 					} while (i-- > 0);
 
+					//TODO: remove sheetDecorateRemove
 					return jS.sheetDecorateRemove(false, $(clonedTables));
 				},
 
@@ -8268,10 +8004,6 @@ $.sheet = {
 
 		if (window.scrollBarSize === u) {
 			window.scrollBarSize = getScrollBarSize();
-		}
-
-		if (window.defaultCharSize === u) {
-			window.defaultCharSize = getAverageCharacterSize();
 		}
 
 		jS.cellHandler = new Sheet.CellHandler(jS, jSE, $.sheet.fn);

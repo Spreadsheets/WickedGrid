@@ -3,11 +3,15 @@
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-	var Constructor = function(enclosure, table, cl, frozenAt, max) {
+	var ActionUI = function(enclosure, table, cl, frozenAt, max) {
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
 		this.table = table;
 		this.max = max;
+
+		this.megaTable = new MegaTable({
+			element: pane
+		});
 
 		this.xIndex = 0;
 		this.yIndex = 0;
@@ -114,7 +118,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		new MouseWheel(pane, scrollOuter);
 	};
 
-	Constructor.prototype = {
+	ActionUI.prototype = {
 		/**
 		 * scrolls the sheet to the selected cell
 		 * @param {HTMLElement} td
@@ -462,5 +466,5 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		maximumVisibleColumns: 35
 	};
 
-	return Constructor;
+	return ActionUI;
 })(document, window, Math, Number, $);

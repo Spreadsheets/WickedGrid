@@ -9,14 +9,14 @@
  *
  */
 
-;Sheet.JSONLoader = (function($, document, String) {
+;Sheet.HTMLTableLoader = (function($, document, String) {
 	"use strict";
-	function Constructor(json) {
-		if (json !== undefined) {
-			this.json = json;
-			this.count = json.length;
+	function Constructor(tables) {
+		if (tables !== undefined) {
+			this.tables = tables;
+			this.count = tables.length;
 		} else {
-			this.json = [];
+			this.tables = [];
 			this.count = 0;
 		}
 
@@ -39,16 +39,16 @@
 					cols: 0,
 					rows: 0
 				},
-				json = this.json,
-				jsonSpreadsheet,
+				tables = this.tables,
+				table,
 				rows,
 				firstRow,
 				firstRowColumns;
 
-			if ((jsonSpreadsheet = json[spreadsheetIndex]) === undefined) return size;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return size;
+			if ((table = tables[spreadsheetIndex]) === undefined) return size;
+			if ((rows = table.querySelectorAll('tr')) === undefined) return size;
 			if ((firstRow = rows[0]) === undefined) return size;
-			if ((firstRowColumns = firstRow.columns) === undefined) return size;
+			if ((firstRowColumns = firstRow.children) === undefined) return size;
 
 			return {
 				rows: rows.length,
@@ -56,45 +56,51 @@
 			};
 		},
 		getWidth: function(sheetIndex, columnIndex) {
-			var json = this.json,
-				jsonSpreadsheet = json[sheetIndex] || {},
-				metadata = jsonSpreadsheet.metadata || {},
-				widths = metadata.widths || [],
-				width = widths[columnIndex] || Sheet.defaultColumnWidth;
+			var tables = this.tables,
+				table = tables[sheetIndex],
+				columns,
+				width;
+
+			columns = table.colGroup.children;
+
+			width = columns[columnIndex] || Sheet.defaultColumnWidth;
 
 			return width;
 		},
 		getHeight: function(sheetIndex, rowIndex) {
-			var json = this.json,
-				jsonSpreadsheet = json[sheetIndex] || {},
-				rows = jsonSpreadsheet.rows || [],
-				row = rows[rowIndex] || {},
-				height = row.height || Sheet.defaultRowHeight;
+			var tables = this.tables,
+				table = tables[sheetIndex],
+				rows,
+				row,
+				height;
+
+			rows = table.tBody.children;
+			row = rows[rowIndex];
+
+			height = row.height || Sheet.defaultRowHeight;
 
 			return height;
 		},
 		isHidden: function(sheetIndex) {
-			var json = this.json,
-				jsonSpreadsheet = json[sheetIndex] || {},
-				metadata = jsonSpreadsheet.metadata || {};
+			var tables = this.tables,
+				table = tables[sheetIndex];
 
-			return metadata.hidden === true;
+			return table.style.display === 'none';
 		},
-		setMetadata: function(sheetIndex, metadata) {
-			var json = this.json,
-				jsonSpreadsheet = json[sheetIndex] || {},
-				jsonMetadata = jsonSpreadsheet.metadata || (jsonSpreadsheet.metadata = {});
+		setHidden: function(sheetIndex, isHidden) {
+			var tables = this.tables,
+				table = tables[sheetIndex];
 
-			var i;
-			for (i in metadata) if (metadata.hasOwnProperty(i)) {
-				jsonMetadata[i] = metadata[i];
+			if (isHidden) {
+				table.style.display = 'none';
+			} else {
+				table.style.display = '';
 			}
 
 			return this;
 		},
 		setupCell: function(sheetIndex, rowIndex, columnIndex) {
-			var td = document.createElement('td'),
-				cell = this.jitCell(sheetIndex, rowIndex, columnIndex),
+			var cell = this.jitCell(sheetIndex, rowIndex, columnIndex),
 				jsonCell,
 				html;
 
@@ -106,19 +112,19 @@
 			if (cell.hasOwnProperty('formula')) {
 				td.setAttribute('data-formula', cell['formula'] || '');
 				/*if (cell.hasOwnProperty('value') && cell.value !== null) {
-					html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
-					switch (typeof html) {
-						case 'object':
-							if (html.appendChild !== undefined) {
-								td.appendChild(html);
-								break;
-							}
-						case 'string':
-						default:
-							td.innerHTML = html;
-							break;
-					}
-				}*/
+				 html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
+				 switch (typeof html) {
+				 case 'object':
+				 if (html.appendChild !== undefined) {
+				 td.appendChild(html);
+				 break;
+				 }
+				 case 'string':
+				 default:
+				 td.innerHTML = html;
+				 break;
+				 }
+				 }*/
 				if (jsonCell.hasOwnProperty('cache')) {
 					if (jsonCell['cache'] !== null && jsonCell['cache'] !== '') {
 						td.innerHTML = jsonCell['cache'];
@@ -457,7 +463,7 @@
 				c: dependencyCell.columnIndex
 			});
 
-		    return this;
+			return this;
 		},
 
 		cycleCells: function(sheetIndex, fn) {
@@ -896,24 +902,24 @@
 								entry.append(document.createElement('br'));
 								entry
 									.append(
-										$(document.createElement('a'))
-											.attr('download', spreadsheet.title + '-part' + index +'.json')
-											.attr('href', URL.createObjectURL(new Blob([JSON.stringify(json)], {type: "application/json"})))
-											.text(spreadsheet.title + ' - part ' + index)
-									);
+									$(document.createElement('a'))
+										.attr('download', spreadsheet.title + '-part' + index +'.json')
+										.attr('href', URL.createObjectURL(new Blob([JSON.stringify(json)], {type: "application/json"})))
+										.text(spreadsheet.title + ' - part ' + index)
+								);
 							};
 
 						addFile(spreadsheetPart, fileIndex);
 						/*entry
-							.append(
-								document.createElement('br')
-							)
-							.append(
-								$(document.createElement('a'))
-									.attr('download', spreadsheet.title + '-part' + fileIndex +'.json')
-									.attr('href', new Blob([JSON.stringify()], {type: "application/json"}))
-									.text(spreadsheet.title + ' part:' + fileIndex)
-							);*/
+						 .append(
+						 document.createElement('br')
+						 )
+						 .append(
+						 $(document.createElement('a'))
+						 .attr('download', spreadsheet.title + '-part' + fileIndex +'.json')
+						 .attr('href', new Blob([JSON.stringify()], {type: "application/json"}))
+						 .text(spreadsheet.title + ' part:' + fileIndex)
+						 );*/
 
 						while (rowIndex < rowCount) {
 							if (setIndex === rowSplitAt) {
@@ -939,14 +945,14 @@
 					else {
 						entry
 							.append(
-								document.createElement('br')
-							)
+							document.createElement('br')
+						)
 							.append(
-								$(document.createElement('a'))
-									.attr('download', spreadsheet.title + '.json')
-									.attr('href', URL.createObjectURL(new Blob([JSON.stringify(spreadsheet)], {type: "application/json"})))
-									.text(spreadsheet.title)
-							);
+							$(document.createElement('a'))
+								.attr('download', spreadsheet.title + '.json')
+								.attr('href', URL.createObjectURL(new Blob([JSON.stringify(spreadsheet)], {type: "application/json"})))
+								.text(spreadsheet.title)
+						);
 					}
 					i++;
 				}

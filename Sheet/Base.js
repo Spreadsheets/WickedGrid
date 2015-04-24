@@ -1,4 +1,6 @@
 var Sheet = {
+	Loader: {},
+
 	defaultTheme: 0,
 	themeRollerTheme: 0,
 	bootstrapTheme: 1,

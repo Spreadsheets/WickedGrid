@@ -9,7 +9,7 @@
  *
  */
 
-;Sheet.XMLLoader = (function($, document) {
+;Sheet.Loader.XML = (function($, document) {
 	"use strict";
 
 	/**
