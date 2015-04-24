@@ -11,7 +11,7 @@
 
 ;Sheet.Loader.JSON = (function($, document, String) {
 	"use strict";
-	function Constructor(json) {
+	function JSONLoader(json) {
 		if (json !== undefined) {
 			this.json = json;
 			this.count = json.length;
@@ -25,7 +25,7 @@
 		this.handler = null;
 	}
 
-	Constructor.prototype = {
+	JSONLoader.prototype = {
 		bindJS: function(jS) {
 			this.jS = jS;
 			return this;
@@ -158,17 +158,22 @@
 				row,
 				cell;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
-			if ((row = rows[rowIndex - 1]) === undefined) return null;
-			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
+			if ((rows = jsonSpreadsheet.rows) === undefined) return;
+			if ((row = rows[rowIndex - 1]) === undefined) return;
+			if ((cell = row.columns[columnIndex - 1]) === undefined) return;
+
+			//null is faster in json, so here turn null into an object
+			if (cell === null) {
+				cell = row.columns[columnIndex - 1] = {};
+			}
 
 			return cell;
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex) {
 			var jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
 
-			if (jsonCell === null) return null;
+			if (jsonCell === undefined) return null;
 
 			if (jsonCell.getCell !== undefined) {
 				return jsonCell.getCell();
@@ -247,8 +252,17 @@
 				for (i = 0; i < max; i++) {
 					jsonDependency = dependencies[i];
 					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c']);
+					//dependency was found
 					if (dependency !== null) {
 						jitCell.dependencies.push(dependency);
+					}
+
+					//dependency was not found, so cache cannot be accurate, so reset it and remove all dependencies
+					else {
+						jitCell.dependencies = [];
+						jsonCell['dependencies'] = [];
+						jitCell.setNeedsUpdated(true);
+						jitCell.value = new String();
 					}
 				}
 			}
@@ -416,7 +430,7 @@
 		setDependencies: function(cell) {
 			//TODO: need to handle the cell's cache that are dependent on this one so that it changes when it is in view
 			//some cells just have a ridiculous amount of dependencies
-			if (cell.dependencies.length > Constructor.maxStoredDependencies) {
+			if (cell.dependencies.length > JSONLoader.maxStoredDependencies) {
 				delete cell.loadedFrom['dependencies'];
 				return this;
 			}
@@ -804,7 +818,7 @@
 
 			return this.json = output;
 		},
-		type: Constructor,
+		type: JSONLoader,
 		typeName: 'Sheet.JSONLoader',
 
 		clearCaching: function() {
@@ -834,6 +848,8 @@
 					for (columnIndex = 0; columnIndex < columnMax; columnIndex++) {
 						column = columns[columnIndex];
 
+						if (column === null) continue;
+
 						delete column['cache'];
 						delete column['dependencies'];
 						delete column['parsedFormula'];
@@ -843,6 +859,7 @@
 
 			return this;
 		},
+
 		/**
 		 *
 		 */
@@ -954,7 +971,7 @@
 		}
 	};
 
-	Constructor.maxStoredDependencies = 100;
+	JSONLoader.maxStoredDependencies = 100;
 
-	return Constructor;
+	return JSONLoader;
 })(jQuery, document, String);
