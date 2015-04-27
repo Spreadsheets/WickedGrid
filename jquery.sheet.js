@@ -1529,8 +1529,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					td.jSCell = cell;
 					cell.updateValue();
 				},
-				updateCorner: function() {
-
+				updateCorner: function(th, col) {
+					th.className = jS.cl.barCorner;
 				},
 				updateRowHeader: function(i, header) {
 					header.className = jS.cl.barLeft;
@@ -1541,8 +1541,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					header.className = jS.cl.barTop;
 					header.innerHTML = jSE.columnLabelString(i + 1);
 					col.style.width = jS.s.loader.getWidth(jS.i, i) + 'px';
-				},
-				strict: true
+				}
 			}),
 
 			infiniscroll = this.infiniscroll = new Infiniscroll(pane, {
