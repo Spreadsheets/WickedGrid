@@ -9,7 +9,7 @@
  *
  */
 
-;Sheet.HTMLTableLoader = (function($, document, String) {
+;Sheet.Loader.HTMLTable = (function($, document, String) {
 	"use strict";
 	function Constructor(tables) {
 		if (tables !== undefined) {
@@ -61,7 +61,7 @@
 				columns,
 				width;
 
-			columns = table.colGroup.children;
+			columns = table.querySelectorAll('col');
 
 			width = columns[columnIndex] || Sheet.defaultColumnWidth;
 
@@ -74,7 +74,7 @@
 				row,
 				height;
 
-			rows = table.tBody.children;
+			rows = table.querySelectorAll('tr');
 			row = rows[rowIndex];
 
 			height = row.height || Sheet.defaultRowHeight;
@@ -101,15 +101,16 @@
 		},
 		setupCell: function(sheetIndex, rowIndex, columnIndex) {
 			var cell = this.jitCell(sheetIndex, rowIndex, columnIndex),
-				jsonCell,
+				cache,
+				tdCell,
 				html;
 
 			if (cell === null) return cell;
-			jsonCell = cell.loadedFrom;
-			if (jsonCell === null) return null;
+			tdCell = cell.loadedFrom;
+			if (tdCell === null) return null;
 
 
-			if (cell.hasOwnProperty('formula')) {
+			if (tdCell.hasOwnProperty('formula')) {
 				td.setAttribute('data-formula', cell['formula'] || '');
 				/*if (cell.hasOwnProperty('value') && cell.value !== null) {
 				 html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
@@ -125,10 +126,8 @@
 				 break;
 				 }
 				 }*/
-				if (jsonCell.hasOwnProperty('cache')) {
-					if (jsonCell['cache'] !== null && jsonCell['cache'] !== '') {
-						td.innerHTML = jsonCell['cache'];
-					}
+				if ((cache = tdCell.getAttribute('data-cache')) !== null) {
+					td.innerHTML = jsonCell['cache'];
 				}
 			} else if (jsonCell['cellType'] !== undefined) {
 				td.setAttribute('data-celltype', jsonCell['cellType']);
@@ -142,7 +141,7 @@
 			}
 
 
-			if (jsonCell['class'] !== undefined) td.className = jsonCell['class'];
+			td.className = tdCell['class'];
 			if (jsonCell['style'] !== undefined) td.setAttribute('style', jsonCell['style']);
 			if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan']);
 			if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan']);
@@ -352,42 +351,40 @@
 			return jsonSpreadsheet.title || '';
 		},
 		hiddenRows: function(sheetIndex) {
-			var metadata = this.json[sheetIndex].metadata || {},
-				jsonHiddenRows = metadata.hiddenRows || [],
-				max = jsonHiddenRows.length,
-				result = [],
-				i = 0;
+			var hiddenRowsString = this.tables[sheetIndex].getAttribute('data-hiddenrows'),
+				hiddenRows = null;
 
-			for (;i < max; i++) result.push(jsonHiddenRows[i]);
+			if (hiddenRowsString !== null) {
+				hiddenRows = arrHelpers.toNumbers(hiddenRowsString.split(','));
+			}
 
-			return result;
+			return hiddenRows;
 		},
 		hiddenColumns: function(sheetIndex) {
-			var metadata = this.json[sheetIndex].metadata || {},
-				jsonHiddenColumns = metadata.hiddenColumns || [],
-				max = jsonHiddenColumns.length,
-				result = [],
-				i = 0;
+			var hiddenColumnsString = this.tables[sheetIndex].getAttribute('data-hiddencolumns'),
+				hiddenColumns = null;
 
-			for (;i < max; i++) result.push(jsonHiddenColumns[i]);
+			if (hiddenColumnsString !== null) {
+				hiddenColumns = arrHelpers.toNumbers(hiddenColumnsString.split(','));
+			}
 
-			return result;
+			return hiddenColumns;
 		},
 		hasSpreadsheetAtIndex: function(index) {
-			return (this.json[index] !== undefined);
+			return (this.tables[index] !== undefined);
 		},
 		getSpreadsheetIndexByTitle: function(title) {
-			var json = this.json,
+			var tables = this.tables,
 				max = this.count,
 				i = 0,
-				jsonTitle;
+				tableTitle;
 
 			title = title.toLowerCase();
 
 			for(;i < max; i++) {
-				if (json[i] !== undefined) {
-					jsonTitle = json[i].title;
-					if (jsonTitle !== undefined && jsonTitle !== null && jsonTitle.toLowerCase() == title) {
+				if (tables[i] !== undefined) {
+					tableTitle = tables[i].getAttribute('title');
+					if (tableTitle !== undefined && tableTitle !== null && tableTitle.toLowerCase() == title) {
 						return i;
 					}
 				}

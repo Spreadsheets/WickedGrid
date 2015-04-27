@@ -45,6 +45,7 @@
     "thaw.js": "~1.2.0",
     "testify.js": "*",
     "operative": "~0.4.0",
-    "megatable.js": "*"
+    "megatable.js": "*",
+    "infiniscroll.js": "*"
   }
 }

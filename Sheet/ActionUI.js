@@ -3,15 +3,10 @@
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-	var ActionUI = function(enclosure, table, cl, frozenAt, max) {
+	var ActionUI = function(jS, enclosure, cl, frozenAt, max) {
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
-		this.table = table;
 		this.max = max;
-
-		this.megaTable = new MegaTable({
-			element: pane
-		});
 
 		this.xIndex = 0;
 		this.yIndex = 0;
@@ -46,76 +41,30 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		var that = this,
 			pane = this.pane,
-			tBody = this.tBody = table.tBody,
-			cssId = '#' + table.getAttribute('id'),
-			scrollOuter = this.scrollUI = pane.scrollOuter = document.createElement('div'),
-			scrollInner = pane.scrollInner = document.createElement('div'),
-			scrollStyleX = this.scrollAxisX.scrollStyle = pane.scrollStyleX = this.scrollStyleX = new Sheet.StyleUpdater(function(index, style) {
-				//the reason we save the index and return false is to prevent redraw, a scrollbar may move 100 pixels, but only need to redraw once
-				if (that.xIndex === index) return false;
 
-				if (index === undefined || index === null) index = that.xIndex;
-
-				var endIndex = index + that.maximumVisibleColumns,
-					startOfSet = arrHelpers.ofSet(that.hiddenColumns, index),
-					endOfSet = arrHelpers.ofSet(that.hiddenColumns, endIndex);
-
-				if (startOfSet !== null) {
-					index = startOfSet.end + (index - startOfSet.start);
+			//TODO: connect megatable up to Loader
+			megaTable = this.megaTable = new MegaTable({
+				element: pane,
+				updateCell: function(row, column, td) {
+					jS.getCell(jS.i);
+				},
+				updateRowHeader: function(i, header) {
+					header.innerHTML = i;
+				},
+				updateColumnHeader: function(i, header) {
+					header.innerHTML = i;
 				}
+			}),
 
-				if (endOfSet !== null) {
-					endIndex = endOfSet.end + (endIndex - endOfSet.start);
-				}
+			infiniscroll = this.infiniscroll = new Infiniscroll(pane, {
+				scroll: function(c, r) {
+					megaTable.update(r, c);
+				},
+				verticalScrollDensity: 5,
+				horizontalScrollDensity: 25
+			});
 
-				that.xIndex = index;
-
-				if (style === undefined) {
-					var col = that.frozenAt.col;
-					 style =
-						 //hide all previous td/th/col elements
-						 cssId + ' tr > *:nth-child(-n+' + index + ') {display: none;}' +
-						 cssId + ' col:nth-child(-n+' + index + ') {display: none;}' +
-
-						 //but show those that are frozen
-						 cssId + ' tr > *:nth-child(-n+' + (col + 1) + ') {display: table-cell;}' +
-						 cssId + ' col:nth-child(-n+' + (col + 1) + ') {display: table-column;}' +
-
-						 //hide those that are ahead of current scroll area, but are not in view to keep table redraw fast
-						 cssId + ' tr > *:nth-child(' + (endIndex) + ') ~ * {display: none;}' +
-						 cssId + ' col:nth-child(' + (endIndex) + ') ~ col {display: none;}';
-
-				}
-
-				this.setStyle(style);
-				that.scrolledArea.col = Math.max(index || 1, 1);
-				that.foldArea.col = endIndex;
-				return true;
-			}, max);
-
-		this.yDetacher = new Sheet.Detacher(tBody);
-
-		scrollOuter.setAttribute('class', cl);
-		scrollOuter.appendChild(scrollInner);
-
-		$(scrollOuter)
-			.disableSelectionSpecial();
-
-		scrollOuter.addEventListener('scroll', function() {
-			var total = scrollOuter.scrollTop + scrollOuter.clientHeight;
-			if (total >= (scrollInner.clientHeight - (scrollOuter.clientHeight / 2))) {
-				scrollInner.style.height = (scrollInner.clientHeight + (scrollOuter.clientHeight * 2)) + 'px';
-			}
-
-			total = scrollOuter.scrollLeft + scrollOuter.clientWidth;
-			if (total >= (scrollInner.clientWidth - (scrollOuter.clientWidth / 2))) {
-				scrollInner.style.width = (scrollInner.clientWidth + (scrollOuter.clientWidth * 2)) + 'px';
-			}
-		});
-
-		pane.appendChild(scrollStyleX.styleElement);
-
-		new MouseWheel(pane, scrollOuter);
+		new MouseWheel(pane, this.mt._out);
 	};
 
 	ActionUI.prototype = {

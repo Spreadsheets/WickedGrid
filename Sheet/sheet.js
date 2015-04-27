@@ -1369,9 +1369,6 @@ $.sheet = {
 					notFoundSheet:"Sheet not found",
 					setCellRef:"Enter the name you would like to reference the cell by.",
 					sheetTitleDefault:"Spreadsheet {index}",
-					maxRowsBrowserLimitation:"You've reached the maximum amount of rows this browser supports. Try using Chrome, FireFox, or Internet Explorer 9+",
-					maxColsBrowserLimitation:"You've reached the maximum amount of columns this browser supports. Try using Chrome, FireFox, or Internet Explorer 9+",
-					maxSizeBrowserLimitationOnOpen:"The spreadsheet you are loading is larger than the maximum size of cells this browser supports. Try using Chrome, Firefox, or Internet Explorer 9+. You can an proceed, but the spreadsheet may not work as intended.",
 					cellLoading: "Loading..."
 				},
 
@@ -1903,12 +1900,8 @@ $.sheet = {
 
 								loc = {row: spreadsheetIndex, col: 0};
 								o = this.rowAdder;
-								if (o.setQty(qty, tableSize) === false) {
-									if (!jS.isBusy()) {
-										s.alert(jS.msg.maxRowsBrowserLimitation);
-									}
-									return;
-								}
+
+								o.setQty(qty, tableSize);
 
 								o.setCreateBarFn(function (rowIndex, isHidden) {
 									var barParent = document.createElement('tr'),
@@ -2045,12 +2038,7 @@ $.sheet = {
 
 								loc = {row: 0, col: spreadsheetIndex};
 								o = this.columnAdder;
-								if (o.setQty(qty, tableSize) === false) {
-									if (!jS.isBusy()) {
-										s.alert(jS.msg.maxColsBrowserLimitation);
-									}
-									return;
-								}
+								o.setQty(qty, tableSize);
 								o.setCreateBarFn(function(columnIndex) {
 									var barParent = tBody.children[0],
 										col = document.createElement('col'),
@@ -2800,17 +2788,16 @@ $.sheet = {
 					/**
 					 * Creates the spreadsheet user interface
 					 * @param {HTMLElement} ui raw user interface
-					 * @param {HTMLElement} table raw table
 					 * @param {Number} i the new count for spreadsheets in this instance
 					 * @memberOf jS.controlFactory
 					 */
-					sheetUI:function (ui, table, i) {
+					sheetUI:function (ui, i) {
 						jS.i = i;
 
-						jS.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
+						//TODO: readOnly from metadata
+						//jS.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
 
-						var hasChildren = table.tBody.children.length > 0,
-							enclosure = jS.controlFactory.enclosure(table),
+						var enclosure = jS.controlFactory.enclosure(table),
 							settings = jS.s,
 							hiddenRows = settings.hiddenRows[i],
 							hiddenColumns = settings.hiddenColumns[i],
@@ -2837,11 +2824,6 @@ $.sheet = {
 							};
 
 						ui.appendChild(enclosure);
-
-						jS.controlFactory.barTop(table);
-						jS.controlFactory.barLeft(table);
-
-						pane.appendChild(table);
 
 						if (jS.isSheetEditable()) {
 							jS.controlFactory.autoFiller(pane);
@@ -2931,33 +2913,10 @@ $.sheet = {
 								.bind('cellEdit', jS.evt.cellEdit);
 						}
 
-						jS.createSpreadsheet(table, i);
+						jS.createSpreadsheet(i);
 
-						if (settings.loader !== null) {
-							hiddenRows = settings.loader.hiddenRows(i);
-							hiddenColumns = settings.loader.hiddenColumns(i);
-						}
-
-						else {
-							hiddenRows = hiddenRows || null;
-							hiddenColumns = hiddenColumns || null;
-
-							if (hiddenRows === null || hiddenRows.length < 1) {
-								hiddenRows = table.getAttribute('data-hiddenrows');
-
-								if (hiddenRows !== null) {
-									hiddenRows = arrHelpers.toNumbers(hiddenRows.split(','));
-								}
-							}
-
-							if (hiddenColumns === null || hiddenColumns.length < 1) {
-								hiddenColumns = table.getAttribute('data-hiddencolumns');
-
-								if (hiddenColumns !== null) {
-									hiddenColumns = arrHelpers.toNumbers(hiddenColumns.split(','));
-								}
-							}
-						}
+						hiddenRows = settings.loader.hiddenRows(i);
+						hiddenColumns = settings.loader.hiddenColumns(i);
 
 						if (settings.hiddenRows[i] === u) {
 							settings.hiddenRows[i] = [];
@@ -6585,37 +6544,26 @@ $.sheet = {
 
 				/**
 				 * opens a spreadsheet into the active sheet instance
-				 * @param {Array} tables
+				 * @param {Sheet.Loader.HTMLTable|Sheet.Loader.JSON|Sheet.Loader.XML} loader
 				 * @memberOf jS
 				 */
-				openSheet:function (tables) {
-					var lastIndex = tables.length - 1,
+				openSheet:function (loader) {
+					var count = loader.count,
+						lastIndex = count - 1,
 						open = function() {
 							jS.setBusy(true);
+							jS.s.loader = loader;
 							var header = jS.controlFactory.header(),
 								ui = jS.controlFactory.ui(),
 								sheetAdder = jS.controlFactory.sheetAdder(),
 								tabContainer = jS.controlFactory.tabContainer(),
 								i,
 								options = {
-									sizeCheck: function(spreadsheetUI) {
-										if ($.sheet.max) {
-											var size = jS.tableSize(spreadsheetUI.table);
-											if (size.rows > $.sheet.max || size.cols > $.sheet.max) {
-												jS.trigger('sheetMaxSize', [spreadsheetUI.table, spreadsheetUI.i]);
-												s.confirm(
-													jS.msg.maxSizeBrowserLimitationOnOpen,
-													function() {spreadsheetUI.load();}
-												);
-											} else {
-												spreadsheetUI.load();
-											}
-										} else {
-											spreadsheetUI.load();
-										}
-									},
-									initChildren: function(ui, table, i) {
-										jS.controlFactory.sheetUI(ui, table, i);
+									initChildren: function(ui, i) {
+										jS.controlFactory.sheetUI(ui, i);
+
+
+
 										jS.trigger('sheetOpened', [i]);
 									},
 									done: function(stack) {
@@ -6676,72 +6624,62 @@ $.sheet = {
 							});
 
 
-
-							if (s.loader === null) {
-								for (i = 0; i < tables.length; i++) {
-									new Sheet.SpreadsheetUI(i, ui, tables[i], options);
-									jS.sheetCount++;
-								}
-							} else {
-
-								jS.insertSheet = function(data, i, makeVisible, table) {
-									jS.sheetCount++;
-									data = data || null;
-									table = table || document.createElement('table');
-									makeVisible = makeVisible !== u ? makeVisible : true;
-									i = i || jS.sheetCount - 1;
-
-									if (data !== null) {
-										s.loader.addSpreadsheet(data);
-									}
-
-									if (!table.hasAttribute('title')) {
-										table.setAttribute('title', s.loader.title(i));
-									}
-
-									var showSpreadsheet = function() {
-											jS.obj.ui.removeChild(jS.obj.enclosure());
-											jS.setBusy(true);
-											var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, table, options);
-											jS.setActiveSheet(-1, spreadsheetUI);
-											jS.calcVisibleInit(i);
-											jS.setBusy(false);
-											jS.sheetSyncSize();
-										},
-										tab;
-
-									if (makeVisible) {
-										showSpreadsheet();
-										return;
-									}
-
-
-									tab = jS.controlFactory.customTab(table.getAttribute('title'))
-										.mousedown(function () {
-											showSpreadsheet();
-											jS.obj.tab().insertBefore(this);
-											$(this).remove();
-											return false;
-										});
-
-									if (s.loader.isHidden(i)) {
-										tab.hide();
-									}
-								};
-
-								//always load at least the first spreadsheet
-								firstSpreadsheetUI = new Sheet.SpreadsheetUI(0, ui, tables[0], options);
+							jS.insertSheet = function(data, i, makeVisible) {
 								jS.sheetCount++;
+								data = data || null;
+								makeVisible = makeVisible !== u ? makeVisible : true;
+								i = i || jS.sheetCount - 1;
 
-								if (tables.length > 1) {
-									//set the others up to load on demand
-									for (i = 1; i < tables.length; i++) {
-										jS.insertSheet(null, i, false, tables[i]);
-									}
-									jS.i = 0;
-
-									firstSpreadsheetUI.loaded();
+								if (data !== null) {
+									s.loader.addSpreadsheet(data);
 								}
+
+								if (!table.hasAttribute('title')) {
+									table.setAttribute('title', s.loader.title(i));
+								}
+
+								var showSpreadsheet = function() {
+										jS.obj.ui.removeChild(jS.obj.enclosure());
+										jS.setBusy(true);
+										var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, options);
+										jS.setActiveSheet(-1, spreadsheetUI);
+										jS.calcVisibleInit(i);
+										jS.setBusy(false);
+										jS.sheetSyncSize();
+									},
+									tab;
+
+								if (makeVisible) {
+									showSpreadsheet();
+									return;
+								}
+
+
+								tab = jS.controlFactory.customTab(table.getAttribute('title'))
+									.mousedown(function () {
+										showSpreadsheet();
+										jS.obj.tab().insertBefore(this);
+										$(this).remove();
+										return false;
+									});
+
+								if (s.loader.isHidden(i)) {
+									tab.hide();
+								}
+							};
+
+							//always load at least the first spreadsheet
+							firstSpreadsheetUI = new Sheet.SpreadsheetUI(0, ui, options);
+							jS.sheetCount++;
+
+							if (count > 0) {
+								//set the others up to load on demand
+								for (i = 1; i < count; i++) {
+									jS.insertSheet(null, i, false);
+								}
+								jS.i = 0;
+
+								firstSpreadsheetUI.loaded();
 							}
 						};
 

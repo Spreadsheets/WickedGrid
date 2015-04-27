@@ -1,33 +1,28 @@
 Sheet.SpreadsheetUI = (function() {
 	var stack = [];
 
-	function Constructor(i, ui, table, options) {
+	function Constructor(i, ui, options) {
 		options = options || {};
 
 		this.i = i;
 		this.ui = ui;
-		this.table = table;
 		this.isLast = options.lastIndex === i;
 		this.enclosure = null;
 		this.pane = null;
 		this.spreadsheet = null;
 
-		this.sizeCheck = options.sizeCheck || function() {};
 		this.initChildren = options.initChildren || function() {};
 		this.done = options.done || function() {};
-
-		this.sizeCheck(this);
+		this.load();
 	}
 
 	Constructor.prototype = {
-		load: function() {
-			var table = this.table;
-			this.initChildren(this.ui, table, this.i);
+		load: function(enclosure, pane, spreadsheet) {
+			this.initChildren(this.ui, this.i);
 
-			table.pane.ui = this.ui;
-			this.enclosure = table.enclosure;
-			this.pane = table.pane;
-			this.spreadsheet = table.spreadsheet;
+			this.enclosure = enclosure;
+			this.pane = pane;
+			this.spreadsheet = spreadsheet;
 
 			stack.push(this.i);
 

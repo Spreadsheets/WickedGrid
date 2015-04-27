@@ -37,8 +37,9 @@ JS_FILES=(
 	RowAdder.js
 	Detacher.js
 	StyleUpdater.js
-	JSONLoader.js
-	XMLLoader.js
+	Loader/HTMLTable.js
+	Loader/JSON.js
+	Loader/XML.js
 
 	#everything else next
 	sheet.js
