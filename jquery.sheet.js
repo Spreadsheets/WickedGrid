@@ -4065,8 +4065,8 @@ Sheet.StyleUpdater = (function(document) {
 							this.cellIds[column['id']] = {
 								cell: column,
 								sheetIndex: sheetIndex,
-								rowIndex: rowIndex,
-								columnIndex: columnIndex,
+								rowIndex: rowIndex + 1,
+								columnIndex: columnIndex + 1,
 								requestCell: function() {
 									return loader.jitCell(this.sheetIndex, this.rowIndex, this.columnIndex);
 								}
