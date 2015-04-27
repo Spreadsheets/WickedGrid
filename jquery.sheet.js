@@ -383,7 +383,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 
 				//visual feedback
 				if (cell.td !== null) {
-					cell.td.innerHTML = Cell.cellLoading;
+					while(cell.td.lastChild !== null) {
+						cell.td.removeChild(cell.td.lastChild);
+					}
+					cell.td.appendChild(document.createTextNode(Cell.cellLoading));
 				}
 
 				Sheet.calcStack++;
@@ -464,7 +467,8 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			var value = this.value,
 				td = this.td,
 				valType = typeof value,
-				html = value.html;
+				html = value.html,
+				text;
 
 			if (html === u) {
 				if (
@@ -490,13 +494,17 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 			switch (typeof html) {
 				case 'object':
 					if (html === null) {
-						td.innerHTML = '';
+						while(td.lastChild !== null) {
+							td.removeChild(td.lastChild);
+						}
 					} else if (html.appendChild !== u) {
 
 						//if html already belongs to another element, just return nothing for it's cache, formula function is probably managing it
 						if (html.parentNode === null) {
 							//otherwise, append it to this td
-							td.innerHTML = '';
+							while(td.lastChild !== null) {
+								td.removeChild(td.lastChild);
+							}
 							td.appendChild(html);
 						}
 
@@ -504,7 +512,10 @@ var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, 
 					}
 				case 'string':
 				default:
-					td.innerHTML = html;
+					while(td.lastChild !== null) {
+						td.removeChild(td.lastChild);
+					}
+					td.appendChild(document.createTextNode(html));
 			}
 
 			return td.innerHTML;
@@ -1461,6 +1472,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 	var ActionUI = function(jS, enclosure, cl, frozenAt, max) {
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
+		enclosure.appendChild(this.pane);
 		this.max = max;
 
 		this.xIndex = 0;
@@ -1499,16 +1511,38 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			//TODO: connect megatable up to Loader
 			megaTable = this.megaTable = new MegaTable({
+				columns: 30,
+				rows: 70,
 				element: pane,
 				updateCell: function(row, column, td) {
-					jS.getCell(jS.i);
+					if (typeof td.jSCell === 'object' && td.jSCell !== null) {
+						td.jSCell.td = null;
+					}
+
+					var cell = jS.getCell(jS.i, row + 1, column + 1);
+
+					if (cell === null) return;
+
+					cell.td = td;
+					td.style = cell.style;
+					td.className = cell.class;
+					td.jSCell = cell;
+					cell.updateValue();
+				},
+				updateCorner: function() {
+
 				},
 				updateRowHeader: function(i, header) {
-					header.innerHTML = i;
+					header.className = jS.cl.barLeft;
+					header.innerHTML = i + 1;
+					header.style.height = jS.s.loader.getHeight(jS.i, i) + 'px';
 				},
-				updateColumnHeader: function(i, header) {
-					header.innerHTML = i;
-				}
+				updateColumnHeader: function(i, header, col) {
+					header.className = jS.cl.barTop;
+					header.innerHTML = jSE.columnLabelString(i + 1);
+					col.style.width = jS.s.loader.getWidth(jS.i, i) + 'px';
+				},
+				strict: true
 			}),
 
 			infiniscroll = this.infiniscroll = new Infiniscroll(pane, {
@@ -1519,7 +1553,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				horizontalScrollDensity: 25
 			});
 
-		new MouseWheel(pane, this.mt._out);
+		new MouseWheel(pane, infiniscroll._out);
+
+		megaTable.table.className += ' ' + jS.cl.table + ' ' + jS.theme.table;
+		megaTable.table.setAttribute('cellSpacing', '0');
+		megaTable.table.setAttribute('cellPadding', '0');
+		pane.scroll = infiniscroll._out;
 	};
 
 	ActionUI.prototype = {
@@ -2766,20 +2805,9 @@ Sheet.StyleUpdater = (function(document) {
 	}
 
 	return Constructor;
-})(document);/**
- * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
- * @author RobertLeePlummerJr@gmail.com
- * $Id: jquery.sheet.dts.js 933 2013-08-28 12:59:30Z robertleeplummerjr $
- * Licensed under MIT
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- */
-
-;Sheet.Loader.HTMLTable = (function($, document, String) {
+})(document);;Sheet.Loader.HTMLTable = (function($, document, String) {
 	"use strict";
-	function Constructor(tables) {
+	function HTMLTable(tables) {
 		if (tables !== undefined) {
 			this.tables = tables;
 			this.count = tables.length;
@@ -2793,7 +2821,7 @@ Sheet.StyleUpdater = (function(document) {
 		this.handler = null;
 	}
 
-	Constructor.prototype = {
+	HTMLTable.prototype = {
 		bindJS: function(jS) {
 			this.jS = jS;
 			return this;
@@ -2829,7 +2857,7 @@ Sheet.StyleUpdater = (function(document) {
 				columns,
 				width;
 
-			columns = table.colGroup.children;
+			columns = table.querySelectorAll('col');
 
 			width = columns[columnIndex] || Sheet.defaultColumnWidth;
 
@@ -2842,7 +2870,7 @@ Sheet.StyleUpdater = (function(document) {
 				row,
 				height;
 
-			rows = table.tBody.children;
+			rows = table.querySelectorAll('tr');
 			row = rows[rowIndex];
 
 			height = row.height || Sheet.defaultRowHeight;
@@ -2869,15 +2897,16 @@ Sheet.StyleUpdater = (function(document) {
 		},
 		setupCell: function(sheetIndex, rowIndex, columnIndex) {
 			var cell = this.jitCell(sheetIndex, rowIndex, columnIndex),
-				jsonCell,
+				cache,
+				tdCell,
 				html;
 
 			if (cell === null) return cell;
-			jsonCell = cell.loadedFrom;
-			if (jsonCell === null) return null;
+			tdCell = cell.loadedFrom;
+			if (tdCell === null) return null;
 
 
-			if (cell.hasOwnProperty('formula')) {
+			if (tdCell.hasOwnProperty('formula')) {
 				td.setAttribute('data-formula', cell['formula'] || '');
 				/*if (cell.hasOwnProperty('value') && cell.value !== null) {
 				 html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
@@ -2893,10 +2922,8 @@ Sheet.StyleUpdater = (function(document) {
 				 break;
 				 }
 				 }*/
-				if (jsonCell.hasOwnProperty('cache')) {
-					if (jsonCell['cache'] !== null && jsonCell['cache'] !== '') {
-						td.innerHTML = jsonCell['cache'];
-					}
+				if ((cache = tdCell.getAttribute('data-cache')) !== null) {
+					td.innerHTML = jsonCell['cache'];
 				}
 			} else if (jsonCell['cellType'] !== undefined) {
 				td.setAttribute('data-celltype', jsonCell['cellType']);
@@ -2910,7 +2937,7 @@ Sheet.StyleUpdater = (function(document) {
 			}
 
 
-			if (jsonCell['class'] !== undefined) td.className = jsonCell['class'];
+			td.className = tdCell['class'];
 			if (jsonCell['style'] !== undefined) td.setAttribute('style', jsonCell['style']);
 			if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan']);
 			if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan']);
@@ -2930,26 +2957,26 @@ Sheet.StyleUpdater = (function(document) {
 			return cell;
 		},
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
-			var json = this.json,
-				jsonSpreadsheet,
+			var tables = this.tables,
+				table,
 				rows,
 				row,
 				cell;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
+			if ((table = tables[sheetIndex]) === undefined) return null;
+			if ((rows = table.querySelectorAll('tr')) === undefined) return null;
 			if ((row = rows[rowIndex - 1]) === undefined) return null;
-			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+			if ((cell = row.children[columnIndex - 1]) === undefined) return null;
 
 			return cell;
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex) {
-			var jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
+			var tdCell = this.getCell(sheetIndex, rowIndex, columnIndex);
 
-			if (jsonCell === null) return null;
+			if (tdCell === null) return null;
 
-			if (jsonCell.getCell !== undefined) {
-				return jsonCell.getCell();
+			if (tdCell.getCell !== undefined) {
+				return tdCell.getCell();
 			}
 
 			var jitCell,
@@ -2974,34 +3001,34 @@ Sheet.StyleUpdater = (function(document) {
 				hasUneditable,
 				hasDependencies;
 
-			id = jsonCell['id'];
-			value = jsonCell['value'];
-			cache = jsonCell['cache'];
-			formula = jsonCell['formula'];
-			parsedFormula = jsonCell['parsedFormula'];
-			cellType = jsonCell['cellType'];
-			uneditable = jsonCell['uneditable'];
-			dependencies = jsonCell['dependencies'];
+			id = tdCell.getAttribute('id');
+			value = tdCell.innerHTML;
+			//cache = tdCell.getAttribute('data-cache');
+			formula = tdCell.getAttribute('data-formula');
+			//parsedFormula = jsonCell['parsedFormula'];
+			cellType = tdCell.getAttribute('data-celltype');
+			uneditable = tdCell.getAttribute('data-uneditable');
+			//dependencies = tdCell.getAttribute('dependencies');
 
-			hasId = (id !== undefined && id !== null);
-			hasValue = (value !== undefined && value !== null);
-			hasCache = (cache !== undefined && cache !== null && (cache + '').length > 0);
-			hasFormula = (formula !== undefined && formula !== null && formula !== '');
-			hasParsedFormula = (parsedFormula !== undefined && parsedFormula !== null);
-			hasCellType = (cellType !== undefined && cellType !== null);
-			hasUneditable = (uneditable !== undefined && uneditable !== null);
-			hasDependencies = (dependencies !== undefined && dependencies !== null);
+			hasId = id.length > 0;
+			hasValue = value.length > 0;
+			//hasCache = cache.length > 0;
+			hasFormula = formula.length > 0;
+			//hasParsedFormula = (parsedFormula !== undefined && parsedFormula !== null);
+			hasCellType = cellType.length > 0;
+			hasUneditable = uneditable.length > 0;
+			//hasDependencies = (dependencies !== undefined && dependencies !== null);
 
 			jitCell = new Sheet.Cell(sheetIndex, null, this.jS, this.handler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
-			jitCell.loadedFrom = jsonCell;
+			jitCell.loadedFrom = tdCell;
 			jitCell.loader = this;
 
 			if (hasId) jitCell.id = id;
 
 			if (hasFormula) jitCell.formula = formula;
-			if (hasParsedFormula) jitCell.parsedFormula = parsedFormula;
+			//if (hasParsedFormula) jitCell.parsedFormula = parsedFormula;
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasUneditable) jitCell.uneditable = uneditable;
 
@@ -3013,7 +3040,7 @@ Sheet.StyleUpdater = (function(document) {
 				jitCell.value = new String();
 			}
 
-			if (hasCache) {
+			/*if (hasCache) {
 				jitCell.value.html = cache;
 				jitCell.needsUpdated = false;
 			} else {
@@ -3029,12 +3056,12 @@ Sheet.StyleUpdater = (function(document) {
 						jitCell.dependencies.push(dependency);
 					}
 				}
-			}
+			}*/
 
 			jitCell.value.cell = jitCell;
 
 
-			jsonCell.getCell = function() {
+			tdCell.getCell = function() {
 				return jitCell;
 			};
 
@@ -3053,9 +3080,9 @@ Sheet.StyleUpdater = (function(document) {
 			}
 
 			var loader = this,
-				json = this.json,
-				sheetMax = (sheetIndex < 0 ? json.length - 1: sheetIndex + 1),
-				sheet,
+				tables = this.tables,
+				sheetMax = (sheetIndex < 0 ? tables.length - 1: sheetIndex + 1),
+				table,
 				rowIndex,
 				rowMax,
 				rows,
@@ -3070,8 +3097,8 @@ Sheet.StyleUpdater = (function(document) {
 			}
 
 			for(;sheetIndex < sheetMax;sheetIndex++) {
-				sheet = json[sheetIndex];
-				rows = sheet.rows;
+				table = tables[sheetIndex];
+				rows = table.querySelectorAll('tr');
 				if (rows.length < 1) continue;
 				rowIndex = 0;
 				rowMax = rows.length;
@@ -3079,7 +3106,7 @@ Sheet.StyleUpdater = (function(document) {
 				for (; rowIndex < rowMax; rowIndex++) {
 
 					row = rows[rowIndex];
-					columns = row.columns;
+					columns = row.children;
 					columnIndex = 0;
 					columnMax = columns.length;
 
@@ -3088,12 +3115,12 @@ Sheet.StyleUpdater = (function(document) {
 
 						if (column === null) continue;
 
-						if (typeof column['id'] === 'string') {
-							this.cellIds[column['id']] = {
+						if (column.id !== null && column.id.length > 0) {
+							this.cellIds[column.id] = {
 								cell: column,
 								sheetIndex: sheetIndex,
-								rowIndex: rowIndex,
-								columnIndex: columnIndex,
+								rowIndex: rowIndex + 1,
+								columnIndex: columnIndex + 1,
 								requestCell: function() {
 									return loader.jitCell(this.sheetIndex, this.rowIndex, this.columnIndex);
 								}
@@ -3112,50 +3139,48 @@ Sheet.StyleUpdater = (function(document) {
 			return this;
 		},
 		title: function(sheetIndex) {
-			var json = this.json,
-				jsonSpreadsheet;
+			var tables = this.tables,
+				table;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return '';
+			if ((table = tables[sheetIndex]) === undefined) return '';
 
-			return jsonSpreadsheet.title || '';
+			return table.getAttribute('title');
 		},
 		hiddenRows: function(sheetIndex) {
-			var metadata = this.json[sheetIndex].metadata || {},
-				jsonHiddenRows = metadata.hiddenRows || [],
-				max = jsonHiddenRows.length,
-				result = [],
-				i = 0;
+			var hiddenRowsString = this.tables[sheetIndex].getAttribute('data-hiddenrows'),
+				hiddenRows = null;
 
-			for (;i < max; i++) result.push(jsonHiddenRows[i]);
+			if (hiddenRowsString !== null) {
+				hiddenRows = arrHelpers.toNumbers(hiddenRowsString.split(','));
+			}
 
-			return result;
+			return hiddenRows;
 		},
 		hiddenColumns: function(sheetIndex) {
-			var metadata = this.json[sheetIndex].metadata || {},
-				jsonHiddenColumns = metadata.hiddenColumns || [],
-				max = jsonHiddenColumns.length,
-				result = [],
-				i = 0;
+			var hiddenColumnsString = this.tables[sheetIndex].getAttribute('data-hiddencolumns'),
+				hiddenColumns = null;
 
-			for (;i < max; i++) result.push(jsonHiddenColumns[i]);
+			if (hiddenColumnsString !== null) {
+				hiddenColumns = arrHelpers.toNumbers(hiddenColumnsString.split(','));
+			}
 
-			return result;
+			return hiddenColumns;
 		},
 		hasSpreadsheetAtIndex: function(index) {
-			return (this.json[index] !== undefined);
+			return (this.tables[index] !== undefined);
 		},
 		getSpreadsheetIndexByTitle: function(title) {
-			var json = this.json,
+			var tables = this.tables,
 				max = this.count,
 				i = 0,
-				jsonTitle;
+				tableTitle;
 
 			title = title.toLowerCase();
 
 			for(;i < max; i++) {
-				if (json[i] !== undefined) {
-					jsonTitle = json[i].title;
-					if (jsonTitle !== undefined && jsonTitle !== null && jsonTitle.toLowerCase() == title) {
+				if (tables[i] !== undefined) {
+					tableTitle = tables[i].getAttribute('title');
+					if (tableTitle !== undefined && tableTitle !== null && tableTitle.toLowerCase() == title) {
 						return i;
 					}
 				}
@@ -3163,13 +3188,13 @@ Sheet.StyleUpdater = (function(document) {
 
 			return -1;
 		},
-		addSpreadsheet: function(jsonSpreadsheet, atIndex) {
+		addSpreadsheet: function(table, atIndex) {
 			if (atIndex === undefined) {
-				this.json.push(jsonSpreadsheet);
+				this.tables.push(table);
 			} else {
-				this.json.splice(atIndex, 0, jsonSpreadsheet);
+				this.tables.splice(atIndex, 0, table);
 			}
-			this.count = this.json.length;
+			this.count = this.table.length;
 		},
 		getCellAttribute: function(cell, attribute) {
 			return cell[attribute];
@@ -3192,72 +3217,37 @@ Sheet.StyleUpdater = (function(document) {
 		 * @param {Sheet.Cell} cell
 		 */
 		setDependencies: function(cell) {
-			//TODO: need to handle the cell's cache that are dependent on this one so that it changes when it is in view
-			//some cells just have a ridiculous amount of dependencies
-			if (cell.dependencies.length > Constructor.maxStoredDependencies) {
-				delete cell.loadedFrom['dependencies'];
-				return this;
-			}
-
-			var i = 0,
-				loadedFrom = cell.loadedFrom,
-				dependencies = cell.dependencies,
-				dependency,
-				max = dependencies.length,
-				jsonDependencies = loadedFrom['dependencies'] = [];
-
-			for(;i<max;i++) {
-				dependency = dependencies[i];
-				jsonDependencies.push({
-					s: dependency.sheetIndex,
-					r: dependency.rowIndex,
-					c: dependency.columnIndex
-				});
-			}
-
 			return this;
 		},
 
 		addDependency: function(parentCell, dependencyCell) {
-			var loadedFrom = parentCell.loadedFrom;
-
-			if (loadedFrom.dependencies === undefined) {
-				loadedFrom.dependencies = [];
-			}
-
-			loadedFrom.dependencies.push({
-				s: dependencyCell.sheetIndex,
-				r: dependencyCell.rowIndex,
-				c: dependencyCell.columnIndex
-			});
-
 			return this;
 		},
 
 		cycleCells: function(sheetIndex, fn) {
-			var json = this.json,
-				jsonSpreadsheet,
+			var tables = this.tables,
+				table,
 				rows,
 				columns,
-				jsonCell,
+				cell,
 				row,
 				rowIndex,
 				columnIndex;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
-			if ((rowIndex = (rows = jsonSpreadsheet.rows).length) < 1) return;
-			if (rows[0].columns.length < 1) return;
+			if ((table = tables[sheetIndex]) === undefined) return;
+			if ((rowIndex = (rows = table.querySelectorAll('tr')).length) < 1) return;
+			if (rows[0].children.length < 1) return;
 
 			rowIndex--;
 			do
 			{
 				row = rows[rowIndex];
-				columns = row.columns;
+				columns = row.children;
 				columnIndex = columns.length - 1;
 				do
 				{
-					jsonCell = columns[columnIndex];
-					fn.call(jsonCell, sheetIndex, rowIndex + 1, columnIndex + 1);
+					cell = columns[columnIndex];
+					fn.call(cell, sheetIndex, rowIndex + 1, columnIndex + 1);
 				}
 				while (columnIndex-- > 0);
 			}
@@ -3266,8 +3256,8 @@ Sheet.StyleUpdater = (function(document) {
 			return this;
 		},
 		cycleCellsAll: function(fn) {
-			var json = this.json,
-				sheetIndex = json.length - 1;
+			var tables = this.tables,
+				sheetIndex = tables.length - 1;
 
 			if (sheetIndex < 0) return;
 
@@ -3279,201 +3269,11 @@ Sheet.StyleUpdater = (function(document) {
 
 			return this;
 		},
-		/**
-		 * Create a table from json
-		 * @param {Array} json array of spreadsheets - schema:<pre>
-		 * [{ // sheet 1, can repeat
-		 *  "title": "Title of spreadsheet",
-		 *  "metadata": {
-		 *	  "widths": [
-		 *		  120, //widths for each column, required
-		 *		  80
-		 *	  ]
-		 *  },
-		 *  "rows": [
-		 *	  { // row 1, repeats for each column of the spreadsheet
-		 *		  "height": 18, //optional
-		 *		  "columns": [
-		 *			  { //column A
-		 *				  "cellType": "", //optional
-		 *				  "class": "css classes", //optional
-		 *				  "formula": "=cell formula", //optional
-		 *				  "value": "value", //optional
-		 *				  "style": "css cell style", //optional
-		 *				  "uneditable": true, //optional
-		 *				  "cache": "" //optional
-		 *			  },
-		 *			  {} //column B
-		 *		  ]
-		 *	  },
-		 *	  { // row 2
-		 *		  "height": 18, //optional
-		 *		  "columns": [
-		 *			  { // column A
-		 *				  "cellType": "", //optional
-		 *				  "class": "css classes", //optional
-		 *				  "formula": "=cell formula", //optional
-		 *				  "value": "value", //optional
-		 *				  "style": "css cell style" //optional
-		 *				  "uneditable": true, //optional
-		 *				  "cache": "" //optional
-		 *			  },
-		 *			  {} // column B
-		 *		  ]
-		 *	  }
-		 *  ]
-		 * }]</pre>
-		 * @returns {*|jQuery|HTMLElement} a simple html table
-		 * @memberOf Sheet.JSONLoader
-		 */
+
 		toTables: function() {
-
-			var json = this.json,
-				max = this.count,
-				tables = $([]),
-				spreadsheet,
-				rows,
-				row,
-				columns,
-				column,
-				metadata,
-				widths,
-				width,
-				frozenAt,
-				hiddenRows,
-				hiddenColumns,
-				height,
-				table,
-				colgroup,
-				col,
-				tr,
-				td,
-				i = 0,
-				j,
-				k;
-
-
-			for (; i < max; i++) {
-				spreadsheet = json[i];
-				table = $(document.createElement('table'));
-				if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');
-
-				tables = tables.add(table);
-
-				rows = spreadsheet['rows'];
-				for (j = 0; j < rows.length; j++) {
-					row = rows[j];
-					if (height = (row['height'] + '').replace('px','')) {
-						tr = $(document.createElement('tr'))
-							.attr('height', height)
-							.css('height', height + 'px')
-							.appendTo(table);
-					}
-					columns = row['columns'];
-					for (k = 0; k < columns.length; k++) {
-						column = columns[k];
-						td = $(document.createElement('td'))
-							.appendTo(tr);
-
-						if (column['class']) td.attr('class', column['class'] || '');
-						if (column['style']) td.attr('style', column['style'] || '');
-						if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
-						if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
-						if (column['value']) td.html(column['value'] || '');
-						if (column['uneditable']) td.html(column['uneditable'] || '');
-						if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
-						if (column['colspan']) td.attr('colspan', column['colspan'] || '');
-						if (column['id']) td.attr('id', column['id'] || '');
-						if (column['cache']) td.html(column['cache']);
-					}
-				}
-
-				if (metadata = spreadsheet['metadata']) {
-					if (widths = metadata['widths']) {
-						colgroup = $(document.createElement('colgroup'))
-							.prependTo(table);
-						for(k = 0; k < widths.length; k++) {
-							width = (widths[k] + '').replace('px', '');
-							col = $(document.createElement('col'))
-								.attr('width', width)
-								.css('width', width + 'px')
-								.appendTo(colgroup);
-						}
-					}
-					if (frozenAt = metadata['frozenAt']) {
-						if (frozenAt['row']) {
-							table.attr('data-frozenatrow', frozenAt['row']);
-						}
-						if (frozenAt['col']) {
-							table.attr('data-frozenatcol', frozenAt['col']);
-						}
-					}
-
-					if (hiddenRows = metadata['hiddenRows']) {
-						table.attr('data-hiddenrows', hiddenRows.join(','));
-					}
-
-					if (hiddenColumns = metadata['hiddenColumns']) {
-						table.attr('data-hiddencolumns', hiddenColumns.join(','));
-					}
-				}
-			}
-
-			return tables;
+			return this.tables;
 		},
 
-		/**
-		 * Create json from jQuery.sheet Sheet instance
-		 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
-		 * @returns {Array}  - schema:<pre>
-		 * [{ // sheet 1, can repeat
-				 *  "title": "Title of spreadsheet",
-				 *  "metadata": {
-				 *	  "widths": [
-				 *		  "120px", //widths for each column, required
-				 *		  "80px"
-				 *	  ],
-				 *	  "frozenAt": {row: 0, col: 0},
-				 *	  "hiddenRows": [1,2,3],
-				 *	  "hiddenColumns": [1,2,3]
-				 *  },
-				 *  "rows": [
-				 *	  { // row 1, repeats for each column of the spreadsheet
-				 *		  "height": "18px", //optional
-				 *		  "columns": [
-				 *			  { //column A
-				 *				  "cellType": "", //optional
-				 *				  "class": "css classes", //optional
-				 *				  "formula": "=cell formula", //optional
-				 *				  "value": "value", //optional
-				 *				  "style": "css cell style", //optional
-				 *				  "uneditable": false,  //optional
-				 *				  "cache": "",  //optional
-				 *				  "id": "" //optional
-				 *			  },
-				 *			  {} //column B
-				 *		  ]
-				 *	  },
-				 *	  { // row 2
-				 *		  "height": "18px", //optional
-				 *		  "columns": [
-				 *			  { // column A
-				 *				  "cellType": "", //optional
-				 *				  "class": "css classes", //optional
-				 *				  "formula": "=cell formula", //optional
-				 *				  "value": "value", //optional
-				 *				  "style": "css cell style", //optional
-				 *				  "uneditable": true, //optional
-				 *				  "cache": "", //optional
-				 *				  "id": "" //optional
-				 *			  },
-				 *			  {} // column B
-				 *		  ]
-				 *	  }
-				 *  ]
-				 * }]</pre>
-		 * @memberOf Sheet.JSONLoader
-		 */
 		fromSheet: function(doNotTrim) {
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
 
@@ -3481,14 +3281,18 @@ Sheet.StyleUpdater = (function(document) {
 				jS = this.jS,
 				i = 1 * jS.i,
 				pane,
-				sheet = jS.spreadsheets.length - 1,
-				jsonSpreadsheet,
 				spreadsheet,
+				sheet = jS.spreadsheets.length - 1,
+				tables,
+				table,
+				tBody,
+				colGroup,
+				col,
 				row,
 				column,
 				parentAttr,
-				jsonRow,
-				jsonColumn,
+				tr,
+				td,
 				cell,
 				attr,
 				cl,
@@ -3504,34 +3308,29 @@ Sheet.StyleUpdater = (function(document) {
 				jS.i = sheet;
 				jS.evt.cellEditDone();
 				pane = jS.obj.pane();
-				jsonSpreadsheet = {
-					"title": (jS.obj.table().attr('title') || ''),
-					"rows": [],
-					"metadata": {
-						"widths": [],
-						"frozenAt": {
-							"row": pane.actionUI.frozenAt.row,
-							"col": pane.actionUI.frozenAt.col
-						}
-					}
-				};
+				table = document.createElement('table');
+				tBody = document.createElement('tBody');
+				colGroup = document.createElement('colGroup');
+				table.setAttribute('title', jS.obj.table().attr('title'));
+				table.setAttribute('data-frozenatrow', pane.action.frozenAt.row);
+				table.setAttribute('data-frozenatcol', pane.action.frozenAt.col);
+				table.appendChild(colGroup);
+				table.appendChild(tBody);
 
-				output.unshift(jsonSpreadsheet);
+				output.unshift(table);
 
 				spreadsheet = jS.spreadsheets[sheet];
 				row = spreadsheet.length - 1;
 				do {
 					parentEle = spreadsheet[row][1].td.parentNode;
 					parentHeight = parentEle.style['height'];
-					jsonRow = {
-						"columns": [],
-						"height": (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin)
-					};
+					tr = document.createElement('tr');
+					tr.style.height = (parentHeight ? parentHeight : jS.s.colMargin + 'px');
 
 					column = spreadsheet[row].length - 1;
 					do {
 						cell = spreadsheet[row][column];
-						jsonColumn = {};
+						td = document.createElement('td');
 						attr = cell.td.attributes;
 
 						if (doNotTrim || rowHasValues || attr['class'] || cell['formula'] || cell['value'] || attr['style']) {
@@ -3545,35 +3344,37 @@ Sheet.StyleUpdater = (function(document) {
 
 							parent = cell.td.parentNode;
 
-							jsonRow.columns.unshift(jsonColumn);
+							tr.insertBefore(td, tr.firstChild);
 
-							if (!jsonRow["height"]) {
-								jsonRow["height"] = (parent.style['height'] ? parent.style['height'].replace('px' , '') : jS.s.colMargin);
+							if (!tr.style.height) {
+								tr.style.height = (parent.style.height ? parent.style.height : jS.s.colMargin + 'px');
 							}
 
-							if (cell['formula']) jsonColumn['formula'] = cell['formula'];
-							if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
-							if (cell['value']) jsonColumn['value'] = cell['value'];
-							if (cell['uneditable']) jsonColumn['uneditable'] = cell['uneditable'];
-							if (cell['cache']) jsonColumn['cache'] = cell['cache'];
-							if (cell['id']) jsonColumn['id'] = cell['id'];
-							if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
+							if (cell['formula']) td.setAttribute('data-formula', cell['formula']);
+							if (cell['cellType']) td.setAttribute('cellType', cell['cellType']);
+							if (cell['value']) td.setAttribute('value', cell['value']);
+							if (cell['uneditable']) td.setAttribute('uneditable', cell['uneditable']);
+							if (cell['cache']) td.setAttribute('cache', cell['cache']);
+							if (cell['id']) td.setAttribute('id', cell['id']);
+							if (attr['style'] && attr['style'].value) td.setAttribute('style', attr['style'].value);
 
 
 							if (cl.length) {
-								jsonColumn['class'] = cl;
+								td.className = cl;
 							}
-							if (attr['rowspan']) jsonColumn['rowspan'] = attr['rowspan'].value;
-							if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
+							if (attr['rowspan']) td['rowspan'] = attr['rowspan'].value;
+							if (attr['colspan']) td['colspan'] = attr['colspan'].value;
 
 							if (row * 1 == 1) {
-								jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
+								col = document.createElement('col');
+								col.style.width = $(jS.col(null, column)).css('width');
+								colGroup.insertBefore(col, colGroup.firstChild);
 							}
 						}
 					} while (column-- > 1);
 
 					if (rowHasValues) {
-						jsonSpreadsheet.rows.unshift(jsonRow);
+						tBody.insertBefore(tr, tBody.firstChild);
 					}
 
 				} while (row-- > 1);
@@ -3582,159 +3383,17 @@ Sheet.StyleUpdater = (function(document) {
 
 			return this.json = output;
 		},
-		type: Constructor,
-		typeName: 'Sheet.JSONLoader',
+		type: HTMLTable,
+		typeName: 'Sheet.Loader.HTMLTable',
 
 		clearCaching: function() {
-			var json = this.json,
-				spreadsheet,
-				row,
-				rows,
-				column,
-				columns,
-				sheetIndex = 0,
-				rowIndex,
-				columnIndex,
-				sheetMax = json.length,
-				rowMax,
-				columnMax;
-
-			for (;sheetIndex < sheetMax; sheetIndex++) {
-				spreadsheet = json[sheetIndex];
-				rows = spreadsheet['rows'];
-				rowMax = rows.length;
-
-				for (rowIndex = 0; rowIndex < rowMax; rowIndex++) {
-					row = rows[rowIndex];
-					columns = row['columns'];
-					columnMax = columns.length;
-
-					for (columnIndex = 0; columnIndex < columnMax; columnIndex++) {
-						column = columns[columnIndex];
-
-						delete column['cache'];
-						delete column['dependencies'];
-						delete column['parsedFormula'];
-					}
-				}
-			}
-
 			return this;
-		},
-		/**
-		 *
-		 */
-		download: function(rowSplitAt) {
-			rowSplitAt = rowSplitAt || 500;
-
-			var w = window.open(),
-				d,
-				entry,
-				json = this.json,
-				i = 0,
-				max = json.length - 1,
-				spreadsheet;
-
-
-			//popup blockers
-			if (w !== undefined) {
-				d = w.document;
-				d.write('<html>\
-	<head id="head"></head>\
-	<body>\
-		<div id="entry">\
-		</div>\
-	</body>\
-</html>');
-
-				entry = $(d.getElementById('entry'));
-
-				while (i <= max) {
-					spreadsheet = json[i];
-
-					//strategy: slice spreadsheet into parts so JSON doesn't get overloaded and bloated
-					if (spreadsheet.rows.length > rowSplitAt) {
-						var spreadsheetPart = {
-								title: spreadsheet.title,
-								metadata: spreadsheet.metadata,
-								rows: []
-							},
-							rowParts = [],
-							rowIndex = 0,
-							row,
-							rows = spreadsheet.rows,
-							rowCount = rows.length,
-							fileIndex = 1,
-							setIndex = 0,
-							addFile = function(json, index) {
-								entry.append(document.createElement('br'));
-								entry
-									.append(
-									$(document.createElement('a'))
-										.attr('download', spreadsheet.title + '-part' + index +'.json')
-										.attr('href', URL.createObjectURL(new Blob([JSON.stringify(json)], {type: "application/json"})))
-										.text(spreadsheet.title + ' - part ' + index)
-								);
-							};
-
-						addFile(spreadsheetPart, fileIndex);
-						/*entry
-						 .append(
-						 document.createElement('br')
-						 )
-						 .append(
-						 $(document.createElement('a'))
-						 .attr('download', spreadsheet.title + '-part' + fileIndex +'.json')
-						 .attr('href', new Blob([JSON.stringify()], {type: "application/json"}))
-						 .text(spreadsheet.title + ' part:' + fileIndex)
-						 );*/
-
-						while (rowIndex < rowCount) {
-							if (setIndex === rowSplitAt) {
-								setIndex = 0;
-								fileIndex++;
-
-								addFile(rowParts, fileIndex);
-
-								rowParts = [];
-							}
-							rowParts.push(rows[rowIndex]);
-							setIndex++;
-							rowIndex++
-						}
-
-						if (rowParts.length > 0) {
-							fileIndex++;
-							addFile(rowParts, fileIndex);
-						}
-					}
-
-					//strategy: stringify sheet and output
-					else {
-						entry
-							.append(
-							document.createElement('br')
-						)
-							.append(
-							$(document.createElement('a'))
-								.attr('download', spreadsheet.title + '.json')
-								.attr('href', URL.createObjectURL(new Blob([JSON.stringify(spreadsheet)], {type: "application/json"})))
-								.text(spreadsheet.title)
-						);
-					}
-					i++;
-				}
-
-
-				d.close();
-				w.focus();
-			}
 		}
 	};
 
-	Constructor.maxStoredDependencies = 100;
+	HTMLTable.maxStoredDependencies = 100;
 
-	return Constructor;
+	return HTMLTable;
 })(jQuery, document, String);/**
  * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
  * @author RobertLeePlummerJr@gmail.com
@@ -7952,17 +7611,16 @@ $.sheet = {
 					/**
 					 * Creates the spreadsheet user interface
 					 * @param {HTMLElement} ui raw user interface
-					 * @param {HTMLElement} table raw table
 					 * @param {Number} i the new count for spreadsheets in this instance
 					 * @memberOf jS.controlFactory
 					 */
-					sheetUI:function (ui, table, i) {
+					sheetUI:function (ui, i) {
 						jS.i = i;
 
-						jS.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
+						//TODO: readOnly from metadata
+						//jS.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
 
-						var hasChildren = table.tBody.children.length > 0,
-							enclosure = jS.controlFactory.enclosure(table),
+						var enclosure = jS.controlFactory.enclosure(),
 							settings = jS.s,
 							hiddenRows = settings.hiddenRows[i],
 							hiddenColumns = settings.hiddenColumns[i],
@@ -7989,11 +7647,6 @@ $.sheet = {
 							};
 
 						ui.appendChild(enclosure);
-
-						jS.controlFactory.barTop(table);
-						jS.controlFactory.barLeft(table);
-
-						pane.appendChild(table);
 
 						if (jS.isSheetEditable()) {
 							jS.controlFactory.autoFiller(pane);
@@ -8083,33 +7736,10 @@ $.sheet = {
 								.bind('cellEdit', jS.evt.cellEdit);
 						}
 
-						jS.createSpreadsheet(table, i);
+						//jS.createSpreadsheet(i);
 
-						if (settings.loader !== null) {
-							hiddenRows = settings.loader.hiddenRows(i);
-							hiddenColumns = settings.loader.hiddenColumns(i);
-						}
-
-						else {
-							hiddenRows = hiddenRows || null;
-							hiddenColumns = hiddenColumns || null;
-
-							if (hiddenRows === null || hiddenRows.length < 1) {
-								hiddenRows = table.getAttribute('data-hiddenrows');
-
-								if (hiddenRows !== null) {
-									hiddenRows = arrHelpers.toNumbers(hiddenRows.split(','));
-								}
-							}
-
-							if (hiddenColumns === null || hiddenColumns.length < 1) {
-								hiddenColumns = table.getAttribute('data-hiddencolumns');
-
-								if (hiddenColumns !== null) {
-									hiddenColumns = arrHelpers.toNumbers(hiddenColumns.split(','));
-								}
-							}
-						}
+						hiddenRows = settings.loader.hiddenRows(i);
+						hiddenColumns = settings.loader.hiddenColumns(i);
 
 						if (settings.hiddenRows[i] === u) {
 							settings.hiddenRows[i] = [];
@@ -8119,12 +7749,10 @@ $.sheet = {
 						}
 
 						//hide cells, if we use loader, it is done dynamically as the cells are built, otherwise it is done here
-						enclosure.actionUI.hide(jS, hiddenColumns, s.loader === null ? hiddenRows : null);
+						//enclosure.actionUI.hide(jS, hiddenColumns, s.loader === null ? hiddenRows : null);
 
 						settings.hiddenRows[i] = hiddenRows;
 						settings.hiddenColumns[i] = hiddenColumns;
-
-						jS.checkMinSize(table);
 
 						jS.controlFactory.tab();
 
@@ -8136,116 +7764,19 @@ $.sheet = {
 					 * @returns {*|jQuery|HTMLElement}
 					 * @memberOf jS.controlFactory
 					 */
-					enclosure:function (table) {
+					enclosure:function () {
 						var enclosure = document.createElement('div'),
 							$enclosure = $(enclosure),
-							actionUI = new Sheet.ActionUI(enclosure, table, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
-							scrollUI = actionUI.scrollUI,
-							pane = actionUI.pane,
-							tBody = table.tBody,
-							rows = tBody.children,
-							columns = table.colGroup.children,
-							scrollAction,
-							lastScrollLeft = 0,
-							lastScrollTop = 0,
-							scrollLeft,
-							scrollTop,
-							xUpdated,
-							yUpdated;
-
-						table.size = function() { return jS.tableSize(table); };
-						pane.size = function() { return jS.sheetSize(table); };
-
-						pane.scrollToX = function () {
-							//since you can only scroll one direction at a time, check that and if scrolled Y, then skip x
-							if (yUpdated) return;
-
-							xUpdated = false;
-							scrollLeft = scrollUI.scrollLeft;
-							if (lastScrollLeft !== scrollLeft) {
-								lastScrollLeft = scrollLeft;
-								xUpdated = actionUI.scrollToPixelX(scrollLeft);
-							}
-						};
-
-						pane.scrollToY = function () {
-							yUpdated = false;
-							scrollTop = scrollUI.scrollTop;
-							if (lastScrollTop !== scrollTop) {
-								yUpdated = actionUI.scrollToPixelY(scrollTop, lastScrollTop > scrollTop);
-								lastScrollTop = scrollTop;
-							}
-						};
-
-						pane.updateX = function () {
-							//since you can only scroll one direction at a time, check that and if scrolled Y, then skip x
-							if (yUpdated) return;
-
-							if (xUpdated) {
-								jS.calcVisibleCol(actionUI);
-							}
-						};
-
-						pane.updateY = function () {
-							if (yUpdated) {
-								jS.calcVisibleRow(actionUI);
-							}
-						};
-
-						pane.finishScroll = function () {
-							if (xUpdated || yUpdated) {
-								jS.obj.barHelper().remove();
-								jS.autoFillerGoToTd();
-								if (pane.inPlaceEdit) {
-									pane.inPlaceEdit.goToTd();
-								}
-							}
-						};
-
-						scrollAction = [
-							pane.updateY,
-							pane.scrollToY,
-							pane.updateX,
-							pane.scrollToX,
-							pane.finishScroll
-						];
-
-						//here we have two different types of functionality to cut down on logic between behaviours.
-						scrollUI.onscroll = function () {
-							this.scrollTop = 0;
-							this.scrollLeft = 0;
-
-							scrollUI.onscroll = function() {
-								if (jS.isBusy()) return;
-								thaw(scrollAction);
-							}
-						};
-
-						scrollUI.onmousedown = function() {
-							jS.obj.barHelper().remove();
-						};
-
-						enclosure.actionUI = pane.actionUI = actionUI;
-
-						enclosure.scrollUI = pane.scrollUI = scrollUI;
-						enclosure.appendChild(scrollUI);
-						scrollUI.scrollTop = 0;
-						scrollUI.scrollLeft = 0;
+							actionUI = new Sheet.ActionUI(jS, enclosure, jS.cl.scroll, jS.s.frozenAt[jS.i], $.sheet.max),
+							pane = actionUI.pane;
 
 						pane.setAttribute('class', jS.cl.pane + ' ' + jS.theme.pane);
-						enclosure.appendChild(pane);
 						enclosure.setAttribute('class', jS.cl.enclosure);
 
 						enclosure.pane = pane;
-						enclosure.table = table;
 
-						pane.table = table;
 						pane.enclosure = enclosure;
 						pane.$enclosure = $enclosure;
-
-						table.pane = pane;
-						table.enclosure = enclosure;
-						table.$enclosure = $enclosure;
 
 						jS.controls.pane[jS.i] = pane;
 						jS.controls.panes = jS.obj.panes().add(pane);
@@ -9559,17 +9090,15 @@ $.sheet = {
 
 				/**
 				 * Cycles through all the td's and turns table into spreadsheet
-				 * @param {HTMLElement} table spreadsheet
 				 * @param {Number} i spreadsheet index within instance
 				 * @memberOf jS
 				 */
-				createSpreadsheet:function (table, i) {
-					this.createSpreadsheetForArea(table, i);
-				},
+				/*createSpreadsheet:function (i) {
+					this.createSpreadsheetForArea(i);
+				},*/
 
 				/**
 				 * Cycles through all the td's and turns table into spreadsheet
-				 * @param {HTMLElement} table spreadsheet
 				 * @param {Number} i spreadsheet index within instance
 				 * @param {Number} [rowStart]
 				 * @param {Number} [rowEnd]
@@ -9577,7 +9106,7 @@ $.sheet = {
 				 * @param {Number} [colEnd]
 				 * @memberOf jS
 				 */
-				createSpreadsheetForArea:function (table, i, rowStart, rowEnd, colStart, colEnd) {
+				/*createSpreadsheetForArea:function (i, rowStart, rowEnd, colStart, colEnd) {
 					var rowIndex,
 						tBody = table.tBody,
 						columnIndex,
@@ -9691,7 +9220,7 @@ $.sheet = {
 							}
 						}
 					}
-				},
+				},*/
 
 
 				toggleHideRow: function(i) {
@@ -10297,49 +9826,6 @@ $.sheet = {
 
 					if (fn) {
 						fn(o);
-					}
-				},
-
-
-
-
-				/**
-				 * Ensure sheet minimums have been met, if not add columns and rows
-				 * @param {jQuery|HTMLElement} table object
-				 * @memberOf jS
-				 */
-				checkMinSize:function (table) {
-					var size = jS.tableSize(table),
-						addRows = s.minSize.rows || 0,
-						addCols = s.minSize.cols || 0,
-						actionUI = jS.obj.pane().actionUI,
-						frozenAt = actionUI.frozenAt;
-
-					addRows = Math.max((frozenAt.row > addRows ? frozenAt.row + 1 : addRows), 1, s.initScrollRows);
-					addCols = Math.max((frozenAt.col > addCols ? frozenAt.col + 1 : addCols), 1, s.initScrollCols);
-
-					if (size.cols < addCols) {
-						addCols -= size.cols;
-
-						if (actionUI.hiddenColumns.length > 0) {
-							addCols += arrHelpers.indexOfNearestLessThan(actionUI.hiddenColumns, addCols) + 1;
-						}
-
-						jS.controlFactory.addColumnMulti(null, addCols, false, true, true);
-					}
-
-					//The sheet size (rows) may have changed
-					size = jS.tableSize(table);
-
-					if (size.rows < addRows) {
-						addRows -= size.rows;
-
-						//TODO
-						//if (actionUI.hiddenRows.length > 0) {
-						//	addRows += arrHelpers.indexOfNearestLessThan(actionUI.hiddenRows, addRows) + 1;
-						//}
-
-						jS.controlFactory.addRowMulti(null, addRows, false, true, true);
 					}
 				},
 
@@ -11008,197 +10494,6 @@ $.sheet = {
 					}
 				},
 
-				calcVisiblePos: [],
-				calcVisibleInit: function(sheetIndex) {
-					sheetIndex = sheetIndex || jS.i;
-
-					var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
-						min = Math.min,
-						initRows = s.initCalcRows,
-						initCols = s.initCalcCols,
-						rowIndex = 1,
-						rowIndexMax = min(spreadsheet.length - 1, initRows),
-						row,
-						columnIndex,
-						columnIndexMax,
-						pos = {row: -1, col: -1},
-						stack = [],
-						each = function() {
-							this.cell.rowIndex = this.rowIndex;
-							this.cell.columnIndex = this.columnIndex;
-							this.cell.updateValue();
-						},
-						done = function() {
-							stack.length = 0;
-							jS.trigger('sheetCalculation', [
-								{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
-							]);
-						};
-
-
-					pos.row = rowIndexMax;
-					for (;rowIndex <= rowIndexMax; rowIndex++) {
-						if (rowIndex > 0 && (row = spreadsheet[rowIndex]) !== u) {
-							columnIndexMax = pos.col = min(row.length - 1, initCols);
-							columnIndex = 1;
-
-							for (;columnIndex <= columnIndexMax;columnIndex++) {
-								stack.push({
-									cell: row[columnIndex],
-									rowIndex: rowIndex,
-									columnIndex: columnIndex
-								});
-							}
-
-						}
-					}
-
-
-					thaw(stack, {
-						each: each,
-						done: done
-					});
-
-					this.calcVisiblePos[jS.i] = pos;
-					jS.setChanged(false);
-				},
-				calcVisibleRow: function(actionUI, sheetIndex) {
-					sheetIndex = sheetIndex || jS.i;
-
-					var spreadsheet = jS.spreadsheets[sheetIndex],
-						initRows = s.initCalcRows,
-						table = actionUI.table,
-						pane = actionUI.pane,
-						columnIndex,
-						columnMax,
-						calcVisiblePos = this.calcVisiblePos[jS.i] || {
-								row: -1,
-								col: -1
-							},
-						grow = function() {
-							var stack = [],
-								sheetSize = pane.size(),
-								tableSize = table.size(),
-								rowIndex,
-								row,
-								cell;
-
-							if(
-								tableSize.rows < initRows
-								&& spreadsheet.length <= sheetSize.rows
-								&& calcVisiblePos.row <= (sheetSize.rows + 1)
-							) {
-								rowIndex = calcVisiblePos.row;//self incrementing
-
-								calcVisiblePos.row++;
-
-								columnIndex = 1;
-								columnMax = calcVisiblePos.col;
-								for (; columnIndex <= columnMax; columnIndex++) {
-									row = spreadsheet[rowIndex];
-									cell = row !== u ? row[columnIndex] : u;
-
-									stack.push({
-										row: row,
-										cell: cell,
-										rowIndex: rowIndex,
-										columnIndex: columnIndex
-									});
-								}
-
-								thaw(stack, {
-									each: function() {
-										if (this.row === u || (this.row = spreadsheet[this.rowIndex]) === u) {
-											if (spreadsheet[this.rowIndex] === u) {
-												jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex + 1, this.columnIndex, this.columnIndex);
-												this.row = spreadsheet[this.rowIndex];
-											}
-										} else {
-											if ((this.cell = this.row[this.columnIndex]) === u) {
-												jS.createCell(jS.i, this.rowIndex, this.columnIndex);
-												this.cell = this.row[this.columnIndex];
-											}
-										}
-									},
-									done: function() {
-										grow();
-									}
-								});
-							}
-						};
-
-					calcVisiblePos.row = calcVisiblePos.row >= 0 ? calcVisiblePos.row : initRows;
-
-					grow();
-
-					jS.setChanged(false);
-				},
-				calcVisibleCol: function(actionUI, sheetIndex) {
-					sheetIndex = sheetIndex || jS.i;
-
-					var spreadsheet = jS.spreadsheetToArray(null, sheetIndex) || [],
-						endScrolledArea = actionUI.scrolledArea,
-						sheetSize = actionUI.pane.size(),
-						initRows = s.initCalcRows,
-						initCols = s.initCalcCols,
-						targetRow = Math.max((endScrolledArea.row + initRows) - 1, actionUI.foldArea.row),
-						targetCol = Math.max((endScrolledArea.col + initCols) - 1, actionUI.foldArea.col),
-						rowIndex,
-						row,
-						colIndex,
-						cell,
-						oldPos = this.calcVisiblePos[jS.i] || {
-								row: -1,
-								col: -1
-							},
-						newPos = {row: oldPos.row, col: oldPos.col},
-						stack = [],
-						each = function() {
-							if (this.row === u || this.cell === u) {
-								jS.createSpreadsheetForArea(actionUI.table, sheetIndex, this.rowIndex, this.rowIndex, this.colIndex, this.colIndex + 1);
-								this.row = spreadsheet[this.rowIndex];
-							}
-
-							if (this.row === u) {
-								return;
-							}
-
-							cell = this.row[this.colIndex];
-							if (cell === u) {
-								return;
-							}
-							cell.updateValue();
-						};
-
-					targetRow = targetRow < sheetSize.rows ? targetRow : sheetSize.rows;
-					targetCol = targetCol < sheetSize.cols ? targetCol : sheetSize.cols;
-					rowIndex = targetRow;
-
-					if (rowIndex > 0 && targetCol > 0) {
-						do {
-							colIndex = targetCol;
-							row = spreadsheet[rowIndex];
-							stack.push({
-								row: row,
-								cell: row !== u ? row[colIndex] : u,
-								rowIndex: rowIndex,
-								colIndex: colIndex
-							});
-						} while(rowIndex-- > 1);
-					}
-
-					this.calcVisiblePos[jS.i] = newPos;
-
-					thaw(stack,{
-						each: each
-					});
-
-					jS.trigger('sheetCalculation', [
-						{which:'spreadsheet', sheet:spreadsheet, index:sheetIndex}
-					]);
-					jS.setChanged(false);
-				},
-
 				/**
 				 * Calculates just the dependencies of a single cell, and their dependencies recursively
 				 * @param {Sheet.Cell} cell
@@ -11291,7 +10586,6 @@ $.sheet = {
 					jS.obj.menus().remove();
 					jS.obj.tabContainer().children().eq(jS.i).remove();
 					jS.spreadsheets.splice(oldI, 1);
-					jS.calcVisiblePos.splice(oldI, 1);
 					jS.controls.autoFiller.splice(oldI, 1);
 					jS.controls.bar.helper.splice(oldI, 1);
 					jS.controls.bar.corner.splice(oldI, 1);
@@ -11520,13 +10814,10 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				sheetTab:function (get, callback) {
-					var sheetTab = '',
-						table;
+					var sheetTab = '';
 					if (get) {
-						table = jS.obj.table();
-						sheetTab = table.attr('title') || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1);
+						sheetTab = s.loader.title(jS.i) || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1);
 						if (callback) {
-							table.attr('title', sheetTab);
 							callback(sheetTab);
 						}
 						return sheetTab;
@@ -11535,7 +10826,7 @@ $.sheet = {
 							jS.msg.newSheetTitle,
 							function(newTitle) {
 								if (!newTitle) { //The user didn't set the new tab name
-									sheetTab = jS.obj.table().attr('title');
+									sheetTab = s.loader.title(jS.i);
 									newTitle = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
 								} else {
 									jS.setDirty(true);
@@ -11570,7 +10861,7 @@ $.sheet = {
 
 					jS.setBusy(true);
 
-					actionUI.putTdInView(td);
+					//actionUI.putTdInView(td);
 
 					jS.setBusy(false);
 
@@ -11683,17 +10974,17 @@ $.sheet = {
 
 					jS.highlighter.setTab(jS.obj.tab());
 
-					jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/i) != null;
+					//jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/i) != null;
 
 					pane = enclosure.pane;
 					if (pane.inPlaceEdit) {
 						pane.inPlaceEdit.goToTd();
 					}
 
-					enclosure.scrollUI.scrollLeft = enclosure._scrollLeft || enclosure.scrollUI.scrollLeft;
-					enclosure.scrollUI.scrollTop = enclosure._scrollTop || enclosure.scrollUI.scrollTop;
-					enclosure._scrollLeft = enclosure._scrollTop = null;
-					enclosure.scrollUI.onscroll();
+					pane.scroll.scrollLeft = pane._scrollLeft || pane.scroll.scrollLeft;
+					pane.scroll.scrollTop = pane._scrollTop || pane.scroll.scrollTop;
+					pane._scrollLeft = pane._scrollTop = null;
+					//enclosure.scroll.onscroll();
 				},
 
 
@@ -11767,10 +11058,6 @@ $.sheet = {
 										jS.setDirty(false);
 										jS.setBusy(false);
 
-										while (stack.length > 0) {
-											jS.calcVisibleInit(jS.i = stack.pop());
-										}
-
 										jS.trigger('sheetAllOpened');
 									},
 									lastIndex: lastIndex
@@ -11827,16 +11114,11 @@ $.sheet = {
 									s.loader.addSpreadsheet(data);
 								}
 
-								if (!table.hasAttribute('title')) {
-									table.setAttribute('title', s.loader.title(i));
-								}
-
 								var showSpreadsheet = function() {
 										jS.obj.ui.removeChild(jS.obj.enclosure());
 										jS.setBusy(true);
 										var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, options);
 										jS.setActiveSheet(-1, spreadsheetUI);
-										jS.calcVisibleInit(i);
 										jS.setBusy(false);
 										jS.sheetSyncSize();
 									},
@@ -11848,7 +11130,7 @@ $.sheet = {
 								}
 
 
-								tab = jS.controlFactory.customTab(table.getAttribute('title'))
+								tab = jS.controlFactory.customTab(loader.title(i))
 									.mousedown(function () {
 										showSpreadsheet();
 										jS.obj.tab().insertBefore(this);
@@ -11956,7 +11238,7 @@ $.sheet = {
 
 					jS.obj.panes().each(function() {
 						var style = this.style,
-							scrollStyle = this.actionUI.scrollUI.style,
+							scrollStyle = this.scroll.style,
 							enclosureStyle = this.enclosure.style;
 
 						style.height = paneHeight;
@@ -13143,7 +12425,7 @@ $.sheet = {
 
 		jS.highlighter = new Sheet.Highlighter(jS.theme.tdHighlighted, jS.theme.barHighlight, jS.theme.tabActive, function() {
 			//Chrome has a hard time rendering table col elements when they change style, this triggers the table to be re-rendered
-			jS.obj.pane().actionUI.redraw();
+			//jS.obj.pane().actionUI.redraw();
 		});
 
 		//We need to take the sheet out of the parent in order to get an accurate reading of it's height and width
@@ -13234,23 +12516,23 @@ $.sheet = {
 		s.parent.addClass(jS.theme.parent);
 
 		if (s.origHtml.length) {
-			jS.openSheet(s.origHtml);
+			jS.openSheet(s.loader);
 		} else {
 			if (s.loader !== null) {
 				s.loader
 					.bindJS(jS)
 					.bindHandler(jS.cellHandler);
 
-				while(loaderTables.length < s.loader.count) {
+				/*while(loaderTables.length < s.loader.count) {
 					loaderTable = document.createElement('table');
 					loaderTable.setAttribute('title', s.loader.title(loaderTables.length) || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, loaderTables.length + 1));
 					loaderTables.push(loaderTable);
-				}
-				jS.openSheet(loaderTables);
+				}*/
+				jS.openSheet(s.loader);
 			}
 
 			else {
-				jS.openSheet([document.createElement('table')]);
+				jS.openSheet(s.loader);
 			}
 		}
 

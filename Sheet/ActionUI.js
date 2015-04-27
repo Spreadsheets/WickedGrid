@@ -6,6 +6,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 	var ActionUI = function(jS, enclosure, cl, frozenAt, max) {
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
+		enclosure.appendChild(this.pane);
 		this.max = max;
 
 		this.xIndex = 0;
@@ -44,16 +45,38 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			//TODO: connect megatable up to Loader
 			megaTable = this.megaTable = new MegaTable({
+				columns: 30,
+				rows: 70,
 				element: pane,
 				updateCell: function(row, column, td) {
-					jS.getCell(jS.i);
+					if (typeof td.jSCell === 'object' && td.jSCell !== null) {
+						td.jSCell.td = null;
+					}
+
+					var cell = jS.getCell(jS.i, row + 1, column + 1);
+
+					if (cell === null) return;
+
+					cell.td = td;
+					td.style = cell.style;
+					td.className = cell.class;
+					td.jSCell = cell;
+					cell.updateValue();
+				},
+				updateCorner: function() {
+
 				},
 				updateRowHeader: function(i, header) {
-					header.innerHTML = i;
+					header.className = jS.cl.barLeft;
+					header.innerHTML = i + 1;
+					header.style.height = jS.s.loader.getHeight(jS.i, i) + 'px';
 				},
-				updateColumnHeader: function(i, header) {
-					header.innerHTML = i;
-				}
+				updateColumnHeader: function(i, header, col) {
+					header.className = jS.cl.barTop;
+					header.innerHTML = jSE.columnLabelString(i + 1);
+					col.style.width = jS.s.loader.getWidth(jS.i, i) + 'px';
+				},
+				strict: true
 			}),
 
 			infiniscroll = this.infiniscroll = new Infiniscroll(pane, {
@@ -64,7 +87,12 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				horizontalScrollDensity: 25
 			});
 
-		new MouseWheel(pane, this.mt._out);
+		new MouseWheel(pane, infiniscroll._out);
+
+		megaTable.table.className += ' ' + jS.cl.table + ' ' + jS.theme.table;
+		megaTable.table.setAttribute('cellSpacing', '0');
+		megaTable.table.setAttribute('cellPadding', '0');
+		pane.scroll = infiniscroll._out;
 	};
 
 	ActionUI.prototype = {

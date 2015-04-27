@@ -1,17 +1,6 @@
-/**
- * @project jQuery.sheet() The Ajax Spreadsheet - http://code.google.com/p/jquerysheet/
- * @author RobertLeePlummerJr@gmail.com
- * $Id: jquery.sheet.dts.js 933 2013-08-28 12:59:30Z robertleeplummerjr $
- * Licensed under MIT
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- */
-
 ;Sheet.Loader.HTMLTable = (function($, document, String) {
 	"use strict";
-	function Constructor(tables) {
+	function HTMLTable(tables) {
 		if (tables !== undefined) {
 			this.tables = tables;
 			this.count = tables.length;
@@ -25,7 +14,7 @@
 		this.handler = null;
 	}
 
-	Constructor.prototype = {
+	HTMLTable.prototype = {
 		bindJS: function(jS) {
 			this.jS = jS;
 			return this;
@@ -161,26 +150,26 @@
 			return cell;
 		},
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
-			var json = this.json,
-				jsonSpreadsheet,
+			var tables = this.tables,
+				table,
 				rows,
 				row,
 				cell;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return null;
-			if ((rows = jsonSpreadsheet.rows) === undefined) return null;
+			if ((table = tables[sheetIndex]) === undefined) return null;
+			if ((rows = table.querySelectorAll('tr')) === undefined) return null;
 			if ((row = rows[rowIndex - 1]) === undefined) return null;
-			if ((cell = row.columns[columnIndex - 1]) === undefined) return null;
+			if ((cell = row.children[columnIndex - 1]) === undefined) return null;
 
 			return cell;
 		},
 		jitCell: function(sheetIndex, rowIndex, columnIndex) {
-			var jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
+			var tdCell = this.getCell(sheetIndex, rowIndex, columnIndex);
 
-			if (jsonCell === null) return null;
+			if (tdCell === null) return null;
 
-			if (jsonCell.getCell !== undefined) {
-				return jsonCell.getCell();
+			if (tdCell.getCell !== undefined) {
+				return tdCell.getCell();
 			}
 
 			var jitCell,
@@ -205,34 +194,34 @@
 				hasUneditable,
 				hasDependencies;
 
-			id = jsonCell['id'];
-			value = jsonCell['value'];
-			cache = jsonCell['cache'];
-			formula = jsonCell['formula'];
-			parsedFormula = jsonCell['parsedFormula'];
-			cellType = jsonCell['cellType'];
-			uneditable = jsonCell['uneditable'];
-			dependencies = jsonCell['dependencies'];
+			id = tdCell.getAttribute('id');
+			value = tdCell.innerHTML;
+			//cache = tdCell.getAttribute('data-cache');
+			formula = tdCell.getAttribute('data-formula');
+			//parsedFormula = jsonCell['parsedFormula'];
+			cellType = tdCell.getAttribute('data-celltype');
+			uneditable = tdCell.getAttribute('data-uneditable');
+			//dependencies = tdCell.getAttribute('dependencies');
 
-			hasId = (id !== undefined && id !== null);
-			hasValue = (value !== undefined && value !== null);
-			hasCache = (cache !== undefined && cache !== null && (cache + '').length > 0);
-			hasFormula = (formula !== undefined && formula !== null && formula !== '');
-			hasParsedFormula = (parsedFormula !== undefined && parsedFormula !== null);
-			hasCellType = (cellType !== undefined && cellType !== null);
-			hasUneditable = (uneditable !== undefined && uneditable !== null);
-			hasDependencies = (dependencies !== undefined && dependencies !== null);
+			hasId = id.length > 0;
+			hasValue = value.length > 0;
+			//hasCache = cache.length > 0;
+			hasFormula = formula.length > 0;
+			//hasParsedFormula = (parsedFormula !== undefined && parsedFormula !== null);
+			hasCellType = cellType.length > 0;
+			hasUneditable = uneditable.length > 0;
+			//hasDependencies = (dependencies !== undefined && dependencies !== null);
 
 			jitCell = new Sheet.Cell(sheetIndex, null, this.jS, this.handler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
-			jitCell.loadedFrom = jsonCell;
+			jitCell.loadedFrom = tdCell;
 			jitCell.loader = this;
 
 			if (hasId) jitCell.id = id;
 
 			if (hasFormula) jitCell.formula = formula;
-			if (hasParsedFormula) jitCell.parsedFormula = parsedFormula;
+			//if (hasParsedFormula) jitCell.parsedFormula = parsedFormula;
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasUneditable) jitCell.uneditable = uneditable;
 
@@ -244,7 +233,7 @@
 				jitCell.value = new String();
 			}
 
-			if (hasCache) {
+			/*if (hasCache) {
 				jitCell.value.html = cache;
 				jitCell.needsUpdated = false;
 			} else {
@@ -260,12 +249,12 @@
 						jitCell.dependencies.push(dependency);
 					}
 				}
-			}
+			}*/
 
 			jitCell.value.cell = jitCell;
 
 
-			jsonCell.getCell = function() {
+			tdCell.getCell = function() {
 				return jitCell;
 			};
 
@@ -284,9 +273,9 @@
 			}
 
 			var loader = this,
-				json = this.json,
-				sheetMax = (sheetIndex < 0 ? json.length - 1: sheetIndex + 1),
-				sheet,
+				tables = this.tables,
+				sheetMax = (sheetIndex < 0 ? tables.length - 1: sheetIndex + 1),
+				table,
 				rowIndex,
 				rowMax,
 				rows,
@@ -301,8 +290,8 @@
 			}
 
 			for(;sheetIndex < sheetMax;sheetIndex++) {
-				sheet = json[sheetIndex];
-				rows = sheet.rows;
+				table = tables[sheetIndex];
+				rows = table.querySelectorAll('tr');
 				if (rows.length < 1) continue;
 				rowIndex = 0;
 				rowMax = rows.length;
@@ -310,7 +299,7 @@
 				for (; rowIndex < rowMax; rowIndex++) {
 
 					row = rows[rowIndex];
-					columns = row.columns;
+					columns = row.children;
 					columnIndex = 0;
 					columnMax = columns.length;
 
@@ -319,12 +308,12 @@
 
 						if (column === null) continue;
 
-						if (typeof column['id'] === 'string') {
-							this.cellIds[column['id']] = {
+						if (column.id !== null && column.id.length > 0) {
+							this.cellIds[column.id] = {
 								cell: column,
 								sheetIndex: sheetIndex,
-								rowIndex: rowIndex,
-								columnIndex: columnIndex,
+								rowIndex: rowIndex + 1,
+								columnIndex: columnIndex + 1,
 								requestCell: function() {
 									return loader.jitCell(this.sheetIndex, this.rowIndex, this.columnIndex);
 								}
@@ -343,12 +332,12 @@
 			return this;
 		},
 		title: function(sheetIndex) {
-			var json = this.json,
-				jsonSpreadsheet;
+			var tables = this.tables,
+				table;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return '';
+			if ((table = tables[sheetIndex]) === undefined) return '';
 
-			return jsonSpreadsheet.title || '';
+			return table.getAttribute('title');
 		},
 		hiddenRows: function(sheetIndex) {
 			var hiddenRowsString = this.tables[sheetIndex].getAttribute('data-hiddenrows'),
@@ -392,13 +381,13 @@
 
 			return -1;
 		},
-		addSpreadsheet: function(jsonSpreadsheet, atIndex) {
+		addSpreadsheet: function(table, atIndex) {
 			if (atIndex === undefined) {
-				this.json.push(jsonSpreadsheet);
+				this.tables.push(table);
 			} else {
-				this.json.splice(atIndex, 0, jsonSpreadsheet);
+				this.tables.splice(atIndex, 0, table);
 			}
-			this.count = this.json.length;
+			this.count = this.table.length;
 		},
 		getCellAttribute: function(cell, attribute) {
 			return cell[attribute];
@@ -421,72 +410,37 @@
 		 * @param {Sheet.Cell} cell
 		 */
 		setDependencies: function(cell) {
-			//TODO: need to handle the cell's cache that are dependent on this one so that it changes when it is in view
-			//some cells just have a ridiculous amount of dependencies
-			if (cell.dependencies.length > Constructor.maxStoredDependencies) {
-				delete cell.loadedFrom['dependencies'];
-				return this;
-			}
-
-			var i = 0,
-				loadedFrom = cell.loadedFrom,
-				dependencies = cell.dependencies,
-				dependency,
-				max = dependencies.length,
-				jsonDependencies = loadedFrom['dependencies'] = [];
-
-			for(;i<max;i++) {
-				dependency = dependencies[i];
-				jsonDependencies.push({
-					s: dependency.sheetIndex,
-					r: dependency.rowIndex,
-					c: dependency.columnIndex
-				});
-			}
-
 			return this;
 		},
 
 		addDependency: function(parentCell, dependencyCell) {
-			var loadedFrom = parentCell.loadedFrom;
-
-			if (loadedFrom.dependencies === undefined) {
-				loadedFrom.dependencies = [];
-			}
-
-			loadedFrom.dependencies.push({
-				s: dependencyCell.sheetIndex,
-				r: dependencyCell.rowIndex,
-				c: dependencyCell.columnIndex
-			});
-
 			return this;
 		},
 
 		cycleCells: function(sheetIndex, fn) {
-			var json = this.json,
-				jsonSpreadsheet,
+			var tables = this.tables,
+				table,
 				rows,
 				columns,
-				jsonCell,
+				cell,
 				row,
 				rowIndex,
 				columnIndex;
 
-			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
-			if ((rowIndex = (rows = jsonSpreadsheet.rows).length) < 1) return;
-			if (rows[0].columns.length < 1) return;
+			if ((table = tables[sheetIndex]) === undefined) return;
+			if ((rowIndex = (rows = table.querySelectorAll('tr')).length) < 1) return;
+			if (rows[0].children.length < 1) return;
 
 			rowIndex--;
 			do
 			{
 				row = rows[rowIndex];
-				columns = row.columns;
+				columns = row.children;
 				columnIndex = columns.length - 1;
 				do
 				{
-					jsonCell = columns[columnIndex];
-					fn.call(jsonCell, sheetIndex, rowIndex + 1, columnIndex + 1);
+					cell = columns[columnIndex];
+					fn.call(cell, sheetIndex, rowIndex + 1, columnIndex + 1);
 				}
 				while (columnIndex-- > 0);
 			}
@@ -495,8 +449,8 @@
 			return this;
 		},
 		cycleCellsAll: function(fn) {
-			var json = this.json,
-				sheetIndex = json.length - 1;
+			var tables = this.tables,
+				sheetIndex = tables.length - 1;
 
 			if (sheetIndex < 0) return;
 
@@ -508,201 +462,11 @@
 
 			return this;
 		},
-		/**
-		 * Create a table from json
-		 * @param {Array} json array of spreadsheets - schema:<pre>
-		 * [{ // sheet 1, can repeat
-		 *  "title": "Title of spreadsheet",
-		 *  "metadata": {
-		 *	  "widths": [
-		 *		  120, //widths for each column, required
-		 *		  80
-		 *	  ]
-		 *  },
-		 *  "rows": [
-		 *	  { // row 1, repeats for each column of the spreadsheet
-		 *		  "height": 18, //optional
-		 *		  "columns": [
-		 *			  { //column A
-		 *				  "cellType": "", //optional
-		 *				  "class": "css classes", //optional
-		 *				  "formula": "=cell formula", //optional
-		 *				  "value": "value", //optional
-		 *				  "style": "css cell style", //optional
-		 *				  "uneditable": true, //optional
-		 *				  "cache": "" //optional
-		 *			  },
-		 *			  {} //column B
-		 *		  ]
-		 *	  },
-		 *	  { // row 2
-		 *		  "height": 18, //optional
-		 *		  "columns": [
-		 *			  { // column A
-		 *				  "cellType": "", //optional
-		 *				  "class": "css classes", //optional
-		 *				  "formula": "=cell formula", //optional
-		 *				  "value": "value", //optional
-		 *				  "style": "css cell style" //optional
-		 *				  "uneditable": true, //optional
-		 *				  "cache": "" //optional
-		 *			  },
-		 *			  {} // column B
-		 *		  ]
-		 *	  }
-		 *  ]
-		 * }]</pre>
-		 * @returns {*|jQuery|HTMLElement} a simple html table
-		 * @memberOf Sheet.JSONLoader
-		 */
+
 		toTables: function() {
-
-			var json = this.json,
-				max = this.count,
-				tables = $([]),
-				spreadsheet,
-				rows,
-				row,
-				columns,
-				column,
-				metadata,
-				widths,
-				width,
-				frozenAt,
-				hiddenRows,
-				hiddenColumns,
-				height,
-				table,
-				colgroup,
-				col,
-				tr,
-				td,
-				i = 0,
-				j,
-				k;
-
-
-			for (; i < max; i++) {
-				spreadsheet = json[i];
-				table = $(document.createElement('table'));
-				if (spreadsheet['title']) table.attr('title', spreadsheet['title'] || '');
-
-				tables = tables.add(table);
-
-				rows = spreadsheet['rows'];
-				for (j = 0; j < rows.length; j++) {
-					row = rows[j];
-					if (height = (row['height'] + '').replace('px','')) {
-						tr = $(document.createElement('tr'))
-							.attr('height', height)
-							.css('height', height + 'px')
-							.appendTo(table);
-					}
-					columns = row['columns'];
-					for (k = 0; k < columns.length; k++) {
-						column = columns[k];
-						td = $(document.createElement('td'))
-							.appendTo(tr);
-
-						if (column['class']) td.attr('class', column['class'] || '');
-						if (column['style']) td.attr('style', column['style'] || '');
-						if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
-						if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
-						if (column['value']) td.html(column['value'] || '');
-						if (column['uneditable']) td.html(column['uneditable'] || '');
-						if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
-						if (column['colspan']) td.attr('colspan', column['colspan'] || '');
-						if (column['id']) td.attr('id', column['id'] || '');
-						if (column['cache']) td.html(column['cache']);
-					}
-				}
-
-				if (metadata = spreadsheet['metadata']) {
-					if (widths = metadata['widths']) {
-						colgroup = $(document.createElement('colgroup'))
-							.prependTo(table);
-						for(k = 0; k < widths.length; k++) {
-							width = (widths[k] + '').replace('px', '');
-							col = $(document.createElement('col'))
-								.attr('width', width)
-								.css('width', width + 'px')
-								.appendTo(colgroup);
-						}
-					}
-					if (frozenAt = metadata['frozenAt']) {
-						if (frozenAt['row']) {
-							table.attr('data-frozenatrow', frozenAt['row']);
-						}
-						if (frozenAt['col']) {
-							table.attr('data-frozenatcol', frozenAt['col']);
-						}
-					}
-
-					if (hiddenRows = metadata['hiddenRows']) {
-						table.attr('data-hiddenrows', hiddenRows.join(','));
-					}
-
-					if (hiddenColumns = metadata['hiddenColumns']) {
-						table.attr('data-hiddencolumns', hiddenColumns.join(','));
-					}
-				}
-			}
-
-			return tables;
+			return this.tables;
 		},
 
-		/**
-		 * Create json from jQuery.sheet Sheet instance
-		 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
-		 * @returns {Array}  - schema:<pre>
-		 * [{ // sheet 1, can repeat
-				 *  "title": "Title of spreadsheet",
-				 *  "metadata": {
-				 *	  "widths": [
-				 *		  "120px", //widths for each column, required
-				 *		  "80px"
-				 *	  ],
-				 *	  "frozenAt": {row: 0, col: 0},
-				 *	  "hiddenRows": [1,2,3],
-				 *	  "hiddenColumns": [1,2,3]
-				 *  },
-				 *  "rows": [
-				 *	  { // row 1, repeats for each column of the spreadsheet
-				 *		  "height": "18px", //optional
-				 *		  "columns": [
-				 *			  { //column A
-				 *				  "cellType": "", //optional
-				 *				  "class": "css classes", //optional
-				 *				  "formula": "=cell formula", //optional
-				 *				  "value": "value", //optional
-				 *				  "style": "css cell style", //optional
-				 *				  "uneditable": false,  //optional
-				 *				  "cache": "",  //optional
-				 *				  "id": "" //optional
-				 *			  },
-				 *			  {} //column B
-				 *		  ]
-				 *	  },
-				 *	  { // row 2
-				 *		  "height": "18px", //optional
-				 *		  "columns": [
-				 *			  { // column A
-				 *				  "cellType": "", //optional
-				 *				  "class": "css classes", //optional
-				 *				  "formula": "=cell formula", //optional
-				 *				  "value": "value", //optional
-				 *				  "style": "css cell style", //optional
-				 *				  "uneditable": true, //optional
-				 *				  "cache": "", //optional
-				 *				  "id": "" //optional
-				 *			  },
-				 *			  {} // column B
-				 *		  ]
-				 *	  }
-				 *  ]
-				 * }]</pre>
-		 * @memberOf Sheet.JSONLoader
-		 */
 		fromSheet: function(doNotTrim) {
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
 
@@ -710,14 +474,18 @@
 				jS = this.jS,
 				i = 1 * jS.i,
 				pane,
-				sheet = jS.spreadsheets.length - 1,
-				jsonSpreadsheet,
 				spreadsheet,
+				sheet = jS.spreadsheets.length - 1,
+				tables,
+				table,
+				tBody,
+				colGroup,
+				col,
 				row,
 				column,
 				parentAttr,
-				jsonRow,
-				jsonColumn,
+				tr,
+				td,
 				cell,
 				attr,
 				cl,
@@ -733,34 +501,29 @@
 				jS.i = sheet;
 				jS.evt.cellEditDone();
 				pane = jS.obj.pane();
-				jsonSpreadsheet = {
-					"title": (jS.obj.table().attr('title') || ''),
-					"rows": [],
-					"metadata": {
-						"widths": [],
-						"frozenAt": {
-							"row": pane.actionUI.frozenAt.row,
-							"col": pane.actionUI.frozenAt.col
-						}
-					}
-				};
+				table = document.createElement('table');
+				tBody = document.createElement('tBody');
+				colGroup = document.createElement('colGroup');
+				table.setAttribute('title', jS.obj.table().attr('title'));
+				table.setAttribute('data-frozenatrow', pane.action.frozenAt.row);
+				table.setAttribute('data-frozenatcol', pane.action.frozenAt.col);
+				table.appendChild(colGroup);
+				table.appendChild(tBody);
 
-				output.unshift(jsonSpreadsheet);
+				output.unshift(table);
 
 				spreadsheet = jS.spreadsheets[sheet];
 				row = spreadsheet.length - 1;
 				do {
 					parentEle = spreadsheet[row][1].td.parentNode;
 					parentHeight = parentEle.style['height'];
-					jsonRow = {
-						"columns": [],
-						"height": (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin)
-					};
+					tr = document.createElement('tr');
+					tr.style.height = (parentHeight ? parentHeight : jS.s.colMargin + 'px');
 
 					column = spreadsheet[row].length - 1;
 					do {
 						cell = spreadsheet[row][column];
-						jsonColumn = {};
+						td = document.createElement('td');
 						attr = cell.td.attributes;
 
 						if (doNotTrim || rowHasValues || attr['class'] || cell['formula'] || cell['value'] || attr['style']) {
@@ -774,35 +537,37 @@
 
 							parent = cell.td.parentNode;
 
-							jsonRow.columns.unshift(jsonColumn);
+							tr.insertBefore(td, tr.firstChild);
 
-							if (!jsonRow["height"]) {
-								jsonRow["height"] = (parent.style['height'] ? parent.style['height'].replace('px' , '') : jS.s.colMargin);
+							if (!tr.style.height) {
+								tr.style.height = (parent.style.height ? parent.style.height : jS.s.colMargin + 'px');
 							}
 
-							if (cell['formula']) jsonColumn['formula'] = cell['formula'];
-							if (cell['cellType']) jsonColumn['cellType'] = cell['cellType'];
-							if (cell['value']) jsonColumn['value'] = cell['value'];
-							if (cell['uneditable']) jsonColumn['uneditable'] = cell['uneditable'];
-							if (cell['cache']) jsonColumn['cache'] = cell['cache'];
-							if (cell['id']) jsonColumn['id'] = cell['id'];
-							if (attr['style'] && attr['style'].value) jsonColumn['style'] = attr['style'].value;
+							if (cell['formula']) td.setAttribute('data-formula', cell['formula']);
+							if (cell['cellType']) td.setAttribute('cellType', cell['cellType']);
+							if (cell['value']) td.setAttribute('value', cell['value']);
+							if (cell['uneditable']) td.setAttribute('uneditable', cell['uneditable']);
+							if (cell['cache']) td.setAttribute('cache', cell['cache']);
+							if (cell['id']) td.setAttribute('id', cell['id']);
+							if (attr['style'] && attr['style'].value) td.setAttribute('style', attr['style'].value);
 
 
 							if (cl.length) {
-								jsonColumn['class'] = cl;
+								td.className = cl;
 							}
-							if (attr['rowspan']) jsonColumn['rowspan'] = attr['rowspan'].value;
-							if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
+							if (attr['rowspan']) td['rowspan'] = attr['rowspan'].value;
+							if (attr['colspan']) td['colspan'] = attr['colspan'].value;
 
 							if (row * 1 == 1) {
-								jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
+								col = document.createElement('col');
+								col.style.width = $(jS.col(null, column)).css('width');
+								colGroup.insertBefore(col, colGroup.firstChild);
 							}
 						}
 					} while (column-- > 1);
 
 					if (rowHasValues) {
-						jsonSpreadsheet.rows.unshift(jsonRow);
+						tBody.insertBefore(tr, tBody.firstChild);
 					}
 
 				} while (row-- > 1);
@@ -811,157 +576,15 @@
 
 			return this.json = output;
 		},
-		type: Constructor,
-		typeName: 'Sheet.JSONLoader',
+		type: HTMLTable,
+		typeName: 'Sheet.Loader.HTMLTable',
 
 		clearCaching: function() {
-			var json = this.json,
-				spreadsheet,
-				row,
-				rows,
-				column,
-				columns,
-				sheetIndex = 0,
-				rowIndex,
-				columnIndex,
-				sheetMax = json.length,
-				rowMax,
-				columnMax;
-
-			for (;sheetIndex < sheetMax; sheetIndex++) {
-				spreadsheet = json[sheetIndex];
-				rows = spreadsheet['rows'];
-				rowMax = rows.length;
-
-				for (rowIndex = 0; rowIndex < rowMax; rowIndex++) {
-					row = rows[rowIndex];
-					columns = row['columns'];
-					columnMax = columns.length;
-
-					for (columnIndex = 0; columnIndex < columnMax; columnIndex++) {
-						column = columns[columnIndex];
-
-						delete column['cache'];
-						delete column['dependencies'];
-						delete column['parsedFormula'];
-					}
-				}
-			}
-
 			return this;
-		},
-		/**
-		 *
-		 */
-		download: function(rowSplitAt) {
-			rowSplitAt = rowSplitAt || 500;
-
-			var w = window.open(),
-				d,
-				entry,
-				json = this.json,
-				i = 0,
-				max = json.length - 1,
-				spreadsheet;
-
-
-			//popup blockers
-			if (w !== undefined) {
-				d = w.document;
-				d.write('<html>\
-	<head id="head"></head>\
-	<body>\
-		<div id="entry">\
-		</div>\
-	</body>\
-</html>');
-
-				entry = $(d.getElementById('entry'));
-
-				while (i <= max) {
-					spreadsheet = json[i];
-
-					//strategy: slice spreadsheet into parts so JSON doesn't get overloaded and bloated
-					if (spreadsheet.rows.length > rowSplitAt) {
-						var spreadsheetPart = {
-								title: spreadsheet.title,
-								metadata: spreadsheet.metadata,
-								rows: []
-							},
-							rowParts = [],
-							rowIndex = 0,
-							row,
-							rows = spreadsheet.rows,
-							rowCount = rows.length,
-							fileIndex = 1,
-							setIndex = 0,
-							addFile = function(json, index) {
-								entry.append(document.createElement('br'));
-								entry
-									.append(
-									$(document.createElement('a'))
-										.attr('download', spreadsheet.title + '-part' + index +'.json')
-										.attr('href', URL.createObjectURL(new Blob([JSON.stringify(json)], {type: "application/json"})))
-										.text(spreadsheet.title + ' - part ' + index)
-								);
-							};
-
-						addFile(spreadsheetPart, fileIndex);
-						/*entry
-						 .append(
-						 document.createElement('br')
-						 )
-						 .append(
-						 $(document.createElement('a'))
-						 .attr('download', spreadsheet.title + '-part' + fileIndex +'.json')
-						 .attr('href', new Blob([JSON.stringify()], {type: "application/json"}))
-						 .text(spreadsheet.title + ' part:' + fileIndex)
-						 );*/
-
-						while (rowIndex < rowCount) {
-							if (setIndex === rowSplitAt) {
-								setIndex = 0;
-								fileIndex++;
-
-								addFile(rowParts, fileIndex);
-
-								rowParts = [];
-							}
-							rowParts.push(rows[rowIndex]);
-							setIndex++;
-							rowIndex++
-						}
-
-						if (rowParts.length > 0) {
-							fileIndex++;
-							addFile(rowParts, fileIndex);
-						}
-					}
-
-					//strategy: stringify sheet and output
-					else {
-						entry
-							.append(
-							document.createElement('br')
-						)
-							.append(
-							$(document.createElement('a'))
-								.attr('download', spreadsheet.title + '.json')
-								.attr('href', URL.createObjectURL(new Blob([JSON.stringify(spreadsheet)], {type: "application/json"})))
-								.text(spreadsheet.title)
-						);
-					}
-					i++;
-				}
-
-
-				d.close();
-				w.focus();
-			}
 		}
 	};
 
-	Constructor.maxStoredDependencies = 100;
+	HTMLTable.maxStoredDependencies = 100;
 
-	return Constructor;
+	return HTMLTable;
 })(jQuery, document, String);

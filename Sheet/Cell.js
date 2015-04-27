@@ -279,7 +279,10 @@ Sheet.Cell = (function() {
 
 				//visual feedback
 				if (cell.td !== null) {
-					cell.td.innerHTML = Cell.cellLoading;
+					while(cell.td.lastChild !== null) {
+						cell.td.removeChild(cell.td.lastChild);
+					}
+					cell.td.appendChild(document.createTextNode(Cell.cellLoading));
 				}
 
 				Sheet.calcStack++;
@@ -360,7 +363,8 @@ Sheet.Cell = (function() {
 			var value = this.value,
 				td = this.td,
 				valType = typeof value,
-				html = value.html;
+				html = value.html,
+				text;
 
 			if (html === u) {
 				if (
@@ -386,13 +390,17 @@ Sheet.Cell = (function() {
 			switch (typeof html) {
 				case 'object':
 					if (html === null) {
-						td.innerHTML = '';
+						while(td.lastChild !== null) {
+							td.removeChild(td.lastChild);
+						}
 					} else if (html.appendChild !== u) {
 
 						//if html already belongs to another element, just return nothing for it's cache, formula function is probably managing it
 						if (html.parentNode === null) {
 							//otherwise, append it to this td
-							td.innerHTML = '';
+							while(td.lastChild !== null) {
+								td.removeChild(td.lastChild);
+							}
 							td.appendChild(html);
 						}
 
@@ -400,7 +408,10 @@ Sheet.Cell = (function() {
 					}
 				case 'string':
 				default:
-					td.innerHTML = html;
+					while(td.lastChild !== null) {
+						td.removeChild(td.lastChild);
+					}
+					td.appendChild(document.createTextNode(html));
 			}
 
 			return td.innerHTML;
