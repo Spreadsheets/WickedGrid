@@ -89,67 +89,13 @@
 
 			return this;
 		},
-		setupCell: function(sheetIndex, rowIndex, columnIndex) {
-			var cell = this.jitCell(sheetIndex, rowIndex, columnIndex),
-				jsonCell,
-				html;
+		setupTD: function(cell, td) {
+			if (cell['class'] !== undefined) td.className = cell['class'];
+			if (cell['style'] !== undefined) td.setAttribute('style', cell['style']);
+			if (cell['rowspan'] !== undefined) td.setAttribute('rowspan', cell['rowspan']);
+			if (cell['colspan'] !== undefined) td.setAttribute('colspan', cell['colspan']);
 
-			if (cell === null) return cell;
-			jsonCell = cell.loadedFrom;
-			if (jsonCell === null) return null;
-
-
-			if (cell.hasOwnProperty('formula')) {
-				td.setAttribute('data-formula', cell['formula'] || '');
-				/*if (cell.hasOwnProperty('value') && cell.value !== null) {
-					html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
-					switch (typeof html) {
-						case 'object':
-							if (html.appendChild !== undefined) {
-								td.appendChild(html);
-								break;
-							}
-						case 'string':
-						default:
-							td.innerHTML = html;
-							break;
-					}
-				}*/
-				if (jsonCell.hasOwnProperty('cache')) {
-					if (jsonCell['cache'] !== null && jsonCell['cache'] !== '') {
-						td.innerHTML = jsonCell['cache'];
-					}
-				}
-			} else if (jsonCell['cellType'] !== undefined) {
-				td.setAttribute('data-celltype', jsonCell['cellType']);
-				cell.cellType = jsonCell['cellType'];
-				if (jsonCell.hasOwnProperty('cache')) {
-					td.innerHTML = jsonCell['cache'];
-				}
-			}
-			else {
-				td.innerHTML = cell['value'];
-			}
-
-
-			if (jsonCell['class'] !== undefined) td.className = jsonCell['class'];
-			if (jsonCell['style'] !== undefined) td.setAttribute('style', jsonCell['style']);
-			if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan']);
-			if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan']);
-			if (jsonCell['uneditable'] !== undefined) td.setAttribute('data-uneditable', jsonCell['uneditable']);
-
-			if (jsonCell['id'] !== undefined) {
-				td.setAttribute('id', jsonCell['id']);
-				cell.id = jsonCell['id'];
-			}
-
-			td.jSCell = cell;
-			cell.td = td;
-			cell.sheetIndex = sheetIndex;
-			cell.rowIndex = rowIndex;
-			cell.columnIndex = columnIndex;
-
-			return cell;
+			return this;
 		},
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			var json = this.json,

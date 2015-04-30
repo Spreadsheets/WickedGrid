@@ -1,6 +1,6 @@
-;Sheet.Loader.HTMLTable = (function($, document, String) {
+;Sheet.Loader.HTML = (function($, document, String) {
 	"use strict";
-	function HTMLTable(tables) {
+	function HTML(tables) {
 		if (tables !== undefined) {
 			this.tables = tables;
 			this.count = tables.length;
@@ -14,7 +14,7 @@
 		this.handler = null;
 	}
 
-	HTMLTable.prototype = {
+	HTML.prototype = {
 		bindJS: function(jS) {
 			this.jS = jS;
 			return this;
@@ -52,9 +52,12 @@
 
 			columns = table.querySelectorAll('col');
 
-			width = columns[columnIndex] || Sheet.defaultColumnWidth;
+			if (columns.length > columnIndex) {
+				width = columns[columnIndex - 1].style.width.replace('px', '') || Sheet.defaultColumnWidth;
+				return width;
+			}
 
-			return width;
+			return Sheet.defaultColumnWidth;
 		},
 		getHeight: function(sheetIndex, rowIndex) {
 			var tables = this.tables,
@@ -64,11 +67,16 @@
 				height;
 
 			rows = table.querySelectorAll('tr');
-			row = rows[rowIndex];
 
-			height = row.height || Sheet.defaultRowHeight;
+			if (rows.length > rowIndex) {
+				row = rows[rowIndex - 1];
 
-			return height;
+				height = row.style.height.replace('px', '') || Sheet.defaultRowHeight;
+
+				return height;
+			}
+
+			return Sheet.defaultRowHeight;
 		},
 		isHidden: function(sheetIndex) {
 			var tables = this.tables,
@@ -88,66 +96,13 @@
 
 			return this;
 		},
-		setupCell: function(sheetIndex, rowIndex, columnIndex) {
-			var cell = this.jitCell(sheetIndex, rowIndex, columnIndex),
-				cache,
-				tdCell,
-				html;
+		setupTD: function(cell, td) {
+			if (cell.hasAttribute('class')) td.className = cell.className;
+			if (cell.hasAttribute('style')) td.setAttribute('style', cell.getAttribute('style'));
+			if (cell.hasAttribute('rowspan')) td.setAttribute('rowspan', cell.getAttribute('rowspan'));
+			if (cell.hasAttribute('colspan')) td.setAttribute('colspan', cell.getAttribute('colspan'));
 
-			if (cell === null) return cell;
-			tdCell = cell.loadedFrom;
-			if (tdCell === null) return null;
-
-
-			if (tdCell.hasOwnProperty('formula')) {
-				td.setAttribute('data-formula', cell['formula'] || '');
-				/*if (cell.hasOwnProperty('value') && cell.value !== null) {
-				 html = cell.value.hasOwnProperty('html') ? cell.value.html : cell.value;
-				 switch (typeof html) {
-				 case 'object':
-				 if (html.appendChild !== undefined) {
-				 td.appendChild(html);
-				 break;
-				 }
-				 case 'string':
-				 default:
-				 td.innerHTML = html;
-				 break;
-				 }
-				 }*/
-				if ((cache = tdCell.getAttribute('data-cache')) !== null) {
-					td.innerHTML = jsonCell['cache'];
-				}
-			} else if (jsonCell['cellType'] !== undefined) {
-				td.setAttribute('data-celltype', jsonCell['cellType']);
-				cell.cellType = jsonCell['cellType'];
-				if (jsonCell.hasOwnProperty('cache')) {
-					td.innerHTML = jsonCell['cache'];
-				}
-			}
-			else {
-				td.innerHTML = cell['value'];
-			}
-
-
-			td.className = tdCell['class'];
-			if (jsonCell['style'] !== undefined) td.setAttribute('style', jsonCell['style']);
-			if (jsonCell['rowspan'] !== undefined) td.setAttribute('rowspan', jsonCell['rowspan']);
-			if (jsonCell['colspan'] !== undefined) td.setAttribute('colspan', jsonCell['colspan']);
-			if (jsonCell['uneditable'] !== undefined) td.setAttribute('data-uneditable', jsonCell['uneditable']);
-
-			if (jsonCell['id'] !== undefined) {
-				td.setAttribute('id', jsonCell['id']);
-				cell.id = jsonCell['id'];
-			}
-
-			td.jSCell = cell;
-			cell.td = td;
-			cell.sheetIndex = sheetIndex;
-			cell.rowIndex = rowIndex;
-			cell.columnIndex = columnIndex;
-
-			return cell;
+			return this;
 		},
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			var tables = this.tables,
@@ -173,44 +128,28 @@
 			}
 
 			var jitCell,
-				i,
 				id,
-				max,
 				value,
-				cache,
 				formula,
-				parsedFormula,
 				cellType,
 				uneditable,
-				dependency,
-				dependencies,
-				jsonDependency,
 				hasId,
 				hasValue,
-				hasCache,
 				hasFormula,
-				hasParsedFormula,
 				hasCellType,
-				hasUneditable,
-				hasDependencies;
+				hasUneditable;
 
 			id = tdCell.getAttribute('id');
 			value = tdCell.innerHTML;
-			//cache = tdCell.getAttribute('data-cache');
 			formula = tdCell.getAttribute('data-formula');
-			//parsedFormula = jsonCell['parsedFormula'];
 			cellType = tdCell.getAttribute('data-celltype');
 			uneditable = tdCell.getAttribute('data-uneditable');
-			//dependencies = tdCell.getAttribute('dependencies');
 
-			hasId = id.length > 0;
+			hasId = id !== null;
 			hasValue = value.length > 0;
-			//hasCache = cache.length > 0;
-			hasFormula = formula.length > 0;
-			//hasParsedFormula = (parsedFormula !== undefined && parsedFormula !== null);
-			hasCellType = cellType.length > 0;
-			hasUneditable = uneditable.length > 0;
-			//hasDependencies = (dependencies !== undefined && dependencies !== null);
+			hasFormula = formula !== null;
+			hasCellType = cellType !== null;
+			hasUneditable = uneditable !== null;
 
 			jitCell = new Sheet.Cell(sheetIndex, null, this.jS, this.handler);
 			jitCell.rowIndex = rowIndex;
@@ -221,7 +160,6 @@
 			if (hasId) jitCell.id = id;
 
 			if (hasFormula) jitCell.formula = formula;
-			//if (hasParsedFormula) jitCell.parsedFormula = parsedFormula;
 			if (hasCellType) jitCell.cellType = cellType;
 			if (hasUneditable) jitCell.uneditable = uneditable;
 
@@ -232,24 +170,6 @@
 			else {
 				jitCell.value = new String();
 			}
-
-			/*if (hasCache) {
-				jitCell.value.html = cache;
-				jitCell.needsUpdated = false;
-			} else {
-				jitCell.needsUpdated = (hasFormula || hasCellType || jitCell.hasOperator.test(value));
-			}
-
-			if (hasDependencies) {
-				max = dependencies.length;
-				for (i = 0; i < max; i++) {
-					jsonDependency = dependencies[i];
-					dependency = this.jitCell(jsonDependency['s'], jsonDependency['r'], jsonDependency['c']);
-					if (dependency !== null) {
-						jitCell.dependencies.push(dependency);
-					}
-				}
-			}*/
 
 			jitCell.value.cell = jitCell;
 
@@ -390,15 +310,15 @@
 			this.count = this.table.length;
 		},
 		getCellAttribute: function(cell, attribute) {
-			return cell[attribute];
+			return cell.getAttribute(attribute);
 		},
 		setCellAttribute: function(cell, attribute, value) {
-			cell[attribute] = value;
+			cell.setAttribute(attribute, value);
 		},
 		setCellAttributes: function(cell, attributes) {
 			var i;
 			for (i in attributes) if (i !== undefined && attributes.hasOwnProperty(i)) {
-				cell[i] = attributes[i];
+				cell.setAttribute(i, attributes[i]);
 			}
 
 			return this;
@@ -576,15 +496,15 @@
 
 			return this.json = output;
 		},
-		type: HTMLTable,
-		typeName: 'Sheet.Loader.HTMLTable',
+		type: HTML,
+		typeName: 'Sheet.Loader.HTML',
 
 		clearCaching: function() {
 			return this;
 		}
 	};
 
-	HTMLTable.maxStoredDependencies = 100;
+	HTML.maxStoredDependencies = 100;
 
-	return HTMLTable;
+	return HTML;
 })(jQuery, document, String);

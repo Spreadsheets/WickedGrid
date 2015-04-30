@@ -15,8 +15,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.scrollAxisX = {};
 		this.scrollAxisY = {};
 
-		this.scrollSize = {};
-
 		this.hiddenColumns = [];
 
 		if (!(this.frozenAt = frozenAt)) {
@@ -35,52 +33,62 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			col: Math.max(this.frozenAt.col, 1)
 		};
 
-		this.foldArea = {
-			row: 0,
-			col: 0
-		};
-
 		var that = this,
+			loader = jS.s.loader,
 			pane = this.pane,
 
 			//TODO: connect megatable up to Loader
 			megaTable = this.megaTable = new MegaTable({
-				columns: 30,
-				rows: 70,
+				columns: 35,
+				rows: 40,
 				element: pane,
-				updateCell: function(row, column, td) {
+				updateCell: function(rowIndex, columnIndex, td) {
 					if (typeof td.jSCell === 'object' && td.jSCell !== null) {
 						td.jSCell.td = null;
 					}
 
-					var cell = jS.getCell(jS.i, row + 1, column + 1);
+					var cell = jS.getCell(jS.i, rowIndex + 1, columnIndex + 1);
 
 					if (cell === null) return;
 
+					var spreadsheet = jS.spreadsheets[jS.i] || (jS.spreadsheets[jS.i] = []),
+						row = spreadsheet[rowIndex + 1] || (spreadsheet[rowIndex + 1] = []);
+
+					if (!row[columnIndex + 1]) {
+						row[columnIndex + 1] = cell;
+					}
+
 					cell.td = td;
-					td.style = cell.style;
-					td.className = cell.class;
 					td.jSCell = cell;
+					loader.setupTD(cell.loadedFrom, td);
 					cell.updateValue();
 				},
 				updateCorner: function(th, col) {
-					th.className = jS.cl.barCorner;
+					th.entity = 'corner';
+					th.col = col;
+					th.className = jS.cl.barCorner + ' ' + jS.theme.bar;
 				},
 				updateRowHeader: function(i, header) {
-					header.className = jS.cl.barLeft;
-					header.innerHTML = i + 1;
-					header.style.height = jS.s.loader.getHeight(jS.i, i) + 'px';
+					header.entity = 'left';
+					header.className = jS.cl.barLeft + ' ' + jS.theme.bar;
+					header.appendChild(document.createTextNode(i + 1));
+					header.parentNode.style.height = header.style.height = loader.getHeight(jS.i, i + 1) + 'px';
 				},
 				updateColumnHeader: function(i, header, col) {
-					header.className = jS.cl.barTop;
-					header.innerHTML = jSE.columnLabelString(i + 1);
-					col.style.width = jS.s.loader.getWidth(jS.i, i) + 'px';
+					header.th = header;
+					header.col = col;
+					header.entity = 'top';
+					header.className = jS.cl.barTop + ' ' + jS.theme.bar;
+					header.appendChild(document.createTextNode(jSE.columnLabelString(i + 1)));
+					col.style.width = loader.getWidth(jS.i, i + 1) + 'px';
 				}
 			}),
 
 			infiniscroll = this.infiniscroll = new Infiniscroll(pane, {
 				scroll: function(c, r) {
-					megaTable.update(r, c);
+					setTimeout(function() {
+						megaTable.update(r, c);
+					}, 0);
 				},
 				verticalScrollDensity: 5,
 				horizontalScrollDensity: 25
@@ -92,6 +100,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		megaTable.table.setAttribute('cellSpacing', '0');
 		megaTable.table.setAttribute('cellPadding', '0');
 		pane.scroll = infiniscroll._out;
+		pane.actionUI = this;
 	};
 
 	ActionUI.prototype = {

@@ -2175,16 +2175,17 @@ $.sheet = {
 					barHandleFreeze:{
 
 						/**
-						 * @param {jQuery|HTMLElement} pane
+						 * @param {HTMLElement} bar
+						 * @param {Number} i
+						 * @param {HTMLElement} pane
 						 * @returns {Boolean}
 						 * @memberOf jS.controlFactory.barHandleFreeze
 						 */
-						top:function (pane) {
+						top:function (bar, i, pane) {
 							if (jS.isBusy()) {
 								return false;
 							}
-							var
-								actionUI = jS.obj.pane().actionUI,
+							var actionUI = pane.actionUI,
 								frozenAt = actionUI.frozenAt,
 								scrolledArea = actionUI.scrolledArea;
 
@@ -2194,20 +2195,16 @@ $.sheet = {
 
 							jS.obj.barHelper().remove();
 
-							var table = pane.table,
-								tBody = table.tBody,
-								firstRow = tBody.children[0],
-								tds = firstRow.children,
-								bar = $(tds[frozenAt.col + 1]),
-								pos = bar.position(),
-								highlighter,
-								offset = $(pane).offset(),
+							var highlighter,
+								paneRectangle = pane.getBoundingClientRect(),
+								paneTop = paneRectangle.top + document.body.scrollTop,
+								paneLeft = paneRectangle.left + document.body.scrollLeft,
 								handle = document.createElement('div'),
 								$handle = pane.freezeHandleTop = $(handle)
 									.appendTo(pane)
 									.addClass(jS.theme.barHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
-									.height(bar.height())
-									.css('left', (pos.left - handle.clientWidth) + 'px')
+									.height(bar.clientHeight)
+									.css('left', (bar.offsetLeft - handle.clientWidth) + 'px')
 									.attr('title', jS.msg.dragToFreezeCol);
 
 
@@ -2223,11 +2220,11 @@ $.sheet = {
 										.appendTo(pane)
 										.css('position', 'absolute')
 										.addClass(jS.theme.barFreezeIndicator + ' ' + jS.cl.barHelper)
-										.height(pane.table.corner.clientHeight)
+										.height(bar.clientHeight)
 										.fadeTo(0,0.33);
 								},
 								drag:function() {
-									var target = jS.nearest($handle, tds).prev();
+									var target = jS.nearest($handle, bar.parentNode.children).prev();
 									if (target.length && target.position) {
 										highlighter.width(target.position().left + target.width());
 									}
@@ -2236,30 +2233,30 @@ $.sheet = {
 									highlighter.remove();
 									jS.setBusy(false);
 									jS.setDirty(true);
-									var target = jS.nearest($handle, tds);
+									var target = jS.nearest($handle, bar.parentNode.children);
 
 									jS.obj.barHelper().remove();
 									scrolledArea.col = actionUI.frozenAt.col = jS.getTdLocation(target[0]).col - 1;
 									jS.autoFillerHide();
 								},
-								containment:[offset.left, offset.top, math.min(offset.left + pane.table.clientWidth, offset.left + pane.clientWidth - window.scrollBarSize.width), offset.top]
+								containment:[paneLeft, paneTop, math.min(paneLeft + pane.clientWidth, paneLeft + pane.clientWidth - window.scrollBarSize.width), paneTop]
 							});
 
 							return true;
 						},
 
 						/**
-						 *
-						 * @param {jQuery|HTMLElement} pane
+						 * @param {HTMLElement} bar
+						 * @param {Number} i
+						 * @param {HTMLElement} pane
 						 * @returns {Boolean}
 						 * @memberOf jS.controlFactory.barHandleFreeze
 						 */
-						left:function (pane) {
+						left:function (bar, i, pane) {
 							if (jS.isBusy()) {
 								return false;
 							}
-							var pane = jS.obj.pane(),
-								actionUI = pane.actionUI,
+							var actionUI = pane.actionUI,
 								frozenAt = actionUI.frozenAt,
 								scrolledArea = actionUI.scrolledArea;
 
@@ -2269,18 +2266,14 @@ $.sheet = {
 
 							jS.obj.barHelper().remove();
 
-							var table = pane.table,
-								tBody = table.tBody,
-								bar = $(tBody.children[frozenAt.row + 1].children[0]),
-								pos = bar.position(),
-								highlighter,
-								offset = $(pane).offset(),
+							var paneRectangle = pane.getBoundingClientRect(),
+								paneTop = paneRectangle.top + document.body.scrollTop,
+								paneLeft = paneRectangle.left + document.body.scrollLeft,
 								handle = document.createElement('div'),
-								trs = tBody.children,
 								$handle = pane.freezeHandleLeft = $(handle)
 									.appendTo(pane)
 									.addClass(jS.theme.barHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
-									.width(bar.width())
+									.width(bar.clientWidth)
 									.css('top', (pos.top - handle.clientHeight + 1) + 'px')
 									.attr('title', jS.msg.dragToFreezeRow);
 
@@ -2300,7 +2293,7 @@ $.sheet = {
 										.fadeTo(0,0.33);
 								},
 								drag:function() {
-									var target = jS.nearest($handle, trs).prev();
+									var target = jS.nearest($handle, bar.parentNode.parentNode.children).prev();
 									if (target.length && target.position) {
 										highlighter.height(target.position().top + target.height());
 									}
@@ -2309,12 +2302,12 @@ $.sheet = {
 									highlighter.remove();
 									jS.setBusy(false);
 									jS.setDirty(true);
-									var target = jS.nearest($handle, trs);
+									var target = jS.nearest($handle, bar.parentNode.parentNode.children);
 									jS.obj.barHelper().remove();
 									scrolledArea.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)[0]).row - 1, 0);
 									jS.autoFillerHide();
 								},
-								containment:[offset.left, offset.top, offset.left, math.min(offset.top + pane.table.clientHeight, offset.top + pane.clientHeight - window.scrollBarSize.height)]
+								containment:[paneLeft, paneTop, paneLeft, math.min(paneTop + pane.table.clientHeight, paneTop + pane.clientHeight - window.scrollBarSize.height)]
 							});
 
 							return true;
@@ -2814,7 +2807,7 @@ $.sheet = {
 
 									if (i < 0) return false;
 
-									if (jS.evt.barInteraction.first == jS.evt.barInteraction.last) {
+									if (jS.evt.barInteraction.first === jS.evt.barInteraction.last) {
 										jS.controlFactory.barMenu[entity](e, i);
 									}
 								} else {
@@ -2878,23 +2871,23 @@ $.sheet = {
 								if (!jS.isBar(target)) {
 									return false;
 								}
-								var bar = $(target),
+								var bar = target,
 									entity = target.entity,
-									i = jS.getBarIndex[entity](target);
+									i = jS.getBarIndex[entity](bar);
 
 								if (i < 0) {
 									return false;
 								}
 
-								if (jS.evt.barInteraction.selecting && entity == mouseDownEntity) {
-									jS.evt.barInteraction.last = i;
+								if (jS.evt.barInteraction.selecting && bar === mouseDownEntity) {
+									jS.evt.barInteraction.last = bar;
 
 									jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
 								} else {
-									jS.resizeBar[entity](bar, i, pane, table);
+									jS.resizeBar[entity](bar, i, pane);
 
 									if (jS.isSheetEditable()) {
-										jS.controlFactory.barHandleFreeze[entity](pane);
+										jS.controlFactory.barHandleFreeze[entity](bar, i, pane);
 
 										if (entity == "top") {
 											jS.controlFactory.barMenu[entity](e, i, bar);
@@ -3189,11 +3182,9 @@ $.sheet = {
 										if ((parsedColumn + '').charAt(0) == '=') { //we need to know if it's a formula here
 											cell.formula = parsedColumn.substring(1);
 											cell.value = '';
-											cell.td.setAttribute('data-formula', parsedColumn);
 										} else {
 											cell.formula = '';
 											cell.value = parsedColumn;
-											cell.td.removeData('formula');
 										}
 									});
 								})(cell, parsedColumns[j]);
@@ -3650,11 +3641,9 @@ $.sheet = {
 										//reset formula to null so it can be re-evaluated
 										cell.parsedFormula = null;
 										if (v.charAt(0) == '=') {
-											cell.formula = v = v.substring(1);
 											//change only formula, previous value will be stored and recalculated momentarily
-											td.setAttribute('data-formula', cell.formula = v);
+											cell.formula = v = v.substring(1);
 										} else {
-											td.removeAttribute('data-formula');
 											cell.value = v;
 											cell.formula = '';
 
@@ -4024,17 +4013,16 @@ $.sheet = {
 						 */
 						select:function (o) {
 							if (!o) return;
-							if (!o.type == 'bar') return;
+							if (!o.type === 'bar') return;
 							var entity = o.entity, //returns "top" or "left";
 								i = jS.getBarIndex[entity](o);
 
 							if (i < 0) return false;
 
 							jS[entity + 'Last'] = i; //keep track of last column for inserting new columns
-							jS.evt.barInteraction.last = jS.evt.barInteraction.first = i;
+							jS.evt.barInteraction.last = jS.evt.barInteraction.first = jS[entity + 'Last'] = o;
 
 							jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
-							jS.evt.barInteraction.first = jS.evt.barInteraction.last = jS[entity + 'Last'] = i;
 
 							jS.evt.barInteraction.selecting = true;
 							$document
@@ -4116,12 +4104,12 @@ $.sheet = {
 
 				/**
 				 * Detects if an object is a bar td within a spreadsheet's table
-				 * @param {jQuery|HTMLElement} o target
+				 * @param {HTMLElement} o target
 				 * @returns {Boolean}
 				 * @memberOf jS
 				 */
 				isBar:function (o) {
-					if (o && o.tagName && o.tagName == 'TH' && o.type && o.type == 'bar') {
+					if (o.tagName == 'TH') {
 						return true;
 					}
 					return false;
@@ -4505,8 +4493,6 @@ $.sheet = {
 									cell.value = '';
 									cell.defer = td.jSCell;
 
-									_td.removeAttribute('data-formula');
-									_td.removeAttribute('data-celltype');
 									_td.innerHTML = '';
 									//_td.style.display = 'none';
 									_td.style.visibility = 'collapse';
@@ -4638,7 +4624,6 @@ $.sheet = {
 									s.parent.one('sheetPreCalculation', function () {
 										cells[i].formula = newV;
 										cells[i].value = '';
-										cells[i].td.setAttribute('data-formula', newV);
 									});
 
 									jS.resolveCell(cells[i]);
@@ -4663,7 +4648,6 @@ $.sheet = {
 								s.parent.one('sheetPreCalculation', function () {
 									cells[i].formula = '';
 									cells[i].value = newV + '';
-									cells[i].td.removeAttribute('data-formula');
 								});
 
 								jS.resolveCell(cells[i]);
@@ -4770,8 +4754,6 @@ $.sheet = {
 						var cell = this;
 						if (this.formula && typeof this.formula == 'string' && jS.isFormulaEditable(this.td)) {
 							this.formula = jS.reparseFormula(this.formula, offset, loc, isBefore, wasDeleted);
-
-							this.td.setAttribute('data-formula', '=' + this.formula);
 						}
 
 						cellStack.push(function() {
@@ -5105,20 +5087,18 @@ $.sheet = {
 
 					/**
 					 * Provides the top bar with ability to resize
-					 * @param {jQuery|HTMLElement} $bar td bar object
+					 * @param {HTMLElement} bar td bar object
 					 * @param {Number} i index of bar
-					 * @param {jQuery|HTMLElement} pane spreadsheet pane
-					 * @param {jQuery|HTMLElement} sheet spreadsheet table
+					 * @param {HTMLElement} pane spreadsheet pane
 					 * @memberOf jS.resizeBar
 					 */
-					top:function ($bar, i, pane, sheet) {
+					top:function (bar, i, pane) {
 						jS.obj.barTopControls().remove();
 						var barController = document.createElement('div'),
 							$barController = $(barController)
 								.addClass(jS.cl.barController + ' ' + jS.theme.barResizer)
-								.width($bar.width())
-								.prependTo($bar),
-							col,
+								.width(bar.clientWidth)
+								.prependTo(bar),
 							handle;
 
 						jS.controls.bar.x.controls[jS.i] = jS.obj.barTopControls().add($barController);
@@ -5128,14 +5108,12 @@ $.sheet = {
 							start:function (e, ui) {
 								jS.autoFillerHide();
 								jS.setBusy(true);
-								col = jS.col(sheet, i);
 								if (pane.freezeHandleTop) {
 									pane.freezeHandleTop.remove();
 								}
-								col.removeAttribute('width');
 							},
 							resize:function (e, ui) {
-								col.style.width = ui.size.width + 'px';
+								bar.col.style.width = ui.size.width + 'px';
 
 								if (pane.inPlaceEdit) {
 									pane.inPlaceEdit.goToTd();
@@ -5153,36 +5131,35 @@ $.sheet = {
 						});
 
 						handle = barController.children[0];
-						handle.style.height = $bar.outerHeight() + 'px';
+						handle.style.height = bar.clientHeight + 'px';
 						handle.style.position = 'absolute';
 					},
 
 					/**
 					 * Provides the left bar with ability to resize
-					 * @param {jQuery|HTMLElement} $bar td bar object
+					 * @param {HTMLElement} bar td bar object
 					 * @param {Number} i index of bar
-					 * @param {jQuery|HTMLElement} pane spreadsheet pane
-					 * @param {jQuery|HTMLElement} sheet spreadsheet table
+					 * @param {HTMLElement} pane spreadsheet pane
 					 * @memberOf jS.resizeBar
 					 */
-					left:function ($bar, i, pane, sheet) {
+					left:function (bar, i, pane) {
 						jS.obj.barLeftControls().remove();
-						var offset = $bar.offset(),
+						var barRectangle = bar.getBoundingClientRect(),
+							barOffsetTop = barRectangle.top + document.body.scrollTop,
+							barOffsetLeft = barRectangle.left + document.body.scrollLeft,
 							barController = document.createElement('div'),
 							$barController = $(barController)
 								.addClass(jS.cl.barController + ' ' + jS.theme.barResizer)
-								.prependTo($bar)
+								.prependTo(bar)
 								.offset({
-									top:offset.top,
-									left:offset.left
+									top: barOffsetTop,
+									left: barOffsetLeft
 								}),
-							bar = $bar[0],
-							td = $bar.next()[0],
-							parent = td.parentNode,
+							parent = bar.parentNode,
 							child = document.createElement('div'),
 							$child = $(child)
 								.addClass(jS.cl.barControllerChild)
-								.height($bar.height())
+								.height(bar.clientHeight)
 								.prependTo($barController),
 							handle;
 
@@ -5196,16 +5173,12 @@ $.sheet = {
 								if (pane.freezeHandleLeft) {
 									pane.freezeHandleLeft.remove();
 								}
-								parent.removeAttribute('height');
-								bar.removeAttribute('height');
-								td.removeAttribute('height');
 							},
 							resize:function (e, ui) {
-								barController.style.height =
-								td.style.height =
-								bar.style.height =
-								parent.style.height =
-								ui.size.height + 'px';
+								barController.style.height
+									= bar.style.height
+									= parent.style.height
+									= ui.size.height + 'px';
 
 								if (pane.inPlaceEdit) {
 									pane.inPlaceEdit.goToTd();
@@ -5223,7 +5196,7 @@ $.sheet = {
 						});
 
 						handle = child.children[0];
-						handle.style.width = $bar.outerWidth() + 'px';
+						handle.style.width = bar.offsetWidth + 'px';
 						handle.style.position = 'absolute';
 					},
 
@@ -6124,30 +6097,30 @@ $.sheet = {
 					//the below use of _scrollLeft and _scrollTop are protected from IE, which makes those attributes go away after something is hidden, thus forgetting where you are scrolled to when you change sheets
 					//IE, stop flossin' me
 					var ui = jS.obj.ui,
-						enclosures = jS.obj.enclosures(),
+						panes = jS.obj.panes(),
 						j = 0,
-						max = enclosures.length,
-						enclosure,
-						pane;
+						max = panes.length,
+						scroll,
+						pane,
+						enclosure;
 
 					jS.autoFillerHide();
 
 					for (;j < max; j++) {
 						if (i != j) {
-							enclosure = enclosures[j];
-							if (enclosure !== u && enclosure.parentNode !== null) {
-								enclosure._scrollLeft = enclosure._scrollLeft || enclosure.scrollUI.scrollLeft;
-								enclosure._scrollTop = enclosure._scrollTop || enclosure.scrollUI.scrollTop;
-								ui.removeChild(enclosure);
+							pane = panes[j];
+							scroll = pane.scroll;
+							if (pane !== u && pane.parentNode.parentNode !== null) {
+								pane._scrollLeft = pane._scrollLeft || scroll.scrollLeft;
+								pane._scrollTop = pane._scrollTop || scroll.scrollTop;
+								ui.removeChild(pane.parentNode);
 							}
 						}
 					}
 
 					jS.i = i;
 
-					enclosure = jS.obj.enclosure();
-
-					ui.appendChild(enclosure);
+					ui.appendChild(enclosure = jS.obj.enclosure());
 
 					jS.highlighter.setTab(jS.obj.tab());
 
@@ -6528,34 +6501,34 @@ $.sheet = {
 				/**
 				 * Sets active bar
 				 * @param {String} type "col" || "row" || "all"
-				 * @param {Number} begin start highlighting from
-				 * @param {Number} end end highlighting to
+				 * @param {HTMLElement} begin start highlighting from
+				 * @param {HTMLElement} end end highlighting to
 				 * @memberOf jS
 				 */
 				cellSetActiveBar:function (type, begin, end) {
-					var size = jS.sheetSize(),
-						first = math.min(begin, end),
-						last = math.max(begin, end),
+					var size = s.loader.size(),
+						startIndex,
+						endIndex,
 						start = {},
 						stop = {},
+						before,
 
 						/**
 						 * Sets active bar
-						 * @param {Boolean} [before]
 						 */
-						SetActive = function (before) {
+						SetActive = function (highlighter) {
 							switch (s.cellSelectModel) {
 								case Sheet.openOfficeSelectModel: //follow cursor behavior
-									this.row = (before ? start.row : stop.row);
-									this.col = (before ? start.col : stop.col);
+									this.row = highlighter.startRowIndex;
+									this.col = highlighter.startColumnIndex;
 									this.td = jS.getTd(-1, this.row, this.col);
 									if (this.td !== null && (jS.cellLast !== null && this.td !== jS.cellLast.td)) {
 										jS.cellEdit(this.td, false, true);
 									}
 									break;
 								default: //stay at initial cell
-									this.row = (before ? stop.row : start.row);
-									this.col = (before ? stop.col : start.col);
+									this.row = highlighter.endRowIndex;
+									this.col = highlighter.endColumnIndex;
 									this.td = jS.getTd(-1, this.row, this.col);
 									if (this.td !== null && (jS.cellLast !== null && this.td !== jS.cellLast.td)) {
 										jS.cellEdit(this.td, false, true);
@@ -6565,8 +6538,7 @@ $.sheet = {
 						},
 						obj = [],
 						scrolledArea  = jS.obj.pane().actionUI.scrolledArea,
-						sheet = jS.obj.table(),
-						col,
+						index,
 						row,
 						td,
 						highlighter = jS.highlighter;
@@ -6574,20 +6546,41 @@ $.sheet = {
 					switch (type) {
 						case 'top':
 							start.row = scrolledArea.row;
-							start.col = first;
 							stop.row = scrolledArea.row;
-							stop.col = last;
+
+							if (begin.th.rowIndex < end.th.rowIndex) {
+								highlighter.startColumnIndex
+									= index
+									= startIndex
+									= start.col
+									= begin.th.cellIndex;
+
+								highlighter.endColumnIndex
+									= endIndex
+									= stop.col
+									= end.th.cellIndex;
+							} else {
+								before = true;
+								highlighter.startColumnIndex
+									= index
+									= startIndex
+									= start.col
+									= end.th.cellIndex;
+
+								highlighter.endColumnIndex
+									= endIndex
+									= stop.col
+									= begin.th.cellIndex;
+							}
 
 							highlighter.startRowIndex = 1;
-							highlighter.startColumnIndex = first;
 							highlighter.endRowIndex = size.rows;
-							highlighter.endColumnIndex = last;
 
-							col = last;
+							obj.push(begin.col);
 
-							do {
-								obj.push(jS.col(sheet[0], col));
-							} while(col-- > first);
+							for (;index < endIndex;index++) {
+								obj.push(obj[obj.length - 1].nextSibling);
+							}
 							break;
 						case 'left':
 							start.row = first;
@@ -6598,7 +6591,7 @@ $.sheet = {
 							highlighter.startRowIndex = first;
 							highlighter.startColumnIndex = 1;
 							highlighter.endRowIndex = last;
-							highlighter.endColumn = size.cols;
+							highlighter.endColumnIndex = size.cols;
 
 							row = last;
 
@@ -6618,7 +6611,7 @@ $.sheet = {
 							break;
 					}
 
-					new SetActive(begin > end);
+					new SetActive(highlighter);
 
 					jS.highlighter.set(obj);
 				},
@@ -6724,28 +6717,21 @@ $.sheet = {
 
 				/**
 				 * Gets the td element within a spreadsheet instance
-				 * @param {Number} tableIndex table index
-				 * @param {Number} rowIndex row index
-				 * @param {Number} colIndex column index
+				 * @param {Number} _s spreadsheet index
+				 * @param {Number} r row index
+				 * @param {Number} c column index
 				 * @returns {HTMLElement|null}
 				 * @memberOf jS
 				 */
-				getTd:function (tableIndex, rowIndex, colIndex) {
-					var table = (tableIndex > -1 ? jS.obj.tables()[tableIndex] : jS.obj.table()[0]),
-						tBody,
-						row,
-						td;
-
-					if (
-						!table
-							|| !(tBody = table.tBody)
-							|| !(row = tBody.children[rowIndex])
-							|| !(td = row.children[colIndex])
-						) {
-						return null;
+				getTd:function (_s, r, c) {
+					if (_s < 0) {
+						_s = jS.i;
 					}
+					var cell = s.loader.jitCell(_s, r, c);
 
-					return td;
+					if (cell === null) return cell;
+
+					return cell.td || null;
 				},
 
 				/**
@@ -7692,26 +7678,16 @@ $.sheet = {
 
 		s.parent.addClass(jS.theme.parent);
 
-		if (s.origHtml.length) {
-			jS.openSheet(s.loader);
-		} else {
-			if (s.loader !== null) {
-				s.loader
-					.bindJS(jS)
-					.bindHandler(jS.cellHandler);
 
-				/*while(loaderTables.length < s.loader.count) {
-					loaderTable = document.createElement('table');
-					loaderTable.setAttribute('title', s.loader.title(loaderTables.length) || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, loaderTables.length + 1));
-					loaderTables.push(loaderTable);
-				}*/
-				jS.openSheet(s.loader);
-			}
-
-			else {
-				jS.openSheet(s.loader);
-			}
+		if (s.loader === null) {
+			s.loader = (new Sheet.Loader.HTML(s.origHtml))
 		}
+
+		s.loader
+			.bindJS(jS)
+			.bindHandler(jS.cellHandler);
+
+		jS.openSheet(s.loader);
 
 		jS.setBusy(false);
 

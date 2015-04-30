@@ -37,7 +37,7 @@ JS_FILES=(
 	RowAdder.js
 	Detacher.js
 	StyleUpdater.js
-	Loader/HTMLTable.js
+	Loader/HTML.js
 	Loader/JSON.js
 	Loader/XML.js
 

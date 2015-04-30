@@ -143,6 +143,7 @@ var jSE = $.sheet.engine = {
 	 */
 	chart:function (o) {
 		var jS = this.jS,
+			loader = jS.s.loader,
 			chart = document.createElement('div'),
 			td = this.td,
 			gR,
@@ -195,16 +196,12 @@ var jSE = $.sheet.engine = {
 
 		o.legend = (o.legend ? o.legend : o.data);
 
-		var width,
-			height,
+		var width = loader.getWidth(this.sheetIndex, this.rowIndex),
+			height = loader.getHeight(this.sheetIndex, this.columnIndex),
 			r = Raphael(chart);
 
-		if (td.clientHeight > 0) {
-			width = Math.max(td.clientWidth, 100);
-			height = Math.max(td.clientHeight, 50);
-		}
-
 		if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
+
 		switch (o.type) {
 			case "bar":
 				gR = r.barchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
