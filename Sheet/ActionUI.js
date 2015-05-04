@@ -24,18 +24,18 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.frozenAt.row = Math.max(this.frozenAt.row, 0);
 		this.frozenAt.col = Math.max(this.frozenAt.col, 0);
 
-		/**
-		 * Where the current sheet is scrolled to
-		 * @returns {Object}
-		 */
-		this.scrolledArea = {
-			row: Math.max(this.frozenAt.row, 1),
-			col: Math.max(this.frozenAt.col, 1)
-		};
-
 		var that = this,
 			loader = jS.s.loader,
 			pane = this.pane,
+
+			/**
+			 * Where the current sheet is scrolled to
+			 * @returns {Object}
+			 */
+			scrolledArea = this.scrolledArea = {
+				row: Math.max(this.frozenAt.row, 1),
+				col: Math.max(this.frozenAt.col, 1)
+			},
 
 			//TODO: connect megatable up to Loader
 			megaTable = this.megaTable = new MegaTable({
@@ -87,6 +87,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			infiniscroll = this.infiniscroll = new Infiniscroll(pane, {
 				scroll: function(c, r) {
 					setTimeout(function() {
+						scrolledArea.col = c;
+						scrolledArea.row = r;
 						megaTable.update(r, c);
 					}, 0);
 				},
@@ -101,6 +103,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		megaTable.table.setAttribute('cellPadding', '0');
 		pane.scroll = infiniscroll._out;
 		pane.actionUI = this;
+		pane.table = megaTable.table;
+		pane.tBody = megaTable.tBody;
 	};
 
 	ActionUI.prototype = {

@@ -1490,18 +1490,18 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.frozenAt.row = Math.max(this.frozenAt.row, 0);
 		this.frozenAt.col = Math.max(this.frozenAt.col, 0);
 
-		/**
-		 * Where the current sheet is scrolled to
-		 * @returns {Object}
-		 */
-		this.scrolledArea = {
-			row: Math.max(this.frozenAt.row, 1),
-			col: Math.max(this.frozenAt.col, 1)
-		};
-
 		var that = this,
 			loader = jS.s.loader,
 			pane = this.pane,
+
+			/**
+			 * Where the current sheet is scrolled to
+			 * @returns {Object}
+			 */
+			scrolledArea = this.scrolledArea = {
+				row: Math.max(this.frozenAt.row, 1),
+				col: Math.max(this.frozenAt.col, 1)
+			},
 
 			//TODO: connect megatable up to Loader
 			megaTable = this.megaTable = new MegaTable({
@@ -1553,6 +1553,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			infiniscroll = this.infiniscroll = new Infiniscroll(pane, {
 				scroll: function(c, r) {
 					setTimeout(function() {
+						scrolledArea.col = c;
+						scrolledArea.row = r;
 						megaTable.update(r, c);
 					}, 0);
 				},
@@ -1567,6 +1569,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		megaTable.table.setAttribute('cellPadding', '0');
 		pane.scroll = infiniscroll._out;
 		pane.actionUI = this;
+		pane.table = megaTable.table;
+		pane.tBody = megaTable.tBody;
 	};
 
 	ActionUI.prototype = {
@@ -5915,7 +5919,7 @@ $.sheet = {
 						return jS.controls.bar.x.menu[jS.i] || $([]);
 					},
 					tdActive:function () {
-						return jS.cellLast.td || null;
+						return jS.cellLast !== null ? jS.cellLast.td : null;
 					},
 					cellActive:function() {
 						return jS.cellLast;
@@ -6872,17 +6876,17 @@ $.sheet = {
 					barHandleFreeze:{
 
 						/**
-						 * @param {HTMLElement} bar
 						 * @param {Number} i
 						 * @param {HTMLElement} pane
 						 * @returns {Boolean}
 						 * @memberOf jS.controlFactory.barHandleFreeze
 						 */
-						top:function (bar, i, pane) {
+						top:function (i, pane) {
 							if (jS.isBusy()) {
 								return false;
 							}
 							var actionUI = pane.actionUI,
+								tBody = pane.tBody,
 								frozenAt = actionUI.frozenAt,
 								scrolledArea = actionUI.scrolledArea;
 
@@ -6893,6 +6897,7 @@ $.sheet = {
 							jS.obj.barHelper().remove();
 
 							var highlighter,
+								bar = tBody.children[0].children[frozenAt.col + 1],
 								paneRectangle = pane.getBoundingClientRect(),
 								paneTop = paneRectangle.top + document.body.scrollTop,
 								paneLeft = paneRectangle.left + document.body.scrollLeft,
@@ -6900,7 +6905,7 @@ $.sheet = {
 								$handle = pane.freezeHandleTop = $(handle)
 									.appendTo(pane)
 									.addClass(jS.theme.barHandleFreezeTop + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeTop)
-									.height(bar.clientHeight)
+									.height(bar.clientHeight - 1)
 									.css('left', (bar.offsetLeft - handle.clientWidth) + 'px')
 									.attr('title', jS.msg.dragToFreezeCol);
 
@@ -6917,11 +6922,11 @@ $.sheet = {
 										.appendTo(pane)
 										.css('position', 'absolute')
 										.addClass(jS.theme.barFreezeIndicator + ' ' + jS.cl.barHelper)
-										.height(bar.clientHeight)
+										.height(bar.clientHeight - 1)
 										.fadeTo(0,0.33);
 								},
 								drag:function() {
-									var target = jS.nearest($handle, tds).prev();
+									var target = jS.nearest($handle, bar.parentNode.children).prev();
 									if (target.length && target.position) {
 										highlighter.width(target.position().left + target.width());
 									}
@@ -6936,24 +6941,25 @@ $.sheet = {
 									scrolledArea.col = actionUI.frozenAt.col = jS.getTdLocation(target[0]).col - 1;
 									jS.autoFillerHide();
 								},
-								containment:[paneLeft, paneTop, math.min(paneLeft + pane.clientWidth, paneLeft + pane.clientWidth - window.scrollBarSize.width), paneTop]
+								containment:[paneLeft, paneTop, paneLeft + pane.clientWidth - window.scrollBarSize.width, paneTop]
 							});
 
 							return true;
 						},
 
 						/**
-						 * @param {HTMLElement} bar
 						 * @param {Number} i
 						 * @param {HTMLElement} pane
 						 * @returns {Boolean}
 						 * @memberOf jS.controlFactory.barHandleFreeze
 						 */
-						left:function (bar, i, pane) {
+						left:function (i, pane) {
 							if (jS.isBusy()) {
 								return false;
 							}
 							var actionUI = pane.actionUI,
+								table = pane.table,
+								tBody = pane.tBody,
 								frozenAt = actionUI.frozenAt,
 								scrolledArea = actionUI.scrolledArea;
 
@@ -6963,7 +6969,8 @@ $.sheet = {
 
 							jS.obj.barHelper().remove();
 
-							var paneRectangle = pane.getBoundingClientRect(),
+							var bar = tBody.children[frozenAt.row + 1].children[0],
+								paneRectangle = pane.getBoundingClientRect(),
 								paneTop = paneRectangle.top + document.body.scrollTop,
 								paneLeft = paneRectangle.left + document.body.scrollLeft,
 								handle = document.createElement('div'),
@@ -6971,8 +6978,9 @@ $.sheet = {
 									.appendTo(pane)
 									.addClass(jS.theme.barHandleFreezeLeft + ' ' + jS.cl.barHelper + ' ' + jS.cl.barHandleFreezeLeft)
 									.width(bar.clientWidth)
-									.css('top', (pos.top - handle.clientHeight + 1) + 'px')
-									.attr('title', jS.msg.dragToFreezeRow);
+									.css('top', (bar.offsetTop - handle.clientHeight + 1) + 'px')
+									.attr('title', jS.msg.dragToFreezeRow),
+								highlighter;
 
 							jS.controls.bar.helper[jS.i] = jS.obj.barHelper().add(handle);
 							jS.controls.bar.y.handleFreeze[jS.i] = $handle;
@@ -6990,7 +6998,7 @@ $.sheet = {
 										.fadeTo(0,0.33);
 								},
 								drag:function() {
-									var target = jS.nearest($handle, bar.parentNode.children).prev();
+									var target = jS.nearest($handle, bar.parentNode.parentNode.children).prev();
 									if (target.length && target.position) {
 										highlighter.height(target.position().top + target.height());
 									}
@@ -6999,12 +7007,12 @@ $.sheet = {
 									highlighter.remove();
 									jS.setBusy(false);
 									jS.setDirty(true);
-									var target = jS.nearest($handle, bar.parentNode.children);
+									var target = jS.nearest($handle, bar.parentNode.parentNode.children);
 									jS.obj.barHelper().remove();
 									scrolledArea.row = actionUI.frozenAt.row = math.max(jS.getTdLocation(target.children(0)[0]).row - 1, 0);
 									jS.autoFillerHide();
 								},
-								containment:[paneLeft, paneTop, paneLeft, math.min(paneTop + pane.table.clientHeight, paneTop + pane.clientHeight - window.scrollBarSize.height)]
+								containment:[paneLeft, paneTop, paneLeft, paneTop + pane.clientHeight - window.scrollBarSize.height]
 							});
 
 							return true;
@@ -7584,7 +7592,7 @@ $.sheet = {
 									jS.resizeBar[entity](bar, i, pane);
 
 									if (jS.isSheetEditable()) {
-										jS.controlFactory.barHandleFreeze[entity](bar, i, pane);
+										jS.controlFactory.barHandleFreeze[entity](i, pane);
 
 										if (entity == "top") {
 											jS.controlFactory.barMenu[entity](e, i, bar);
@@ -12716,8 +12724,8 @@ var jSE = $.sheet.engine = {
 
 		o.legend = (o.legend ? o.legend : o.data);
 
-		var width = loader.getWidth(this.sheetIndex, this.rowIndex),
-			height = loader.getHeight(this.sheetIndex, this.columnIndex),
+		var width = loader.getWidth(this.sheetIndex, this.columnIndex),
+			height = loader.getHeight(this.sheetIndex, this.rowIndex),
 			r = Raphael(chart);
 
 		if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});

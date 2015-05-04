@@ -196,8 +196,8 @@ var jSE = $.sheet.engine = {
 
 		o.legend = (o.legend ? o.legend : o.data);
 
-		var width = loader.getWidth(this.sheetIndex, this.rowIndex),
-			height = loader.getHeight(this.sheetIndex, this.columnIndex),
+		var width = loader.getWidth(this.sheetIndex, this.columnIndex),
+			height = loader.getHeight(this.sheetIndex, this.rowIndex),
 			r = Raphael(chart);
 
 		if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
