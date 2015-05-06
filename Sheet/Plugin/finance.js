@@ -8,10 +8,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+Sheet.Plugin.finance =
 (function(jFN){
     var nAN = NaN;
 
-    var jSF = jQuery.sheet.financefn = {
+    var finance = {
         NPV: function(rate) {
             rate = rate * 1;
             var factor = 1,
@@ -165,5 +166,13 @@
             result.html = Globalize.format( resultPrimitive, "c" );
             return result;
         }
-    };
-})(jQuery.sheet.fn);
+    },
+    i,
+	fn = Sheet.fn;
+
+	for(i in finance) if (finance.hasOwnProperty(i)) {
+		fn[i] = finance[i];
+	}
+
+	return finance;
+})();

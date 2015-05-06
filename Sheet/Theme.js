@@ -18,7 +18,7 @@ Sheet.Theme = (function($) {
 				break;
 		}
 
-		$.extend(this, this.cl);
+		extend(this, this.cl);
 	}
 
 	Constructor.themeRollerClasses = {

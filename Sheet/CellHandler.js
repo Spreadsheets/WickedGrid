@@ -6,9 +6,8 @@ Sheet.CellHandler = (function(Math) {
 	var u = undefined,
 		nAN = NaN;
 
-	function CellHandler(jS, jSE, fn) {
+	function CellHandler(jS, fn) {
 		this.jS = jS;
-		this.jSE = jSE;
 		this.fn = fn;
 	}
 
@@ -256,9 +255,8 @@ Sheet.CellHandler = (function(Math) {
 		 */
 		cellValue:function (parentCell, cellRef, callback) {
 			var jS = this.jS,
-				loc = jSE.parseLocation(cellRef.c, cellRef.r),
-				cell,
-				value;
+				loc = this.parseLocation(cellRef.c, cellRef.r),
+				cell;
 
 			cell = jS.getCell(parentCell.sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
@@ -294,10 +292,9 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Sheet.CellHandler}
 		 */
 		remoteCellValue:function (parentCell, sheet, cellRef, callback) {
-			var jSE = this.jSE,
-				jS = this.jS,
-				loc = jSE.parseLocation(cellRef.c, cellRef.r),
-				sheetIndex = jSE.parseSheetLocation(sheet),
+			var jS = this.jS,
+				loc = this.parseLocation(cellRef.c, cellRef.r),
+				sheetIndex = this.parseSheetLocation(sheet),
 				cell;
 
 			if (sheetIndex < 0) {
@@ -325,9 +322,9 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Array}
 		 */
 		remoteCellRangeValue:function (parentCell, sheetTitle, start, end, callback) {
-			var sheetIndex = (typeof sheetTitle === 'string' ? jSE.parseSheetLocation(sheetTitle) : sheetTitle),
-				_start = jSE.parseLocation(start.c, start.r),
-				_end = jSE.parseLocation(end.c, end.r),
+			var sheetIndex = (typeof sheetTitle === 'string' ? this.parseSheetLocation(sheetTitle) : sheetTitle),
+				_start = this.parseLocation(start.c, start.r),
+				_end = this.parseLocation(end.c, end.r),
 				rowIndex = (_start.row < _end.row ? _start.row : _end.row),
 				rowIndexEnd = (_start.row < _end.row ? _end.row : _start.row),
 				colIndexStart = (_start.col < _end.col ? _start.col : _end.col),
@@ -415,7 +412,7 @@ Sheet.CellHandler = (function(Math) {
 			}
 
 			if (i !== totalNeedResolved) {
-				throw new Error('Not all cells were found and added to range');
+				//throw new Error('Not all cells were found and added to range');
 			}
 
 			return this;
@@ -465,6 +462,90 @@ Sheet.CellHandler = (function(Math) {
 			}
 
 			return formulaParser;
+		},
+		/**
+		 * Parse a cell name to it's location
+		 * @param {String} columnStr "A"
+		 * @param {String|Number} rowString "1"
+		 * @returns {Object} {row: 1, col: 1}
+		 */
+		parseLocation: function (columnStr, rowString) {
+			return {
+				row: parseInt(rowString),
+				col: this.columnLabelIndex(columnStr)
+			};
+		},
+
+		/**
+		 * Parse a sheet name to it's index
+		 * @param {String} locStr SHEET1 = 0
+		 * @returns {Number}
+		 */
+		parseSheetLocation: function (locStr) {
+			var sheetIndex = ((locStr + '').replace(/SHEET/i, '') * 1) - 1;
+			return isNaN(sheetIndex) ? -1 : sheetIndex ;
+		},
+
+		/**
+		 *
+		 * @param {Number} col 1 = A
+		 * @param {Number} row 1 = 1
+		 * @returns {String}
+		 */
+		parseCellName: function (col, row) {
+			return this.columnLabelString(col) + (row || '');
+		},
+
+		/**
+		 * Available labels, used for their index
+		 */
+		alphabet: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+		/**
+		 * Available labels, used for their index
+		 */
+		columnLabels: {},
+		/**
+		 * Get index of a column label
+		 * @param {String} str A to 1, B to 2, Z to 26, AA to 27
+		 * @returns {Number}
+		 */
+		columnLabelIndex: function (str) {
+			return this.columnLabels[str.toUpperCase()];
+		},
+
+		/**
+		 * Available indexes, used for their labels
+		 */
+		columnIndexes:[],
+
+		/**
+		 * Get label of a column index
+		 * @param {Number} index 1 = A, 2 = B, 26 = Z, 27 = AA
+		 * @returns {String}
+		 */
+		columnLabelString: function (index) {
+			if (!this.columnIndexes.length) { //cache the indexes to save on processing
+				var s = '', i, j, k, l;
+				i = j = k = -1;
+				for (l = 1; l < 16385; ++l) {
+					s = '';
+					++k;
+					if (k == 26) {
+						k = 0;
+						++j;
+						if (j == 26) {
+							j = 0;
+							++i;
+						}
+					}
+					if (i >= 0) s += this.alphabet[i];
+					if (j >= 0) s += this.alphabet[j];
+					if (k >= 0) s += this.alphabet[k];
+					this.columnIndexes[l] = s;
+					this.columnLabels[s] = l;
+				}
+			}
+			return this.columnIndexes[index] || '';
 		}
 	};
 

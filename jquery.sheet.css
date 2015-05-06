@@ -269,6 +269,10 @@
 	white-space: nowrap;
 	-ms-text-overflow: ellipsis;
 }
+.jSParent .jS td.jSMerged {
+	position: absolute;
+	visibility: hidden;
+}
 
 .jSParent .jS th.jSBarCorner {
 	border-width: 0px 0px 1px 0px;

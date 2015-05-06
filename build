@@ -5,48 +5,44 @@ cd parser/formula
 node ../../../jison/ports/php/php.js formula.jison
 cd ../../
 
-# directories of the JS and CSS files
-# CSS_DIR='.'
+# directories of the JS files
 JS_IN_DIR='./Sheet'
 JS_OUT_DIR='.'
 
 #these are the paths to the final combined files that you want to have in the end
-# CSS_COMBINED_FILE="$CSS_DIR/combined.css"
 
 JS_TEMP=""
 JS_WRAPPER=$(<"$JS_IN_DIR/wrapper.js")
 JS_COMBINED_FILE="$JS_OUT_DIR/jquery.sheet.js"
 JS_COMBINED_FILE_MIN="$JS_OUT_DIR/jquery.sheet.min.js"
 
-# These files are your CSS and JS files you want to combine together
-# CSS_FILES=( file1.css file2.css )
-
 JS_FILES=(
-	#constructors first
-	Base.js
-	Cell.js
-	CellHandler.js
-	CellTypeHandlers.js
-	CellRange.js
-	ActionUI.js
-	SpreadsheetUI.js
-	Theme.js
-	thread.js
-	Highlighter.js
-	ColumnAdder.js
-	RowAdder.js
-	Detacher.js
-	StyleUpdater.js
-	Loader/HTML.js
-	Loader/JSON.js
-	Loader/XML.js
+	#namespace first
+		Base.js
 
-	#everything else next
-	sheet.js
-	engine.js
-	fn.js
-	utilities.js
-	environmentCorrection.js
+	#non-constructors next
+    	fn.js
+    	sheet.js
+    	thread.js
+    	utilities.js
+
+	#children namespaces next
+		Loader/HTML.js
+		Loader/JSON.js
+		Loader/XML.js
+
+	#constructors next
+		ActionUI.js
+		Cell.js
+		CellHandler.js
+		CellTypeHandlers.js
+		CellRange.js
+		Highlighter.js
+		SpreadsheetUI.js
+		Theme.js
+
+	#environment correction last
+		environmentCorrection.js
 )
 
 PARSER_FILES=(
@@ -54,18 +50,10 @@ PARSER_FILES=(
 	parser/tsv/tsv.js
 )
 
-# ----- Do not edit past this line -----
-# CSS_TEMP="$CSS_DIR/_Sheet.css"
 
 #clear the files
-# > $CSS_COMBINED_FILE
 > $JS_COMBINED_FILE
 > $JS_COMBINED_FILE_MIN
-
-#run thru the CSS files
-#for F in ${CSS_FILES[@]}; do
-#  cat "$CSS_DIR/$F" >> $CSS_TEMP
-#done
 
 #run thru the JS files
 for F in ${JS_FILES[@]}; do
@@ -82,14 +70,8 @@ for F in ${PARSER_FILES[@]}; do
 done
 
 #compress it
-#csstidy $CSS_TEMP $CSS_COMBINED_FILE
 yui-compressor -o $JS_COMBINED_FILE_MIN $JS_COMBINED_FILE
 
-#remove the temp files
-#rm $CSS_TEMP
-#rm $JS_TEMP
-
 #add the file to the git base
-#git add $CSS_COMBINED_FILE
 git add $JS_COMBINED_FILE
 git add $JS_COMBINED_FILE_MIN

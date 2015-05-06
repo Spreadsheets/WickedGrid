@@ -1,5 +1,6 @@
 var Sheet = {
 	Loader: {},
+	Plugin: {},
 
 	defaultTheme: 0,
 	themeRollerTheme: 0,
@@ -12,6 +13,9 @@ var Sheet = {
 
 	defaultColumnWidth: 120,
 	defaultRowHeight: 20,
+
+	domRows: 40,
+	domColumns: 35,
 
 	calcStack: 0,
 

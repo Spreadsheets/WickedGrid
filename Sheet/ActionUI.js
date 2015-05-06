@@ -3,19 +3,16 @@
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-	var ActionUI = function(jS, enclosure, cl, frozenAt, max) {
+	var ActionUI = function(jS, enclosure, cl, frozenAt, hiddenRows, hiddenColumns) {
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
 		enclosure.appendChild(this.pane);
-		this.max = max;
 
 		this.xIndex = 0;
 		this.yIndex = 0;
 
-		this.scrollAxisX = {};
-		this.scrollAxisY = {};
-
-		this.hiddenColumns = [];
+		this.hiddenRows = hiddenRows;
+		this.hiddenColumns = hiddenColumns;
 
 		if (!(this.frozenAt = frozenAt)) {
 			this.frozenAt = {row:0, col:0};
@@ -27,6 +24,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		var that = this,
 			loader = jS.s.loader,
 			pane = this.pane,
+			left,
+			up,
 
 			/**
 			 * Where the current sheet is scrolled to
@@ -39,23 +38,35 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 			//TODO: connect megatable up to Loader
 			megaTable = this.megaTable = new MegaTable({
-				columns: 35,
-				rows: 40,
+				columns: Sheet.domColumns,
+				rows: Sheet.domRows,
 				element: pane,
 				updateCell: function(rowIndex, columnIndex, td) {
+					if (that.rowPrevHidden > 0 && rowIndex > that.rowPrevHidden) {
+						rowIndex = that.rowPrevHidden + rowIndex + 1;
+					} else {
+						rowIndex = rowIndex + 1;
+					}
+
+					if (that.columnPrevHidden > 0 && columnIndex > that.columnPrevHidden) {
+						columnIndex = that.columnPrevHidden + columnIndex + 1;
+					} else {
+						columnIndex = columnIndex + 1;
+					}
+
 					if (typeof td.jSCell === 'object' && td.jSCell !== null) {
 						td.jSCell.td = null;
 					}
 
-					var cell = jS.getCell(jS.i, rowIndex + 1, columnIndex + 1);
+					var cell = jS.getCell(jS.i, rowIndex, columnIndex);
 
 					if (cell === null) return;
 
 					var spreadsheet = jS.spreadsheets[jS.i] || (jS.spreadsheets[jS.i] = []),
-						row = spreadsheet[rowIndex + 1] || (spreadsheet[rowIndex + 1] = []);
+						row = spreadsheet[rowIndex] || (spreadsheet[rowIndex] = []);
 
-					if (!row[columnIndex + 1]) {
-						row[columnIndex + 1] = cell;
+					if (!row[columnIndex]) {
+						row[columnIndex] = cell;
 					}
 
 					cell.td = td;
@@ -69,18 +80,74 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					th.className = jS.cl.barCorner + ' ' + jS.theme.bar;
 				},
 				updateRowHeader: function(i, header) {
+					var prevHidden = 0,
+						nextHidden = 0,
+						hiddenI,
+						isHidden = (hiddenI = hiddenRows.indexOf(i)) > -1;
+
+					if (isHidden) {
+						prevHidden++;
+						nextHidden++;
+
+						//count previous till you find one that isn't hidden
+						while (hiddenRows[hiddenI - prevHidden] !== undefined) prevHidden++;
+
+						//count next till you find one that isn't hidden
+						while (hiddenRows[hiddenI + nextHidden] !== undefined) nextHidden++;
+
+						that.rowPrevHidden = prevHidden;
+						that.rowNextHidden = nextHidden;
+						that.yIndex = i + prevHidden + nextHidden + 1;
+					} else {
+						if (that.rowPrevHidden > 0 && i > that.rowPrevHidden) {
+							that.yIndex = that.rowPrevHidden + i + 1;
+						} else {
+							that.rowPrevHidden = 0;
+							that.rowNextHidden = 0;
+							that.yIndex = i + 1;
+						}
+					}
+
 					header.entity = 'left';
 					header.className = jS.cl.barLeft + ' ' + jS.theme.bar;
-					header.appendChild(document.createTextNode(i + 1));
-					header.parentNode.style.height = header.style.height = loader.getHeight(jS.i, i + 1) + 'px';
+					header.appendChild(document.createTextNode(that.yIndex + ''));
+					header.parentNode.style.height = header.style.height = loader.getHeight(jS.i, that.yIndex) + 'px';
 				},
 				updateColumnHeader: function(i, header, col) {
+					var prevHidden = 0,
+						nextHidden = 0,
+						hiddenI,
+						isHidden = (hiddenI = hiddenColumns.indexOf(i)) > -1;
+
+					if (isHidden) {
+						prevHidden++;
+						nextHidden++;
+
+						//count previous till you find one that isn't hidden
+						while (hiddenColumns[hiddenI - prevHidden] !== undefined) prevHidden++;
+
+						//count next till you find one that isn't hidden
+						while (hiddenColumns[hiddenI + nextHidden] !== undefined) nextHidden++;
+
+						that.columnPrevHidden = prevHidden;
+						that.columnNextHidden = nextHidden;
+						that.xIndex = i + prevHidden + nextHidden + 1;
+					} else {
+						if (that.columnPrevHidden > 0 && i > that.columnPrevHidden) {
+							that.xIndex = that.columnPrevHidden + i + 1;
+						} else {
+							that.columnPrevHidden = 0;
+							that.columnNextHidden = 0;
+							that.xIndex = i + 1;
+						}
+					}
+
 					header.th = header;
 					header.col = col;
 					header.entity = 'top';
 					header.className = jS.cl.barTop + ' ' + jS.theme.bar;
-					header.appendChild(document.createTextNode(jSE.columnLabelString(i + 1)));
-					col.style.width = loader.getWidth(jS.i, i + 1) + 'px';
+					header.appendChild(document.createTextNode(jS.cellHandler.columnLabelString(that.xIndex)));
+					col.style.width = loader.getWidth(jS.i, that.xIndex) + 'px';
 				}
 			}),
 
@@ -92,7 +159,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						megaTable.update(r, c);
 					}, 0);
 				},
-				verticalScrollDensity: 5,
+				verticalScrollDensity: 15,
 				horizontalScrollDensity: 25
 			});
 
@@ -215,48 +282,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		},
 
 
-
-		/**
-		 * Causes the pane to redraw, really just for fixing issues in Chrome
-		 */
-		redraw: function() {
-			var style = this.pane.style;
-
-			style.opacity = 0.9999;
-
-			setTimeout(function() {
-				style.opacity = 1;
-			},0);
-		},
-
 		hide:function (jS, hiddenColumns, hiddenRows) {
-			var cssId = '#' + this.table.getAttribute('id'),
-				pane = this.pane,
-				that = this;
-
-			if (this.toggleHideStyleX === null) {
-				this.toggleHideStyleX = new Sheet.StyleUpdater(function () {
-					var style = this.nthCss('col', cssId, that.hiddenColumns, 0) +
-						this.nthCss('> td', cssId + ' tr', that.hiddenColumns, 0) +
-						this.nthCss('> th', cssId + ' tr', that.hiddenColumns, 0);
-
-					this.setStyle(style);
-				});
-			}
-
-			pane.appendChild(this.toggleHideStyleX.styleElement);
-
-			this.hiddenColumns = (hiddenColumns !== null ? hiddenColumns : []);
-
-			if (hiddenRows !== null && hiddenRows.length > 0) {
-				hiddenRows.sort();
-				this.toggleHideRowRange(jS, hiddenRows[0], hiddenRows[hiddenRows.length - 1], true);
-			}
-
-			if (this.hiddenColumns.length > 0) {
-				this.hiddenColumns.sort();
-				this.toggleHideStyleX.update();
-			}
+			throw new Error('Not yet implemented');
 		},
 
 		/**
@@ -265,7 +292,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @param {Number} rowIndex
 		 */
 		toggleHideRow: function(jS, rowIndex) {
-			this.toggleHideRowRange(jS, rowIndex);
+			throw new Error('Not yet implemented');
 		},
 
 		/**
@@ -276,44 +303,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @param {Boolean} [hide]
 		 */
 		toggleHideRowRange: function(jS, startIndex, endIndex, hide) {
-			if (!startIndex) return;
-			if (!endIndex) endIndex = startIndex;
-
-			var spreadsheets = jS.spreadsheets,
-				spreadsheet = spreadsheets[jS.i],
-				tBody = this.tBody,
-				rowIndex = startIndex,
-				row,
-				tr,
-				removing = (hide !== undefined ? hide : (spreadsheet[startIndex][1].td.parentNode.parentNode !== null)),
-				lastAnchorIndex = endIndex + 1,
-				lastAnchor = null;
-
-			if (removing) {
-				for(;rowIndex <= endIndex && (row = spreadsheet[rowIndex]) !== undefined; rowIndex++){
-					tr = row[1].td.parentNode;
-					if (tr.parentNode !== null) {
-						tBody.removeChild(tr);
-					}
-				}
-			} else {
-
-				while (lastAnchor === null && lastAnchorIndex < spreadsheet.length) {
-					row = spreadsheet[lastAnchorIndex++];
-					lastAnchor = row[1].td.parentNode;
-					if (lastAnchor.parentNode === null) {
-						lastAnchor = null;
-					}
-				}
-
-				for(;rowIndex <= endIndex && (row = spreadsheet[rowIndex]) !== undefined; rowIndex++){
-					tr = row[1].td.parentNode;
-					if (tr.parentNode !== null) {
-						tBody.insertBefore(tr, lastAnchor);
-					}
-				}
-			}
-
+			throw new Error('Not yet implemented');
 		},
 
 		/**
@@ -321,10 +311,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * Makes all rows visible
 		 */
 		rowShowAll:function (jS) {
-			var spreadsheet = jS.spreadsheets[jS.i],
-				lastIndex = spreadsheet.length - 1;
-
-			this.toggleHideRowRange(jS, 1, lastIndex, false);
+			throw new Error('Not yet implemented');
 		},
 
 
@@ -333,14 +320,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @param {Number} index
 		 */
 		toggleHideColumn: function(index) {
-			var key;
-			if ((key = this.hiddenColumns.indexOf(index)) > -1) {
-				this.hiddenColumns.splice(key, 1);
-			} else {
-				this.hiddenColumns.push(index);
-			}
-			this.hiddenColumns.sort();
-			this.toggleHideStyleX.update();
+			throw new Error('Not yet implemented');
 		},
 		/**
 		 * Toggles a range of columns to be visible starting at index of 1
@@ -348,107 +328,19 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @param {Number} [endIndex]
 		 */
 		toggleHideColumnRange: function(startIndex, endIndex) {
-			if (!startIndex) return;
-			if (!endIndex) endIndex = startIndex;
-
-			var hiddenColumns = this.hiddenColumns,
-				newHiddenColumns = [],
-				max = hiddenColumns.length,
-				hiddenColumn,
-				i = 0,
-				removing = null;
-
-			for(;i < max; i++){
-				hiddenColumn = hiddenColumns[i];
-				if (hiddenColumn >= startIndex && hiddenColumn <= endIndex) {
-					if (removing === null) {
-						removing = true;
-					}
-				} else {
-					newHiddenColumns.push(hiddenColumn);
-				}
-			}
-
-			if (removing === null) {
-				for(i = startIndex; i <= endIndex; i++) {
-					newHiddenColumns.push(i);
-				}
-			}
-
-			newHiddenColumns.sort();
-			this.hiddenColumns = newHiddenColumns;
-			this.toggleHideStyleX.update();
+			throw new Error('Not yet implemented');
 		},
 		columnShowAll:function () {
-			this.toggleHideStyleX.setStyle('');
-			this.hiddenColumns = [];
+			throw new Error('Not yet implemented');
 		},
 
 		remove: function() {
-
-		},
-
-
-		/**
-		 * Scrolls to a position within the spreadsheet
-		 * @param {Number} pixel scrollTO
-		 */
-		scrollToPixelX:function (pixel) {
-			var axis = this.scrollAxisX,
-				max,
-				i,
-				value = (pixel / this.pixelScrollDensity) >> 1,
-				offset = arrHelpers.indexOfNearestLessThan(this.hiddenColumns, value) + 1;
-
-			if (offset > 0) {
-				value += offset;
-			}
-
-			max = axis.max;
-			axis.value = value;
-
-			i = value > max ? max : value;
-			return axis.scrollStyle.update(i);
-		},
-
-		/**
-		 * Scrolls to a position within the spreadsheet
-		 * @param {Number} pixel
-		 * @param {Boolean} [isUp]
-		 */
-		scrollToPixelY: function(pixel, isUp) {
-			var i = (pixel / this.pixelScrollDensity) >> 1,
-				detacher = this.yDetacher;
-
-			this.yIndex = i;
-			this.scrolledArea.row = Math.max(i || 1, 1);
-
-			if (isUp === true) {
-				detacher
-					.attachAboveAfter(i)
-					.detachBelowAfter(i + this.maximumVisibleRows + 1);
-			} else {
-				detacher
-					.detachAboveBefore(i)
-					.attachBelowBefore(i + this.maximumVisibleRows + 1);
-			}
-
-			return detacher.aboveChanged || detacher.belowChanged;
+			throw new Error('Not yet implemented');
 		},
 
 		scrollToCell: function(axis, value) {
 			throw new Error('Not yet implemented');
 		},
-
-		/**
-		 * @type Sheet.StyleUpdater
-		 */
-		toggleHideStyleX: null,
-
-		/**
-		 * @type Sheet.StyleUpdater
-		 */
-		toggleHideStyleY: null,
 
 		pixelScrollDensity: 30,
 		maximumVisibleRows: 65,
