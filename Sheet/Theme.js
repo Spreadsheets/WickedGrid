@@ -51,14 +51,14 @@ Sheet.Theme = (function($) {
 
 	Constructor.bootstrapClasses = {
 		autoFiller:'btn-info',
-		bar:'bg-primary',
+		bar:'input-group-addon',
 		barHighlight:'label-info',
 		barHandleFreezeLeft:'bg-warning',
 		barHandleFreezeTop:'bg-warning',
 		barMenuTop:'bg-warning',
 		tdActive:'active',
-		tdHighlighted:'bg-info',
-		control:'bg-primary',
+		tdHighlighted:'bg-info disabled',
+		control:'panel-heading',
 		controlTextBox:'form-control',
 		fullScreen:'',
 		inPlaceEdit:'form-control',

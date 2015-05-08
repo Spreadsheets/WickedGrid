@@ -1,348 +1,335 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
-        <meta http-equiv="Pragma" content="no-cache"/>
-        <meta http-equiv="Expires" content="-1"/>
-        <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-        <meta content="utf-8" http-equiv="encoding"/>
+<!--Icons made by Freepik, Elegant Themes, Zurb, Icomoon, SimpleIcon, Catalin Fertu from www.flaticon.com-->
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta http-equiv="Pragma" content="no-cache"/>
+    <meta http-equiv="Expires" content="-1"/>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+    <meta content="utf-8" http-equiv="encoding"/>
 
-        <title>jQuery.sheet - The Ajax Spreadsheet</title>
+    <title>jQuery.sheet - The Web's Spreadsheet</title>
 
-        <!--dependencies-->
-            <link rel="stylesheet" type="text/css" href="jquery.sheet.css">
-            <link rel="stylesheet" type="text/css" href="bower_components/jquery-ui/themes/start/jquery-ui.min.css">
-            <link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap.css">
-            <link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap-theme.css">
-            <script src="bower_components/jquery-legacy/dist/jquery.min.js"></script>
-            <script src="bower_components/globalize/lib/globalize.js"></script>
-            <script src="bower_components/MouseWheel/MouseWheel.js"></script>
-            <script src="bower_components/megatable.js/megatable.js"></script>
-            <script src="bower_components/infiniscroll.js/infinitescroll.js"></script>
-            <script src="bower_components/thaw.js/thaw.js"></script>
-            <script src="jquery.sheet.js"></script>
+	<!--dependencies-->
+    <link rel="stylesheet" type="text/css" href="jquery.sheet.css">
+    <link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="bower_components/bootstrap/dist/css/bootstrap-theme.css">
+</head>
+<body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+	    <div class="container">
+		    <div class="navbar-header">
+			    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+				    <span class="sr-only">Toggle navigation</span>
+				    <span class="icon-bar"></span>
+				    <span class="icon-bar"></span>
+				    <span class="icon-bar"></span>
+			    </button>
+			    <a class="navbar-brand" href="http://github.com/Spreadsheets/jQuery.sheet"><img alt="jQuery.sheet" title="jQuery.sheet" src="images/svg/logo.svg" width="40" style="margin-top: -10px;"></a>
+		    </div>
+		    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+			    <ul class="nav navbar-nav">
+				    <li><a href="http://visop-dev.com/contact+us">Support</a></li>
+				    <li><a href="http://www.VisOp-Dev.com">Sponsor</a></li>
+				    <li><a href="https://github.com/Spreadsheets/jQuery.sheet/">Code</a></li>
+				    <li><a href="http://visop-dev.com/doc/js3/index.html">API</a></li>
+				    <li><a href="http://visop-dev.com/jQuery.sheet+-+End+User+Documentation">End User Documentation</a></li>
+				    <li class="dropdown">
+					    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Examples <span class="caret"></span></a>
+					    <ul class="dropdown-menu" role="menu">
+						    <li>
+							    <a href="examples/lazy.load.test.html">Lazy Load</a>
+						    </li>
+						    <li>
+							    <a href="examples/charts.html" onclick="loadSheet(this);return false;">Charts</a>
+						    </li>
+						    <li>
+							    <a href="examples/inputs.html" onclick="loadSheet(this);return false;">Inputs</a>
+						    </li>
+						    <li>
+							    <a href="examples/inputs.get.html">Get Inputs</a>
+						    </li>
+						    <li>
+							    <a href="examples/dates.html" onclick="loadSheet(this);return false;">Dates</a>
+						    </li>
+						    <li>
+							    <a href="examples/empty.html" onclick="loadSheet(this);return false;">Empty</a>
+						    </li>
+						    <li>
+							    <a href="examples/events.html">Javascript Events</a>
+						    </li>
+						    <li>
+							    <a href="examples/financial.html" onclick="loadSheet(this);return false;">Financial</a>
+						    </li>
+						    <li>
+							    <a href="examples/information.html" onclick="loadSheet(this);return false;">Information</a>
+						    </li>
+						    <li>
+							    <a href="examples/logical.html" onclick="loadSheet(this);return false;">Logical</a>
+						    </li>
+						    <li>
+							    <a href="examples/math.html" onclick="loadSheet(this); return false;">Math</a>
+						    </li>
+						    <li>
+							    <a href="examples/globalize.html">Number and Date Culture Formats</a>
+						    </li>
+						    <li>
+							    <a href="examples/mild.stress.test.html" onclick="loadSheet(this); return false;">Mild Stress Test</a>
+						    </li>
+						    <li>
+							    <a href="examples/mortgage.estimator.html" onclick="loadSheet(this); return false;">Mortgage Estimator</a>
+						    </li>
+						    <li>
+							    <a href="examples/not.editable.html" onclick="loadSheet(this); return false;">Not Editable</a>
+						    </li>
+						    <li>
+							    <a href="examples/readonly.html" onclick="loadSheet(this); return false;">Read Only (partially, formula's don't do anything)</a>
+						    </li>
+						    <li>
+							    <a href="examples/statistical.html" onclick="loadSheet(this); return false;">Statistical</a>
+						    </li>
+						    <li>
+							    <a href="examples/sort.html">Sorting</a>
+						    </li>
+						    <li>
+							    <a href="examples/string.html" onclick="loadSheet(this); return false;">String</a>
+						    </li>
+						    <li>
+							    <a href="examples/cells.hidden.html" onclick="loadSheet(this); return false;">Hidden Cells</a>
+						    </li>
+						    <li>
+							    <a href="examples/cells.merged.html" onclick="loadSheet(this); return false;">Merged Cells</a>
+						    </li>
+						    <li>
+							    <a href="examples/toggle.state.html">Toggle State</a>
+						    </li>
+						    <li>
+							    <a href="examples/dts.test.html">Json & XML Data Transformation Services</a>
+						    </li>
+						    <li>
+							    <a href="examples/behavior.testing.html">Cross Browser Behavior Unit Test</a>
+						    </li>
+					    </ul>
+				    </li>
+			    </ul>
+			    <form class="nav navbar-nav navbar-right" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+				    <div class="form-group"></div>
+				    <button class="btn" name="submit">buy me a beer</button>
+				    <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" style="position: absolute;"/>
+				    <input type="hidden" name="cmd" value="_s-xclick" />
+				    <input type="hidden" name="hosted_button_id" value="X9USQZEMU9934" />
+			    </form>
+		    </div>
+	    </div>
+    </nav>
 
-		<!--optional-->
-            <!--Nearest-->
-            <script src="bower_components/jquery-nearest/src/jquery.nearest.min.js"></script>
-            <!--/Nearest-->
-			<!--jQuery UI-->
-				<script src="bower_components/jquery-ui/jquery-ui.min.js"></script>
-			<!--/jQuery UI-->
-			<!--Raphaeljs - for charts-->
-				<script src="bower_components/raphael/raphael-min.js"></script>
-				<script src="bower_components/graphael/g.raphael.js"></script>
-				<script src="bower_components/graphael/g.bar.js"></script>
-				<script src="bower_components/graphael/g.dot.js"></script>
-				<script src="bower_components/graphael/g.line.js"></script>
-				<script src="bower_components/graphael/g.pie.js"></script>
-			<!--/Raphaeljs-->
-			<!--ColorPicker-->
-				<link rel="stylesheet" type="text/css" href="bower_components/really-simple-color-picker/colorPicker.css" />
-				<script src="bower_components/really-simple-color-picker/jquery.colorPicker.min.js"></script>
-			<!--/ColorPicker-->
-			<!--Elastic-->
-				<script src="bower_components/jquery-elastic/jquery.elastic.source.js"></script>
-			<!--/Elastic-->
-			<!--Advanced_Math-->
-				<script src="Sheet/Plugin/advanced.js"></script>
-			<!--/Advanced_Math-->
-			<!--Finance-->
-				<script src="Sheet/Plugin/finance.js"></script>
-			<!--/Finance-->
-	        <!--Undo-->
-	            <script src="bower_components/Javascript-Undo-Manager/js/undomanager.js"></script>
-	        <!--/Undo-->
-            <!--Zero Clipboard-->
-            <script src="bower_components/zeroclipboard/dist/ZeroClipboard.min.js"></script>
-            <!--/Zero Clipboard-->
-        <script>
-            $(function(){
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+	    <div class="container">
+		    <h1>jQuery.sheet</h1>
+		    <p>Easy & Wicked Fast spreadsheets for the web...  Finally!</p>
+		    <div id="sheet" class="jQuerySheet" style="height: 450px;"></div>
+		    <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more &raquo;</a></p>
+	    </div>
+    </div>
 
-	            var parseHtml = function(html, selector) {
-		            var parent = document.createElement('div');
-		            parent.innerHTML = html;
-		            if (selector) {
-			            return parent.querySelector(selector);
-		            }
-		            return parent.children;
-	            };
+    <div class="container">
+	    <!-- Example row of columns -->
+	    <div class="row">
+		    <div class="col-md-4">
+			    <h2>Easy</h2>
+			    <p>
+				    Built from the bottom up for simplicity jQuery.sheet
+			    </p>
+			    <ul>
+				    <li>100% free and open source</li>
+				    <li>Runs completely in the browser</li>
+				    <li>No strings attached simple architecture</li>
+				    <li>An open and flexible API</li>
+				    <li>Support for HTML, JSON, and XML</li>
+				    <li>Collaborative</li>
+				    <li>Syntax Highlighting</li>
+				    <li><a href="http://www.opensource.org/licenses/mit-license.html">MIT license</a></li>
+			    </ul>
+			    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+		    </div>
+		    <div class="col-md-4">
+			    <h2>Wicked Fast</h2>
+			    <p>
+				    We've pulled out all the stops and strapped a rocket to this thing!
+			    </p>
+			    <ul>
+				    <li>Resource light</li>
+				    <li>Multi threading & natural processing</li>
+				    <li>Massive Spreadsheets in under a second</li>
+				    <li>Can handle ANY size spreadsheet</li>
+			    </ul>
+			    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+		    </div>
+		    <div class="col-md-4">
+			    <h2>Enterprise Ready</h2>
+			    <p>
+				    jQuery.sheet has been engineered for speed and is used by many fortune 500 companies.
+			    </p>
+			    <ul>
+				    <li>Stable and tested</li>
+				    <li>Big Data ready</li>
+				    <li>Thousands of installations all over the world!</li>
+			    </ul>
+			    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+		    </div>
+	    </div>
 
-                //Here is where we initiate the sheets
-                //every time sheet is created it creates a new jQuery.sheet.instance (array), to manipulate each sheet, the jQuery object is returned
-	            window.loadSheet = function (loadWhat) {
-		            var url;
+	    <hr>
 
-		            switch (typeof loadWhat) {
-			            case 'object':
-				            url = $(loadWhat).attr('href');
-				            break;
-			            case 'string':
-				            url = loadWhat;
-				            break;
-		            }
+	    <footer>
+		    <p>&copy; Visual Interop Development 2015</p>
+	    </footer>
+    </div> <!-- /container -->
 
-		            $.when(
-			            $.get(url),
-			            $.get('menu.left.html'),
-			            $.get('menu.right.html')
-		            ).done(function(sheet, menuLeft, menuRight) {
-			            $('#sheet')
-				            .html(parseHtml(sheet[0], 'div#sheetParent table'))
-				            .sheet({
-					            theme: Sheet.bootstrapTheme,
-					            title: 'Demo',
-					            menuLeft: function() {
-						            var jS = this,
-							            menu = $(menuLeft[0]),
-							            copy = menu.find('.jSCopy').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
-							            cut = menu.find('.jSCut').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
-							            paste = menu.find('.jSPaste').click(function() {
-								            alert('Press Ctrl + V to paste over highlighted cells');
-							            });
-
-						            //Give anchors access to jS them
-						            menu.find('a').each(function() {
-							            this.jS = jS;
-						            });
-
-						            var clip = new ZeroClipboard(copy.add(cut), {
-							            moviePath: "plugins/ZeroClipboard.swf"
-						            });
-
-						            clip.on('mousedown', function(client) {
-							            clip.setText(jS.tdsToTsv());
-							            $(this).mousedown();
-						            });
-
-						            cut.mousedown(function() {
-							            jS.tdsToTsv(null, true);
-						            });
-
-						            return menu;
-					            },
-					            menuRight: function (){
-						            var jS = this,
-						            //we want to be able to edit the html for the menu to make them multi-instance
-							            menu = $(menuRight[0]);
-
-						            //Give anchors access to jS them
-						            menu.find('a').each(function() {
-							            this.jS = jS;
-						            });
-
-						            //The following is just so you get an idea of how to style cells
-						            var colorPickerCell = menu.find('.colorPickerCell')
-								            .colorPicker()
-								            .change(function(){
-									            jS.cellChangeStyle('background-color', $(this).val());
-								            }),
-
-							            colorPickerFont = menu.find('.colorPickerFont')
-								            .colorPicker()
-								            .change(function(){
-									            jS.cellChangeStyle('color', $(this).val());
-								            });
-
-						            colorPickerCell.next()
-							            .html($('<img>').attr('src', colorPickerCell.attr('data-img')));
-
-						            colorPickerFont.next()
-							            .html($('<img>').attr('src', colorPickerFont.attr('data-img')));
-
-						            return menu;
-					            }
-				            });
-		            });
-	            };
-
-	            loadSheet('examples/charts.html');
-
-                $('#pseudoSheetsMoreInfo').click(function() {
-                    $(this).next().dialog({
-                        title: "What is a pseudo sheet?",
-                        modal: true
-                    });
-                })
-                    .next().hide();
-            });
-        </script>
-        <!--Page styles-->
-        <style>
-            body {
-                background-color: #464646;
-                padding: 0px;
-                margin: 0px;
-                padding-bottom: 100px;
-                color: black;
-                font-family: sans-serif;
-                font-size: 13px;
-            }
-            
-            .wrapper {
-                margin: 10px;
-                background-color: #CCCCCC;
-            }
-            
-            .locked {
-                position: fixed;
-                top: expression(eval(document.body.scrollTop) + "px");
-                left: 20px;
-            }
-
-            #lockedMenu
-            {
-                width: 225px;
-                background-image: none;
-            }
-
-			#lockedMenu * {
-				font-size: .95em ! important;
-                text-decoration: none;
-			}
-            
-            #header {
-                text-align: left;
-                font-size: 1.5em;
-                padding: 18px;
-                border: none;
-                padding-left: 150px;
-            }
-            
-            #footer {
-                text-align: center;
-                color: white;
-                font-size: .9em;
-            }
-            
-            #footer a {
-                font-size: 1.2em;
-                color: #FFFFFF;
-            }
-        </style>
-    </head>
-    <body>
-        <h1 id="header" class="ui-state-default">
-        	<a href="http://visop-dev.com/Project+jQuery.sheet">
-        		<img src="images/logo.png" style="position: absolute;top: -20px; left: 20px; border: none;" />
-        		jQuery.sheet - The Ajax Spreadsheet, Demo
-        	</a>
-            <br />
-        </h1>
-        <div id="mainWrapper" class="ui-corner-all wrapper">
-            <table style="width: 100%;">
-                <tr>
-                    <td rowspan="2" style="width: 170px; vertical-align: top;">
-                        <div id="lockedMenu" class="ui-widget-header ui-corner-all">
-                            <h2 style="width: 100%; text-align: center;">Spreadsheets</h2>
-                            <ul style="padding-left: 15px;">
-                                <li>
-                                    <a href="examples/lazy.load.test.html">Lazy Load</a>
-                                </li>
-                                <li>
-                                    <a href="examples/charts.html" onclick="loadSheet(this);return false;">Charts</a>
-                                </li>
-                                <li>
-                                    <a href="examples/inputs.html" onclick="loadSheet(this);return false;">Inputs</a>
-                                </li>
-                                <li>
-                                    <a href="examples/inputs.get.html">Get Inputs</a>
-                                </li>
-                                <li>
-                                    <a href="examples/dates.html" onclick="loadSheet(this);return false;">Dates</a>
-                                </li>
-                                <li>
-                                    <a href="examples/empty.html" onclick="loadSheet(this);return false;">Empty</a>
-                                </li>
-	                            <li>
-		                            <a href="examples/events.html">Javascript Events</a>
-	                            </li>
-                                <li>
-                                    <a href="examples/financial.html" onclick="loadSheet(this);return false;">Financial</a>
-                                </li>
-                                <li>
-                                    <a href="examples/information.html" onclick="loadSheet(this);return false;">Information</a>
-                                </li>
-                                <li>
-                                    <a href="examples/logical.html" onclick="loadSheet(this);return false;">Logical</a>
-                                </li>
-                                <li>
-                                    <a href="examples/math.html" onclick="loadSheet(this); return false;">Math</a>
-                                </li>
-                                <li>
-                                    <a href="examples/globalize.html">Number and Date Culture Formats</a>
-                                </li>
-                                <li>
-                                    <a href="examples/mild.stress.test.html" onclick="loadSheet(this); return false;">Mild Stress Test</a>
-                                </li>
-                                <li>
-                                    <a href="examples/mortgage.estimator.html" onclick="loadSheet(this); return false;">Mortgage Estimator</a>
-                                </li>
-                                <li>
-                                    <a href="examples/not.editable.html" onclick="loadSheet(this); return false;">Not Editable</a>
-                                </li>
-                                <li>
-                                    <a href="examples/readonly.html" onclick="loadSheet(this); return false;">Read Only (partially, formula's don't do anything)</a>
-                                </li>
-                                <li>
-                                    <a href="examples/statistical.html" onclick="loadSheet(this); return false;">Statistical</a>
-                                </li>
-                                <li>
-                                    <a href="examples/sort.html">Sorting</a>
-                                </li>
-                                <li>
-                                    <a href="examples/string.html" onclick="loadSheet(this); return false;">String</a>
-                                </li>
-                                <li>
-                                    <a href="examples/cells.hidden.html" onclick="loadSheet(this); return false;">Hidden Cells</a>
-                                </li>
-                                <li>
-                                    <a href="examples/cells.merged.html" onclick="loadSheet(this); return false;">Merged Cells</a>
-                                </li>
-                                <li>
-                                    <a href="examples/toggle.state.html">Toggle State</a>
-                                </li>
-                                <li>
-                                    <a href="examples/dts.test.html">Json & XML Data Transformation Services</a>
-                                </li>
-                                <li>
-                                    <a href="examples/behavior.testing.html">Cross Browser Behavior Unit Test</a>
-                                </li>
-                            </ul>
-							<div style="text-align: center;">
-                                <a href="http://visop-dev.com/Project+jQuery.sheet">Project Home | Download</a>
-                            </div>
-							<br />
-                            <form action="https://www.paypal.com/cgi-bin/webscr" method="post" style="width: 100%; text-align: center;padding-bottom: 5px;">
-                                <input type="hidden" name="cmd" value="_s-xclick" />
-                                <input type="hidden" name="hosted_button_id" value="X9USQZEMU9934" />
-                                <input type="submit" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only ui-state-highlight" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!" value="DONATE"/>
-                                <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1" />
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="vertical-align: top;">
-                        <div id="sheet" class="jQuerySheet" style="height: 450px;"></div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <div id="footer" class="ui-corner-all">
-            <a href="http://visop-dev.com/Project+jQuery.sheet">jQuery.sheet() The Ajax Spreadsheet</a>
-            | <a href="http://visop-dev.com/contact+us">Get Support!</a>
-            | <a href="http://www.VisOp-Dev.com">Home</a>
-            | <a href="https://github.com/Spreadsheets/jQuery.sheet/">Code</a>
-            | <a href="http://visop-dev.com/doc/js3/index.html">Developer Documentation</a>
-            | <a href="http://visop-dev.com/jQuery.sheet+-+End+User+Documentation">End User Documentation</a>
-            <br/>
-            <a href="http://www.opensource.org/licenses/mit-license.html">MIT license</a>
-	        <br>
-	        <br>
-	        <br>
-	        <div>Icons made by Freepik, Elegant Themes, Zurb, Icomoon, SimpleIcon, Catalin Fertu from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a></div>
-        </div>
+        <a href="https://github.com/Spreadsheets/jQuery.sheet"><img style="position: fixed; top: 50px; right: 0; border: 0;" src="images/fork_me.png" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png"></a>
     </body>
 
+<!--dependencies-->
+<script src="bower_components/jquery-legacy/dist/jquery.min.js"></script>
+<script src="bower_components/globalize/lib/globalize.js"></script>
+<script src="bower_components/MouseWheel/MouseWheel.js"></script>
+<script src="bower_components/megatable.js/megatable.js"></script>
+<script src="bower_components/infiniscroll.js/infinitescroll.js"></script>
+<script src="bower_components/thaw.js/thaw.js"></script>
+<script src="jquery.sheet.js"></script>
+
+<!--optional-->
+<!--Nearest-->
+<script src="bower_components/jquery-nearest/src/jquery.nearest.min.js"></script>
+<!--/Nearest-->
+<!--jQuery UI-->
+<script src="bower_components/jquery-ui/jquery-ui.min.js"></script>
+<!--/jQuery UI-->
+<!--Raphaeljs - for charts-->
+<script src="bower_components/raphael/raphael-min.js"></script>
+<script src="bower_components/graphael/g.raphael.js"></script>
+<script src="bower_components/graphael/g.bar.js"></script>
+<script src="bower_components/graphael/g.dot.js"></script>
+<script src="bower_components/graphael/g.line.js"></script>
+<script src="bower_components/graphael/g.pie.js"></script>
+<!--/Raphaeljs-->
+<!--ColorPicker-->
+<link rel="stylesheet" type="text/css" href="bower_components/really-simple-color-picker/colorPicker.css" />
+<script src="bower_components/really-simple-color-picker/jquery.colorPicker.min.js"></script>
+<!--/ColorPicker-->
+<!--Elastic-->
+<script src="bower_components/jquery-elastic/jquery.elastic.source.js"></script>
+<!--/Elastic-->
+<!--Advanced_Math-->
+<script src="Sheet/Plugin/advanced.js"></script>
+<!--/Advanced_Math-->
+<!--Finance-->
+<script src="Sheet/Plugin/finance.js"></script>
+<!--/Finance-->
+<!--Undo-->
+<script src="bower_components/Javascript-Undo-Manager/js/undomanager.js"></script>
+<!--/Undo-->
+<!--Zero Clipboard-->
+<script src="bower_components/zeroclipboard/dist/ZeroClipboard.min.js"></script>
+<!--/Zero Clipboard-->
+
+<script>
+	$(function(){
+
+		var parseHtml = function(html, selector) {
+			var parent = document.createElement('div');
+			parent.innerHTML = html;
+			if (selector) {
+				return parent.querySelector(selector);
+			}
+			return parent.children;
+		};
+
+		//Here is where we initiate the sheets
+		//every time sheet is created it creates a new jQuery.sheet.instance (array), to manipulate each sheet, the jQuery object is returned
+		window.loadSheet = function (loadWhat) {
+			var url;
+
+			switch (typeof loadWhat) {
+				case 'object':
+					url = $(loadWhat).attr('href');
+					break;
+				case 'string':
+					url = loadWhat;
+					break;
+			}
+
+			$.when(
+				$.get(url),
+				$.get('menu.html'))
+			.done(function(sheetGet, menuGet) {
+				$('#sheet')
+					.html(parseHtml(sheetGet[0], 'div#sheetParent table'))
+					.sheet({
+						theme: Sheet.bootstrapTheme,
+						title: 'Demo',
+						menuLeft: function() {
+							var jS = this,
+									menu = $(menuGet[0]),
+									copy = menu.find('.jSCopy').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
+									cut = menu.find('.jSCut').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
+									paste = menu.find('.jSPaste').click(function() {
+										alert('Press Ctrl + V to paste over highlighted cells');
+									});
+
+							//Give anchors access to jS them
+							menu.find('a').each(function() {
+								this.jS = jS;
+							});
+
+							var clip = new ZeroClipboard(copy.add(cut), {
+								moviePath: "bower_components/zeroclipboard/dist/ZeroClipboard.swf"
+							});
+
+							clip.on('mousedown', function(client) {
+								clip.setText(jS.tdsToTsv());
+								$(this).mousedown();
+							});
+
+							cut.mousedown(function() {
+								jS.tdsToTsv(null, true);
+							});
+
+							//The following is just so you get an idea of how to style cells
+							var colorPickerCell = menu.find('.colorPickerCell')
+											.colorPicker()
+											.change(function(){
+												jS.cellChangeStyle('background-color', $(this).val());
+											}),
+
+									colorPickerFont = menu.find('.colorPickerFont')
+											.colorPicker()
+											.change(function(){
+												jS.cellChangeStyle('color', $(this).val());
+											});
+
+							colorPickerCell.next()
+									.html($('<img>').attr('src', colorPickerCell.attr('data-img')));
+
+							colorPickerFont.next()
+									.html($('<img>').attr('src', colorPickerFont.attr('data-img')));
+
+							return menu;
+						}
+					});
+				});
+		};
+
+		loadSheet('examples/charts.html');
+
+		$('#pseudoSheetsMoreInfo').click(function() {
+			$(this).next().dialog({
+				title: "What is a pseudo sheet?",
+				modal: true
+			});
+		})
+				.next().hide();
+	});
+</script>
 </html>
