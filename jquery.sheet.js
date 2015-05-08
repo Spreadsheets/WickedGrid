@@ -10689,7 +10689,8 @@ $.printSource = function (s) {
 				columnIndex,
 				columnMax,
 				columns,
-				column;
+				column,
+                cell;
 
 			if (sheetIndex < 0) {
 				sheetIndex = 0;
@@ -10730,7 +10731,8 @@ $.printSource = function (s) {
 			}
 
 			if (this.cellIds[id] !== undefined) {
-				callback(this.cellIds[id].requestCell());
+                cell = this.cellIds[id].requestCell();
+				callback.apply(cell);
 			} else {
 				this.cellIds[id] = null;
 			}
@@ -11240,7 +11242,8 @@ $.printSource = function (s) {
 				columnIndex,
 				columnMax,
 				columns,
-				column;
+				column,
+                cell;
 
 			if (sheetIndex < 0) {
 				sheetIndex = 0;
@@ -11281,7 +11284,8 @@ $.printSource = function (s) {
 			}
 
 			if (this.cellIds[id] !== undefined) {
-				callback(this.cellIds[id].requestCell());
+                cell = this.cellIds[id].requestCell();
+				callback.apply(cell);
 			} else {
 				this.cellIds[id] = null;
 			}
