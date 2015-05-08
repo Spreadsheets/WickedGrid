@@ -348,6 +348,8 @@
 			return -1;
 		},
 		addSpreadsheet: function(jsonSpreadsheet, atIndex) {
+			jsonSpreadsheet = jsonSpreadsheet || {};
+
 			if (atIndex === undefined) {
 				this.json.push(jsonSpreadsheet);
 			} else {

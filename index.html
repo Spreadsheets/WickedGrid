@@ -90,6 +90,7 @@
 			            $('#sheet')
 				            .html(parseHtml(sheet[0], 'div#sheetParent table'))
 				            .sheet({
+					            theme: Sheet.bootstrapTheme,
 					            title: 'Demo',
 					            menuLeft: function() {
 						            var jS = this,
@@ -227,7 +228,6 @@
         		jQuery.sheet - The Ajax Spreadsheet, Demo
         	</a>
             <br />
-            <span id="themeSwitcher"></span>
         </h1>
         <div id="mainWrapper" class="ui-corner-all wrapper">
             <table style="width: 100%;">
@@ -336,7 +336,6 @@
             | <a href="https://github.com/Spreadsheets/jQuery.sheet/">Code</a>
             | <a href="http://visop-dev.com/doc/js3/index.html">Developer Documentation</a>
             | <a href="http://visop-dev.com/jQuery.sheet+-+End+User+Documentation">End User Documentation</a>
-            | <a href="http://jqueryui.com/themeroller/">Create your own theme</a>
             <br/>
             <a href="http://www.opensource.org/licenses/mit-license.html">MIT license</a>
 	        <br>

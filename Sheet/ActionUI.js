@@ -83,7 +83,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					var prevHidden = 0,
 						nextHidden = 0,
 						hiddenI,
-						isHidden = (hiddenI = hiddenRows.indexOf(i)) > -1;
+						isHidden = hiddenRows !== null ? (hiddenI = hiddenRows.indexOf(i)) > -1 : false;
 
 					if (isHidden) {
 						prevHidden++;
@@ -117,7 +117,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					var prevHidden = 0,
 						nextHidden = 0,
 						hiddenI,
-						isHidden = (hiddenI = hiddenColumns.indexOf(i)) > -1;
+						isHidden = hiddenColumns!== null ? (hiddenI = hiddenColumns.indexOf(i)) > -1 : false;
 
 					if (isHidden) {
 						prevHidden++;

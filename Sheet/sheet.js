@@ -1158,7 +1158,7 @@ $.sheet = {
 				 */
 				obj:{
 					autoFiller:function () {
-						return jS.controls.autoFiller[jS.i] || $([]);
+						return jS.controls.autoFiller[jS.i] || null;
 					},
 					barCorner:function () {
 						return jS.controls.bar.corner[jS.i] || $([]);
@@ -5190,15 +5190,13 @@ $.sheet = {
 
 				/**
 				 * adds a spreadsheet table
-				 * @param {Object} [size]
 				 * @memberOf jS
 				 */
-				addSheet:function (size) {
-					size = size || {rows: 25, cols: 10};
-
+				addSheet:function () {
 					jS.evt.cellEditAbandon();
 					jS.setDirty(true);
-					jS.controlFactory.sheetUI(jS.obj.ui, $.sheet.makeTable(size), jS.sheetCount);
+					s.loader.addSpreadsheet(null, jS.sheetCount);
+					jS.controlFactory.sheetUI(jS.obj.ui, jS.sheetCount);
 
 					jS.setActiveSheet(jS.sheetCount);
 

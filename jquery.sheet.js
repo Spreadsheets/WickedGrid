@@ -3568,7 +3568,7 @@ $.sheet = {
 				 */
 				obj:{
 					autoFiller:function () {
-						return jS.controls.autoFiller[jS.i] || $([]);
+						return jS.controls.autoFiller[jS.i] || null;
 					},
 					barCorner:function () {
 						return jS.controls.bar.corner[jS.i] || $([]);
@@ -7600,15 +7600,13 @@ $.sheet = {
 
 				/**
 				 * adds a spreadsheet table
-				 * @param {Object} [size]
 				 * @memberOf jS
 				 */
-				addSheet:function (size) {
-					size = size || {rows: 25, cols: 10};
-
+				addSheet:function () {
 					jS.evt.cellEditAbandon();
 					jS.setDirty(true);
-					jS.controlFactory.sheetUI(jS.obj.ui, $.sheet.makeTable(size), jS.sheetCount);
+					s.loader.addSpreadsheet(null, jS.sheetCount);
+					jS.controlFactory.sheetUI(jS.obj.ui, jS.sheetCount);
 
 					jS.setActiveSheet(jS.sheetCount);
 
@@ -10790,12 +10788,13 @@ $.printSource = function (s) {
 			return -1;
 		},
 		addSpreadsheet: function(table, atIndex) {
+			table = table || document.createElement('table');
 			if (atIndex === undefined) {
 				this.tables.push(table);
 			} else {
 				this.tables.splice(atIndex, 0, table);
 			}
-			this.count = this.table.length;
+			this.count = this.tables.length;
 		},
 		getCellAttribute: function(cell, attribute) {
 			return cell.getAttribute(attribute);
@@ -11345,6 +11344,8 @@ $.printSource = function (s) {
 			return -1;
 		},
 		addSpreadsheet: function(jsonSpreadsheet, atIndex) {
+			jsonSpreadsheet = jsonSpreadsheet || {};
+
 			if (atIndex === undefined) {
 				this.json.push(jsonSpreadsheet);
 			} else {
@@ -12455,7 +12456,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					var prevHidden = 0,
 						nextHidden = 0,
 						hiddenI,
-						isHidden = (hiddenI = hiddenRows.indexOf(i)) > -1;
+						isHidden = hiddenRows !== null ? (hiddenI = hiddenRows.indexOf(i)) > -1 : false;
 
 					if (isHidden) {
 						prevHidden++;
@@ -12489,7 +12490,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					var prevHidden = 0,
 						nextHidden = 0,
 						hiddenI,
-						isHidden = (hiddenI = hiddenColumns.indexOf(i)) > -1;
+						isHidden = hiddenColumns!== null ? (hiddenI = hiddenColumns.indexOf(i)) > -1 : false;
 
 					if (isHidden) {
 						prevHidden++;

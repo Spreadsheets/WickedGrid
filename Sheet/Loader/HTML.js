@@ -304,12 +304,13 @@
 			return -1;
 		},
 		addSpreadsheet: function(table, atIndex) {
+			table = table || document.createElement('table');
 			if (atIndex === undefined) {
 				this.tables.push(table);
 			} else {
 				this.tables.splice(atIndex, 0, table);
 			}
-			this.count = this.table.length;
+			this.count = this.tables.length;
 		},
 		getCellAttribute: function(cell, attribute) {
 			return cell.getAttribute(attribute);
