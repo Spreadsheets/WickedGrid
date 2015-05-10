@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+	<meta charset="UTF-8">
+	<title>thaw.js - synthetic asynchronous processing in javascript (Now with extra anti-freeze!)</title>
+	<link href="//maxcdn.bootstrapcdn.com/bootswatch/3.3.0/superhero/bootstrap.min.css" rel="stylesheet">
+	<script src="thaw.js"></script>
+	<style>
+		body {
+			width: 450px;
+			margin-left: auto;
+			margin-right: auto;
+			text-align: center;
+		}
+		h1,h2 {
+			padding-top: 30px;
+		}
+		p, h2, pre {
+			width: 100%;
+			text-align: left;
+		}
+		.catchphrase {
+			text-align: center;
+		}
+		pre code {
+			font-family: monospace;
+			font-size: 8px;
+		}
+
+	</style>
+	<script>
+		function getSource(scriptId, codeId) {
+			var source = document.getElementById(scriptId).innerHTML,
+				scriptShow = document.getElementById(codeId);
+
+			if (scriptShow.innerHTML.length > 0) {
+				scriptShow.innerHTML = '';
+			} else {
+				scriptShow.innerHTML = source
+					.replace('(function() {', '')
+					.replace('})();', '')
+					.replace(/\n\n\t/, '')
+					.replace(/\n\t/g, '\n');
+			}
+		}
+	</script>
+</head>
+<body>
+	<h1>thaw.js</h1>
+	<p class="catchphrase">
+		<em class="text-primary">synthetic asynchronous processing in javascript<br>
+			(Now with extra anti-freeze!)</em>
+	</p>
+	<p>
+		Browsers are synchronous. They have limits & can be slow.  thaw.js defers processes
+		until the browser is ready for them.<br>
+		thaw.js makes frozen browsers thaw(.js).
+	</p>
+
+	<blockquote class="text-info">Thaw.js is like the idea of javascript promises only tied to time.</blockquote>
+
+	<h2>Shouldn't I just use a web worker?</h2>
+	<p>
+		You could, if you don't care about the DOM.  Unfortunately the DOM does exist, and it is synchronous.  Web
+		workers do not have access to anything synchronous, including the DOM.
+	</p>
+
+	<h2>Demo</h2>
+	<p>
+		<b>You are in one right now!  Scroll to bottom to see.</b><br />
+		There are 2 million div elements being appended to this very document from
+		three separate thaw calls happening right now, 6 million total.  Does your browser seem slow or sluggish?  Of
+		course not!  It is thaw(.js)ing.
+	</p>
+
+	<button class="btn btn-default" onclick="getSource('script-1', 'code-1');">Show Source One</button>
+	<pre><code id="code-1"></code></pre><br/>
+
+	<button class="btn btn-default" onclick="getSource('script-2', 'code-2');">Show Source Two</button>
+	<pre><code id="code-2"></code></pre><br/>
+
+	<button class="btn btn-default" onclick="getSource('script-3', 'code-3');">Show Source Three</button>
+	<pre><code id="code-3"></code></pre>
+
+	<h2>Usage</h2>
+	<p><b>With Functions:</b></p>
+	<pre><code>new Thaw([
+	function() {},
+	function() {}
+]);</code></pre>
+
+	<p><b>With Arrays:</b></p>
+		<pre><code>new Thaw([], {
+	each:function(i) {
+		//this = item of array
+	},
+	done: function() {
+		//this = item of array
+	}
+});
+</code></pre>
+
+	<p><b>As a block or Thaws (can be even faster in some situations):</b></p>
+		<pre><code>new Thaw.Block({
+	each:function(i) {
+	//this = item of array
+	},
+	done: function() {
+	//this = item of array
+	}
+}, 200);
+</code></pre>
+
+	<h2>Methods</h2>
+	<ul style="text-align: left;">
+		<li><pre><code>add({*}item)</code></pre><br>
+			Adds an item to the end of this instance of Thaw and readies Thaw to process it, returns Thaw
+		</li>
+		<li><pre><code>insert({*}item)</code></pre><br>
+			Inserts an item just after the current item being processed in Thaw and readies Thaw to process it, returns Thaw
+		</li>
+		<li><pre><code>addArray({Array}items)</code></pre><br>
+			Adds an Array to the end of this instance of Thaw and readies Thaw to process it, returns Thaw
+		</li>
+		<li><pre><code>insertArray({Array}items)</code></pre><br>
+			Inserts an Array just after the current item being processed in Thaw and readies Thaw to process them, returns Thaw
+		</li>
+		<li><pre><code>stop()</code></pre><br>
+			Stops this instance of Thaw, returns Thaw
+		</li>
+	</ul>
+
+	<h2>Written by</h2>
+	<p>
+		<a href="https://github.com/robertleeplummerjr">Robert Lee Plummer Jr.</a>
+	</p>
+
+	<h2>License</h2>
+	<p>
+		MIT
+	</p>
+
+	<hr id="slicer">
+
+	<a href="https://github.com/robertleeplummerjr/thaw.js"><img style="position: fixed; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+	<a href="test/" title="Testify.js Tested!"><img style="position: fixed; top: 0; right: 0; border: 0;" src="http://robertleeplummerjr.github.io/testify.js/icon.svg" at="Testify.js Tested!"></a>
+</body>
+<script id="script-1">
+(function() {
+	console.log("start one");
+
+	var startTime = new Date(),
+		workCounter=0,
+		items = new Array(2000000),
+		body = document.body,
+		slicer = document.getElementById('slicer'),
+		ms;
+
+	thaw(items, {
+		each:function() {
+			var s = document.createElement("div");
+			s.innerHTML = (new Array(5)).join(workCounter);
+			body.insertBefore(s, slicer.nextSibling);
+			workCounter++;
+		},
+		done: function() {
+			ms = (new Date()).getTime() - startTime.getTime();
+			console.log("done: demo one iterations=" + workCounter + " time=" + ms + "ms");
+		}
+	});
+})();
+</script>
+<script id="script-2">
+(function() {
+	console.log("start two");
+
+	var startTime = new Date(),
+		workCounter=0,
+		items = new Array(2000000),
+		body = document.body,
+		slicer = document.getElementById('slicer'),
+		ms;
+
+	thaw(items, {
+		each:function() {
+			var s = document.createElement("div");
+			s.innerHTML = (new Array(5)).join(':D');
+			body.insertBefore(s, slicer.nextSibling);
+			workCounter++;
+		},
+		done: function() {
+			ms = (new Date()).getTime() - startTime.getTime();
+			console.log("done: demo two iterations=" + workCounter + " time=" + ms + "ms");
+		}
+	});
+})();
+</script>
+<script id="script-3">
+(function() {
+	console.log("start three");
+
+	var startTime = new Date(),
+		workCounter=0,
+		items = new Array(2000000),
+		body = document.body,
+		slicer = document.getElementById('slicer'),
+		ms;
+
+	thaw(items, {
+		each:function() {
+			var el = document.createElement("div");
+			el.innerHTML = (new Array(5)).join(':)');
+			body.insertBefore(el, slicer.nextSibling);
+			workCounter++;
+		},
+		done: function() {
+			ms = (new Date()).getTime() - startTime.getTime();
+			console.log("done: demo three iterations=" + workCounter + " time=" + ms + "ms");
+		}
+	});
+})();
+</script>
+</html>

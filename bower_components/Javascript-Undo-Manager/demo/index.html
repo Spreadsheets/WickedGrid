@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head> 
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+        <title>UndoManager demo</title>
+        <link href="css/demo.css" rel="stylesheet">
+    </head>  
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="form-inline">
+                    <button type="button" class="btn btn-primary" id="btnUndo" disabled="disabled">Undo</button>
+                    <button type="button" class="btn btn-primary" id="btnRedo" disabled="disabled">Redo</button>
+                    <input type="number" min="0" max="10" class="form-control" id="ctrlLimit" placeholder="Limit: 0" />
+                    <button type="button" class="btn btn-default pull-right" id="btnClear">Clear memory</button>
+                </div>
+                <div>
+                    <canvas id="view" width="600" height="400"></canvas>
+                </div>
+                <p class="comment mute">Click on the area to create circles</p>
+            </div>
+        </div>
+        
+        <script type="text/javascript" src="../js/undomanager.js"></script>
+        <script type="text/javascript" src="js/demo.js"></script>
+        <script type="text/javascript" src="js/circledrawer.js"></script>
+    </body>  
+</html>  

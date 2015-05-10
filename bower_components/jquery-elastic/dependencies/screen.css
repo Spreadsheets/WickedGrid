@@ -1,0 +1,6 @@
+html, body { padding: 0; margin: 0; }
+.full-width-hack { padding-right: 20px; }
+textarea {
+    border: 5px solid #eee; padding: 5px; width: 100%;
+    font: 14px/18px 'Helvetica', 'Arial', 'sans-serif';
+}

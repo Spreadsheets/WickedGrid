@@ -1,0 +1,34 @@
+{
+  "name": "Infiniscroll.js",
+  "homepage": "https://github.com/robertleeplummerjr/Infiniscroll.js",
+  "authors": [
+    "Robert Plummer <RobertLeePlummerJr@Gmail.com>"
+  ],
+  "description": "a fast infinite scroll-er",
+  "main": "infiniscroll.js",
+  "keywords": [
+    "scroll",
+    "infinite"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "MouseWheel": "~1.0.0",
+    "megatable.js": "*"
+  },
+  "_release": "ebd903eaef",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "ebd903eaefdfd0d3a5177ade88a6334c73e9b6e0"
+  },
+  "_source": "git://github.com/robertleeplummerjr/Infiniscroll.js.git",
+  "_target": "*",
+  "_originalSource": "infiniscroll.js"
+}

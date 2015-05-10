@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+	<meta charset="UTF-8">
+	<title>InfinteScroll.js</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.4/cosmo/bootstrap.min.css">
+	<style>
+		body {
+			width: 400px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+		.container {
+			width: inherit;
+		}
+	</style>
+</head>
+<body style="padding-bottom: 150px;">
+<div class="container">
+	<h1>Infiniscroll.js</h1>
+	<blockquote>Look Ma!  I can scroll forever!</blockquote>
+
+
+	<!--Examples Beginning-->
+	<h3>Vertical</h3>
+	<div id="vert" class="well" style="height: 400px; width: 300px; position: relative"></div>
+
+	<h3>Horizontal</h3>
+	<div id="horiz" class="well" style="height: 400px; width: 300px; position: relative"></div>
+
+	<h3>Horizontal & Vertical</h3>
+	<div id="both" class="well" style="height: 400px; width: 300px; position: relative"></div>
+
+	<h3>Table (using MegaTable.js)</h3>
+	<div id="large-table" style="height: 400px; width: 300px; position: relative; overflow: hidden"></div>
+	<!--Examples End-->
+
+
+	<a href="https://github.com/robertleeplummerjr/Infiniscroll.js"><img style="position: fixed; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+</div>
+<footer style="position: fixed; right: 0; bottom: 0;">
+	Written by <a href="//github.com/robertleeplummerjr">Robert Lee Plummer Jr.</a>
+</footer>
+</body>
+<script src="infinitescroll.js"></script>
+<script src="bower_components/MouseWheel/MouseWheel.js"></script>
+<script src="bower_components/megatable.js/megatable.js"></script>
+<script>
+	var vert = document.getElementById('vert'),
+		vertI = new Infiniscroll(vert, {
+			horizontal: false,
+			scroll: function(y) {
+				vert.innerHTML = 'Item ' + y;
+			}
+		}),
+		vertM = new MouseWheel(vert, vertI._out),
+
+		horiz = document.getElementById('horiz'),
+		horizI = new Infiniscroll(horiz, {
+			vertical: false,
+			scroll: function(x) {
+				horiz.innerHTML = 'Horizontal Item ' + x
+			}
+		}),
+		horizM = new MouseWheel(horiz, horizI._out),
+
+		both = document.getElementById('both'),
+		bothI = new Infiniscroll(both, {
+			scroll: function(x, y) {
+				both.innerHTML = 'Horizontal Item ' + x + ', Vertical Item ' + y
+			}
+		}),
+		bothM = new MouseWheel(both, bothI._out),
+
+		largeTable = document.getElementById('large-table'),
+		largeTableMT = new MegaTable({
+			element: largeTable,
+			updateCell: function(row, column, td) {
+				var frag = document.createDocumentFragment();
+				frag.textContent = 'Cell ' + column + '/' + row;
+				td.appendChild(frag);
+			},
+			updateRowHeader: function(i, th) {
+				var frag = document.createDocumentFragment();
+				frag.textContent = i;
+				th.appendChild(frag);
+			},
+			updateColumnHeader: function(i, th, col) {
+				var frag = document.createDocumentFragment();
+				frag.textContent = i;
+
+				th.appendChild(frag);
+				if (col.style.width.length < 1) {
+					col.style.width = '120px';
+				}
+			},
+			strict: true,
+			columns: 5,
+			rows: 25
+		}),
+		largeTableI = new Infiniscroll(largeTable, {
+			scroll: function(c, r) {
+				largeTableMT.update(r, c);
+			},
+			verticalScrollDensity: 5,
+			horizontalScrollDensity: 25
+		}),
+		largeTableM = new MouseWheel(largeTable, largeTableI._out);
+
+	largeTableMT.table.className += ' table table-striped';
+</script>
+</html>

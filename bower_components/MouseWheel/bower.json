@@ -1,0 +1,24 @@
+{
+  "name": "MouseWheel",
+  "main": "MouseWheel.js",
+  "version": "1.0.0",
+  "homepage": "https://github.com/robertleeplummerjr/MouseWheel",
+  "authors": [
+    "Robert Plummer <RobertLeePlummerJr@Gmail.com>"
+  ],
+  "description": "A zero dependency ridiculous fast mousewheel handler",
+  "keywords": [
+    "mouse",
+    "wheel",
+    "fast",
+    "mousewheel"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "ThemeSwitcher",
+  "homepage": "https://github.com/josephbulger/ThemeSwitcher",
+  "_release": "a1bd0cf3f4",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "a1bd0cf3f41777152e2254881a6bc1f0b3dd8a50"
+  },
+  "_source": "https://github.com/josephbulger/ThemeSwitcher.git",
+  "_target": "*",
+  "_originalSource": "https://github.com/josephbulger/ThemeSwitcher.git"
+}

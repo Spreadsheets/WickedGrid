@@ -1,0 +1,21 @@
+@import url("http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css");
+
+body {
+    padding: 20px;
+    background: #f6f6f6;
+}
+p {
+    margin: 0 0 1em 0;
+}
+#view {
+    margin:.5em 0 .25em 0;
+    border:1px solid #ccc;
+    background: #fff;
+}
+.container {
+    width: 600px;
+}
+input[type="number"] {
+    text-align: center;
+    width: 20px;
+}

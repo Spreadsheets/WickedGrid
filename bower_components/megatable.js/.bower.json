@@ -1,0 +1,35 @@
+{
+  "name": "megaTable.js",
+  "homepage": "https://github.com/robertleeplummerjr/megaTable.js",
+  "authors": [
+    "Robert Plummer <RobertLeePlummerJr@Gmail.com>"
+  ],
+  "description": "Wicked fast & fat html tables!",
+  "main": "megatable.js",
+  "keywords": [
+    "table",
+    "large",
+    "fast",
+    "memory",
+    "leak",
+    "mega",
+    "infinite"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "_release": "cbda8b4376",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "cbda8b43761c9896019c6ddd5c04af67d37ed280"
+  },
+  "_source": "git://github.com/robertleeplummerjr/megaTable.js.git",
+  "_target": "*",
+  "_originalSource": "megatable.js"
+}

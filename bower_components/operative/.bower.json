@@ -1,0 +1,24 @@
+{
+  "name": "operative",
+  "version": "0.4.4",
+  "main": "dist/operative.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "src",
+    "Gruntfile.js"
+  ],
+  "homepage": "https://github.com/padolsey/operative",
+  "_release": "0.4.4",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.4.4",
+    "commit": "9d925c9e265ce125d1ef0714d84881a4b4503462"
+  },
+  "_source": "git://github.com/padolsey/operative.git",
+  "_target": "~0.4.0",
+  "_originalSource": "operative"
+}
