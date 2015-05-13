@@ -699,6 +699,31 @@ Sheet.Cell = (function() {
 				.replace(/\t/g, '&nbsp;&nbsp;&nbsp ')
 				.replace(/  /g, '&nbsp; ');
 		},
+		setAttribute: function (attribute, value) {
+			var td = this.td;
+
+			if (td !== u) {
+				td[attribute] = value;
+			}
+
+			this.loader.setCellAttribute(this.loadedFrom, attribute, value);
+
+			return this;
+		},
+		setAttributes: function(attributes) {
+			var td = this.td,
+				i;
+
+			if (td !== u) {
+				for (i in attributes) if (attributes.hasOwnProperty(i)) {
+					td[attributes] = attributes[i];
+				}
+			}
+
+			this.loader.setCellAttributes(this.loadedFrom, attributes);
+
+			return this;
+		},
 		addClass: function(_class) {
 			var td = this.td,
 				classes,
