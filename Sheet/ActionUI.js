@@ -82,6 +82,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				updateRowHeader: function(i, header) {
 					var prevHidden = 0,
 						nextHidden = 0,
+						hiddenRow,
 						hiddenI,
 						isHidden = hiddenRows !== null ? (hiddenI = hiddenRows.indexOf(i)) > -1 : false;
 
@@ -90,10 +91,20 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						nextHidden++;
 
 						//count previous till you find one that isn't hidden
-						while (hiddenRows[hiddenI - prevHidden] !== undefined) prevHidden++;
+						while (
+							(hiddenRow = hiddenRows[hiddenI - prevHidden]) !== undefined
+							&& hiddenRow + prevHidden === i
+							) {
+							prevHidden++;
+						}
 
 						//count next till you find one that isn't hidden
-						while (hiddenRows[hiddenI + nextHidden] !== undefined) nextHidden++;
+						while (
+							(hiddenRow = hiddenRows[hiddenI + nextHidden]) !== undefined
+							&& hiddenRow - nextHidden === i
+							) {
+							nextHidden++;
+						}
 
 						that.rowPrevHidden = prevHidden;
 						that.rowNextHidden = nextHidden;
@@ -116,6 +127,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				updateColumnHeader: function(i, header, col) {
 					var prevHidden = 0,
 						nextHidden = 0,
+						hiddenColumn,
 						hiddenI,
 						isHidden = hiddenColumns!== null ? (hiddenI = hiddenColumns.indexOf(i)) > -1 : false;
 
@@ -124,10 +136,20 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						nextHidden++;
 
 						//count previous till you find one that isn't hidden
-						while (hiddenColumns[hiddenI - prevHidden] !== undefined) prevHidden++;
+						while (
+							(hiddenColumn = hiddenColumns[hiddenI - prevHidden]) !== undefined
+							&& hiddenColumn + prevHidden === i
+							) {
+							prevHidden++;
+						}
 
 						//count next till you find one that isn't hidden
-						while (hiddenColumns[hiddenI + nextHidden] !== undefined) nextHidden++;
+						while (
+							(hiddenColumn = hiddenColumns[hiddenI + nextHidden]) !== undefined
+							&& hiddenColumn - nextHidden === i
+							) {
+							nextHidden++;
+						}
 
 						that.columnPrevHidden = prevHidden;
 						that.columnNextHidden = nextHidden;

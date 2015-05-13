@@ -235,6 +235,7 @@
 <!--/Zero Clipboard-->
 
 <script>
+	var jS;
 	$(function(){
 
 		var parseHtml = function(html, selector) {
@@ -264,12 +265,12 @@
 				$.get(url),
 				$.get('menu.html'))
 			.done(function(sheetGet, menuGet) {
-				$('#sheet')
+				jS = $('#sheet')
 					.html(parseHtml(sheetGet[0], 'div#sheetParent table'))
 					.sheet({
 						theme: Sheet.bootstrapTheme,
 						title: 'Demo',
-						menuLeft: function() {
+						menu: function() {
 							var jS = this,
 									menu = $(menuGet[0]),
 									copy = menu.find('.jSCopy').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
@@ -317,19 +318,12 @@
 
 							return menu;
 						}
-					});
+					})
+					.getSheet();
 				});
 		};
 
 		loadSheet('examples/charts.html');
-
-		$('#pseudoSheetsMoreInfo').click(function() {
-			$(this).next().dialog({
-				title: "What is a pseudo sheet?",
-				modal: true
-			});
-		})
-				.next().hide();
 	});
 </script>
 </html>

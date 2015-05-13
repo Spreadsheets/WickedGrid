@@ -281,9 +281,7 @@ $.fn.extend({
 	 *
 	 * title {String|Function}, title of spreadsheet, if function, expects string and is sent jS
 	 *
-	 * menuRight {String|Function}, default '', 'this' is jQuery.sheet instance. If ul object, will attempt to create menu
-	 *
-	 * menuLeft {String|Function}, default '', 'this' is jQuery.sheet instance. If ul object, will attempt to create menu
+	 * menu {String|Function|Object}, default '', 'this' is jQuery.sheet instance. If ul object, will attempt to create menu
 	 *
 	 * calcOff {Boolean} default false, turns turns off ability to calculate
 	 *
@@ -721,8 +719,7 @@ $.sheet = {
 		barMenus:true,
 		freezableCells:true,
 		allowToggleState:true,
-		menuLeft:null,
-		menuRight:null,
+		menu:null,
 		newColumnWidth:120,
 		title:null,
 		calcOff:false,
@@ -1133,8 +1130,7 @@ $.sheet = {
 					inPlaceEdit:[],
 					inputs:[],
 					label:null,
-					menuLeft:[],
-					menuRight:[],
+					menu:[],
 					menus:[],
 					pane:[],
 					panes:null,
@@ -1235,9 +1231,6 @@ $.sheet = {
 					highlighted: function() {
 						return jS.highlighter.last || $([]);
 					},
-					menuRight:function () {
-						return jS.controls.menuRight[jS.i] || $([]);
-					},
 					inPlaceEdit:function () {
 						return jS.controls.inPlaceEdit[jS.i] || $([]);
 					},
@@ -1250,8 +1243,8 @@ $.sheet = {
 					menus:function() {
 						return jS.controls.menus[jS.i] || $([]);
 					},
-					menuLeft:function () {
-						return jS.controls.menuLeft[jS.i] || $([]);
+					menu:function () {
+						return jS.controls.menu[jS.i] || $([]);
 					},
 					pane:function () {
 						return jS.controls.pane[jS.i] || {};
@@ -2207,19 +2200,15 @@ $.sheet = {
 						jS.obj.tabContainer().remove();
 
 						var header = document.createElement('div'),
-							firstRow = document.createElement('table'),
-							firstRowTr = document.createElement('tr'),
 							secondRow,
 							secondRowTr,
-							title = document.createElement('td'),
+							title = document.createElement('h4'),
 							label,
-							menuLeft,
-							menuRight,
+							menu,
+							$menu,
 							formula,
 							formulaParent;
 
-						header.appendChild(firstRow);
-						firstRow.appendChild(firstRowTr);
 						header.className = jS.cl.header + ' ' + jS.theme.control;
 
 						jS.controls.header = $(header);
@@ -2234,63 +2223,22 @@ $.sheet = {
 						} else {
 							$(title).hide();
 						}
-						firstRowTr.appendChild(title);
+						header.appendChild(title);
 
-						//Sheet Menu Control
-						function makeMenu(menu) {
-							if ($.isFunction(menu)) {
-								menu = $(menu.call(jS));
-							} else {
-								menu = $(menu);
-							}
-
-							if (menu.is('ul')) {
-								menu
-									.find("ul").hide()
-									.addClass(jS.theme.menuUl);
-
-								menu
-									.find("li")
-									.addClass(jS.theme.menuLi)
-									.hover(function () {
-										$(this).find('ul:first')
-											.hide()
-											.show();
-									}, function () {
-										$(this).find('ul:first')
-											.hide();
-									});
-							}
-							return menu;
-						}
 
 						if (jS.isSheetEditable()) {
-							if (s.menuLeft) {
-								menuLeft = document.createElement('td');
-								menuLeft.className = jS.cl.menu + ' ' + jS.cl.menuFixed + ' ' + jS.theme.menuFixed;
-								firstRowTr.insertBefore(menuLeft, title);
+							if (s.menu) {
+								menu = document.createElement('div');
+								$menu = $(menu);
+								menu.className = jS.cl.menu + ' ' + jS.cl.menuFixed + ' ' + jS.theme.menuFixed;
+								header.appendChild(menu);
 
-								jS.controls.menuLeft[jS.i] = $(menuLeft)
-									.append(makeMenu(s.menuLeft))
+								jS.controls.menu[jS.i] = $menu
+									.append(s.menu)
 									.children()
 									.addClass(jS.theme.menuFixed);
 
-								jS.controls.menuLeft[jS.i].find('img').load(function () {
-									jS.sheetSyncSize();
-								});
-							}
-
-							if (s.menuRight) {
-								menuRight = document.createElement('td');
-								menuRight.className = jS.cl.menu + ' ' + jS.cl.menuFixed;
-								firstRowTr.appendChild(menuRight);
-
-								jS.controls.menuRight[jS.i] = $(menuRight)
-									.append(makeMenu(s.menuRight))
-									.children()
-									.addClass(jS.theme.menuFixed);
-
-								jS.controls.menuRight[jS.i].find('img').load(function () {
+								$menu.find('img').load(function () {
 									jS.sheetSyncSize();
 								});
 							}
@@ -5264,8 +5212,7 @@ $.sheet = {
 					jS.controls.fullScreen = null;
 					jS.controls.inPlaceEdit.splice(oldI, 1);
 					jS.controls.menus.splice(oldI, 1);
-					jS.controls.menuLeft.splice(oldI, 1);
-					jS.controls.menuRight.splice(oldI, 1);
+					jS.controls.menu.splice(oldI, 1);
 					jS.controls.pane.splice(oldI, 1);
 					jS.controls.tables.splice(oldI, 1);
 					jS.controls.table.splice(oldI, 1);

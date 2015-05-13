@@ -445,8 +445,10 @@
 .jSParent .jSTitle
 {
 	width: auto;
-	text-align: center;
+	text-align: left;
 	border: none ! important;
+	margin: 0 !important;
+	padding: 10px;
 }
 
 body > .jSChart {
