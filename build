@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #compile parsers
-cd parser/formula
-node ../../../jison/ports/php/php.js formula.jison
-cd ../../
+#cd parser/formula
+#node ../../../jison/ports/php/php.js formula.jison
+#cd ../../
 
 # directories of the JS files
 JS_IN_DIR='./Sheet'
