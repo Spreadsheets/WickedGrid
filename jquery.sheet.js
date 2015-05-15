@@ -12331,8 +12331,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.xIndex = 0;
 		this.yIndex = 0;
 
-		this.hiddenRows = hiddenRows;
-		this.hiddenColumns = hiddenColumns;
+		this.hiddenRows = hiddenRows || [];
+		this.hiddenColumns = hiddenColumns || [];
 
 		if (!(this.frozenAt = frozenAt)) {
 			this.frozenAt = {row:0, col:0};
@@ -12623,18 +12623,23 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			return null;
 		},
 
-
-		hide:function (jS, hiddenColumns, hiddenRows) {
-			throw new Error('Not yet implemented');
-		},
-
 		/**
 		 * Toggles a row to be visible
 		 * @param {jQuery.sheet.instance} jS
 		 * @param {Number} rowIndex
 		 */
 		toggleHideRow: function(jS, rowIndex) {
-			throw new Error('Not yet implemented');
+            var i,
+                hiddenRows = this.hiddenRows;
+
+            if ((i = hiddenRows.indexOf(rowIndex)) > -1) {
+                hiddenRows.splice(rowIndex, 1);
+            } else {
+                hiddenRows.push(rowIndex);
+                hiddenRows.sort();
+            }
+
+            this.megaTable.forceRedrawRows();
 		},
 
 		/**
@@ -12645,7 +12650,21 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @param {Boolean} [hide]
 		 */
 		toggleHideRowRange: function(jS, startIndex, endIndex, hide) {
-			throw new Error('Not yet implemented');
+            var i,
+                max,
+                hiddenRows = this.hiddenRows;
+
+            if ((i = hiddenRows.indexOf(startIndex)) > -1) {
+                hiddenRows.splice(startIndex, endIndex - startIndex);
+            } else {
+                max = i + endIndex - startIndex;
+                for(;i < max; i++) {
+                    hiddenRows.push(startIndex + i);
+                }
+                hiddenRows.sort();
+            }
+
+            this.megaTable.forceRedrawRows();
 		},
 
 		/**
@@ -12653,16 +12672,27 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * Makes all rows visible
 		 */
 		rowShowAll:function (jS) {
-			throw new Error('Not yet implemented');
+            this.hiddenRows = [];
+            this.megaTable.forceRedrawRows();
 		},
 
 
 		/**
 		 * Toggles a column to be visible
-		 * @param {Number} index
+		 * @param {Number} columnIndex
 		 */
-		toggleHideColumn: function(index) {
-			throw new Error('Not yet implemented');
+		toggleHideColumn: function(columnIndex) {
+            var i,
+                hiddenColumns = this.hiddenColumns;
+
+            if ((i = hiddenColumns.indexOf(columnIndex)) > -1) {
+                hiddenColumns.splice(columnIndex, 1);
+            } else {
+                hiddenColumns.push(columnIndex);
+                hiddenColumns.sort();
+            }
+
+            this.megaTable.forceRedrawColumns();
 		},
 		/**
 		 * Toggles a range of columns to be visible starting at index of 1
@@ -12670,10 +12700,25 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * @param {Number} [endIndex]
 		 */
 		toggleHideColumnRange: function(startIndex, endIndex) {
-			throw new Error('Not yet implemented');
+            var i,
+                max,
+                hiddenColumns = this.hiddenColumns;
+
+            if ((i = hiddenColumns.indexOf(startIndex)) > -1) {
+                hiddenColumns.splice(startIndex, endIndex - startIndex);
+            } else {
+                max = i + endIndex - startIndex;
+                for(;i < max; i++) {
+                    hiddenColumns.push(startIndex + i);
+                }
+                hiddenColumns.sort();
+            }
+
+            this.megaTable.forceRedrawColumns();
 		},
 		columnShowAll:function () {
-			throw new Error('Not yet implemented');
+            this.hiddenColumns = [];
+            this.megaTable.forceRedrawColumns();
 		},
 
 		remove: function() {
