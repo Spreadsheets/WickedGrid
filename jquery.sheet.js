@@ -12630,16 +12630,17 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 */
 		toggleHideRow: function(jS, rowIndex) {
             var i,
-                hiddenRows = this.hiddenRows;
+                hiddenRows = this.hiddenRows,
+                mt = this.megaTable;
 
             if ((i = hiddenRows.indexOf(rowIndex)) > -1) {
-                hiddenRows.splice(rowIndex, 1);
+                hiddenRows.splice(i, 1);
+                mt.newRow(rowIndex - mt.rowIndex - 1);
             } else {
                 hiddenRows.push(rowIndex);
-                hiddenRows.sort();
+                hiddenRows.sort(function (a, b) { return a - b; });
+                mt.removeRow(rowIndex - mt.rowIndex);
             }
-
-            this.megaTable.forceRedrawRows();
 		},
 
 		/**

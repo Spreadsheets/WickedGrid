@@ -310,16 +310,17 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 */
 		toggleHideRow: function(jS, rowIndex) {
             var i,
-                hiddenRows = this.hiddenRows;
+                hiddenRows = this.hiddenRows,
+                mt = this.megaTable;
 
             if ((i = hiddenRows.indexOf(rowIndex)) > -1) {
-                hiddenRows.splice(rowIndex, 1);
+                hiddenRows.splice(i, 1);
+                mt.newRow(rowIndex - mt.rowIndex - 1);
             } else {
                 hiddenRows.push(rowIndex);
-                hiddenRows.sort();
+                hiddenRows.sort(function (a, b) { return a - b; });
+                mt.removeRow(rowIndex - mt.rowIndex);
             }
-
-            this.megaTable.forceRedrawRows();
 		},
 
 		/**
@@ -332,10 +333,15 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		toggleHideRowRange: function(jS, startIndex, endIndex, hide) {
             var i,
                 max,
-                hiddenRows = this.hiddenRows;
+                hiddenRows = this.hiddenRows,
+                mt = this.megaTable;
 
             if ((i = hiddenRows.indexOf(startIndex)) > -1) {
                 hiddenRows.splice(startIndex, endIndex - startIndex);
+                for(;startIndex < endIndex; startIndex++) {
+                    mt.newRow(startIndex - mt.rowIndex - 1);
+                }
+
             } else {
                 max = i + endIndex - startIndex;
                 for(;i < max; i++) {
