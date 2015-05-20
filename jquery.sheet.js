@@ -12754,7 +12754,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		setupVisibleRows: function() {
 			var i = 0,
-				visibleRows = this.visibleRows,
+				visibleRows = this.visibleRows = [],
 				hiddenRows = this.hiddenRows,
 				max = this.loader.size(this.jS.i).rows;
 
@@ -12768,7 +12768,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		},
 		setupVisibleColumns: function() {
 			var i = 0,
-				visibleColumns = this.visibleColumns,
+				visibleColumns = this.visibleColumns = [],
 				hiddenColumns = this.hiddenColumns,
 				max = this.loader.size(this.jS.i).cols;
 
