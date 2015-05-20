@@ -34,6 +34,9 @@
 			this.handler = handler;
 			return this;
 		},
+		bindActionUI: function(spreadsheetIndex, actionUI) {
+			actionUI.loadedFrom = this.json[spreadsheetIndex];
+		},
 		size: function(spreadsheetIndex) {
 			var size = {
 					cols: 0,
@@ -106,12 +109,12 @@
 
 			if ((jsonSpreadsheet = json[sheetIndex]) === undefined) return;
 			if ((rows = jsonSpreadsheet.rows) === undefined) return;
-			if ((row = rows[rowIndex - 1]) === undefined) return;
-			if ((cell = row.columns[columnIndex - 1]) === undefined) return;
+			if ((row = rows[rowIndex]) === undefined) return;
+			if ((cell = row.columns[columnIndex]) === undefined) return;
 
 			//null is faster in json, so here turn null into an object
 			if (cell === null) {
-				cell = row.columns[columnIndex - 1] = {};
+				cell = row.columns[columnIndex] = {};
 			}
 
 			return cell;
@@ -303,25 +306,75 @@
 
 			return jsonSpreadsheet.title || '';
 		},
-		hiddenRows: function(sheetIndex) {
-			var metadata = this.json[sheetIndex].metadata || {},
-				jsonHiddenRows = metadata.hiddenRows || [],
-				max = jsonHiddenRows.length,
+		hideRow: function(actionUI, rowIndex) {
+			var json = actionUI.loadedFrom,
+				metadata = json.metadata || (json.metadata = {}),
+				hiddenRows = metadata.hiddenRows || (metadata.hiddenRows = []);
+
+			if (hiddenRows.indexOf(rowIndex) < 0) {
+				hiddenRows.push(rowIndex);
+				hiddenRows.sort(function (a, b) { return a - b; });
+			}
+
+			return hiddenRows;
+		},
+		hideColumn: function(actionUI, columnIndex) {
+			var json = actionUI.loadedFrom,
+				metadata = json.metadata || (json.metadata = {}),
+				hiddenColumns = metadata.hiddenColumns || (metadata.hiddenColumns = []);
+
+			if (hiddenColumns.indexOf(columnIndex) < 0) {
+				hiddenColumns.push(columnIndex);
+				hiddenColumns.sort(function (a, b) { return a - b; });
+			}
+
+			return hiddenColumns;
+		},
+		showRow: function(actionUI, rowIndex) {
+			var json = actionUI.loadedFrom,
+				metadata = json.metadata || (json.metadata = {}),
+				hiddenRows = metadata.hiddenRows || (metadata.hiddenRows = []),
+				i;
+
+			if ((i = hiddenRows.indexOf(rowIndex)) > -1) {
+				hiddenRows.splice(i, 1);
+			}
+
+			return hiddenRows;
+		},
+		showColumn: function(actionUI, columnIndex) {
+			var json = actionUI.loadedFrom,
+				metadata = json.metadata || (json.metadata = {}),
+				hiddenColumns = metadata.hiddenColumns || (metadata.hiddenColumns = []),
+				i;
+
+			if ((i = hiddenColumns.indexOf(columnIndex)) > -1) {
+				hiddenColumns.splice(i, 1);
+			}
+
+			return hiddenColumns;
+		},
+		hiddenRows: function(actionUI) {
+			var json = actionUI.loadedFrom,
+				metadata = json.metadata || (json.metadata = {}),
+				hiddenRows = metadata.hiddenRows || (metadata.hiddenRows = []),
+				max = hiddenRows.length,
 				result = [],
 				i = 0;
 
-			for (;i < max; i++) result.push(jsonHiddenRows[i]);
+			for (;i < max; i++) result.push(hiddenRows[i]);
 
 			return result;
 		},
-		hiddenColumns: function(sheetIndex) {
-			var metadata = this.json[sheetIndex].metadata || {},
-				jsonHiddenColumns = metadata.hiddenColumns || [],
-				max = jsonHiddenColumns.length,
+		hiddenColumns: function(actionUI) {
+			var json = actionUI.loadedFrom,
+				metadata = json.metadata || (json.metadata = {}),
+				hiddenColumns = metadata.hiddenColumns || (metadata.hiddenColumns = []),
+				max = hiddenColumns.length,
 				result = [],
 				i = 0;
 
-			for (;i < max; i++) result.push(jsonHiddenColumns[i]);
+			for (;i < max; i++) result.push(hiddenColumns[i]);
 
 			return result;
 		},
@@ -434,7 +487,6 @@
 			if ((rowIndex = (rows = jsonSpreadsheet.rows).length) < 1) return;
 			if (rows[0].columns.length < 1) return;
 
-			rowIndex--;
 			do
 			{
 				row = rows[rowIndex];
@@ -445,9 +497,9 @@
 					jsonCell = columns[columnIndex];
 					fn.call(jsonCell, sheetIndex, rowIndex + 1, columnIndex + 1);
 				}
-				while (columnIndex-- > 0);
+				while (columnIndex-- >= 0);
 			}
-			while (rowIndex-- > 0);
+			while (rowIndex-- >= 0);
 
 			return this;
 		},

@@ -23,6 +23,9 @@
 			this.handler = handler;
 			return this;
 		},
+		bindActionUI: function(spreadsheetIndex, actionUI) {
+			actionUI.loadedFrom = this.tables[spreadsheetIndex];
+		},
 		size: function(spreadsheetIndex) {
 			var size = {
 					cols: 0,
@@ -53,7 +56,7 @@
 			columns = table.querySelectorAll('col');
 
 			if (columns.length > columnIndex) {
-				width = columns[columnIndex - 1].style.width.replace('px', '') || Sheet.defaultColumnWidth;
+				width = columns[columnIndex].style.width.replace('px', '') || Sheet.defaultColumnWidth;
 				return width;
 			}
 
@@ -69,7 +72,7 @@
 			rows = table.querySelectorAll('tr');
 
 			if (rows.length > rowIndex) {
-				row = rows[rowIndex - 1];
+				row = rows[rowIndex];
 
 				height = row.style.height.replace('px', '') || Sheet.defaultRowHeight;
 
@@ -113,8 +116,8 @@
 
 			if ((table = tables[sheetIndex]) === undefined) return null;
 			if ((rows = table.querySelectorAll('tr')) === undefined) return null;
-			if ((row = rows[rowIndex - 1]) === undefined) return null;
-			if ((cell = row.children[columnIndex - 1]) === undefined) return null;
+			if ((row = rows[rowIndex]) === undefined) return null;
+			if ((cell = row.children[columnIndex]) === undefined) return null;
 
 			return cell;
 		},
@@ -261,22 +264,102 @@
 
 			return table.getAttribute('title');
 		},
-		hiddenRows: function(sheetIndex) {
-			var hiddenRowsString = this.tables[sheetIndex].getAttribute('data-hiddenrows'),
+		hideRow: function(actionUI, rowIndex) {
+			var table = actionUI.loadedFrom,
+				hiddenRows;
+
+			if (table.hasAttribute('data-hiddenrows')) {
+				hiddenRows = arrHelpers.toNumbers(table.getAttribute('data-hiddenrows').split(','));
+			} else {
+				hiddenRows = [];
+			}
+
+			if (hiddenRows.indexOf(rowIndex) < 0) {
+				hiddenRows.push(rowIndex);
+				hiddenRows.sort(function (a, b) { return a - b; });
+			}
+
+			table.setAttribute('data-hiddenrows', hiddenRows.join(','));
+
+			return hiddenRows;
+		},
+		hideColumn: function(actionUI, columnIndex) {
+			var table = actionUI.loadedFrom,
+				hiddenColumns;
+
+			if (table.hasAttribute('data-hiddencolumns')) {
+				hiddenColumns = arrHelpers.toNumbers(table.getAttribute('data-hiddencolumns').split(','));
+			} else {
+				hiddenColumns = [];
+			}
+
+			if (hiddenColumns.indexOf(columnIndex) < 0) {
+				hiddenColumns.push(columnIndex);
+				hiddenColumns.sort(function (a, b) { return a - b; });
+			}
+
+			table.setAttribute('data-hiddencolumns', hiddenColumns.join(','));
+
+			return hiddenColumns;
+		},
+		showRow: function(actionUI, rowIndex) {
+			var table = actionUI.loadedFrom,
+				hiddenRows,
+				i;
+
+			if (table.hasAttribute('data-hiddenrows')) {
+				hiddenRows = arrHelpers.toNumbers(table.getAttribute('data-hiddenrows').split(','));
+			} else {
+				hiddenRows = [];
+			}
+
+			if ((i = hiddenRows.indexOf(rowIndex)) > -1) {
+				hiddenRows.splice(i, 1);
+			}
+
+			table.setAttribute('data-hiddenrows', hiddenRows.join(','));
+
+			return hiddenRows;
+		},
+		showColumn: function(actionUI, columnIndex) {
+			var table = actionUI.loadedFrom,
+				hiddenColumns,
+				i;
+
+			if (table.hasAttribute('data-hiddencolumns')) {
+				hiddenColumns = arrHelpers.toNumbers(table.getAttribute('data-hiddencolumns').split(','));
+			} else {
+				hiddenColumns = [];
+			}
+
+			if ((i = hiddenColumns.indexOf(columnIndex)) > -1) {
+				hiddenColumns.splice(i, 1);
+			}
+
+			table.setAttribute('data-hiddencolumns', hiddenColumns.join(','));
+
+			return hiddenColumns;
+		},
+		hiddenRows: function(actionUI) {
+			var hiddenRowsString = actionUI.loadedFrom.getAttribute('data-hiddenrows'),
 				hiddenRows = null;
 
 			if (hiddenRowsString !== null) {
 				hiddenRows = arrHelpers.toNumbers(hiddenRowsString.split(','));
+			} else {
+				hiddenRows = [];
 			}
 
 			return hiddenRows;
 		},
-		hiddenColumns: function(sheetIndex) {
-			var hiddenColumnsString = this.tables[sheetIndex].getAttribute('data-hiddencolumns'),
+		hiddenColumns: function(actionUI) {
+			var hiddenColumnsString = actionUI.loadedFrom.getAttribute('data-hiddencolumns'),
 				hiddenColumns = null;
 
 			if (hiddenColumnsString !== null) {
 				hiddenColumns = arrHelpers.toNumbers(hiddenColumnsString.split(','));
+			} else {
+				hiddenColumns = [];
 			}
 
 			return hiddenColumns;
@@ -359,11 +442,11 @@
 			{
 				row = rows[rowIndex];
 				columns = row.children;
-				columnIndex = columns.length - 1;
+				columnIndex = columns.length;
 				do
 				{
 					cell = columns[columnIndex];
-					fn.call(cell, sheetIndex, rowIndex + 1, columnIndex + 1);
+					fn.call(cell, sheetIndex, rowIndex, columnIndex);
 				}
 				while (columnIndex-- > 0);
 			}
@@ -373,7 +456,7 @@
 		},
 		cycleCellsAll: function(fn) {
 			var tables = this.tables,
-				sheetIndex = tables.length - 1;
+				sheetIndex = tables.length;
 
 			if (sheetIndex < 0) return;
 
@@ -436,14 +519,14 @@
 				output.unshift(table);
 
 				spreadsheet = jS.spreadsheets[sheet];
-				row = spreadsheet.length - 1;
+				row = spreadsheet.length;
 				do {
 					parentEle = spreadsheet[row][1].td.parentNode;
 					parentHeight = parentEle.style['height'];
 					tr = document.createElement('tr');
 					tr.style.height = (parentHeight ? parentHeight : jS.s.colMargin + 'px');
 
-					column = spreadsheet[row].length - 1;
+					column = spreadsheet[row].length;
 					do {
 						cell = spreadsheet[row][column];
 						td = document.createElement('td');

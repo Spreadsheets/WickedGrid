@@ -471,7 +471,7 @@ Sheet.CellHandler = (function(Math) {
 		 */
 		parseLocation: function (columnStr, rowString) {
 			return {
-				row: parseInt(rowString),
+				row: rowString - 1,
 				col: this.columnLabelIndex(columnStr)
 			};
 		},
@@ -527,7 +527,7 @@ Sheet.CellHandler = (function(Math) {
 			if (!this.columnIndexes.length) { //cache the indexes to save on processing
 				var s = '', i, j, k, l;
 				i = j = k = -1;
-				for (l = 1; l < 16385; ++l) {
+				for (l = 0; l < 16385; ++l) {
 					s = '';
 					++k;
 					if (k == 26) {

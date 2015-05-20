@@ -1392,158 +1392,6 @@ $.sheet = {
 				},
 
 				/**
-				 * Returns all spreadsheets within an instance as an array, builds it if it doesn't exist
-				 * @param [forceRebuild]
-				 * @returns {Array|spreadsheets}
-				 * @memberOf jS
-				 */
-				spreadsheetsToArray:function (forceRebuild) {
-					if (forceRebuild || jS.spreadsheets.length == 0) {
-						jS.cycleCellsAll(function (sheet, row, col) {
-							jS.createCell(sheet, row, col);
-						});
-					}
-					return jS.spreadsheets;
-				},
-
-				/**
-				 * Returns singe spreadsheet from a set of spreadsheets within as instance, builds if it doesn't exist
-				 * @param {Boolean} forceRebuild Enforces the spreadsheet to be rebuilt
-				 * @param {Number} i Spreadsheet index
-				 * @memberOf jS
-				 */
-				spreadsheetToArray:function (forceRebuild, i) {
-					i = (i ? i : jS.i);
-					if (!jS.spreadsheets[i]) {
-						jS.cycleCells(function (sheet, row, col) {
-							jS.createCell(sheet, row, col);
-						});
-					}
-					return jS.spreadsheets[i];
-				},
-
-				/**
-				 * Creates a single cell within
-				 * @param {Number} sheetIndex
-				 * @param {Number} [rowIndex]
-				 * @param {Number} [colIndex]
-				 * @param {Number} [calcCount]
-				 * @memberOf jS
-				 */
-				createCell:function (sheetIndex, rowIndex, colIndex, calcCount) {
-					throw new Error('Being refactored');
-
-					//first create cell
-					var sheet,
-						row,
-						jSCell,
-						value,
-						table,
-						colGroup,
-						col,
-						tBody,
-						tr,
-						td,
-						tdsX,
-						tdsY,
-						formula,
-						cellType,
-						hasCellType,
-						uneditable,
-						id;
-
-					if ((sheet = jS.spreadsheets[sheetIndex]) === u) { //check if spreadsheet exists, if not, create it as an array
-						sheet = jS.spreadsheets[sheetIndex] = [];
-					}
-
-					if ((row = sheet[rowIndex]) === u) { //check if row exists, if not, create it
-						row = sheet[rowIndex] = [];
-					}
-
-					if ((table = jS.controls.tables[sheetIndex]) === u) return null;
-					if ((tBody = table.tBody) === u) return null;
-					if ((tr = tBody.children[rowIndex]) === u) return null;
-					if ((td = tr.children[colIndex]) === u) return null;
-
-					jSCell = row[colIndex] = td.jSCell = new Sheet.Cell(sheetIndex, td, jS, jS.cellHandler);
-					jSCell.sheetIndex = sheetIndex;
-					jSCell.rowIndex = rowIndex;
-					jSCell.columnIndex = colIndex;
-
-					formula = td.getAttribute('data-formula');
-					cellType = td.getAttribute('data-celltype');
-					uneditable = td.getAttribute('data-uneditable');
-					id = td.getAttribute('id');
-
-					if (formula !== null)
-						jSCell.formula = formula;
-					if (cellType !== null) {
-						jSCell.cellType = cellType;
-						hasCellType = true;
-					}
-					if (uneditable !== null)
-						jSCell.uneditable = uneditable;
-					if (id !== null)
-						jSCell.id = id;
-
-					value = td.textContent || td.innerText;
-					switch (typeof(value)) {
-						case 'object':
-							break;
-						case 'undefined':
-							value = new String();
-							break;
-						case 'number':
-							jSCell.value = new Number(value);
-							break;
-						case 'boolean':
-							jSCell.value = new Boolean(value);
-							break;
-						case 'string':
-						default:
-							jSCell.value = new String(value);
-							break;
-					}
-					jSCell.value.cell = jSCell;
-					jSCell.calcCount = calcCount || 0;
-					jSCell.needsUpdated = jSCell.formula.length > 0 || hasCellType;
-
-
-
-					if (jSCell.formula.length > 0 && jSCell.formula.charAt(0) == '=') {
-						jSCell.formula = jSCell.formula.substring(1);
-					}
-
-
-					//attach cells to col
-					colGroup = table.colGroup;
-					if ((col = colGroup.children[colIndex]) === u) {
-						//if a col doesn't exist, it adds it here
-						col = document.createElement('col');
-						col.setAttribute('style', 'width:' + jS.s.newColumnWidth + 'px;');
-						colGroup.appendChild(col);
-					}
-
-					//now create row
-					if ((tdsY = jS.controls.bar.y.th[sheetIndex]) === u) {
-						tdsY = jS.controls.bar.y.th[sheetIndex] = [];
-					}
-					if (tdsY[rowIndex] === u) {
-						tdsY[rowIndex] = tr.children[0];
-					}
-
-					if ((tdsX = jS.controls.bar.x.th[sheetIndex]) === u) {
-						tdsX = jS.controls.bar.x.th[sheetIndex] = [];
-					}
-					if (tdsX[colIndex] !== u) {
-						tdsX[colIndex] = tBody.children[0].children[colIndex];
-					}
-
-					//return cell
-					return jSCell;
-				},
-
-				/**
 				 * Get cell value
 				 * @memberOf jS
 				 * @param {Number} sheetIndex
@@ -2527,7 +2375,7 @@ $.sheet = {
 					enclosure:function () {
 						var enclosure = document.createElement('div'),
 							$enclosure = $(enclosure),
-							actionUI = new Sheet.ActionUI(jS, enclosure, jS.cl.scroll, jS.s.frozenAt[jS.i], s.loader.hiddenRows(jS.i), s.loader.hiddenColumns(jS.i)),
+							actionUI = new Sheet.ActionUI(jS, enclosure, jS.cl.scroll, jS.s.frozenAt[jS.i]),
 							pane = actionUI.pane;
 
 						pane.setAttribute('class', jS.cl.pane + ' ' + jS.theme.pane);
@@ -3845,33 +3693,59 @@ $.sheet = {
 
 
 				toggleHideRow: function(i) {
-					i = i || jS.rowLast;
-					if (!i) return;
+					if (i === undefined) {
+						i = jS.rowLast;
+					}
+
+					if (i === undefined) return;
 
 					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideRow(jS, i);
+					if (actionUI.hiddenRows.indexOf(i) > -1) {
+						actionUI.showRow(i);
+					} else {
+						actionUI.hideRow(i);
+					}
+
 					jS.autoFillerGoToTd();
 				},
 				toggleHideRowRange: function(startIndex, endIndex) {
 					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideRowRange(jS, startIndex, endIndex);
+					if (actionUI.hiddenRows.indexOf(startIndex) > -1) {
+						actionUI.showRowRange(startIndex, endIndex);
+					} else {
+						actionUI.hideRowRange(startIndex, endIndex);
+					}
+
 					jS.autoFillerGoToTd();
 				},
 				toggleHideColumn: function(i) {
-					i = i || jS.colLast;
-					if (!i) return;
+					if (i === undefined) {
+						i = jS.colLast;
+					}
+
+					if (i === undefined) return;
 
 					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideColumn(i);
+					if (actionUI.hiddenColumns.indexOf(i) > -1) {
+						actionUI.showColumn(i);
+					} else {
+						actionUI.hideColumn(i);
+					}
+
 					jS.autoFillerGoToTd();
 				},
 				toggleHideColumnRange: function(startIndex, endIndex) {
 					var actionUI = jS.obj.pane().actionUI;
 
-					actionUI.toggleHideColumnRange(startIndex, endIndex);
+					if (actionUI.hiddenColumns.indexOf(startIndex) > -1) {
+						actionUI.showColumnRange(startIndex, endIndex);
+					} else {
+						actionUI.hideColumnRange(startIndex, endIndex);
+					}
+
 					jS.autoFillerGoToTd();
 				},
 				rowShowAll: function() {
@@ -4369,7 +4243,7 @@ $.sheet = {
 				 */
 				cycleCells:function (fn, firstLoc, lastLoc, i) {
 					i = i || jS.i;
-					firstLoc = firstLoc || {rowIndex:1, col:1};
+					firstLoc = firstLoc || {rowIndex:0, col:0};
 
 					if (!lastLoc) {
 						var size = jS.sheetSize();
@@ -4382,8 +4256,8 @@ $.sheet = {
 						row,
 						cell;
 
-					for(colIndex = firstLoc.col; colIndex <= lastLoc.col; colIndex++) {
-						for(rowIndex = firstLoc.row; rowIndex <= lastLoc.row; rowIndex++) {
+					for(colIndex = firstLoc.col; colIndex < lastLoc.col; colIndex++) {
+						for(rowIndex = firstLoc.row; rowIndex < lastLoc.row; rowIndex++) {
 
 							if ((row = spreadsheet[rowIndex]) === u) continue;
 							if ((cell  = row[colIndex]) === u) continue;

@@ -3,16 +3,11 @@
  * Creates the scrolling system used by each spreadsheet
  */
 Sheet.ActionUI = (function(document, window, Math, Number, $) {
-	var ActionUI = function(jS, enclosure, cl, frozenAt, hiddenRows, hiddenColumns) {
+	var ActionUI = function(jS, enclosure, cl, frozenAt) {
+		this.jS = jS;
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
 		enclosure.appendChild(this.pane);
-
-		this.xIndex = 0;
-		this.yIndex = 0;
-
-		this.hiddenRows = hiddenRows || [];
-		this.hiddenColumns = hiddenColumns || [];
 
 		if (!(this.frozenAt = frozenAt)) {
 			this.frozenAt = {row:0, col:0};
@@ -21,8 +16,23 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.frozenAt.row = Math.max(this.frozenAt.row, 0);
 		this.frozenAt.col = Math.max(this.frozenAt.col, 0);
 
+		jS.s.loader.bindActionUI(jS.i, this);
+
+		this.hiddenRows = jS.s.loader.hiddenRows(this);
+		this.visibleRows = [];
+		this.hiddenColumns = jS.s.loader.hiddenColumns(this);
+		this.visibleColumns = [];
+
+		this.loader = jS.s.loader;
+
+		this
+			.setupVisibleRows()
+			.setupVisibleColumns();
+
 		var that = this,
-			loader = jS.s.loader,
+			loader = this.loader,
+			sheetRowIndex,
+			sheetColumnIndex,
 			pane = this.pane,
 			left,
 			up,
@@ -36,23 +46,13 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				col: Math.max(this.frozenAt.col, 1)
 			},
 
-			//TODO: connect megatable up to Loader
 			megaTable = this.megaTable = new MegaTable({
 				columns: Sheet.domColumns,
 				rows: Sheet.domRows,
 				element: pane,
-				updateCell: function(rowIndex, columnIndex, td) {
-					if (that.rowPrevHidden > 0 && rowIndex > that.rowPrevHidden) {
-						rowIndex = that.rowPrevHidden + rowIndex + 1;
-					} else {
-						rowIndex = rowIndex + 1;
-					}
-
-					if (that.columnPrevHidden > 0 && columnIndex > that.columnPrevHidden) {
-						columnIndex = that.columnPrevHidden + columnIndex + 1;
-					} else {
-						columnIndex = columnIndex + 1;
-					}
+				updateCell: function(rowVisibleIndex, columnVisibleIndex, td) {
+					var rowIndex = (that.visibleRows.length === 0 ? rowVisibleIndex : that.visibleRows[rowVisibleIndex]),
+						columnIndex = (that.visibleColumns === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]);
 
 					if (typeof td.jSCell === 'object' && td.jSCell !== null) {
 						td.jSCell.td = null;
@@ -79,97 +79,49 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					th.col = col;
 					th.className = jS.cl.barCorner + ' ' + jS.theme.bar;
 				},
-				updateRowHeader: function(i, header) {
-					var prevHidden = 0,
-						nextHidden = 0,
-						hiddenRow,
-						hiddenI,
-						isHidden = hiddenRows !== null ? (hiddenI = hiddenRows.indexOf(i)) > -1 : false;
+				updateRowHeader: function(rowVisibleIndex, header) {
+					var rowIndex,
+						label;
 
-					if (isHidden) {
-						prevHidden++;
-						nextHidden++;
-
-						//count previous till you find one that isn't hidden
-						while (
-							(hiddenRow = hiddenRows[hiddenI - prevHidden]) !== undefined
-							&& hiddenRow + prevHidden === i
-							) {
-							prevHidden++;
-						}
-
-						//count next till you find one that isn't hidden
-						while (
-							(hiddenRow = hiddenRows[hiddenI + nextHidden]) !== undefined
-							&& hiddenRow - nextHidden === i
-							) {
-							nextHidden++;
-						}
-
-						that.rowPrevHidden = prevHidden;
-						that.rowNextHidden = nextHidden;
-						that.yIndex = i + prevHidden + nextHidden + 1;
+					if (that.visibleRows.length === 0) {
+						rowIndex = rowVisibleIndex;
+						label = document.createTextNode(rowIndex + 1);
 					} else {
-						if (that.rowPrevHidden > 0 && i > that.rowPrevHidden) {
-							that.yIndex = that.rowPrevHidden + i + 1;
+						if (rowVisibleIndex >= that.visibleRows.length) {
+							rowIndex = rowVisibleIndex + that.hiddenRows.length;
 						} else {
-							that.rowPrevHidden = 0;
-							that.rowNextHidden = 0;
-							that.yIndex = i + 1;
+							rowIndex = that.visibleRows[rowVisibleIndex];
 						}
+						label = document.createTextNode(rowIndex + 1);
 					}
 
 					header.entity = 'left';
 					header.className = jS.cl.barLeft + ' ' + jS.theme.bar;
-					header.appendChild(document.createTextNode(that.yIndex + ''));
-					header.parentNode.style.height = header.style.height = loader.getHeight(jS.i, that.yIndex) + 'px';
+					header.appendChild(label);
+					header.parentNode.style.height = header.style.height = loader.getHeight(jS.i, rowIndex) + 'px';
 				},
-				updateColumnHeader: function(i, header, col) {
-					var prevHidden = 0,
-						nextHidden = 0,
-						hiddenColumn,
-						hiddenI,
-						isHidden = hiddenColumns!== null ? (hiddenI = hiddenColumns.indexOf(i)) > -1 : false;
+				updateColumnHeader: function(columnVisibleIndex, header, col) {
+					var columnIndex,
+						label;
 
-					if (isHidden) {
-						prevHidden++;
-						nextHidden++;
-
-						//count previous till you find one that isn't hidden
-						while (
-							(hiddenColumn = hiddenColumns[hiddenI - prevHidden]) !== undefined
-							&& hiddenColumn + prevHidden === i
-							) {
-							prevHidden++;
-						}
-
-						//count next till you find one that isn't hidden
-						while (
-							(hiddenColumn = hiddenColumns[hiddenI + nextHidden]) !== undefined
-							&& hiddenColumn - nextHidden === i
-							) {
-							nextHidden++;
-						}
-
-						that.columnPrevHidden = prevHidden;
-						that.columnNextHidden = nextHidden;
-						that.xIndex = i + prevHidden + nextHidden + 1;
+					if (that.visibleColumns.length === 0) {
+						columnIndex = columnVisibleIndex;
+						label = document.createTextNode(jS.cellHandler.columnLabelString(columnIndex));
 					} else {
-						if (that.columnPrevHidden > 0 && i > that.columnPrevHidden) {
-							that.xIndex = that.columnPrevHidden + i + 1;
+						if (columnVisibleIndex >= that.visibleColumns.length) {
+							columnIndex = columnVisibleIndex + that.hiddenColumns.length;
 						} else {
-							that.columnPrevHidden = 0;
-							that.columnNextHidden = 0;
-							that.xIndex = i + 1;
+							columnIndex = that.visibleColumns[columnVisibleIndex];
 						}
+						label = document.createTextNode(jS.cellHandler.columnLabelString(columnIndex));
 					}
 
 					header.th = header;
 					header.col = col;
 					header.entity = 'top';
 					header.className = jS.cl.barTop + ' ' + jS.theme.bar;
-					header.appendChild(document.createTextNode(jS.cellHandler.columnLabelString(that.xIndex)));
-					col.style.width = loader.getWidth(jS.i, that.xIndex) + 'px';
+					header.appendChild(label);
+					col.style.width = loader.getWidth(jS.i, columnIndex) + 'px';
 				}
 			}),
 
@@ -207,9 +159,6 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				y = 0,
 				direction,
 				scrolledTo;
-
-			this.xIndex = 0;
-			this.yIndex = 0;
 
 			while ((direction = this.directionToSeeTd(td)) !== null) {
 				scrolledTo = this.scrolledArea;
@@ -305,61 +254,83 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		/**
 		 * Toggles a row to be visible
-		 * @param {jQuery.sheet.instance} jS
 		 * @param {Number} rowIndex
 		 */
-		toggleHideRow: function(jS, rowIndex) {
-            var i,
-                hiddenRows = this.hiddenRows,
-                mt = this.megaTable;
+		hideRow: function(rowIndex) {
+			this.hiddenRows = this.loader.hideRow(this, rowIndex);
 
-            if ((i = hiddenRows.indexOf(rowIndex)) > -1) {
-                hiddenRows.splice(i, 1);
-                mt.newRow(rowIndex - mt.rowIndex - 1);
-            } else {
-                hiddenRows.push(rowIndex);
-                hiddenRows.sort(function (a, b) { return a - b; });
-                mt.removeRow(rowIndex - mt.rowIndex);
-            }
+			var i;
+			if ((i = this.visibleRows.indexOf(rowIndex)) > -1) {
+				this.visibleRows.splice(i, 1);
+			}
+
+			this.megaTable.forceRedrawRows();
+			return this;
+		},
+		/**
+		 * Toggles a row to be visible
+		 * @param {Number} rowIndex
+		 */
+		showRow: function(rowIndex) {
+			this.hiddenRows = this.loader.showRow(this, rowIndex);
+
+			if (this.visibleRows.indexOf(rowIndex) < 0) {
+				this.visibleRows.push(rowIndex);
+				this.visibleRows.sort(function(a, b) {return a-b});
+			}
+
+			this.megaTable.forceRedrawRows();
+			return this;
 		},
 
 		/**
 		 * Toggles a range of rows to be visible starting at index of 1
-		 * @param {jQuery.sheet.instance} jS
 		 * @param {Number} startIndex
 		 * @param {Number} [endIndex]
-		 * @param {Boolean} [hide]
 		 */
-		toggleHideRowRange: function(jS, startIndex, endIndex, hide) {
-            var i,
-                max,
-                hiddenRows = this.hiddenRows,
-                mt = this.megaTable;
+		hideRowRange: function(startIndex, endIndex) {
+			var loader = this.loader, i;
 
-            if ((i = hiddenRows.indexOf(startIndex)) > -1) {
-                hiddenRows.splice(startIndex, endIndex - startIndex);
-                for(;startIndex < endIndex; startIndex++) {
-                    mt.newRow(startIndex - mt.rowIndex - 1);
-                }
-
-            } else {
-                max = i + endIndex - startIndex;
-                for(;i < max; i++) {
-                    hiddenRows.push(startIndex + i);
-                }
-                hiddenRows.sort();
+			for(;startIndex <= endIndex; startIndex++) {
+				this.hiddenRows = loader.hideRow(this, startIndex);
+				if ((i = this.visibleRows.indexOf(startIndex)) > -1) {
+					this.visibleRows.splice(i, 1);
+				}
             }
 
-            this.megaTable.forceRedrawRows();
+			this.megaTable.forceRedrawRows();
+			return this;
 		},
 
 		/**
-		 * @param {jQuery.sheet.instance} jS
+		 * Toggles a range of rows to be visible starting at index of 1
+		 * @param {Number} startIndex
+		 * @param {Number} [endIndex]
+		 */
+		showRowRange: function(startIndex, endIndex) {
+			var loader = this.loader;
+
+			for(;startIndex <= endIndex; startIndex++) {
+				this.hiddenRows = loader.showRow(this, startIndex);
+				if (this.visibleRows.indexOf(startIndex) < 0) {
+					this.visibleRows.push(startIndex);
+				}
+			}
+
+			this.visibleRows.sort(function(a, b) {return a-b});
+
+			this.megaTable.forceRedrawRows();
+			return this;
+		},
+
+		/**
 		 * Makes all rows visible
 		 */
-		rowShowAll:function (jS) {
+		rowShowAll:function () {
             this.hiddenRows = [];
+			this.visibleRows = [];
             this.megaTable.forceRedrawRows();
+			return this;
 		},
 
 
@@ -367,44 +338,81 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		 * Toggles a column to be visible
 		 * @param {Number} columnIndex
 		 */
-		toggleHideColumn: function(columnIndex) {
-            var i,
-                hiddenColumns = this.hiddenColumns;
+		hideColumn: function(columnIndex) {
+			this.hiddenColumns = this.loader.hideColumn(this, columnIndex);
 
-            if ((i = hiddenColumns.indexOf(columnIndex)) > -1) {
-                hiddenColumns.splice(columnIndex, 1);
-            } else {
-                hiddenColumns.push(columnIndex);
-                hiddenColumns.sort();
-            }
+			var i;
+			if ((i = this.hiddenColumns.indexOf(columnIndex)) > -1) {
+				this.hiddenColumns.splice(i, 1);
+			}
 
-            this.megaTable.forceRedrawColumns();
+			this.megaTable.forceRedrawRows();
+			return this;
 		},
+		/**
+		 * Toggles a column to be visible
+		 * @param {Number} columnIndex
+		 */
+		showColumn: function(columnIndex) {
+			this.hiddenColumns = this.loader.showColumn(this, columnIndex);
+
+			if (this.visibleColumns.indexOf(columnIndex) < 0) {
+				this.visibleColumns.push(columnIndex);
+				this.visibleColumns.sort(function(a, b) {return a-b});
+			}
+
+			this.megaTable.forceRedrawColumns();
+			return this;
+		},
+
 		/**
 		 * Toggles a range of columns to be visible starting at index of 1
 		 * @param {Number} startIndex
-		 * @param {Number} [endIndex]
+		 * @param {Number} endIndex
 		 */
-		toggleHideColumnRange: function(startIndex, endIndex) {
-            var i,
-                max,
-                hiddenColumns = this.hiddenColumns;
+		hideColumnRange: function(startIndex, endIndex) {
+			var loader = this.loader, i;
 
-            if ((i = hiddenColumns.indexOf(startIndex)) > -1) {
-                hiddenColumns.splice(startIndex, endIndex - startIndex);
-            } else {
-                max = i + endIndex - startIndex;
-                for(;i < max; i++) {
-                    hiddenColumns.push(startIndex + i);
-                }
-                hiddenColumns.sort();
-            }
+			for(;startIndex <= endIndex; startIndex++) {
+				this.hiddenColumns = loader.hideColumn(this, startIndex);
+				if ((i = this.visibleColumns.indexOf(startIndex)) > -1) {
+					this.visibleColumns.splice(i, 1);
+				}
+			}
 
-            this.megaTable.forceRedrawColumns();
+			this.megaTable.forceRedrawColumns();
+			return this;
 		},
+
+		/**
+		 * Toggles a range of columns to be visible starting at index of 1
+		 * @param {Number} startIndex
+		 * @param {Number} endIndex
+		 */
+		showColumnRange: function(startIndex, endIndex) {
+			var loader = this.loader;
+
+			for(;startIndex <= endIndex; startIndex++) {
+				this.hiddenColumns = loader.showColumn(this, startIndex);
+				if (this.visibleColumns.indexOf(startIndex) < 0) {
+					this.visibleColumns.push(startIndex);
+				}
+			}
+
+			this.visibleColumns.sort(function(a, b) {return a-b});
+
+			this.megaTable.forceRedrawColumns();
+			return this;
+		},
+
+		/**
+		 * Makes all columns visible
+		 */
 		columnShowAll:function () {
-            this.hiddenColumns = [];
-            this.megaTable.forceRedrawColumns();
+			this.hiddenColumns = [];
+			this.visibleColumns = [];
+			this.megaTable.forceRedrawColumns();
+			return this;
 		},
 
 		remove: function() {
@@ -413,6 +421,35 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		scrollToCell: function(axis, value) {
 			throw new Error('Not yet implemented');
+		},
+
+		setupVisibleRows: function() {
+			var i = 0,
+				visibleRows = this.visibleRows,
+				hiddenRows = this.hiddenRows,
+				max = this.loader.size(this.jS.i).rows;
+
+			for (;i < max; i++) {
+				if (hiddenRows.indexOf(i) < 0) {
+					visibleRows.push(i);
+				}
+			}
+
+			return this;
+		},
+		setupVisibleColumns: function() {
+			var i = 0,
+				visibleColumns = this.visibleColumns,
+				hiddenColumns = this.hiddenColumns,
+				max = this.loader.size(this.jS.i).cols;
+
+			for (;i < max; i++) {
+				if (hiddenColumns.indexOf(i) < 0) {
+					visibleColumns.push(i);
+				}
+			}
+
+			return this;
 		},
 
 		pixelScrollDensity: 30,
