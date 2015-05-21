@@ -94,6 +94,7 @@
 		},
 		setupTD: function(cell, td) {
 			if (cell['class'] !== undefined) td.className = cell['class'];
+			if (cell['id'] !== undefined) td.setAttribute('id', cell['id']);
 			if (cell['style'] !== undefined) td.setAttribute('style', cell['style']);
 			if (cell['rowspan'] !== undefined) td.setAttribute('rowspan', cell['rowspan']);
 			if (cell['colspan'] !== undefined) td.setAttribute('colspan', cell['colspan']);
