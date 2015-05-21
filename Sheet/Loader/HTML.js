@@ -236,8 +236,8 @@
 							this.cellIds[column.id] = {
 								cell: column,
 								sheetIndex: sheetIndex,
-								rowIndex: rowIndex + 1,
-								columnIndex: columnIndex + 1,
+								rowIndex: rowIndex,
+								columnIndex: columnIndex,
 								requestCell: function() {
 									return loader.jitCell(this.sheetIndex, this.rowIndex, this.columnIndex);
 								}
