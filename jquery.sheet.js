@@ -12382,7 +12382,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				element: pane,
 				updateCell: function(rowVisibleIndex, columnVisibleIndex, td) {
 					var rowIndex = (that.visibleRows.length === 0 ? rowVisibleIndex : that.visibleRows[rowVisibleIndex]),
-						columnIndex = (that.visibleColumns === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]);
+						columnIndex = (that.visibleColumns === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]),
+						oldTd;
 
 					if (typeof td.jSCell === 'object' && td.jSCell !== null) {
 						td.jSCell.td = null;
@@ -12397,6 +12398,13 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					if (!row[columnIndex]) {
 						row[columnIndex] = cell;
+					}
+
+					oldTd = cell.td;
+					if (oldTd !== null) {
+						while (oldTd.lastChild !== null) {
+							oldTd.removeChild(oldTd.lastChild);
+						}
 					}
 
 					cell.td = td;
