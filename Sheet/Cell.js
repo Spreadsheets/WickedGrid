@@ -33,6 +33,7 @@ Sheet.Cell = (function() {
 		this.defer = null;
 		this.isEdit = false;
 		this.edited = false;
+		this.covered = false;
 	}
 
 	Cell.prototype = {

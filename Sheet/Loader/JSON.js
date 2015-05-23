@@ -65,7 +65,7 @@
 				widths = metadata.widths || [],
 				width = widths[columnIndex] || Sheet.defaultColumnWidth;
 
-			return width;
+			return width * 1;
 		},
 		getHeight: function(sheetIndex, rowIndex) {
 			var json = this.json,
@@ -74,7 +74,7 @@
 				row = rows[rowIndex] || {},
 				height = row.height || Sheet.defaultRowHeight;
 
-			return height;
+			return height * 1;
 		},
 		isHidden: function(sheetIndex) {
 			var json = this.json,
@@ -92,12 +92,167 @@
 
 			return this;
 		},
+		addRow: function(sheetIndex, rowIndex) {
+			var json = this.json[sheetIndex],
+				columnIndex = 0,
+				columnMax = this.size(sheetIndex).cols,
+				rows,
+				row = {
+					columns: []
+				},
+				columns = row.columns;
+
+			if (json === undefined) return this;
+
+			rows = json.rows;
+
+			for (;columnIndex < columnMax; columnIndex++) {
+				columns.push(null);
+			}
+
+			if (rowIndex === undefined) {
+				rows.push(row);
+			} else if (rowIndex < rows.length) {
+				rows.splice(rowIndex, 0, row);
+			}
+
+			return this;
+		},
+		addColumn: function(sheetIndex, columnIndex) {
+			var json = this.json[sheetIndex],
+				rowIndex = 0,
+				rows,
+				size = this.size(sheetIndex),
+				rowMax = size.rows,
+				columnMax = size.cols;
+
+			if (json === undefined) return this;
+
+			rows = json.rows;
+
+			if (columnIndex === undefined) {
+				for (; rowIndex < rowMax; rowIndex++) {
+					rows[rowIndex].columns.push(null);
+				}
+			} else if (columnIndex < columnMax) {
+				for (; rowIndex < rowMax; rowIndex++) {
+					rows[rowIndex].columns.splice(columnIndex, 0, null);
+				}
+			}
+
+			return this;
+		},
+		deleteRow: function(sheetIndex, rowIndex) {
+			var json = this.json[sheetIndex],
+				rows,
+				metadata,
+				hiddenRows,
+				hiddenI;
+
+			if (json === undefined) return this;
+
+			rows = json.rows;
+
+			if (rows.length > rowIndex) {
+				rows.splice(rowIndex, 1);
+			}
+
+			if (
+				(metadata = json.metadata) !== undefined
+				&& (hiddenRows = metadata.hiddenRows) !== undefined
+				&& (hiddenI = hiddenRows.indexOf(rowIndex)) > -1
+			) {
+				hiddenRows.splice(hiddenI, 1);
+			}
+
+			return this;
+		},
+		deleteColumn: function(sheetIndex, columnIndex) {
+			var json = this.json[sheetIndex],
+				rows,
+				row,
+				columns,
+				rowIndex = 0,
+				rowMax,
+				metadata,
+				hiddenColumns,
+				hiddenI;
+
+			if (json === undefined) return this;
+
+			rows = json.rows;
+			rowMax = rows.length;
+
+			for(;rowIndex < rowMax; rowIndex++) {
+				row = rows[rowIndex];
+				columns = row.columns;
+
+				if (columnIndex.length > columnIndex) {
+					columns.splice(columnIndex, 1);
+				}
+			}
+
+			if (
+				(metadata = json.metadata) !== undefined
+				&& (hiddenColumns = metadata.hiddenColumns) !== undefined
+				&& (hiddenI = hiddenColumns.indexOf(columnIndex)) > -1
+			) {
+				hiddenColumns.splice(hiddenI, 1);
+			}
+
+			return this;
+		},
 		setupTD: function(cell, td) {
-			if (cell['class'] !== undefined) td.className = cell['class'];
-			if (cell['id'] !== undefined) td.setAttribute('id', cell['id']);
-			if (cell['style'] !== undefined) td.setAttribute('style', cell['style']);
-			if (cell['rowspan'] !== undefined) td.setAttribute('rowspan', cell['rowspan']);
-			if (cell['colspan'] !== undefined) td.setAttribute('colspan', cell['colspan']);
+			if (cell.covered) {
+				td.style.visibility = 'hidden';
+				return this;
+			}
+
+			var jsonCell = cell.loadedFrom,
+				needsAbsolute = false,
+				height = 0,
+				width = 0,
+				rowspan,
+				colspan,
+				rowMax,
+				columnMax,
+				rowIndex = cell.rowIndex,
+				columnIndex = cell.columnIndex,
+				nextCell;
+
+			if (jsonCell['class'] !== undefined) td.className = jsonCell['class'];
+			if (jsonCell['id'] !== undefined) td.setAttribute('id', jsonCell['id']);
+			if (jsonCell['style'] !== undefined) td.setAttribute('style', jsonCell['style']);
+
+			if (jsonCell['rowspan'] !== undefined) {
+				td.setAttribute('rowspan', rowspan = jsonCell['rowspan']);
+				rowMax = rowIndex + (rowspan * 1);
+				needsAbsolute = true;
+			}
+			if (jsonCell['colspan'] !== undefined) {
+				td.setAttribute('colspan', colspan = jsonCell['colspan']);
+				columnMax = columnIndex + (colspan * 1);
+				needsAbsolute = true;
+			}
+
+			if (needsAbsolute) {
+				td.style.position = 'absolute';
+				for (;rowIndex < rowMax; rowIndex++) {
+					height += this.getHeight(cell.sheetIndex, rowIndex);
+					if (cell.rowIndex !== rowIndex && (nextCell = this.jS.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
+						nextCell.covered = true;
+					}
+				}
+				for (;columnIndex < columnMax; columnIndex++) {
+					width += this.getWidth(cell.sheetIndex, columnIndex);
+					if (cell.columnIndex !== columnIndex && (nextCell = this.jS.getCell(cell.sheetIndex, cell.rowIndex, columnIndex)) !== null) {
+						nextCell.covered = true;
+					}
+				}
+
+				td.style.width = width + 'px';
+				td.style.height = height + 'px';
+			}
 
 			return this;
 		},

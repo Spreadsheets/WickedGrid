@@ -79,7 +79,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 					cell.td = td;
 					td.jSCell = cell;
-					loader.setupTD(cell.loadedFrom, td);
+					loader.setupTD(cell, td);
 					cell.updateValue();
 				},
 				updateCorner: function(th, col) {

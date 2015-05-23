@@ -741,15 +741,15 @@ $.sheet = {
 		frozenAt:[],
 		contextmenuTop:{
 			"Insert column after":function (jS) {
-				jS.controlFactory.addColumn(jS.colLast);
+				jS.controlFactory.addColumn(false, jS.colLast);
 				return false;
 			},
 			"Insert column before":function (jS) {
-				jS.controlFactory.addColumn(jS.colLast, true);
+				jS.controlFactory.addColumn(true, jS.colLast);
 				return false;
 			},
 			"Add column to end":function (jS) {
-				jS.controlFactory.addColumn();
+				jS.controlFactory.addColumn(true);
 				return false;
 			},
 			"Delete this column":function (jS) {
@@ -771,15 +771,15 @@ $.sheet = {
 		},
 		contextmenuLeft:{
 			"Insert row after":function (jS) {
-				jS.controlFactory.addRow(jS.rowLast);
+				jS.controlFactory.addRow(true, jS.rowLast);
 				return false;
 			},
 			"Insert row before":function (jS) {
-				jS.controlFactory.addRow(jS.rowLast, true);
+				jS.controlFactory.addRow(false, jS.rowLast);
 				return false;
 			},
 			"Add row to end":function (jS) {
-				jS.controlFactory.addRow();
+				jS.controlFactory.addRow(true);
 				return false;
 			},
 			"Delete this row":function (jS) {
@@ -787,7 +787,7 @@ $.sheet = {
 				return false;
 			},
 			"Hide row":function (jS) {
-				jS.toggleHideRow(jS);
+				jS.toggleHideRow(jS.rowLast);
 				return false;
 			},
 			"Show all rows": function (jS) {
@@ -804,15 +804,15 @@ $.sheet = {
 			 "Cut":false,
 			 "line1":'line',*/
 			"Insert row after":function (jS) {
-				jS.controlFactory.addRow(jS.rowLast);
+				jS.controlFactory.addRow(true, jS.rowLast);
 				return false;
 			},
 			"Insert row before":function (jS) {
-				jS.controlFactory.addRow(jS.rowLast, true);
+				jS.controlFactory.addRow(false, jS.rowLast);
 				return false;
 			},
 			"Add row to end":function (jS) {
-				jS.controlFactory.addRow();
+				jS.controlFactory.addRow(true);
 				return false;
 			},
 			"Delete this row":function (jS) {
@@ -821,15 +821,15 @@ $.sheet = {
 			},
 			"line2":'line',
 			"Insert column after":function (jS) {
-				jS.controlFactory.addColumn(jS.colLast);
+				jS.controlFactory.addColumn(true, jS.colLast);
 				return false;
 			},
 			"Insert column before":function (jS) {
-				jS.controlFactory.addColumn(jS.colLast, true);
+				jS.controlFactory.addColumn(false, jS.colLast);
 				return false;
 			},
 			"Add column to end":function (jS) {
-				jS.controlFactory.addColumn();
+				jS.controlFactory.addColumn(true);
 				return false;
 			},
 			"Delete this column":function (jS) {
@@ -1564,21 +1564,21 @@ $.sheet = {
 				controlFactory:{
 					/**
 					 * Creates multi rows
-					 * @param {Number} [i] row index
+					 * @param {Number} [rowIndex] row index
 					 * @param {Number} [qty] the number of cells you'd like to add, if not specified, a dialog will ask
-					 * @param {Boolean} [isBefore] places cells before the selected cell if set to true, otherwise they will go after, or at end
-					 * @param {Boolean} [skipFormulaReParse] re-parses formulas if needed
-					 * @param {Boolean} [isInit]
+					 * @param {Boolean} [isAfter] places cells after the selected cell if true
 					 * @memberOf jS.controlFactory
 					 */
-					addRowMulti:function (i, qty, isBefore, skipFormulaReParse, isInit) {
-						var addCellsType = (isInit ? 'row-init' : 'row');
+					addRowMulti:function (rowIndex, qty, isAfter) {
 						function add(qty) {
-							if (qty) {
-								if (!n(qty)) {
-									jS.controlFactory.addCells(i, isBefore, parseInt(qty), addCellsType, skipFormulaReParse);
-									jS.trigger('sheetAddRow', [i, isBefore, qty]);
+							var i = 0;
+							if (qty > 0) {
+
+								for (;i < qty; i++) {
+									jS.addColumn(rowIndex, isAfter, true);
 								}
+
+								jS.trigger('sheetAddRow', [rowIndex, isAfter, qty]);
 							}
 						}
 
@@ -1594,21 +1594,21 @@ $.sheet = {
 
 					/**
 					 * Creates multi columns
-					 * @param {Number} [i] column index
+					 * @param {Number} [columnIndex] column index
 					 * @param {Number} [qty] the number of cells you'd like to add, if not specified, a dialog will ask
-					 * @param {Boolean} [isBefore] places cells before the selected cell if set to true, otherwise they will go after, or at end
-					 * @param {Boolean} [skipFormulaReParse] re-parses formulas if needed
-					 * @param {Boolean} [isInit]
+					 * @param {Boolean} [isAfter] places cells after the selected cell if true
 					 * @memberOf jS.controlFactory
 					 */
-					addColumnMulti:function (i, qty, isBefore, skipFormulaReParse, isInit) {
-						var addCellsType = (isInit ? 'col-init' : 'col');
+					addColumnMulti:function (columnIndex, qty, isAfter) {
 						function add(qty) {
-							if (qty) {
-								if (!n(qty)) {
-									jS.controlFactory.addCells(i, isBefore, parseInt(qty), addCellsType, skipFormulaReParse);
-									jS.trigger('sheetAddColumn', [i, isBefore, qty]);
+							var i = 0;
+							if (qty > 0) {
+
+								for (;i < qty; i++) {
+									jS.addColumn(columnIndex, isAfter, true);
 								}
+
+								jS.trigger('sheetAddColumn', [columnIndex, isAfter, qty]);
 							}
 						}
 
@@ -1621,49 +1621,79 @@ $.sheet = {
 							add(qty);
 						}
 					},
-					/**
-					 * Creates cells for sheet and the bars that go along with them
-					 * @param {Number} [spreadsheetIndex] index where cells should be added, if null, cells go to end
-					 * @param {Boolean} [isBefore] places cells before the selected cell if set to true, otherwise they will go after, or at end;
-					 * @param {Number} [qty] how many rows/columns to add
-					 * @param {String} [type] "row" or "col", default "col"
-					 * @param {Boolean} [skipFormulaReParse] re-parses formulas if needed
-					 * @memberOf jS.controlFactory
-					 * @returns {Boolean}
-					 */
-					addCells:function (spreadsheetIndex, isBefore, qty, type, skipFormulaReParse) {
-						if (qty < 1) return false;
 
-						//hide the autoFiller, it can get confused
-						jS.autoFillerHide();
-
-						jS.setDirty(true);
-						jS.setChanged(true);
-						jS.obj.barHelper().remove();
-
-
-					},
 
 					/**
 					 * creates single row
-					 * @param {Number} [i] row index
-					 * @param {Boolean} [isBefore] places cells before the selected cell if set to true, otherwise they will go after, or at end
+					 * @param {Boolean} [isAfter] places cells after if set to true
+					 * @param {Number} [rowIndex] row index
+					 * @param {Boolean} [skipEvent]
 					 * @memberOf jS.controlFactory
 					 */
-					addRow:function (i, isBefore) {
-						jS.controlFactory.addCells(i, isBefore, 1, 'row');
-						jS.trigger('sheetAddRow', [i, isBefore, 1]);
+					addRow:function (isAfter, rowIndex, skipEvent) {
+						var loader = s.loader,
+							columnIndex = 0,
+							size = loader.size(jS.i),
+							columnMax = size.cols,
+							spreadsheet = jS.spreadsheets[jS.i],
+							row = [],
+							sheetIndex = jS.i;
+
+						if (rowIndex === undefined) {
+							rowIndex = size.rows - 1;
+						}
+
+						if (isAfter) {
+							rowIndex++;
+						}
+
+						for(;columnIndex < columnMax; columnIndex++) {
+							row.push(new Sheet.Cell(sheetIndex, null, jS, jS.cellHandler));
+						}
+
+						spreadsheet[rowIndex].splice(rowIndex, 0, row);
+
+						loader.addRow(jS.i, rowIndex);
+
+						if (skipEvent !== true) {
+							jS.trigger('sheetAddRow', [rowIndex, isAfter, 1]);
+						}
 					},
 
 					/**
 					 * creates single column
-					 * @param {Number} [i], column index
-					 * @param {Boolean} [isBefore] places cells before the selected cell if set to true, otherwise they will go after, or at end
+					 * @param {Boolean} [isAfter] places cells after if set to true
+					 * @param {Number} [columnIndex], column index
+					 * @param {Boolean} [skipEvent]
 					 * @memberOf jS.controlFactory
 					 */
-					addColumn:function (i, isBefore) {
-						jS.controlFactory.addCells(i, isBefore, 1, 'col');
-						jS.trigger('sheetAddColumn', [i, isBefore, 1]);
+					addColumn:function (isAfter, columnIndex, skipEvent) {
+						var loader = s.loader,
+							rowIndex = 0,
+							size = loader.size(jS.i),
+							rowMax = size.rows,
+							row,
+							spreadsheet = jS.spreadsheets[jS.i],
+							sheetIndex = jS.i;
+
+						if (columnIndex === undefined) {
+							columnIndex = size.cols - 1;
+						}
+
+						if (isAfter) {
+							columnIndex++;
+						}
+
+						for(;rowIndex < rowMax; rowIndex++) {
+							row = spreadsheet[rowIndex];
+							row.splice(columnIndex, 0, new Sheet.Cell(sheetIndex, null, jS, jS.cellHandler));
+						}
+
+						loader.addColumn(jS.i, columnIndex);
+
+						if (skipEvent !== true) {
+							jS.trigger('sheetAddColumn', [columnIndex, isAfter, 1]);
+						}
 					},
 
 					/**
@@ -3273,9 +3303,7 @@ $.sheet = {
 									if (!skipMove) {
 										loc.rowIndex += (e.shiftKey ? -1 : 1);
 									}
-									if (s.autoAddCells && loc.rowIndex > jS.sheetSize(e.target.table).rows) {
-										jS.controlFactory.addRow();
-									}
+									//TODO: go down one row, and possibly scroll to cell if needed
 								}
 								break;
 							case key.TAB:
@@ -3288,9 +3316,7 @@ $.sheet = {
 									if (!skipMove) {
 										loc.columnIndex += (e.shiftKey ? -1 : 1);
 									}
-									if (s.autoAddCells && loc.columnIndex > jS.sheetSize(e.target.table).cols) {
-										jS.controlFactory.addColumn();
-									}
+									//TODO: go one cell right and scroll if needed
 								}
 								break;
 							case key.HOME:
@@ -4068,8 +4094,8 @@ $.sheet = {
 					//effected range is the entire spreadsheet
 						affectedRange = {
 							first:{
-								row:1,
-								col:1
+								row:0,
+								col:0
 							},
 							last:{
 								row:size.rows,
@@ -4113,7 +4139,7 @@ $.sheet = {
 				reparseFormula:function (formula, offset, loc, isBefore, wasDeleted) {
 					return formula.replace(this.cellRegex, function (ignored, col, row, pos) {
 						if (col == "SHEET") return ignored;
-						offset = offset || {loc: 0, row: 0};
+						offset = offset || {loc: -1, row: -1};
 
 						var oldLoc = {
 								row: row * 1,
@@ -5117,64 +5143,39 @@ $.sheet = {
 				/**
 				 * removes the currently selected row
 				 * @param {Number} [rowIndex]
-				 * @param {Boolean} skipCalc
 				 * @memberOf jS
 				 */
-				deleteRow:function (rowIndex, skipCalc) {
-					var i,
-						start,
-						end,
-						qty,
-						size = jS.sheetSize(),
-						row,
-						pane = jS.obj.pane(),
-						tBody = pane.table.tBody,
-						td,
-						highlighter = jS.highlighter;
+				deleteRow:function (rowIndex) {
+					rowIndex = rowIndex || jS.rowLast;
 
-					if (rowIndex) {
-						start = end = rowIndex;
-					} else {
-						start = (highlighter.startRowIndex < highlighter.endRowIndex ? highlighter.startRowIndex : highlighter.endRowIndex);
-						end = (highlighter.endRowIndex > highlighter.startRowIndex ? highlighter.endRowIndex : highlighter.startRowIndex);
-					}
-
-					qty = (end - start) + 1;
-
-					if (start < 1 || size.cols < 2 || qty >= size.rows) {
-						return;
-					}
-
-					i = end;
-
-					do {
-						//remove tr's first
-						td = jS.getTd(-1, i, 1);
-						if (td === null) continue;
-						row = td.parentNode;
-						tBody.removeChild(row);
-					} while (start < i--);
-
-					//now remove bar
-					jS.controls.bar.y.th[jS.i].splice(start, qty);
-
-					//now remove cells
-					jS.spreadsheets[jS.i].splice(start, qty);
-
-					jS.refreshRowLabels(start);
+					var pane = jS.obj.pane(),
+						row = jS.spreadsheets[jS.i].splice(rowIndex, 1)[0],
+						columnIndex = 0,
+						cell,
+						columnMax = row.length,
+						loader = s.loader;
 
 					jS.setChanged(true);
 
 					jS.offsetFormulas({
-							row:start,
-							col:0
+							row: rowIndex,
+							col: 0
 						}, {
-							row:-qty,
-							col:0
+							row: -1,
+							col: 0
 						},
 						false,
 						true
 					);
+
+					loader.deleteRow(jS.i, rowIndex);
+
+					for (;columnIndex < columnMax; columnIndex++) {
+						cell = row[columnIndex];
+
+						cell.setNeedsUpdated(false);
+						cell.updateDependencies();
+					}
 
 					jS.setDirty(true);
 
@@ -5184,83 +5185,45 @@ $.sheet = {
 						pane.inPlaceEdit.goToTd();
 					}
 
-					jS.trigger('sheetDeleteRow', i);
+					jS.trigger('sheetDeleteRow', rowIndex);
 				},
 
 				/**
 				 * removes the columns associated with highlighted cells
-				 * @param {Number} [i]
+				 * @param {Number} [columnIndex]
 				 * @memberOf jS
 				 */
-				deleteColumn:function (i) {
-					var j,
-						start,
-						end,
-						qty,
-						size = jS.sheetSize(),
-						cells,
-						k,
-						pane = jS.obj.pane(),
-						highlighter = jS.highlighter;
+				deleteColumn:function (columnIndex) {
+					columnIndex = columnIndex || jS.colLast;
 
-					if (i) {
-						start = end = i;
-					} else {
-						start = (highlighter.startColumnIndex < highlighter.endColumnIndex ? highlighter.startColumnIndex : highlighter.endColumnIndex);
-						end = (highlighter.endColumnIndex > highlighter.startColumnIndex ? highlighter.endColumnIndex : highlighter.startColumnIndex);
-					}
-
-					qty = (end - start) + 1;
-
-					if (
-						start < 1
-							|| size.cols < 2
-							|| qty >= size.cols
-						) {
-						return;
-					}
-
-					j = end;
-
-					jS.obj.barHelper().remove();
-					do {
-						var table = jS.obj.table(),
-							col = jS.col(table[0], j);
-
-						//now remove bar
-						$(jS.obj.barTop(j)).remove();
-
-						//now remove col
-						$(col).remove();
-					} while (start < j--);
-
-					//remove column
-					jS.controls.bar.x.th[jS.i].splice(start, qty);
-
-					//remove cells & tds
-					k = jS.spreadsheets[jS.i].length - qty;
-					do {
-						cells = jS.spreadsheets[jS.i][k].splice(start, qty);
-						while (cells.length > 0) {
-							$(cells.pop().td).remove();
-						}
-					} while (k-- > 1);
-
-					//refresh labels
-					jS.refreshColumnLabels(start);
+					var pane = jS.obj.pane(),
+						rowIndex = 0,
+						cell,
+						rows = jS.spreadsheets[jS.i],
+						loader = s.loader,
+						rowMax = loader.size(jS.i);
 
 					jS.setChanged(true);
 
 					jS.offsetFormulas({
-							row:0,
-							col:start
+							row: 0,
+							col: columnIndex
 						}, {
-							row:0,
-							col:-qty
+							row: -1,
+							col: 0
 						},
 						false,
 						true
 					);
+
+					loader.deleteColumn(jS.i, columnIndex);
+
+					for (;rowIndex < rowMax; rowIndex++) {
+						cell = rows[rowIndex].splice(columnIndex, 1)[0];
+
+						cell.setNeedsUpdated(false);
+						cell.updateDependencies();
+					}
 
 					jS.setDirty(true);
 
@@ -5270,7 +5233,7 @@ $.sheet = {
 						pane.inPlaceEdit.goToTd();
 					}
 
-					jS.trigger('sheetDeleteColumn', j);
+					jS.trigger('sheetDeleteColumn', columnIndex);
 				},
 
 				/**
@@ -6421,17 +6384,16 @@ $.sheet = {
 
 				/**
 				 *
-				 * @param {jQuery|HTMLElement} [table]
+				 * @param {Number} [i]
 				 * @returns {Object} {cols, rows}
 				 * @memberOf jS
 				 */
-				sheetSize:function (table) {
-					table = table || jS.obj.table()[0];
+				sheetSize:function (i) {
+					if (i === undefined) {
+						i = jS.i;
+					}
 
-					var size = {},
-						loaderSize;
-
-					return s.loader.size(table.spreadsheetIndex);
+					return s.loader.size(i);
 				},
 
 				sortVerticalSelectAscending:function() {

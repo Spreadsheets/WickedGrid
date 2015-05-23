@@ -57,7 +57,7 @@
 
 			if (columns.length > columnIndex) {
 				width = columns[columnIndex].style.width.replace('px', '') || Sheet.defaultColumnWidth;
-				return width;
+				return width * 1;
 			}
 
 			return Sheet.defaultColumnWidth;
@@ -76,7 +76,7 @@
 
 				height = row.style.height.replace('px', '') || Sheet.defaultRowHeight;
 
-				return height;
+				return height * 1;
 			}
 
 			return Sheet.defaultRowHeight;
@@ -100,10 +100,55 @@
 			return this;
 		},
 		setupTD: function(cell, td) {
-			if (cell.hasAttribute('class')) td.className = cell.className;
-			if (cell.hasAttribute('style')) td.setAttribute('style', cell.getAttribute('style'));
-			if (cell.hasAttribute('rowspan')) td.setAttribute('rowspan', cell.getAttribute('rowspan'));
-			if (cell.hasAttribute('colspan')) td.setAttribute('colspan', cell.getAttribute('colspan'));
+			if (cell.covered) {
+				td.style.visibility = 'hidden';
+				return this;
+			}
+
+			var htmlCell = cell.loadedFrom,
+				needsAbsolute = false,
+				height = 0,
+				width = 0,
+				rowspan,
+				colspan,
+				rowMax,
+				columnMax,
+				rowIndex = cell.rowIndex,
+				columnIndex = cell.columnIndex,
+				nextCell;
+
+			if (htmlCell.hasAttribute('class')) td.className = cell.className;
+			if (htmlCell.hasAttribute('style')) td.setAttribute('style', htmlCell.getAttribute('style'));
+
+			if (htmlCell.hasAttribute('rowspan')) {
+				td.setAttribute('rowspan', rowspan = htmlCell.getAttribute('rowspan'));
+				rowMax = rowIndex + (rowspan * 1);
+				needsAbsolute = true;
+			}
+			if (htmlCell.hasAttribute('colspan')) {
+				td.setAttribute('colspan', colspan = htmlCell.getAttribute('colspan'));
+				columnMax = columnIndex + (colspan * 1);
+				needsAbsolute = true;
+			}
+
+			if (needsAbsolute) {
+				td.style.position = 'absolute';
+				for (;rowIndex < rowMax; rowIndex++) {
+					height += this.getHeight(cell.sheetIndex, rowIndex);
+					if (cell.rowIndex !== rowIndex && (nextCell = this.jS.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
+						nextCell.covered = true;
+					}
+				}
+				for (;columnIndex < columnMax; columnIndex++) {
+					width += this.getWidth(cell.sheetIndex, columnIndex);
+					if (cell.columnIndex !== columnIndex && (nextCell = this.jS.getCell(cell.sheetIndex, cell.rowIndex, columnIndex)) !== null) {
+						nextCell.covered = true;
+					}
+				}
+
+				td.style.width = width + 'px';
+				td.style.height = height + 'px';
+			}
 
 			return this;
 		},
