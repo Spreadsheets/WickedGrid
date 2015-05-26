@@ -3710,7 +3710,6 @@ $.sheet = {
 					barTop:'jSBarTop',
 					barTopMenuButton: 'jSBarTopMenuButton',
 					barHandleFreezeTop:'jSBarHandleFreezeTop',
-					barTopParent:'jSBarTopParent',
 					chart:'jSChart',
 					formula:'jSFormula',
 					formulaParent:'jSFormulaParent',
@@ -3821,6 +3820,10 @@ $.sheet = {
 
 					if (cell === u || cell === null) {
 						return null;
+					}
+
+					if (cell.typeName !== 'Sheet.Cell') {
+						throw new Error('Wrong Constructor');
 					}
 
 					cell.sheetIndex = sheetIndex;
@@ -4047,7 +4050,8 @@ $.sheet = {
 							columnMax = size.cols,
 							spreadsheet = jS.spreadsheets[jS.i],
 							row = [],
-							sheetIndex = jS.i;
+							sheetIndex = jS.i,
+							pane = jS.obj.pane();
 
 						if (rowIndex === undefined) {
 							rowIndex = size.rows - 1;
@@ -4061,9 +4065,11 @@ $.sheet = {
 							row.push(new Sheet.Cell(sheetIndex, null, jS, jS.cellHandler));
 						}
 
-						spreadsheet[rowIndex].splice(rowIndex, 0, row);
+						spreadsheet.splice(rowIndex, 0, row);
 
-						loader.addRow(jS.i, rowIndex);
+						loader.addRow(jS.i, rowIndex, row);
+
+						pane.actionUI.redrawRows();
 
 						if (skipEvent !== true) {
 							jS.trigger('sheetAddRow', [rowIndex, isAfter, 1]);
@@ -4083,8 +4089,11 @@ $.sheet = {
 							size = loader.size(jS.i),
 							rowMax = size.rows,
 							row,
+							column = [],
+							cell,
 							spreadsheet = jS.spreadsheets[jS.i],
-							sheetIndex = jS.i;
+							sheetIndex = jS.i,
+							pane = jS.obj.pane();
 
 						if (columnIndex === undefined) {
 							columnIndex = size.cols - 1;
@@ -4095,11 +4104,15 @@ $.sheet = {
 						}
 
 						for(;rowIndex < rowMax; rowIndex++) {
+							cell = new Sheet.Cell(sheetIndex, null, jS, jS.cellHandler);
+							column.push(cell);
 							row = spreadsheet[rowIndex];
-							row.splice(columnIndex, 0, new Sheet.Cell(sheetIndex, null, jS, jS.cellHandler));
+							row.splice(columnIndex, 0, cell);
 						}
 
-						loader.addColumn(jS.i, columnIndex);
+						loader.addColumn(jS.i, columnIndex, column);
+
+						pane.actionUI.redrawColumns();
 
 						if (skipEvent !== true) {
 							jS.trigger('sheetAddColumn', [columnIndex, isAfter, 1]);
@@ -4698,13 +4711,14 @@ $.sheet = {
 									return false;
 								}
 								if (jS.isBar(e.target)) {
-									var entity = e.target.entity,
-										i = jS.getBarIndex[entity](e.target);
+									var bar = e.target,
+										index = bar.index,
+										entity = bar.entity;
 
-									if (i < 0) return false;
+									if (index < 0) return false;
 
 									if (jS.evt.barInteraction.first === jS.evt.barInteraction.last) {
-										jS.controlFactory.barMenu[entity](e, i);
+										jS.controlFactory.barMenu[entity](e, index);
 									}
 								} else {
 									jS.controlFactory.tdMenu(e);
@@ -4768,25 +4782,25 @@ $.sheet = {
 									return false;
 								}
 								var bar = target,
-									entity = target.entity,
-									i = jS.getBarIndex[entity](bar);
+									entity = bar.entity,
+									index = bar.index;
 
-								if (i < 0) {
+								if (index < 0) {
 									return false;
 								}
 
 								if (jS.evt.barInteraction.selecting && bar === mouseDownEntity) {
-									jS.evt.barInteraction.last = bar;
+									jS.evt.barInteraction.last = index;
 
 									jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
 								} else {
-									jS.resizeBar[entity](bar, i, pane);
+									jS.resizeBar[entity](bar, index, pane);
 
 									if (jS.isSheetEditable()) {
-										jS.controlFactory.barHandleFreeze[entity](i, pane);
+										jS.controlFactory.barHandleFreeze[entity](index, pane);
 
 										if (entity == "top") {
-											jS.controlFactory.barMenu[entity](e, i, bar);
+											jS.controlFactory.barMenu[entity](e, index, bar);
 										}
 									}
 								}
@@ -5865,13 +5879,13 @@ $.sheet = {
 						 * The first bar that received the event (mousedown)
 						 * @memberOf jS.evt.barInteraction
 						 */
-						first:0,
+						first:null,
 
 						/**
 						 * The last bar that received the event (mousedown)
 						 * @memberOf jS.evt.barInteraction
 						 */
-						last:0,
+						last:null,
 
 						/**
 						 * Tracks if we are in select mode
@@ -5881,20 +5895,20 @@ $.sheet = {
 
 						/**
 						 * Manages the bar selection
-						 * @param {Object} o target
+						 * @param {Object} target
 						 * @returns {*}
 						 * @memberOf jS.evt.barInteraction
 						 */
-						select:function (o) {
-							if (!o) return;
-							if (!o.type === 'bar') return;
-							var entity = o.entity, //returns "top" or "left";
-								i = jS.getBarIndex[entity](o);
+						select:function (target) {
+							if (!target) return;
+							if (!target.type === 'bar') return;
+							var bar = target,
+								entity = bar.entity, //returns "top" or "left";
+								index = bar.index;
 
-							if (i < 0) return false;
+							if (index < 0) return false;
 
-							jS[entity + 'Last'] = i; //keep track of last column for inserting new columns
-							jS.evt.barInteraction.last = jS.evt.barInteraction.first = jS[entity + 'Last'] = o;
+							jS.evt.barInteraction.last = jS.evt.barInteraction.first = jS[entity + 'Last'] = index;
 
 							jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
 
@@ -8158,8 +8172,8 @@ $.sheet = {
 				/**
 				 * Sets active bar
 				 * @param {String} type "col" || "row" || "all"
-				 * @param {HTMLElement} begin start highlighting from
-				 * @param {HTMLElement} end end highlighting to
+				 * @param {Number} begin start highlighting from
+				 * @param {Number} end end highlighting to
 				 * @memberOf jS
 				 */
 				cellSetActiveBar:function (type, begin, end) {
@@ -8205,35 +8219,35 @@ $.sheet = {
 							start.row = scrolledArea.row;
 							stop.row = scrolledArea.row;
 
-							if (begin.th.rowIndex < end.th.rowIndex) {
+							if (begin < end) {
 								highlighter.startColumnIndex
 									= index
 									= startIndex
 									= start.col
-									= begin.th.cellIndex;
+									= begin;
 
 								highlighter.endColumnIndex
 									= endIndex
 									= stop.col
-									= end.th.cellIndex;
+									= end;
 							} else {
 								before = true;
 								highlighter.startColumnIndex
 									= index
 									= startIndex
 									= start.col
-									= end.th.cellIndex;
+									= end;
 
 								highlighter.endColumnIndex
 									= endIndex
 									= stop.col
-									= begin.th.cellIndex;
+									= begin;
 							}
 
-							highlighter.startRowIndex = 1;
+							highlighter.startRowIndex = 0;
 							highlighter.endRowIndex = size.rows;
 
-							obj.push(begin.col);
+							obj.push(begin);
 
 							for (;index < endIndex;index++) {
 								obj.push(obj[obj.length - 1].nextSibling);
@@ -8246,21 +8260,21 @@ $.sheet = {
 							stop.col = scrolledArea.col;
 
 							highlighter.startRowIndex = first;
-							highlighter.startColumnIndex = 1;
+							highlighter.startColumnIndex = 0;
 							highlighter.endRowIndex = last;
 							highlighter.endColumnIndex = size.cols;
 
 							row = last;
 
 							do {
-								td = jS.getTd(-1, row, 1);
+								td = jS.getTd(-1, row, 0);
 								if (td === null) continue;
 								obj.push(td.parentNode);
 							} while(row-- > first);
 							break;
 						case 'corner': //all
-							start.row = 1;
-							start.col = 1;
+							start.row = 0;
+							start.col = 0;
 							stop.col = size.cols;
 							stop.row = size.rows;
 
@@ -8414,47 +8428,6 @@ $.sheet = {
 						col: td.cellIndex,
 						row: td.parentNode.rowIndex + rowOffset
 					};
-				},
-
-				/**
-				 * Get the bar index from an Element
-				 * @memberOf jS
-				 * @namespace
-				 */
-				getBarIndex:{
-
-					/**
-					 * get index from bar left element
-					 * @param [td] if null, will return -1
-					 * @returns {Number}
-					 * @memberOf jS.getBarIndex
-					 */
-					left:function (td) {
-						td = td || {};
-						if (!td.parentNode || n(td.parentNode.rowIndex)) {
-							return -1;
-						} else {
-							return td.parentNode.rowIndex;
-						}
-					},
-
-					/**
-					 * get index from bar top element
-					 * @param [td] if null, will return -1
-					 * @returns {Number} cellIndex
-					 * @memberOf hS.getBarIndex
-					 */
-					top:function (td) {
-						td = td || {};
-						if (n(td.cellIndex)) {
-							return -1;
-						} else {
-							return td.cellIndex;
-						}
-					},
-					corner:function () {
-						return 0;
-					}
 				},
 
 				/**
@@ -10366,6 +10339,133 @@ $.printSource = function (s) {
 
 			return this;
 		},
+		addRow: function(sheetIndex, rowIndex, spreadsheetRow) {
+			var table = this.tables[sheetIndex],
+				columnIndex = 0,
+				size = this.size(sheetIndex),
+				columnMax = size.cols,
+				rowsMax = size.rows,
+				rows,
+				row = document.createElement('tr'),
+				tBody;
+
+			if (table === undefined) return this;
+
+			tBody = table.querySelector('tBody');
+			rows = tBody.children;
+
+			for (;columnIndex < columnMax; columnIndex++) {
+				row.appendChild(
+					spreadsheetRow[columnIndex].loadedFrom = document.createElement('td')
+				);
+			}
+
+			if (rowIndex === undefined) {
+				tBody.appendChild(row);
+			} else if (rowIndex < rowsMax) {
+				tBody.insertBefore(row, rows[rowIndex + 1]);
+			}
+
+			return this;
+		},
+		addColumn: function(sheetIndex, columnIndex, spreadsheetCells) {
+			var table = this.tables[sheetIndex],
+				rowIndex = 0,
+				rows,
+				row,
+				td,
+				size = this.size(sheetIndex),
+				rowMax = size.rows,
+				columnMax = size.cols,
+				tBody;
+
+			if (table === undefined) return this;
+
+			tBody = table.querySelector('tBody');
+			rows = tBody.children;
+
+			if (columnIndex === undefined) {
+				for (; rowIndex < rowMax; rowIndex++) {
+					row = rows[rowIndex];
+					td = document.createElement('td');
+					spreadsheetCells[rowIndex].loadedFrom = td;
+					row.append(td);
+				}
+			} else if (columnIndex < columnMax) {
+				for (; rowIndex < rowMax; rowIndex++) {
+					row = rows[rowIndex];
+					td = document.createElement('td');
+					spreadsheetCells[rowIndex].loadedFrom = td;
+					row.insertBefore(td, row.children[columnIndex + 1]);
+				}
+			}
+
+			return this;
+		},
+		deleteRow: function(sheetIndex, rowIndex) {
+			var table = this.tables[sheetIndex],
+				rows,
+				hiddenRows,
+				hiddenI,
+				tBody;
+
+			if (table === undefined) return this;
+
+			tBody = table.querySelector('tBody');
+			rows = tBody.children;
+
+			if (rows.length > rowIndex) {
+				tBody.removeChild(rows[rowIndex]);
+			}
+
+			if (
+				table.hasAttribute('data-hiddenrows')
+				(hiddenRows = table.getAttribute('data-hiddenrows').split(','))
+				&& (hiddenI = hiddenRows.indexOf(rowIndex)) > -1
+			) {
+				hiddenRows.splice(hiddenI, 1);
+				table.setAttribute('data-hiddenrows', hiddenRows.join(','));
+			}
+
+			return this;
+		},
+		deleteColumn: function(sheetIndex, columnIndex) {
+			var table = this.tables[sheetIndex],
+				rows,
+				row,
+				columns,
+				rowIndex = 0,
+				rowMax,
+				hiddenColumns,
+				hiddenI,
+				tBody;
+
+			if (table === undefined) return this;
+
+			tBody = table.querySelector('tBody');
+			rows = tBody.children;
+			rowMax = rows.length;
+
+			for(;rowIndex < rowMax; rowIndex++) {
+				row = rows[rowIndex];
+				columns = row.children;
+
+				if (columnIndex.length > columnIndex) {
+					row.removeChild(columns[columnIndex]);
+				}
+			}
+
+			if (
+				table.hasAttribute('data-hiddencolumns')
+				&& (hiddenColumns = table.getAttribute('data-hiddencolumns').split(','))
+				&& (hiddenI = hiddenColumns.indexOf(columnIndex)) > -1
+			) {
+				hiddenColumns.splice(hiddenI, 1);
+				table.setAttribute('data-hiddencolumns', hiddenColumns.join(','));
+			}
+
+			return this;
+		},
 		setupTD: function(cell, td) {
 			if (cell.covered) {
 				td.style.visibility = 'hidden';
@@ -10999,7 +11099,7 @@ $.printSource = function (s) {
 
 			return this;
 		},
-		addRow: function(sheetIndex, rowIndex) {
+		addRow: function(sheetIndex, rowIndex, spreadsheetCells) {
 			var json = this.json[sheetIndex],
 				columnIndex = 0,
 				columnMax = this.size(sheetIndex).cols,
@@ -11007,6 +11107,7 @@ $.printSource = function (s) {
 				row = {
 					columns: []
 				},
+				jsonCell,
 				columns = row.columns;
 
 			if (json === undefined) return this;
@@ -11014,7 +11115,9 @@ $.printSource = function (s) {
 			rows = json.rows;
 
 			for (;columnIndex < columnMax; columnIndex++) {
-				columns.push(null);
+				jsonCell = {};
+				spreadsheetCells[columnIndex] = jsonCell;
+				columns.push(jsonCell);
 			}
 
 			if (rowIndex === undefined) {
@@ -11025,10 +11128,11 @@ $.printSource = function (s) {
 
 			return this;
 		},
-		addColumn: function(sheetIndex, columnIndex) {
+		addColumn: function(sheetIndex, columnIndex, spreadsheetCells) {
 			var json = this.json[sheetIndex],
 				rowIndex = 0,
 				rows,
+				jsonCell,
 				size = this.size(sheetIndex),
 				rowMax = size.rows,
 				columnMax = size.cols;
@@ -11039,11 +11143,15 @@ $.printSource = function (s) {
 
 			if (columnIndex === undefined) {
 				for (; rowIndex < rowMax; rowIndex++) {
-					rows[rowIndex].columns.push(null);
+					jsonCell = {};
+					spreadsheetCells[rowIndex].loadedFrom = jsonCell;
+					rows[rowIndex].columns.push(jsonCell);
 				}
 			} else if (columnIndex < columnMax) {
 				for (; rowIndex < rowMax; rowIndex++) {
-					rows[rowIndex].columns.splice(columnIndex, 0, null);
+					jsonCell = {};
+					spreadsheetCells[rowIndex].loadedFrom = jsonCell;
+					rows[rowIndex].columns.splice(columnIndex, 0, jsonCell);
 				}
 			}
 
@@ -12575,6 +12683,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					cell.updateValue();
 				},
 				updateCorner: function(th, col) {
+					th.index = -1;
 					th.entity = 'corner';
 					th.col = col;
 					th.className = jS.cl.barCorner + ' ' + jS.theme.bar;
@@ -12595,6 +12704,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						label = document.createTextNode(rowIndex + 1);
 					}
 
+					header.index = rowIndex;
 					header.entity = 'left';
 					header.className = jS.cl.barLeft + ' ' + jS.theme.bar;
 					header.appendChild(label);
@@ -12616,6 +12726,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						label = document.createTextNode(jS.cellHandler.columnLabelString(columnIndex));
 					}
 
+					header.index = columnIndex;
 					header.th = header;
 					header.col = col;
 					header.entity = 'top';
@@ -12950,6 +13061,14 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 
 			return this;
+		},
+
+		redrawRows: function() {
+			this.megaTable.forceRedrawRows();
+		},
+
+		redrawColumns: function() {
+			this.megaTable.forceRedrawColumns();
 		},
 
 		pixelScrollDensity: 30,

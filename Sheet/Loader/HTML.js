@@ -99,6 +99,133 @@
 
 			return this;
 		},
+		addRow: function(sheetIndex, rowIndex, spreadsheetRow) {
+			var table = this.tables[sheetIndex],
+				columnIndex = 0,
+				size = this.size(sheetIndex),
+				columnMax = size.cols,
+				rowsMax = size.rows,
+				rows,
+				row = document.createElement('tr'),
+				tBody;
+
+			if (table === undefined) return this;
+
+			tBody = table.querySelector('tBody');
+			rows = tBody.children;
+
+			for (;columnIndex < columnMax; columnIndex++) {
+				row.appendChild(
+					spreadsheetRow[columnIndex].loadedFrom = document.createElement('td')
+				);
+			}
+
+			if (rowIndex === undefined) {
+				tBody.appendChild(row);
+			} else if (rowIndex < rowsMax) {
+				tBody.insertBefore(row, rows[rowIndex + 1]);
+			}
+
+			return this;
+		},
+		addColumn: function(sheetIndex, columnIndex, spreadsheetCells) {
+			var table = this.tables[sheetIndex],
+				rowIndex = 0,
+				rows,
+				row,
+				td,
+				size = this.size(sheetIndex),
+				rowMax = size.rows,
+				columnMax = size.cols,
+				tBody;
+
+			if (table === undefined) return this;
+
+			tBody = table.querySelector('tBody');
+			rows = tBody.children;
+
+			if (columnIndex === undefined) {
+				for (; rowIndex < rowMax; rowIndex++) {
+					row = rows[rowIndex];
+					td = document.createElement('td');
+					spreadsheetCells[rowIndex].loadedFrom = td;
+					row.append(td);
+				}
+			} else if (columnIndex < columnMax) {
+				for (; rowIndex < rowMax; rowIndex++) {
+					row = rows[rowIndex];
+					td = document.createElement('td');
+					spreadsheetCells[rowIndex].loadedFrom = td;
+					row.insertBefore(td, row.children[columnIndex + 1]);
+				}
+			}
+
+			return this;
+		},
+		deleteRow: function(sheetIndex, rowIndex) {
+			var table = this.tables[sheetIndex],
+				rows,
+				hiddenRows,
+				hiddenI,
+				tBody;
+
+			if (table === undefined) return this;
+
+			tBody = table.querySelector('tBody');
+			rows = tBody.children;
+
+			if (rows.length > rowIndex) {
+				tBody.removeChild(rows[rowIndex]);
+			}
+
+			if (
+				table.hasAttribute('data-hiddenrows')
+				(hiddenRows = table.getAttribute('data-hiddenrows').split(','))
+				&& (hiddenI = hiddenRows.indexOf(rowIndex)) > -1
+			) {
+				hiddenRows.splice(hiddenI, 1);
+				table.setAttribute('data-hiddenrows', hiddenRows.join(','));
+			}
+
+			return this;
+		},
+		deleteColumn: function(sheetIndex, columnIndex) {
+			var table = this.tables[sheetIndex],
+				rows,
+				row,
+				columns,
+				rowIndex = 0,
+				rowMax,
+				hiddenColumns,
+				hiddenI,
+				tBody;
+
+			if (table === undefined) return this;
+
+			tBody = table.querySelector('tBody');
+			rows = tBody.children;
+			rowMax = rows.length;
+
+			for(;rowIndex < rowMax; rowIndex++) {
+				row = rows[rowIndex];
+				columns = row.children;
+
+				if (columnIndex.length > columnIndex) {
+					row.removeChild(columns[columnIndex]);
+				}
+			}
+
+			if (
+				table.hasAttribute('data-hiddencolumns')
+				&& (hiddenColumns = table.getAttribute('data-hiddencolumns').split(','))
+				&& (hiddenI = hiddenColumns.indexOf(columnIndex)) > -1
+			) {
+				hiddenColumns.splice(hiddenI, 1);
+				table.setAttribute('data-hiddencolumns', hiddenColumns.join(','));
+			}
+
+			return this;
+		},
 		setupTD: function(cell, td) {
 			if (cell.covered) {
 				td.style.visibility = 'hidden';

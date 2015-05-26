@@ -83,6 +83,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					cell.updateValue();
 				},
 				updateCorner: function(th, col) {
+					th.index = -1;
 					th.entity = 'corner';
 					th.col = col;
 					th.className = jS.cl.barCorner + ' ' + jS.theme.bar;
@@ -103,6 +104,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						label = document.createTextNode(rowIndex + 1);
 					}
 
+					header.index = rowIndex;
 					header.entity = 'left';
 					header.className = jS.cl.barLeft + ' ' + jS.theme.bar;
 					header.appendChild(label);
@@ -124,6 +126,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 						label = document.createTextNode(jS.cellHandler.columnLabelString(columnIndex));
 					}
 
+					header.index = columnIndex;
 					header.th = header;
 					header.col = col;
 					header.entity = 'top';
@@ -458,6 +461,14 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 
 			return this;
+		},
+
+		redrawRows: function() {
+			this.megaTable.forceRedrawRows();
+		},
+
+		redrawColumns: function() {
+			this.megaTable.forceRedrawColumns();
 		},
 
 		pixelScrollDensity: 30,

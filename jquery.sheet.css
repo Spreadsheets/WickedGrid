@@ -299,7 +299,7 @@
 }
 
 /* Containers styleing*/
-.jSParent .jSBarCorner
+.jSParent th
 {
 	cursor: pointer;
 }
@@ -320,15 +320,6 @@
 	position: absolute;
 }
 /* Bar item styling */
-
-.jSParent .jSBarTopParent
-{
-	font-size: 0.8em ! important;
-	text-align: center;
-	cursor: pointer ! important;
-	height: 18px;
-	border-width: 0px ! important;
-}
 
 .jSParent .jSBarController {
 	border: none ! important;
@@ -398,7 +389,6 @@
 }
 .jSParent .jSBarLeft
 {
-	font-size: 0.8em ! important;
 	text-align: center;
 	vertical-align: middle ! important;
 	cursor: pointer ! important;

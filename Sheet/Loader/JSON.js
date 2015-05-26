@@ -92,7 +92,7 @@
 
 			return this;
 		},
-		addRow: function(sheetIndex, rowIndex) {
+		addRow: function(sheetIndex, rowIndex, spreadsheetCells) {
 			var json = this.json[sheetIndex],
 				columnIndex = 0,
 				columnMax = this.size(sheetIndex).cols,
@@ -100,6 +100,7 @@
 				row = {
 					columns: []
 				},
+				jsonCell,
 				columns = row.columns;
 
 			if (json === undefined) return this;
@@ -107,7 +108,9 @@
 			rows = json.rows;
 
 			for (;columnIndex < columnMax; columnIndex++) {
-				columns.push(null);
+				jsonCell = {};
+				spreadsheetCells[columnIndex] = jsonCell;
+				columns.push(jsonCell);
 			}
 
 			if (rowIndex === undefined) {
@@ -118,10 +121,11 @@
 
 			return this;
 		},
-		addColumn: function(sheetIndex, columnIndex) {
+		addColumn: function(sheetIndex, columnIndex, spreadsheetCells) {
 			var json = this.json[sheetIndex],
 				rowIndex = 0,
 				rows,
+				jsonCell,
 				size = this.size(sheetIndex),
 				rowMax = size.rows,
 				columnMax = size.cols;
@@ -132,11 +136,15 @@
 
 			if (columnIndex === undefined) {
 				for (; rowIndex < rowMax; rowIndex++) {
-					rows[rowIndex].columns.push(null);
+					jsonCell = {};
+					spreadsheetCells[rowIndex].loadedFrom = jsonCell;
+					rows[rowIndex].columns.push(jsonCell);
 				}
 			} else if (columnIndex < columnMax) {
 				for (; rowIndex < rowMax; rowIndex++) {
-					rows[rowIndex].columns.splice(columnIndex, 0, null);
+					jsonCell = {};
+					spreadsheetCells[rowIndex].loadedFrom = jsonCell;
+					rows[rowIndex].columns.splice(columnIndex, 0, jsonCell);
 				}
 			}
 
