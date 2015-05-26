@@ -5575,8 +5575,9 @@ $.sheet = {
 							.clearBar()
 							.clear();
 
-						if (!skipCalc) {
-							jS.calc();
+						var cell = jS.cellLast;
+						if (!skipCalc && cell !== null) {
+							cell.updateValue();
 						}
 
 						jS.cellLast = null;
@@ -14379,12 +14380,17 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 
 		/**
 		 *
-		 * @param {Number} col 1 = A
-		 * @param {Number} row 1 = 1
+		 * @param {Number} col 0 = A
+		 * @param {Number} row 0 = 1
 		 * @returns {String}
 		 */
 		parseCellName: function (col, row) {
-			return this.columnLabelString(col) + (row || '');
+			var rowString = '';
+			if (row !== undefined) {
+				row++;
+				rowString = row.toString();
+			}
+			return this.columnLabelString(col) + rowString;
 		},
 
 		/**

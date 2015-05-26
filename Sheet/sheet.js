@@ -3165,8 +3165,9 @@ $.sheet = {
 							.clearBar()
 							.clear();
 
-						if (!skipCalc) {
-							jS.calc();
+						var cell = jS.cellLast;
+						if (!skipCalc && cell !== null) {
+							cell.updateValue();
 						}
 
 						jS.cellLast = null;
