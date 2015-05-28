@@ -468,6 +468,16 @@ body > .jSChart {
 .jSParent .jSRadio, .jSRadio * {
 	cursor: pointer;
 }
+.jSParent .jSDropdown {
+	background-color: transparent;
+	border: none;
+	height: inherit;
+	width: inherit;
+	margin-right: -30px;
+	-webkit-appearance: none;
+	-moz-appearance: window;
+	padding-right: 30px;
+}
 
 .jSHide {
 	display: none ! important;
