@@ -232,7 +232,8 @@
 				return this;
 			}
 
-			var htmlCell = cell.loadedFrom,
+			var jS = this.jS,
+				htmlCell = cell.loadedFrom,
 				needsAbsolute = false,
 				height = 0,
 				width = 0,
@@ -262,14 +263,16 @@
 				td.style.position = 'absolute';
 				for (;rowIndex < rowMax; rowIndex++) {
 					height += this.getHeight(cell.sheetIndex, rowIndex);
-					if (cell.rowIndex !== rowIndex && (nextCell = this.jS.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
+					if (cell.rowIndex !== rowIndex && (nextCell = jS.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
 						nextCell.covered = true;
+						nextCell.defer = cell;
 					}
 				}
 				for (;columnIndex < columnMax; columnIndex++) {
 					width += this.getWidth(cell.sheetIndex, columnIndex);
-					if (cell.columnIndex !== columnIndex && (nextCell = this.jS.getCell(cell.sheetIndex, cell.rowIndex, columnIndex)) !== null) {
+					if (cell.columnIndex !== columnIndex && (nextCell = jS.getCell(cell.sheetIndex, cell.rowIndex, columnIndex)) !== null) {
 						nextCell.covered = true;
+						nextCell.defer = cell;
 					}
 				}
 
