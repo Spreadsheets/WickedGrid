@@ -7799,13 +7799,9 @@ $.sheet = {
 						jS.obj.formula().val('');
 					}
 
-					//the below use of _scrollLeft and _scrollTop are protected from IE, which makes those attributes go away after something is hidden, thus forgetting where you are scrolled to when you change sheets
-					//IE, stop flossin' me
-					var ui = jS.obj.ui,
-						panes = jS.obj.panes(),
+					var panes = jS.obj.panes(),
 						j = 0,
 						max = panes.length,
-						scroll,
 						pane,
 						enclosure;
 
@@ -7814,32 +7810,25 @@ $.sheet = {
 					for (;j < max; j++) {
 						if (i != j) {
 							pane = panes[j];
-							scroll = pane.scroll;
-							if (pane !== u && pane.parentNode.parentNode !== null) {
-								pane._scrollLeft = pane._scrollLeft || scroll.scrollLeft;
-								pane._scrollTop = pane._scrollTop || scroll.scrollTop;
-								ui.removeChild(pane.parentNode);
-							}
+							pane.actionUI.hide();
 						}
 					}
 
 					jS.i = i;
 
-					ui.appendChild(enclosure = jS.obj.enclosure());
+					enclosure = jS.obj.enclosure();
 
 					jS.highlighter.setTab(jS.obj.tab());
 
 					//jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/i) != null;
 
 					pane = enclosure.pane;
+
+					pane.actionUI.show();
+
 					if (pane.inPlaceEdit) {
 						pane.inPlaceEdit.goToTd();
 					}
-
-					pane.scroll.scrollLeft = pane._scrollLeft || pane.scroll.scrollLeft;
-					pane.scroll.scrollTop = pane._scrollTop || pane.scroll.scrollTop;
-					pane._scrollLeft = pane._scrollTop = null;
-					//enclosure.scroll.onscroll();
 				},
 
 
@@ -7942,7 +7931,6 @@ $.sheet = {
 								}
 
 								var showSpreadsheet = function() {
-										jS.obj.ui.removeChild(jS.obj.enclosure());
 										jS.setBusy(true);
 										var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, options);
 										jS.setActiveSheet(-1, spreadsheetUI);
@@ -12608,6 +12596,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.jS = jS;
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
+		this.active = true;
 		enclosure.appendChild(this.pane);
 
 		if (!(this.frozenAt = frozenAt)) {
@@ -12651,7 +12640,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				columns: Sheet.domColumns,
 				rows: Sheet.domRows,
 				element: pane,
-				updateCell: function(rowVisibleIndex, columnVisibleIndex, td) {
+				updateCell: this._updateCell = function(rowVisibleIndex, columnVisibleIndex, td) {
 					var rowIndex = (that.visibleRows.length === 0 ? rowVisibleIndex : that.visibleRows[rowVisibleIndex]),
 						columnIndex = (that.visibleColumns === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]),
 						oldTd;
@@ -12683,13 +12672,13 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					loader.setupTD(cell, td);
 					cell.updateValue();
 				},
-				updateCorner: function(th, col) {
+				updateCorner: this._updateCorner = function(th, col) {
 					th.index = -1;
 					th.entity = 'corner';
 					th.col = col;
 					th.className = jS.cl.barCorner + ' ' + jS.theme.bar;
 				},
-				updateRowHeader: function(rowVisibleIndex, header) {
+				updateRowHeader: this._updateRowHeader = function(rowVisibleIndex, header) {
 					var rowIndex,
 						label;
 
@@ -12711,7 +12700,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					header.appendChild(label);
 					header.parentNode.style.height = header.style.height = loader.getHeight(jS.i, rowIndex) + 'px';
 				},
-				updateColumnHeader: function(columnVisibleIndex, header, col) {
+				updateColumnHeader: this._updateColumnHeader = function(columnVisibleIndex, header, col) {
 					var columnIndex,
 						label;
 
@@ -12862,6 +12851,61 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 
 			return null;
+		},
+
+		hide: function() {
+			var jS = this.jS,
+				ui = jS.obj.ui,
+				pane = this.pane,
+				parent = pane.parentNode,
+				infiniscroll = this.infiniscroll;
+
+			if (pane !== undefined && parent.parentNode !== null) {
+				this.deactivate();
+				infiniscroll.saveLT();
+				ui.removeChild(pane.parentNode);
+			}
+
+			return this;
+		},
+
+		show: function() {
+			var jS = this.jS,
+				ui = jS.obj.ui,
+				pane = this.pane,
+				parent = pane.parentNode,
+				infiniscroll = this.infiniscroll;
+
+			if (pane !== undefined && parent.parentNode === null) {
+				ui.appendChild(pane.parentNode);
+				infiniscroll.applyLT();
+				this.activate();
+			}
+
+			return this;
+		},
+
+		deactivate: function() {
+			var mt = this.megaTable;
+			this.active = false;
+
+			mt.updateCell =
+			mt.updateCorner =
+			mt.updateRowHeader =
+			mt.updateColumnHeader = function() {};
+
+			return this;
+		},
+		activate: function() {
+			var mt = this.megaTable;
+			this.active = true;
+
+			mt.updateCell = this._updateCell;
+			mt.updateCorner = this._updateCorner;
+			mt.updateRowHeader = this._updateRowHeader;
+			mt.updateColumnHeader = this._updateColumnHeader;
+
+			return this;
 		},
 
 		/**

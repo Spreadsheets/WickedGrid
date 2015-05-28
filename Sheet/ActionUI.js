@@ -7,6 +7,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 		this.jS = jS;
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
+		this.active = true;
 		enclosure.appendChild(this.pane);
 
 		if (!(this.frozenAt = frozenAt)) {
@@ -50,7 +51,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 				columns: Sheet.domColumns,
 				rows: Sheet.domRows,
 				element: pane,
-				updateCell: function(rowVisibleIndex, columnVisibleIndex, td) {
+				updateCell: this._updateCell = function(rowVisibleIndex, columnVisibleIndex, td) {
 					var rowIndex = (that.visibleRows.length === 0 ? rowVisibleIndex : that.visibleRows[rowVisibleIndex]),
 						columnIndex = (that.visibleColumns === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]),
 						oldTd;
@@ -82,13 +83,13 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					loader.setupTD(cell, td);
 					cell.updateValue();
 				},
-				updateCorner: function(th, col) {
+				updateCorner: this._updateCorner = function(th, col) {
 					th.index = -1;
 					th.entity = 'corner';
 					th.col = col;
 					th.className = jS.cl.barCorner + ' ' + jS.theme.bar;
 				},
-				updateRowHeader: function(rowVisibleIndex, header) {
+				updateRowHeader: this._updateRowHeader = function(rowVisibleIndex, header) {
 					var rowIndex,
 						label;
 
@@ -110,7 +111,7 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 					header.appendChild(label);
 					header.parentNode.style.height = header.style.height = loader.getHeight(jS.i, rowIndex) + 'px';
 				},
-				updateColumnHeader: function(columnVisibleIndex, header, col) {
+				updateColumnHeader: this._updateColumnHeader = function(columnVisibleIndex, header, col) {
 					var columnIndex,
 						label;
 
@@ -261,6 +262,61 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 			}
 
 			return null;
+		},
+
+		hide: function() {
+			var jS = this.jS,
+				ui = jS.obj.ui,
+				pane = this.pane,
+				parent = pane.parentNode,
+				infiniscroll = this.infiniscroll;
+
+			if (pane !== undefined && parent.parentNode !== null) {
+				this.deactivate();
+				infiniscroll.saveLT();
+				ui.removeChild(pane.parentNode);
+			}
+
+			return this;
+		},
+
+		show: function() {
+			var jS = this.jS,
+				ui = jS.obj.ui,
+				pane = this.pane,
+				parent = pane.parentNode,
+				infiniscroll = this.infiniscroll;
+
+			if (pane !== undefined && parent.parentNode === null) {
+				ui.appendChild(pane.parentNode);
+				infiniscroll.applyLT();
+				this.activate();
+			}
+
+			return this;
+		},
+
+		deactivate: function() {
+			var mt = this.megaTable;
+			this.active = false;
+
+			mt.updateCell =
+			mt.updateCorner =
+			mt.updateRowHeader =
+			mt.updateColumnHeader = function() {};
+
+			return this;
+		},
+		activate: function() {
+			var mt = this.megaTable;
+			this.active = true;
+
+			mt.updateCell = this._updateCell;
+			mt.updateCorner = this._updateCorner;
+			mt.updateRowHeader = this._updateRowHeader;
+			mt.updateColumnHeader = this._updateColumnHeader;
+
+			return this;
 		},
 
 		/**

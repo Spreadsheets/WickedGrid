@@ -5389,13 +5389,9 @@ $.sheet = {
 						jS.obj.formula().val('');
 					}
 
-					//the below use of _scrollLeft and _scrollTop are protected from IE, which makes those attributes go away after something is hidden, thus forgetting where you are scrolled to when you change sheets
-					//IE, stop flossin' me
-					var ui = jS.obj.ui,
-						panes = jS.obj.panes(),
+					var panes = jS.obj.panes(),
 						j = 0,
 						max = panes.length,
-						scroll,
 						pane,
 						enclosure;
 
@@ -5404,32 +5400,25 @@ $.sheet = {
 					for (;j < max; j++) {
 						if (i != j) {
 							pane = panes[j];
-							scroll = pane.scroll;
-							if (pane !== u && pane.parentNode.parentNode !== null) {
-								pane._scrollLeft = pane._scrollLeft || scroll.scrollLeft;
-								pane._scrollTop = pane._scrollTop || scroll.scrollTop;
-								ui.removeChild(pane.parentNode);
-							}
+							pane.actionUI.hide();
 						}
 					}
 
 					jS.i = i;
 
-					ui.appendChild(enclosure = jS.obj.enclosure());
+					enclosure = jS.obj.enclosure();
 
 					jS.highlighter.setTab(jS.obj.tab());
 
 					//jS.readOnly[i] = (enclosure.table.className || '').match(/\breadonly\b/i) != null;
 
 					pane = enclosure.pane;
+
+					pane.actionUI.show();
+
 					if (pane.inPlaceEdit) {
 						pane.inPlaceEdit.goToTd();
 					}
-
-					pane.scroll.scrollLeft = pane._scrollLeft || pane.scroll.scrollLeft;
-					pane.scroll.scrollTop = pane._scrollTop || pane.scroll.scrollTop;
-					pane._scrollLeft = pane._scrollTop = null;
-					//enclosure.scroll.onscroll();
 				},
 
 
@@ -5532,7 +5521,6 @@ $.sheet = {
 								}
 
 								var showSpreadsheet = function() {
-										jS.obj.ui.removeChild(jS.obj.enclosure());
 										jS.setBusy(true);
 										var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, options);
 										jS.setActiveSheet(-1, spreadsheetUI);
