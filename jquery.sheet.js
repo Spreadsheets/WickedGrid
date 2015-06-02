@@ -10489,10 +10489,17 @@ $.printSource = function (s) {
 			}
 
 			if (needsAbsolute) {
+				if (rowMax === undefined) {
+					rowMax = rowIndex + 1;
+				}
+				if (columnMax === undefined) {
+					columnMax = columnMax + 1;
+				}
 				td.style.position = 'absolute';
-				td.style.borderBottomWidth = '1px';
+				td.style.borderBottomWidth =
+				td.style.borderRightWidth = '1px';
 				for (;rowIndex < rowMax; rowIndex++) {
-					height += this.getHeight(cell.sheetIndex, rowIndex);
+					height += this.getHeight(cell.sheetIndex, rowIndex) + 2;
 					if (cell.rowIndex !== rowIndex && (nextCell = jS.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
 						nextCell.covered = true;
 						nextCell.defer = cell;
@@ -10505,6 +10512,8 @@ $.printSource = function (s) {
 						nextCell.defer = cell;
 					}
 				}
+				height -= 1;
+				width -= 1;
 
 				td.style.width = width + 'px';
 				td.style.height = height + 'px';
@@ -10654,7 +10663,7 @@ $.printSource = function (s) {
 
 			if (this.cellIds[id] !== undefined) {
                 cell = this.cellIds[id].requestCell();
-				callback.apply(cell);
+				callback(cell);
 			} else {
 				this.cellIds[id] = null;
 			}
@@ -11245,10 +11254,19 @@ $.printSource = function (s) {
 			}
 
 			if (needsAbsolute) {
+				//make values optional
+				if (rowMax === undefined) {
+					rowMax = rowIndex + 1;
+				}
+				if (columnMax === undefined) {
+					columnMax = columnMax + 1;
+				}
+
 				td.style.position = 'absolute';
-				td.style.borderBottomWidth = '1px';
+				td.style.borderBottomWidth =
+				td.style.borderRightWidth = '1px';
 				for (;rowIndex < rowMax; rowIndex++) {
-					height += this.getHeight(cell.sheetIndex, rowIndex);
+					height += this.getHeight(cell.sheetIndex, rowIndex) + 2;
 					if (cell.rowIndex !== rowIndex && (nextCell = jS.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
 						nextCell.covered = true;
 						nextCell.defer = cell;
@@ -11261,6 +11279,8 @@ $.printSource = function (s) {
 						nextCell.defer = cell;
 					}
 				}
+				height -= 1;
+				width -= 1;
 
 				td.style.width = width + 'px';
 				td.style.height = height + 'px';
@@ -11459,7 +11479,7 @@ $.printSource = function (s) {
 
 			if (this.cellIds[id] !== undefined) {
                 cell = this.cellIds[id].requestCell();
-				callback.apply(cell);
+				callback(cell);
 			} else {
 				this.cellIds[id] = null;
 			}
