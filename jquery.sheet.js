@@ -10490,6 +10490,7 @@ $.printSource = function (s) {
 
 			if (needsAbsolute) {
 				td.style.position = 'absolute';
+				td.style.borderBottomWidth = '1px';
 				for (;rowIndex < rowMax; rowIndex++) {
 					height += this.getHeight(cell.sheetIndex, rowIndex);
 					if (cell.rowIndex !== rowIndex && (nextCell = jS.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
@@ -11245,6 +11246,7 @@ $.printSource = function (s) {
 
 			if (needsAbsolute) {
 				td.style.position = 'absolute';
+				td.style.borderBottomWidth = '1px';
 				for (;rowIndex < rowMax; rowIndex++) {
 					height += this.getHeight(cell.sheetIndex, rowIndex);
 					if (cell.rowIndex !== rowIndex && (nextCell = jS.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
