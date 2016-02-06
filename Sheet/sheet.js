@@ -1422,6 +1422,36 @@ $.sheet = {
 					return cell;
 				},
 
+				cellFromTd: function(td) {
+					if (td.jSCell !== u && td.jSCell !== null) return td.jSCell;
+
+					var loc = jS.locationFromTd(td),
+							spreadsheet = jS.spreadsheets[jS.i],
+							row,
+							rowIndex = spreadsheet.length,
+							rowMax = loc.row,
+							colIndex,
+							colMax = loc.col,
+							cell;
+
+					while (rowIndex <= rowMax && (spreadsheet[rowIndex] === u)) {
+						spreadsheet[rowIndex++] = [];
+					}
+
+					row = spreadsheet[loc.row];
+					colIndex = row.length;
+					colMax = loc.col;
+					while (colIndex < colMax && (row[colIndex] === u)) {
+						row[colIndex++] = null;
+					}
+
+					cell = row[colIndex] = new Sheet.Cell(jS.i, td, jS, jS.cellHandler);
+					cell.columnIndex = loc.col;
+					cell.rowIndex = loc.row;
+
+					return cell;
+				},
+
 				/**
 				 *
 				 * @param {String} cellId
@@ -3570,28 +3600,22 @@ $.sheet = {
 
 				/**
 				 * Detects if an object is a td within a spreadsheet's table
-				 * @param {jQuery|HTMLElement} o target
+				 * @param {HTMLElement} element
 				 * @returns {Boolean}
 				 * @memberOf jS
 				 */
-				isCell:function (o) {
-					if (o && o.jSCell !== u) {
-						return true;
-					}
-					return false;
+				isCell:function (element) {
+					return element.nodeName === 'TD';
 				},
 
 				/**
 				 * Detects if an object is a bar td within a spreadsheet's table
-				 * @param {HTMLElement} o target
+				 * @param {HTMLElement} element
 				 * @returns {Boolean}
 				 * @memberOf jS
 				 */
-				isBar:function (o) {
-					if (o.tagName == 'TH') {
-						return true;
-					}
-					return false;
+				isBar:function (element) {
+					return element.tagName === 'TH';
 				},
 
 				/**
@@ -4359,6 +4383,51 @@ $.sheet = {
 					}
 				},
 
+				cycleTableArea: function (fn, row1, col1, row2, col2, groupify) {
+					var trs = jS.obj.pane().tBody.children,
+							tr,
+							td,
+							tds = [],
+							cells = [],
+							_row1,
+							_col1,
+							_row2,
+							_col2;
+
+					if (row1 < row2) {
+						//added to zero's so as not to increment if this number is important when I ++ later
+						_row1 = row1 + 0;
+						_row2 = row2 + 0;
+					} else {
+						_row1 = row2 + 0;
+						_row2 = row1 + 0;
+					}
+
+					while (_row1 <= _row2 && (tr = trs[_row1]) !== u) {
+						if (col1 < col2) {
+							_col1 = col1 + 0;
+							_col2 = col2 + 0;
+						} else {
+							_col1 = col2 + 0;
+							_col2 = col1 + 0;
+						}
+
+						while (_col1 <= _col2 && (td = tr.children[_col1]) !== u) {
+							if (groupify) {
+								tds.push(td);
+								cells.push(jS.cellFromTd(td));
+							} else {
+								fn(td, jS.cellFromTd(td));
+							}
+							_col1++;
+						}
+						_row1++;
+					}
+
+					if (groupify) {
+						fn(tds, cells);
+					}
+				},
 				/**
 				 * @type Sheet.Theme
 				 */
@@ -4606,10 +4675,10 @@ $.sheet = {
 
 					if (td === null) return;
 
-					var cell = td.jSCell,
+					var cell = jS.cellFromTd(td),
 						v;
 
-					if (cell === u || cell === null) return;
+
 					if (cell.uneditable) return;
 
 					jS.trigger('sheetCellEdit', [cell]);
@@ -4655,7 +4724,7 @@ $.sheet = {
 
 					if (!doNotClearHighlighted) {
 						jS.highlighter
-							.set(cell.td) //themeroll the cell and bars
+							.set(cell.td) //highlight the cell and bars
 							.setStart(cell)
 							.setEnd(cell);
 					}
@@ -4686,12 +4755,7 @@ $.sheet = {
 					if (isDrag) {
 						var pane = jS.obj.pane(),
 							highlighter = jS.highlighter,
-							grid = {
-								startRowIndex: cell.rowIndex,
-								startColumnIndex: cell.columnIndex,
-								endRowIndex: 0,
-								endColumnIndex: 0
-							},
+							x1, y1, x2, y2,
 							lastTouchedRowIndex = cell.rowIndex,
 							lastTouchedColumnIndex = cell.columnIndex;
 
@@ -4700,17 +4764,14 @@ $.sheet = {
 
 							var target = e.target || e.srcElement;
 
-							if (jS.isBusy()) {
+							if (jS.isBusy() || !jS.isCell(target)) {
 								return false;
 							}
 
 							if (target.jSCell === u) return false;
 
-							var touchedCell = target.jSCell,
+							var touchedCell = jS.cellFromTd(target),
 								ok = true;
-
-							grid.endColumnIndex = touchedCell.columnIndex;
-							grid.endRowIndex = touchedCell.rowIndex;
 
 							if (directional) {
 								ok = (cell.columnIndex === touchedCell.columnIndex || cell.rowIndex === touchedCell.rowIndex);
@@ -4724,9 +4785,13 @@ $.sheet = {
 								selectModel(target);
 
 								//highlight the cells
-								jS.cycleCellArea(function (o) {
-									highlighter.set(o.td);
-								}, jS.orderedGrid(grid));
+								jS.cycleTableArea(function (tds) {
+									highlighter.set(tds);
+								},
+										cell.rowIndex,
+										cell.columnIndex,
+										touchedCell.rowIndex,
+										touchedCell.columnIndex, true);
 							}
 
 							jS.followMe(target);
@@ -4734,8 +4799,8 @@ $.sheet = {
 							var mouseY = e.clientY,
 								mouseX = e.clientX,
 								offset = pane.$enclosure.offset(),
-								up = touchedCell.rowIndex,
-								left = touchedCell.columnIndex,
+								up = target.cellIndex,
+								left = target.parentNode.rowIndex,
 								move = false,
 								previous;
 
@@ -4755,8 +4820,9 @@ $.sheet = {
 								if (up < 1 || left < 1) {
 									return false;
 								}
-								previous = jS.spreadsheets[jS.i][up][left];
-								jS.followMe(previous.td, true);
+								//table tbody tr td
+								previous = target.parentNode.parentNode.children[up].children[left];
+								jS.followMe(previous, true);
 							}
 
 							lastTouchedColumnIndex = touchedCell.columnIndex;
@@ -5984,6 +6050,13 @@ $.sheet = {
 					return cell.td || null;
 				},
 
+				locationFromTd: function(td) {
+					var scrolledArea = jS.obj.pane().actionUI.scrolledArea;
+					return {
+						row: scrolledArea.row + td.parentNode.rowIndex,
+						col: scrolledArea.col + td.cellIndex
+					};
+				},
 				/**
 				 * Gets the td row and column index as an object {row, col}
 				 * @param {HTMLTableCellElement} td
