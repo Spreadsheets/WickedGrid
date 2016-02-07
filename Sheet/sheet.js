@@ -3605,7 +3605,7 @@ $.sheet = {
 				 * @memberOf jS
 				 */
 				isCell:function (element) {
-					return element.nodeName === 'TD';
+					return element.nodeName === 'TD' && element.parentNode.parentNode.parentNode.parentNode === jS.obj.pane();
 				},
 
 				/**
@@ -4383,12 +4383,15 @@ $.sheet = {
 					}
 				},
 
-				cycleTableArea: function (fn, row1, col1, row2, col2, groupify) {
+				cycleTableArea: function (fn, td1, td2, groupify) {
 					var trs = jS.obj.pane().tBody.children,
 							tr,
 							td,
 							tds = [],
-							cells = [],
+							row1 = td1.parentNode.rowIndex,
+							col1 = td1.cellIndex,
+							row2 = td2.parentNode.rowIndex,
+							col2 = td2.cellIndex,
 							_row1,
 							_col1,
 							_row2,
@@ -4415,9 +4418,8 @@ $.sheet = {
 						while (_col1 <= _col2 && (td = tr.children[_col1]) !== u) {
 							if (groupify) {
 								tds.push(td);
-								cells.push(jS.cellFromTd(td));
 							} else {
-								fn(td, jS.cellFromTd(td));
+								fn(td);
 							}
 							_col1++;
 						}
@@ -4425,7 +4427,7 @@ $.sheet = {
 					}
 
 					if (groupify) {
-						fn(tds, cells);
+						fn(tds);
 					}
 				},
 				/**
@@ -4768,8 +4770,6 @@ $.sheet = {
 								return false;
 							}
 
-							if (target.jSCell === u) return false;
-
 							var touchedCell = jS.cellFromTd(target),
 								ok = true;
 
@@ -4787,11 +4787,7 @@ $.sheet = {
 								//highlight the cells
 								jS.cycleTableArea(function (tds) {
 									highlighter.set(tds);
-								},
-										cell.rowIndex,
-										cell.columnIndex,
-										touchedCell.rowIndex,
-										touchedCell.columnIndex, true);
+								}, td, target, true);
 							}
 
 							jS.followMe(target);
@@ -5853,7 +5849,7 @@ $.sheet = {
 							}
 						},
 						obj = [],
-						scrolledArea  = jS.obj.pane().actionUI.scrolledArea,
+						scrolledArea = jS.obj.pane().actionUI.scrolledArea,
 						index,
 						row,
 						td,
@@ -5892,30 +5888,30 @@ $.sheet = {
 							highlighter.startRowIndex = 0;
 							highlighter.endRowIndex = size.rows;
 
-							obj.push(begin);
+							obj.push(jS.col(begin + 1));
 
 							for (;index < endIndex;index++) {
 								obj.push(obj[obj.length - 1].nextSibling);
 							}
 							break;
 						case 'left':
-							start.row = first;
+							start.row = begin;
 							start.col = scrolledArea.col;
-							stop.row = last;
+							stop.row = end;
 							stop.col = scrolledArea.col;
 
-							highlighter.startRowIndex = first;
+							highlighter.startRowIndex = begin;
 							highlighter.startColumnIndex = 0;
-							highlighter.endRowIndex = last;
+							highlighter.endRowIndex = end;
 							highlighter.endColumnIndex = size.cols;
 
-							row = last;
+							row = begin;
 
 							do {
 								td = jS.getTd(-1, row, 0);
 								if (td === null) continue;
 								obj.push(td.parentNode);
-							} while(row-- > first);
+							} while(row-- > begin);
 							break;
 						case 'corner': //all
 							start.row = 0;
@@ -6311,21 +6307,12 @@ $.sheet = {
 
 				/**
 				 * get col associated with a sheet/table within an instance
-				 * @param {jQuery|HTMLElement} table
-				 * @param {Number} [i] Index of column, default is last
+				 * @param {Number} i Index of column
 				 * @returns {Element}
 				 * @memberOf jS
 				 */
-				col:function (table, i) {
-					table = table || jS.obj.table()[0];
-
-					var cols = jS.cols(table);
-
-					if (i === u) {
-						i = cols.length - 1;
-					}
-
-					return cols[i];
+				col:function (i) {
+					return jS.obj.pane().actionUI.megaTable.col(i);
 				},
 
 				/**

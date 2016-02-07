@@ -751,7 +751,7 @@
 
 							if (row * 1 == 1) {
 								col = document.createElement('col');
-								col.style.width = $(jS.col(null, column)).css('width');
+								col.style.width = $(jS.col(column)).css('width');
 								colGroup.insertBefore(col, colGroup.firstChild);
 							}
 						}

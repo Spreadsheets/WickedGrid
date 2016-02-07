@@ -20,36 +20,38 @@ Sheet.Highlighter = (function(document, window, $) {
 	};
 
 	Constructor.prototype = {
-		set: function (obj) {
-			if (obj.parentNode !== undefined) {
-				obj = [obj];
+		set: function (objs) {
+			if (objs.parentNode !== undefined) {
+				objs = [objs];
 			}
 
 			var i,
-				oldObjects = this.last;
+					obj,
+					lastHighlighted = this.last;
 
 			//_obj is the old selected items
-			if (oldObjects && oldObjects.length > 0) {
-				i = oldObjects.length - 1;
+			if (lastHighlighted && lastHighlighted.length > 0) {
+				i = lastHighlighted.length - 1;
 				do {
-					oldObjects[i].isHighlighted = false;
+					lastHighlighted[i].isHighlighted = false;
 				} while (i-- > 0);
 			}
 
-			if (obj.length > 0) {
-				i = obj.length - 1;
+			if (objs.length > 0) {
+				i = objs.length - 1;
 				do {
-					if (!obj[i].isHighlighted) {
-						obj[i].isHighlighted = true;
-						if (!obj[i].className.match(this.cssClass)) {
-							obj[i].className += ' ' + this.cssClass;
+					obj = objs[i];
+					if (!obj.isHighlighted) {
+						obj.isHighlighted = true;
+						if (!obj.className.match(this.cssClass)) {
+							obj.className += ' ' + this.cssClass;
 						}
 					}
 				} while (i-- > 0);
 			}
 
-			this.clear(oldObjects);
-			this.last = obj;
+			this.clear(lastHighlighted);
+			this.last = objs;
 
 			this.callBack();
 			return this;

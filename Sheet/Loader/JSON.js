@@ -984,7 +984,7 @@
 							if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
 
 							if (row * 1 == 1) {
-								jsonSpreadsheet.metadata.widths.unshift($(jS.col(null, column)).css('width').replace('px', ''));
+								jsonSpreadsheet.metadata.widths.unshift($(jS.col(column)).css('width').replace('px', ''));
 							}
 						}
 					} while (column-- > 1);

@@ -397,7 +397,7 @@
 							xmlColumns = xmlColumn + xmlColumns;
 
 							if (row * 1 == 1) {
-								widths[column] = '<width>' + $(jS.col(null, column)).css('width').replace('px', '') + '</width>';
+								widths[column] = '<width>' + $(jS.col(column)).css('width').replace('px', '') + '</width>';
 							}
 						}
 
