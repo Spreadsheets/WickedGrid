@@ -3294,7 +3294,11 @@ $.sheet = {
 
 		mousewheel:{script:'MouseWheel/MouseWheel.js', thirdParty:true},
 
-		operative:{script:'operative/dist/operative.js', thirdParty:true}
+		operative:{script:'operative/dist/operative.js', thirdParty:true},
+
+		megatable:{script:'megaTable.js/megatable.js', thirdParty:true},
+
+		inffiniscroll:{script:'infiniscroll.js/infinitescroll.js', thirdParty:true}
 	},
 
 	/**
@@ -3303,13 +3307,13 @@ $.sheet = {
 	 */
 	optional:{
 		//native
-		advancedFn:{script:'plugins/jquery.sheet.advancedfn.js'},
-		financeFn:{script:'plugins/jquery.sheet.financefn.js'},
+		advancedFn:{script:'Sheet/Plugin/advanced.js'},
+		financeFn:{script:'Sheet/Plugin/finance.js'},
 
 		//3rd party
 		colorPicker:{
-			css:'really-simple-color-picker/colorPicker.css',
-			script:'really-simple-color-picker/jquery.colorPicker.min.js',
+			css:'really-simple-color-picker/css/colorPicker.css',
+			script:'really-simple-color-picker/js/jquery.colorPicker.min.js',
 			thirdParty:true
 		},
 
@@ -3326,7 +3330,7 @@ $.sheet = {
 
 		thaw: {script:"thaw.js/thaw.js", thirdParty:true},
 
-		undoManager:{script: 'Javascript-Undo-Manager/js/undomanager.js', thirdParty:true},
+		undoManager:{script: 'Javascript-Undo-Manager/lib/undomanager.js', thirdParty:true},
 
 		zeroClipboard:{script:'zeroclipboard/dist/ZeroClipboard.min.js', thirdParty:true}
 	},
@@ -8298,7 +8302,7 @@ $.sheet = {
 							highlighter.startRowIndex = 0;
 							highlighter.endRowIndex = size.rows;
 
-							obj.push(jS.col(begin));
+							obj.push(jS.col(begin + 1));
 
 							for (;index < endIndex;index++) {
 								obj.push(obj[obj.length - 1].nextSibling);
