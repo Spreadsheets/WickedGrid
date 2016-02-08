@@ -888,7 +888,7 @@ $.sheet = {
 
 		megatable:{script:'megaTable.js/megatable.js', thirdParty:true},
 
-		inffiniscroll:{script:'infiniscroll.js/infinitescroll.js', thirdParty:true}
+		infiniscroll:{script:'infiniscroll.js/infinitescroll.js', thirdParty:true}
 	},
 
 	/**
