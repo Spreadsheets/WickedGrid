@@ -1,8 +1,8 @@
 /**
- * The functions container of all functions used in jQuery.sheet
+ * The functions container of all functions used in WickedGrid
  * @namespace
  */
-Sheet.fn = (function(r) {
+WickedGrid.Functions = (function(r) {
 
 	r = r || function() {};
 

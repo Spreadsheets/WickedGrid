@@ -9,7 +9,7 @@
  *
  */
 
-;Sheet.Loader.JSON = (function($, document, String) {
+;WickedGrid.Loader.JSON = (function($, document, String) {
 	"use strict";
 	function JSONLoader(json) {
 		if (json !== undefined) {
@@ -21,13 +21,13 @@
 		}
 
 		this.cellIds = {};
-		this.jS = null;
+		this.wickedGrid = null;
 		this.handler = null;
 	}
 
 	JSONLoader.prototype = {
-		bindJS: function(jS) {
-			this.jS = jS;
+		bindWickedGrid: function(wickedGrid) {
+			this.wickedGrid = wickedGrid;
 			return this;
 		},
 		bindHandler: function(handler) {
@@ -216,7 +216,7 @@
 				return this;
 			}
 
-			var jS = this.jS,
+			var wickedGrid = this.wickedGrid,
 				jsonCell = cell.loadedFrom,
 				needsAbsolute = false,
 				height = 0,
@@ -258,14 +258,14 @@
 				td.style.borderRightWidth = '1px';
 				for (;rowIndex < rowMax; rowIndex++) {
 					height += this.getHeight(cell.sheetIndex, rowIndex) + 2;
-					if (cell.rowIndex !== rowIndex && (nextCell = jS.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
+					if (cell.rowIndex !== rowIndex && (nextCell = wickedGrid.getCell(cell.sheetIndex, rowIndex, cell.columnIndex)) !== null) {
 						nextCell.covered = true;
 						nextCell.defer = cell;
 					}
 				}
 				for (;columnIndex < columnMax; columnIndex++) {
 					width += this.getWidth(cell.sheetIndex, columnIndex);
-					if (cell.columnIndex !== columnIndex && (nextCell = jS.getCell(cell.sheetIndex, cell.rowIndex, columnIndex)) !== null) {
+					if (cell.columnIndex !== columnIndex && (nextCell = wickedGrid.getCell(cell.sheetIndex, cell.rowIndex, columnIndex)) !== null) {
 						nextCell.covered = true;
 						nextCell.defer = cell;
 					}
@@ -347,7 +347,7 @@
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
 			hasDependencies = (dependencies !== undefined && dependencies !== null);
 
-			jitCell = new Sheet.Cell(sheetIndex, null, this.jS, this.handler);
+			jitCell = new Sheet.Cell(sheetIndex, null, this.wickedGrid, this.handler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = jsonCell;
@@ -895,10 +895,10 @@
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
 
 			var output = [],
-				jS = this.jS,
-				i = 1 * jS.i,
+				wickedGrid = this.wickedGrid,
+				i = 1 * wickedGrid.i,
 				pane,
-				sheet = jS.spreadsheets.length - 1,
+				sheet = wickedGrid.spreadsheets.length - 1,
 				jsonSpreadsheet,
 				spreadsheet,
 				row,
@@ -918,11 +918,11 @@
 
 			do {
 				rowHasValues = false;
-				jS.i = sheet;
-				jS.evt.cellEditDone();
-				pane = jS.obj.pane();
+				wickedGrid.i = sheet;
+				wickedGrid.evt.cellEditDone();
+				pane = wickedGrid.obj.pane();
 				jsonSpreadsheet = {
-					"title": (jS.obj.table().attr('title') || ''),
+					"title": (wickedGrid.obj.table().attr('title') || ''),
 					"rows": [],
 					"metadata": {
 						"widths": [],
@@ -935,14 +935,14 @@
 
 				output.unshift(jsonSpreadsheet);
 
-				spreadsheet = jS.spreadsheets[sheet];
+				spreadsheet = wickedGrid.spreadsheets[sheet];
 				row = spreadsheet.length - 1;
 				do {
 					parentEle = spreadsheet[row][1].td.parentNode;
 					parentHeight = parentEle.style['height'];
 					jsonRow = {
 						"columns": [],
-						"height": (parentHeight ? parentHeight.replace('px', '') : jS.s.colMargin)
+						"height": (parentHeight ? parentHeight.replace('px', '') : wickedGrid.s.colMargin)
 					};
 
 					column = spreadsheet[row].length - 1;
@@ -956,8 +956,8 @@
 
 							cl = (attr['class'] ? $.trim(
 								(attr['class'].value || '')
-									.replace(jS.cl.uiCellActive , '')
-									.replace(jS.cl.uiCellHighlighted, '')
+									.replace(wickedGrid.cl.uiCellActive , '')
+									.replace(wickedGrid.cl.uiCellHighlighted, '')
 							) : '');
 
 							parent = cell.td.parentNode;
@@ -965,7 +965,7 @@
 							jsonRow.columns.unshift(jsonColumn);
 
 							if (!jsonRow["height"]) {
-								jsonRow["height"] = (parent.style['height'] ? parent.style['height'].replace('px' , '') : jS.s.colMargin);
+								jsonRow["height"] = (parent.style['height'] ? parent.style['height'].replace('px' , '') : wickedGrid.s.colMargin);
 							}
 
 							if (cell['formula']) jsonColumn['formula'] = cell['formula'];
@@ -984,7 +984,7 @@
 							if (attr['colspan']) jsonColumn['colspan'] = attr['colspan'].value;
 
 							if (row * 1 == 1) {
-								jsonSpreadsheet.metadata.widths.unshift($(jS.col(column)).css('width').replace('px', ''));
+								jsonSpreadsheet.metadata.widths.unshift($(wickedGrid.col(column)).css('width').replace('px', ''));
 							}
 						}
 					} while (column-- > 1);
@@ -995,7 +995,7 @@
 
 				} while (row-- > 1);
 			} while (sheet--);
-			jS.i = i;
+			wickedGrid.i = i;
 
 			return this.json = output;
 		},

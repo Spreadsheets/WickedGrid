@@ -9,7 +9,7 @@
  *
  */
 
-;Sheet.Loader.XML = (function($, document) {
+;WickedGrid.Loader.XML = (function($, document) {
 	"use strict";
 
 	/**

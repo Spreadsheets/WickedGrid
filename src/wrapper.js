@@ -1,5 +1,5 @@
 /**
- * @project jQuery.sheet() The Ajax Spreadsheet - https://github.com/Spreadsheets/jQuery.sheet
+ * @project WickedGrid - Easy & Wicked Fast spreadsheets for the web - https://github.com/Spreadsheets/WickedGrid
  * @author RobertLeePlummerJr@gmail.com
  * Licensed under MIT
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -20,10 +20,12 @@
  * @type {Object|Function}
  */
 var jQuery = window.jQuery || {};
-var Sheet = (function($, document, window, Date, String, Number, Boolean, Math, RegExp, Error) {
-	"use strict";
+var WickedGrid = (function($, document, window, Date, String, Number, Boolean, Math, RegExp, Error, undefined) {
+	'use strict';
+
+	function empty() {}
 
 	CODE_HERE
 
-	return Sheet;
+	return WickedGrid;
 })(jQuery, document, window, Date, String, Number, Boolean, Math, RegExp, Error);

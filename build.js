@@ -8,15 +8,15 @@ var fs = require('fs')
 //cd ../../
 
 //directories of the JS files
-  , inDir = './Sheet'
+  , inDir = './WickedGrid/'
 	, outDir = '.'
 
   //these are the paths to the final combined files that you want to have in the end
   , temp = ''
   , result = ''
-	, wrapper = inDir + '/wrapper.js'
-  , combinedFile = outDir + '/jquery.sheet.js'
-  , combinedFileMin = outDir + '/jquery.sheet.min.js'
+	, wrapper = inDir + 'wrapper.js'
+  , combinedFile = outDir + 'wickedgrid.js'
+  , combinedFileMin = outDir + 'wickedgrid.min.js'
 
 	, files = [
 	    //namespace first
@@ -54,7 +54,7 @@ var fs = require('fs')
 
 //run through the JS files
 files.forEach(function(file) {
-	temp += fs.readFileSync('Sheet/' + file, 'utf8').toString();
+	temp += fs.readFileSync(inDir + file, 'utf8').toString();
 });
 
 result = fs.readFileSync(wrapper, 'utf8').toString().replace('CODE_HERE', function() { return temp; });

@@ -10404,7 +10404,7 @@ $.printSource = function (s) {
 
 			if (table === undefined) return this;
 
-			tBody = table.querySelector('tBody');
+			tBody = table.querySelector('tBody') || table;
 			rows = tBody.children;
 
 			for (;columnIndex < columnMax; columnIndex++) {
@@ -14037,8 +14037,8 @@ Sheet.ActionUI = (function(document, window, Math, Number, $) {
 	var u = undefined,
 		nAN = NaN;
 
-	function CellHandler(jS, fn) {
-		this.jS = jS;
+	function CellHandler(wikiGrid, functions) {
+		this.wickedGrid = wickedGrid;
 		this.fn = fn;
 	}
 

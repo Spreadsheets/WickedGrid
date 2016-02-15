@@ -1,13 +1,13 @@
-Sheet.Cell = (function() {
+WickedGrid.Cell = (function() {
 	var u = undefined;
 
-	function Cell(sheetIndex, td, jS, cellHandler) {
+	function Cell(sheetIndex, td, wickedGrid) {
 		if (Cell.cellLoading === null) {
-			Cell.cellLoading = jS.msg.cellLoading;
+			Cell.cellLoading = wickedGrid.msg.cellLoading;
 		}
 		if (td !== undefined && td !== null) {
 			this.td = td;
-			td.jSCell = this;
+			td.cell = this;
 		} else {
 			this.td = null;
 		}
@@ -20,14 +20,14 @@ Sheet.Cell = (function() {
 		this.sheetIndex = sheetIndex;
 		this.rowIndex = null;
 		this.columnIndex = null;
-		this.jS = (jS !== undefined ? jS : null);
+		this.wickedGrid = wickedGrid;
 		this.state = [];
 		this.needsUpdated = true;
 		this.uneditable = false;
 		this.id = null;
 		this.loader = null;
 		this.loadedFrom = null;
-		this.cellHandler = cellHandler;
+		this.cellHandler = wickedGrid.cellHandler;
 		this.waitingCallbacks = [];
 		this.parsedFormula = null;
 		this.defer = null;
@@ -38,7 +38,7 @@ Sheet.Cell = (function() {
 
 	Cell.prototype = {
 		clone: function() {
-			var clone = new Cell(this.sheetIndex, this.td, this.jS, this.cellHandler),
+			var clone = new Cell(this.sheetIndex, this.td, this.wickedGrid, this.cellHandler),
 				prop;
 			for (prop in this) if (
 				prop !== undefined
@@ -291,7 +291,7 @@ Sheet.Cell = (function() {
 				if (this.parsedFormula !== null) {
 					resolveFormula(this.parsedFormula);
 				} else {
-					this.jS.parseFormula(formula, resolveFormula);
+					this.wickedGrid.parseFormula(formula, resolveFormula);
 				}
 
 			} else if (

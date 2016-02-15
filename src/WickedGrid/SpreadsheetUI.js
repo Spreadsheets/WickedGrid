@@ -1,4 +1,4 @@
-Sheet.SpreadsheetUI = (function() {
+WickedGrid.SpreadsheetUI = (function() {
 	var stack = [];
 
 	function Constructor(i, ui, options) {

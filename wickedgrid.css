@@ -1,69 +1,69 @@
 /* Controls styling */
-.jSParent .jSLoc
+.wg-Parent .wg-loc
 {
-	border-width: 0px ! important;
+	border-width: 0 ! important;
 	background: none ! important;
 	width: 35px;
 	text-align: right;
 	padding: 0;
 }
 
-.jSParent .jSFormula
+.wg-parent .wg-formula
 {
 	width: 100%;
-    height: 22px;
+	height: 22px;
 	font-weight: normal;
 	padding: 0;
 	outline: none;
 	resize: none;
 }
 
-.jSParent .jSFormulaParent
+.wg-parent .wg-formula-parent
 {
 	border: none ! important;
 	padding: 0;
 }
 
-.jSParent .jSHeader, .jSHeader table
+.wg-parent .wg-header, .wg-header table
 {
-	padding: 0px ! important;
+	padding: 0 ! important;
 	border: none ! important;
 	width: 100%; 
-	margin: 0px;
+	margin: 0;
 	border-radius: inherit;
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
 }
 
-.jSParent .jSHeader img
+.wg-parent .wg-header img
 {
 	border: none;
 }
 
 /* Menu */
-.jSParent .jSBarHelper {
-	height: 0px;
+.wg-parent .wg-bar-helper {
+	height: 0;
 	border: none ! important;
-	width: 0px;
+	width: 0;
 }
-.jSParent .jSBarTopMenuButton {
+.wg-parent .wg-bar-top-menu-button {
 	width: inherit ! important;
-	height: 0px ! important;
+	height: 0 ! important;
 	float: right;
 	margin-right: 30px;
 }
-.jSParent .jSBarTopMenuButton * {
+.wg-Parent .wg-BarTopMenuButton * {
 	position: absolute;
 	height: 16px ! important;
 	width: 18px ! important;
 	background-color: inherit ! important;
 }
 
-.jSParent .jSMenuFixed {
+.wg-parent .wg-menu-fixed {
 	position: relative ! important;
 }
 
-.jSTdMenu {
+.wg-td-menu {
 	padding: 3px;
 	background-image: none ! important;
 	border-width: 1px;
@@ -74,23 +74,23 @@
 	font-weight: normal ! important;
 	box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
 }
-.jSTdMenu div
+.wg-td-menu div
 {
-	border-width: 0px ! important;
+	border-width: 0 ! important;
     cursor: pointer;
 }
-.jSTdMenu hr
+.wg-td-menu hr
 {
 	margin: 0;
 }
-.jSMenu {
+.wg-menu {
 	padding: 3px;
 	background-image: none ! important;
 	border: none ! important;
 	position: absolute;
 	z-index: 1001;
 }
-.jSMenu *
+.wg-menu *
 {
 	border-color: inherit ! important;
 	border-width: 1px;
@@ -98,11 +98,11 @@
 	width: auto;
 }
 
-.jSMenu ul,.jSMenu div
+.wg-menu ul,.wg-menu div
 {
 	cursor: pointer;
-	padding: 0px ! important;
-	margin: 0px ! important;
+	padding: 0 ! important;
+	margin: 0 ! important;
 	border: none ! important;
 	z-index: 1001;
 	position:relative;
@@ -112,12 +112,12 @@
 	list-style-position:outside;
 }
 
-.jSMenu a
+.wg-menu a
 {
 	padding:0px 5px;
 }
 
-.jSMenu li
+.wg-menu li
 {
 	float:left;
 	position:relative;
@@ -126,36 +126,36 @@
 	border-width: 1px;
 	width: inherit;
 }
-.jSMenu li:hover,.jSMenu div:hover .jSTdMenu div:hover {
+.wg-menu li:hover,.wg-menu div:hover .wg-td-menu div:hover {
 	background-image: inherit;
 }
 
-.jSMenu ul ul {
+.wg-menu ul ul {
 	position:absolute;
 	display:none;
 	width:12em;
 	top:1.5em;
 }
 
-.jSMenu li ul a{
+.wg-menu li ul a{
 	width:12em;
 	height:auto;
 	float:left;
 }
 
-.jSMenu ul ul{
+.wg-menu ul ul{
 	top:auto;
 }
 
-.jSMenu li ul ul {
+.wg-menu li ul ul {
 	left:12em;
 	margin:0px 0 0 10px;
 }
 
-.jSMenu li:hover ul ul, .jSMenu li:hover ul ul ul, .jSMenu li:hover ul ul ul ul{
+.wg-menu li:hover ul ul, .wg-menu li:hover ul ul ul, .wg-menu li:hover ul ul ul ul{
 	display:none;
 }
-.jSMenu li:hover ul, .jSMenu li li:hover ul, .jSMenu li li li:hover ul, .jSMenu li li li li:hover ul{
+.wg-menu li:hover ul, .wg-menu li li:hover ul, .wg-menu li li li:hover ul, .wg-menu li li li li:hover ul{
 	display:block;
 }
 
@@ -164,12 +164,12 @@
 	filter:alpha(opacity=1);
 }
 
-.jSParent .jSUI
+.wg-parent .wg-ui
 {
 	width: inherit ! important;
 	border-color: inherit ! important;
 }
-.jSParent .jSTabContainer
+.wg-parent .wg-tab-container
 {
 	overflow-x: hidden;
 	height: 21px;
@@ -177,10 +177,10 @@
 	position: absolute;
 	margin-left: 19px;
 }
-.jSParent .jSTabContainerScrollable {
+.wg-parent .wg-tab-container-scrollable {
 	overflow-x: auto;
 }
-.jSParent .jSTabContainer span
+.wg-parent .wg-tab-container span
 {
 	border-width: 0 1px 0 1px;
 	padding: 2px 5px 2px 5px ! important;
@@ -189,7 +189,7 @@
 	border-radius: 0;
 	height: 22px;
 }
-.jSParent .jSSheetAdder {
+.wg-parent .wg-sheet-adder {
 	border-width: 0 1px 0 0;
 	display: block;
 	position: absolute;
@@ -198,21 +198,21 @@
 	height: 20px;
 	border-bottom-left-radius: inherit;
 }
-.jSParent .jSTab {
+.wg-parent .wg-tab {
 	cursor: pointer;
 }
-.jSParent .jSTabContainer *, .Div *
+.wg-parent .wg-tab-container *, .div *
 {
 	font-size: 1em;
 }
 
-.jSParent .jSScroll {
+.wg-parent .wg-scroll {
 	position: absolute;
 	overflow: scroll;
 	height: inherit;
 	width: inherit;
 }
-.jSParent .jSScroll > div {
+.wg-parent .wg-scroll > div {
 	min-height: 1000%;
 	min-width: 500%;
 	height: 1000%;
@@ -221,7 +221,7 @@
 	transition: 0.2s;
 }
 /* Sheet styling */
-.jSParent .jS
+.wg-parent .wg
 {
 	left: 0;
 	top: 0;
@@ -230,147 +230,147 @@
     empty-cells: show;
 	background-image: none ! important;
 	border-color: inherit ! important;
-	border-width: 1px 1px 0px 0px ! important;
+	border-width: 1px 1px 0 0 ! important;
 	cursor: cell;
-	width: 0px ! important;
+	width: 0 ! important;
 }
-.jSParent .jS tbody
+.wg-parent .wg tbody
 {
 	background-color: transparent;
 	color: inherit ! important;
 	border-color: inherit ! important;
 }
 
-.jSParent .jS colgroup {
+.wg-parent .wg colgroup {
 	border-color: inherit ! important;
 }
-.jSParent .jS col {
+.wg-parent .wg col {
 	background-image: none ! important;
 	border-color: inherit ! important;
 }
 
-.jSParent .jS tr {
+.wg-parent .wg tr {
 	border-color: inherit ! important;
 	color:  inherit ! important;
 	background-image: none ! important;
 }
-.jSParent .jS td, .jSParent .jS th {
+.wg-parent .wg td, .wg-parent .wg th {
 	height: inherit;
-	border-width: 0px 0px 1px 1px;
+	border-width: 0 0 1px 1px;
 	border-color: inherit;
-	padding: 0px ! important;
+	padding: 0 ! important;
 	border-style: solid ! important;
-	margin: 0px ! important;
+	margin: 0 ! important;
 	font-size: 1em;
 	background-image: none ! important;
-	-moz-border-radius: 0px 0px 1px 1px;
+	-moz-border-radius: 0 0 1px 1px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	-ms-text-overflow: ellipsis;
 }
-.jSParent .jS td.jSMerged {
+.wg-parent .wg td.wg-merged {
 	position: absolute;
 	visibility: hidden;
 }
 
-.jSParent .jS th.jSBarCorner {
-	border-width: 0px 0px 1px 0px;
+.wg-parent .wg th.wg-bar-corner {
+	border-width: 0 0 1px 0;
 }
 
-.jSParent .jS th.jSBarLeft {
-	border-width: 0px 0px 1px 0px;
+.wg-parent .wg- th.wg-bar-left {
+	border-width: 0 0 1px 0;
 }
 
-.jSParent .jS th.jSBarTop {
-	border-width: 0px 0px 1px 1px;
+.wg-parent .wg- th.wg-bar-top {
+	border-width: 0 0 1px 1px;
 	text-align: center;
 }
 
-.jSParent .jSCellHighighted {
+.wg-parent .wg-cell-highighted {
 	background-image: none ! important;
 }
 
-.jSParent .jSError {
+.wg-parent .wg-error {
 	text-align: left;
 	overflow: hidden;
-	padding: 0px;
-	margin: 0px;
+	padding: 0;
+	margin: 0;
 }
 
 /* Containers styleing*/
-.jSParent th
+.wg-parent th
 {
 	cursor: pointer;
 }
 
-.jSParent .jSEditPane
+.wg-parent .wg-edit-pane
 {
-    overflow: hidden;
+	overflow: hidden;
 	background-image: none ! important;
-	border-width: 0px ! important;
+	border-width: 0 ! important;
 	position: absolute ! important;
 	padding: 0;
 	margin: 0;
 	border-radius: 0 !important;
 }
 
-.jSParent .jSEnclosure {
-	border-width: 0px ! important;
+.wg-parent .wg-enclosure {
+	border-width: 0 ! important;
 	position: absolute;
 }
 /* Bar item styling */
 
-.jSParent .jSBarController {
+.wg-parent .wg-bar-controller {
 	border: none ! important;
 	position: absolute ! important;
 }
-.jSParent .jSBarTopParent .jSBarController {
+.wg-parent .wg-bar-top-parent .wg-bar-controller {
 	height: 0 !important;
 	max-height: 0 !important;
 }
-.jSParent .jSBarTopParent .jSBarController .ui-resizable-handle {
+.wg-parent .wg-bar-top-parent .wg-bar-controller .ui-resizable-handle {
 	width: 10px;
 	top: -1px !important;
 	right: -6px;
-	border-top-width: 0px;
-	border-bottom-width: 0px;
+	border-top-width: 0;
+	border-bottom-width: 0;
 }
 
-.jSParent .jSBarLeft {
-	border-left-width: 0px ! important;
+.wg-parent .wg-bar-left {
+	border-left-width: 0 ! important;
 }
-.jSParent .jSBarLeft .jSBarController {
-	height: 0px;
+.wg-parent .wg-bar-left .wg-bar-controller {
+	height: 0;
 	position: absolute;
 }
-.jSParent .jSBarLeft .jSBarController .ui-resizable-handle {
+.wg-parent .wg-bar-left .wg-bar-controller .ui-resizable-handle {
 	display: inline ! important;
 	height: 10px;
 	border: none ! important;
 	padding-left:1px;
 }
 
-.jSParent .jSBarController .ui-resizable-handle {
-	border-width: 0px;
+.wg-parent .wg-bar-controller .ui-resizable-handle {
+	border-width: 0;
 }
 
-.jSParent .jSBarController .ui-resizable-handle:hover {
+.wg-parent .wg-BarController .ui-resizable-handle:hover {
 	background: inherit;
 }
 
-.jSParent .jSBarControllerChild {
+.wg-parent .wg-bar-controller-child {
 	background: inherit;
 	top: 3px ! important;
-	left: 0px;
+	left: 0;
 }
 
-.jSParent .jSBarControllerChild .ui-resizable-handle {
+.wg-parent .wg-bar-controller-child .ui-resizable-handle {
 	border-left-width: 1px;
 	border-right-width: 1px;
 }
 
-.jSParent .jSBarHandleFreezeTop
+.wg-parent .wg-bar-handle-freeze-top
 {
 	top: 1px;
 	cursor: move ! important;
@@ -379,15 +379,15 @@
 	background-image: none ! important;
 }
 
-.jSParent .jSBarHandleFreezeLeft
+.wg-parent .wg-bar-handle-freeze-left
 {
-	left: 0px;
+	left: 0;
 	cursor: move ! important;
 	height: 10px;
 	position: absolute;
 	background-image: none ! important;
 }
-.jSParent .jSBarLeft
+.wg-parent .wg-bar-left
 {
 	text-align: center;
 	vertical-align: middle ! important;
@@ -395,44 +395,44 @@
 	overflow: visible ! important;
 }
 
-.jSInPlaceEdit
+.wg-in-place-edit
 {
 	position: absolute;
 	background-image: none ! important;
 }
 
-.colorPickers *
+.color-pickers *
 {
 	display: inline-block;
 	background-color: transparent ! important;
 	background-image: none ! important;
 }
 
-.jSFullScreen
+.wg-full-screen
 {
-	top: 0px;
-	left: 0px;
+	top: 0;
+	left: 0;
 	position: fixed;
 	top: expression(eval(document.body.scrollTop) + "px");
 	left: expression(eval(document.body.scrollLeft) + "px");
 }
 
-.jSFullScreen > .ui-resizable-handle {
+.wg-fullScreen > .ui-resizable-handle {
 	display: none;
 }
 
-.jSParent .jSAutoFiller
+.wg-parent .wg-auto-filler
 {
 	position: absolute;
 	height: 8px;
 	width: 8px;
-	top: 0px;
-	left: 0px;
+	top: 0;
+	left: 0;
 	cursor: crosshair ! important;
 	display: none;
 }
 
-.jSParent .jSTitle
+.wg-parent .wg-title
 {
 	width: auto;
 	text-align: left;
@@ -441,34 +441,34 @@
 	padding: 10px;
 }
 
-body > .jSChart {
+body > .wg-chart {
 	opacity: 0.01;
 	position: absolute;
 	top: -9000px;
 	left: -9000px;
 }
 
-.jSParent .jSChart
+.wg-parent .wg-chart
 {
 	width: inherit;
 	height: inherit;
 }
 
-.jSParent .jSChart svg {
+.wg-parent .wg-chart svg {
 	position: relative ! important;
 }
 
-.jSParent .jSDropdown {
+.wg-parent .wg-dropdown {
 	cursor: pointer;
 	width: 100%;
 }
-.jSParent .jSCheckbox, .jSCheckbox * {
+.wg-parent .wg-checkbox, .wg-checkbox * {
 	cursor: pointer;
 }
-.jSParent .jSRadio, .jSRadio * {
+.wg-parent .wg-radio, .wg-radio * {
 	cursor: pointer;
 }
-.jSParent .jSDropdown {
+.wg-parent .wg-dropdown {
 	background-color: transparent;
 	border: none;
 	height: inherit;
@@ -479,45 +479,45 @@ body > .jSChart {
 	padding-right: 30px;
 }
 
-.jSHide {
+.wg-hide {
 	display: none ! important;
 }
 
-.bodyNoScroll
+.body-no-scroll
 {
 	overflow: hidden ! important;
 }
 
 /* Cell styler classes */
-.styleBold
+.style-bold
 { font-weight: bold; }
-.styleItalics	
+.style-italics
 { font-style: italic; }
-.styleUnderline	
+.style-underline
 { text-decoration: underline; }
-.styleLineThrough
+.style-line-through
 { text-decoration: line-through;}
-.styleLeft		
+.style-left
 { text-align: left; }
-.styleRight		
+.style-right
 { text-align: right; }
-.styleCenter	
+.style-center
 { text-align: center; }
-.styleTop		
+.style-top
 { vertical-align: top; }
-.styleMiddle	
+.style-middle
 { vertical-align: middle; }
-.styleBottom	
+.style-bottom
 { vertical-align: bottom; }
-.styleUpper 		
+.style-upper
 { text-transform: uppercase; }
-.styleCapital 	
+.style-capital
 { text-transform: capitalize; }
-.styleLower 		
+.style-lower
 { text-transform: lowercase; }
-.styleHidden 	
+.style-hidden
 { display: none; }
-.styleWrap
+.style-wrap
 {
 	white-space: pre-wrap ! important;       /* css-3 */
 	white-space: -moz-pre-wrap ! important;  /* Mozilla, since 1999 */

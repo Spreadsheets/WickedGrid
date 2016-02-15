@@ -1,4 +1,4 @@
-Sheet.CellHandler = (function(Math) {
+WickedGrid.CellHandler = (function(Math) {
 	function isNum(num) {
 		return !isNaN(num);
 	}
@@ -6,8 +6,8 @@ Sheet.CellHandler = (function(Math) {
 	var u = undefined,
 		nAN = NaN;
 
-	function CellHandler(jS, fn) {
-		this.jS = jS;
+	function CellHandler(wickedGrid, fn) {
+		this.wickedGrid = wickedGrid;
 		this.fn = fn;
 	}
 
@@ -22,7 +22,7 @@ Sheet.CellHandler = (function(Math) {
 			if (arguments.length) {
 				var name = variable[0],
 					attr = variable[1],
-					formulaVariables = this.jS.s.formulaVariables,
+					formulaVariables = this.wickedGrid.s.formulaVariables,
 					formulaVariable,
 					result;
 
@@ -254,11 +254,11 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Sheet.CellHandler}
 		 */
 		cellValue:function (parentCell, cellRef, callback) {
-			var jS = this.jS,
+			var wickedGrid = this.wickedGrid,
 				loc = this.parseLocation(cellRef.c, cellRef.r),
 				cell;
 
-			cell = jS.getCell(parentCell.sheetIndex, loc.row, loc.col);
+			cell = wickedGrid.getCell(parentCell.sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
 				cell.updateValue(callback);
@@ -292,16 +292,16 @@ Sheet.CellHandler = (function(Math) {
 		 * @returns {Sheet.CellHandler}
 		 */
 		remoteCellValue:function (parentCell, sheet, cellRef, callback) {
-			var jS = this.jS,
+			var wickedGrid = this.wickedGrid,
 				loc = this.parseLocation(cellRef.c, cellRef.r),
 				sheetIndex = this.parseSheetLocation(sheet),
 				cell;
 
 			if (sheetIndex < 0) {
-				sheetIndex = jS.getSpreadsheetIndexByTitle(sheet);
+				sheetIndex = wickedGrid.getSpreadsheetIndexByTitle(sheet);
 			}
 
-			cell = jS.getCell(sheetIndex, loc.row, loc.col);
+			cell = wickedGrid.getCell(sheetIndex, loc.row, loc.col);
 			if (cell !== null) {
 				cell.addDependency(parentCell);
 				cell.updateValue(callback);
@@ -332,7 +332,7 @@ Sheet.CellHandler = (function(Math) {
 				colIndexEnd = (_start.col < _end.col ? _end.col : _start.col),
 				totalNeedResolved = (colIndexEnd - (colIndexStart - 1)) * (rowIndexEnd - (rowIndex - 1)),
 				currentlyResolve = 0,
-				jS = this.jS,
+				wickedGrid = this.wickedGrid,
 				result = [],
 				cachedRange,
 				useCache,
@@ -344,7 +344,7 @@ Sheet.CellHandler = (function(Math) {
 				sheet;
 
 			if (sheetIndex < 0) {
-				sheetIndex = jS.getSpreadsheetIndexByTitle(sheetTitle);
+				sheetIndex = wickedGrid.getSpreadsheetIndexByTitle(sheetTitle);
 			}
 
 			//can't find spreadsheet here
@@ -374,10 +374,10 @@ Sheet.CellHandler = (function(Math) {
 				}
 			}
 
-			sheet = jS.spreadsheets[sheetIndex];
+			sheet = wickedGrid.spreadsheets[sheetIndex];
 
 			if (sheet === u) {
-				jS.spreadsheets[sheetIndex] = sheet = [];
+				wickedGrid.spreadsheets[sheetIndex] = sheet = [];
 			}
 
 			result.rowCount = (rowIndexEnd - rowIndex) + 1;
@@ -388,7 +388,7 @@ Sheet.CellHandler = (function(Math) {
 				row = (sheet[rowIndex] !== u ? sheet[rowIndex] : null);
 				for (; colIndex <= colIndexEnd;colIndex++) {
 					if (row === null || (cell = row[colIndex]) === u) {
-						cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+						cell = wickedGrid.getCell(sheetIndex, rowIndex, colIndex);
 					} else {
 						cell.sheetIndex = sheetIndex;
 						cell.rowIndex = rowIndex;
@@ -458,7 +458,7 @@ Sheet.CellHandler = (function(Math) {
 
 			//use the sheet's parser if there aren't many calls in the callStack
 			else {
-				formulaParser = this.jS.formulaParser;
+				formulaParser = this.wickedGrid.formulaParser;
 			}
 
 			return formulaParser;
