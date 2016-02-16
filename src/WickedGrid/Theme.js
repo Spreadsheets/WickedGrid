@@ -1,4 +1,4 @@
-Sheet.Theme = (function($) {
+WickedGrid.Theme = (function() {
 	function Constructor(theme) {
 		theme = theme || Sheet.defaultTheme;
 
@@ -106,4 +106,4 @@ Sheet.Theme = (function($) {
 	};
 
 	return Constructor;
-})(jQuery);
+})();

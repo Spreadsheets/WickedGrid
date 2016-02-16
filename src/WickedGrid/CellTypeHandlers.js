@@ -1,6 +1,6 @@
-Sheet.CellTypeHandlers = (function() {
+WickedGrid.cellTypeHandlers = (function() {
 	var n = isNaN,
-		CellTypeHandlers = {
+		cellTypeHandlers = {
 		percent: function (cell, value) {
 			//https://stackoverflow.com/questions/2652319/how-do-you-check-that-a-number-is-nan-in-javascript/16988441#16988441
 			//NaN !== NaN
@@ -72,5 +72,5 @@ Sheet.CellTypeHandlers = (function() {
 		}
 	};
 
-	return CellTypeHandlers;
+	return cellTypeHandlers;
 })();

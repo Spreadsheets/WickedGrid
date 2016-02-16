@@ -1,4 +1,4 @@
-Sheet.thread = (function (operative) {
+WickedGrid.thread = (function (operative) {
 	var i = 0,
 		threads = [];
 
@@ -137,8 +137,8 @@ Sheet.thread = (function (operative) {
 					});
 			}
 		}, [
-			Sheet.formulaParserUrl,
-			Sheet.threadScopeUrl
+			WickedGrid.formulaParserUrl,
+			WickedGrid.threadScopeUrl
 		]);
 
 		t.stash = [];

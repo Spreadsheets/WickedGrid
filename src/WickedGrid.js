@@ -6,10 +6,109 @@ function WickedGrid(settings) {
   this.settings = settings;
   this.parent = settings.element;
   this.cl = WickedGrid.cl;
+  this.tsv = new TSV();
+  this.calcStack = 0;
+  /**
+   * Internal storage array of controls for an instance
+   */
+  this.controls = {
+    autoFiller:[],
+        bar:{
+      helper:[],
+          corner:[],
+          x:{
+        controls:[],
+            handleFreeze:[],
+            menu:[],
+            menuParent:[],
+            parent:[],
+            th:[],
+            ths:function () {
+          var ths = [],
+              i = 0,
+              _ths = this.th[wickedGrid.i],
+              max = _ths.length;
+
+          for (; i < max; i++) {
+            ths.push(_ths[i]);
+          }
+
+          return ths;
+        }
+      },
+      y:{
+        controls:[],
+            handleFreeze:[],
+            menu:[],
+            parent:[],
+            th:[],
+            ths:function () {
+          var ths = [],
+              i = 0,
+              _ths = this.th[wickedGrid.i],
+              max = _ths.length;
+
+          for (; i < max; i++) {
+            ths.push(_ths[i]);
+          }
+
+          return ths;
+        }
+      }
+    },
+    barMenuLeft:[],
+        barMenuTop:[],
+        barLeft:[],
+        barTop:[],
+        barTopParent:[],
+        chart:[],
+        tdMenu:[],
+        cellsEdited:[],
+        enclosures:[],
+        formula:null,
+        fullScreen:null,
+        header:null,
+        inPlaceEdit:[],
+        inputs:[],
+        label:null,
+        menu:[],
+        menus:[],
+        pane:[],
+        panes:null,
+        scrolls:null,
+        sheetAdder:null,
+        tab:[],
+        tabContainer:null,
+        tabs:null,
+        title:null,
+        toggleHide:{
+      x:[],
+          y:[]
+    },
+    ui:null
+  };
+
+  /**
+   * The active sheet index within the a set of sheets
+   * @type {Number}
+   */
+  this.i = 0;
+
+  /**
+   * The current count of sheet's within the instance
+   * @type {Number}
+   */
+  this.sheetCount = 0;
+
+  /**
+   * The internal storage array of the spreadsheets for an instance, constructed as array 3 levels deep, spreadsheet, rows, cells, can easily be used for custom exporting/saving
+   * @type {Array}
+   */
+  this.spreadsheets = [];
+
   var self = this,
     children = [],
     $window = $(window),
-    body = document.body,
     u = undefined,
     thaw = (WickedGrid.defaults.useStack && window.thaw !== u ? window.thaw : function(stack, options) {
       options = options || {};
@@ -33,7 +132,6 @@ function WickedGrid(settings) {
         done();
       }
     }),
-
     loaderTables = [],
     loaderTable;
 
@@ -43,7 +141,7 @@ function WickedGrid(settings) {
     window.scrollBarSize = getScrollBarSize();
   }
 
-  this.cellHandler = new WickedGrid.CellHandler(this, WickedGrid.Functions);
+  this.cellHandler = new WickedGrid.CellHandler(this, WickedGrid.functions);
 
   this.theme = new WickedGrid.Theme(settings.theme);
 
@@ -71,8 +169,8 @@ function WickedGrid(settings) {
     });
 
   //Use the setting height/width if they are there, otherwise use parent's
-  settings.width = settings.width || parent.clientWidth;
-  settings.height = settings.height || parent.clientHeight;
+  this.width = settings.width || parent.clientWidth;
+  this.height = settings.height || parent.clientHeight;
 
   // Drop functions if they are not needed & save time in recursion
   if (!$.nearest) {
@@ -91,23 +189,11 @@ function WickedGrid(settings) {
     settings.boxModelCorrection = 0;
   }
 
-  if (!s.barMenus) {
-    this.controlFactory.barMenuTop = this.controlFactory.barMenuLeft = empty;
-  }
-
-  if (!s.freezableCells) {
-    this.controlFactory.barHandleFreeze.top = this.controlFactory.barHandleFreeze.left = empty;
-  }
-
-  if (s.calcOff) {
-    this.calc = empty;
-  }
-
   $window
     .resize(function () {
       if (!self.isBusy()) { //We check because this might have been killed
-        settings.width = parent.width();
-        settings.height = parent.height();
+        self.width = parent.width();
+        self.height = parent.height();
         self.sheetSyncSize();
       }
     })
@@ -116,21 +202,21 @@ function WickedGrid(settings) {
     });
 
   //Extend the calculation engine plugins
-  WickedGrid.fn = $.extend(WickedGrid.fn, settings.formulaFunctions);
+  WickedGrid.fn = $.extend(WickedGrid.functions, settings.formulaFunctions);
 
   //Extend the calculation engine with finance functions
   if (WickedGrid.plugin.finance) {
-    WickedGrid.fn = $.extend(WickedGrid.fn, WickedGrid.plugin.finance);
+    WickedGrid.fn = $.extend(WickedGrid.functions, WickedGrid.plugin.finance);
   }
 
   settings.title = settings.title || parent.getAttribute('title') || '';
 
-  this.parseFormula = (settings.useMultiThreads ? WickedGrid.parseFormula : WickedGrid.parseFormulaSlow);
+  this.parseFormula = (settings.useMultiThreads ? this.parseFormulaAsync : this.parseFormulaSync);
 
   parent.className += ' ' + this.theme.parent;
 
   if (settings.loader === null) {
-    settings.loader = (new WickedGrid.Loader.HTML(s.origHtml))
+    settings.loader = new WickedGrid.Loader.HTML(children);
   }
 
   this.loader = settings.loader
@@ -143,104 +229,6 @@ function WickedGrid(settings) {
 }
 
 WickedGrid.prototype = {
-  /**
-   * The active sheet index within the a set of sheets
-   * @type {Number}
-   */
-  i:0,
-
-  /**
-   * The current count of sheet's within the instance
-   * @type {Number}
-   */
-  sheetCount:0,
-
-  /**
-   * The internal storage array of the spreadsheets for an instance, constructed as array 3 levels deep, spreadsheet, rows, cells, can easily be used for custom exporting/saving
-   * @type {Array}
-   */
-  spreadsheets:[],
-
-  /**
-   * Internal storage array of controls for an instance
-   */
-  controls:{
-    autoFiller:[],
-    bar:{
-      helper:[],
-      corner:[],
-      x:{
-        controls:[],
-        handleFreeze:[],
-        menu:[],
-        menuParent:[],
-        parent:[],
-        th:[],
-        ths:function () {
-          var ths = [],
-              i = 0,
-              _ths = this.th[wickedGrid.i],
-              max = _ths.length;
-
-          for (; i < max; i++) {
-            ths.push(_ths[i]);
-          }
-
-          return ths;
-        }
-      },
-      y:{
-        controls:[],
-        handleFreeze:[],
-        menu:[],
-        parent:[],
-        th:[],
-        ths:function () {
-          var ths = [],
-              i = 0,
-              _ths = this.th[wickedGrid.i],
-              max = _ths.length;
-
-          for (; i < max; i++) {
-            ths.push(_ths[i]);
-          }
-
-          return ths;
-        }
-      }
-    },
-    barMenuLeft:[],
-    barMenuTop:[],
-    barLeft:[],
-    barTop:[],
-    barTopParent:[],
-    chart:[],
-    tdMenu:[],
-    cellsEdited:[],
-    enclosures:[],
-    formula:null,
-    fullScreen:null,
-    header:null,
-    inPlaceEdit:[],
-    inputs:[],
-    label:null,
-    menu:[],
-    menus:[],
-    pane:[],
-    panes:null,
-    scrolls:null,
-    sheetAdder:null,
-    tab:[],
-    tabContainer:null,
-    tabs:null,
-    title:null,
-    toggleHide:{
-      x:[],
-      y:[]
-    },
-    ui:null
-  },
-
   /**
    * Object selectors for interacting with a spreadsheet
    * @type {Object}
@@ -404,9 +392,9 @@ WickedGrid.prototype = {
     (this.inPlaceEdit().destroy || empty)();
 
     parent
-        .trigger('sheetKill')
-        .removeClass(this.theme.parent)
-        .html('');
+      .trigger('sheetKill')
+      .removeClass(this.theme.parent)
+      .html('');
 
     this.menus().remove();
 
@@ -459,6 +447,11 @@ WickedGrid.prototype = {
     return cell;
   },
 
+  /**
+   *
+   * @param {HTMLElement} td
+   * @returns {*}
+   */
   cellFromTd: function(td) {
     if (td.thisCell !== u && td.jSCell !== null) return td.jSCell;
 
@@ -494,7 +487,7 @@ WickedGrid.prototype = {
    * @param {String} cellId
    * @param {Number|Function} callbackOrSheet
    * @param {Function} [callback]
-   * @returns {this}
+   * @returns {WickedGrid}
    */
   getCellById: function(cellId, callbackOrSheet, callback) {
     var loader = s.loader,
@@ -547,16 +540,16 @@ WickedGrid.prototype = {
         cellReference = cellReferences[i];
         if (typeof cellReference === 'string') {
           (function(i) {
-            jS.getCellById(cellReference, sheet, function(cell) {
+            this.getCellById(cellReference, sheet, function(cell) {
               cells[i] = cell;
               got++;
 
-              if (got === max) callback.apply(jS, cells);
+              if (got === max) callback.apply(this, cells);
             });
           })(i);
         } else {
           cellLocation = cellReference;
-          cell = jS.getCell(cellLocation.sheet, cellLocation.rowIndex, cellLocation.columnIndex);
+          cell = this.getCell(cellLocation.sheet, cellLocation.rowIndex, cellLocation.columnIndex);
           if (cell !== null) {
             cells[i] = cell;
             got++;
@@ -621,7 +614,7 @@ WickedGrid.prototype = {
       (instance[i] || {}).nav = false;
     }
 
-    jS.nav = nav;
+    this.nav = nav;
   },
 
   /**
@@ -693,11 +686,11 @@ WickedGrid.prototype = {
   addRow:function (isAfter, rowIndex, skipEvent) {
     var loader = this.loader,
         columnIndex = 0,
-        size = loader.size(jS.i),
+        size = loader.size(this.i),
         columnMax = size.cols,
-        spreadsheet = this.spreadsheets[jS.i],
+        spreadsheet = this.spreadsheets[this.i],
         row = [],
-        sheetIndex = jS.i,
+        sheetIndex = this.i,
         pane = this.pane();
 
     if (rowIndex === undefined) {
@@ -714,12 +707,12 @@ WickedGrid.prototype = {
 
     spreadsheet.splice(rowIndex, 0, row);
 
-    loader.addRow(jS.i, rowIndex, row);
+    loader.addRow(this.i, rowIndex, row);
 
     pane.actionUI.redrawRows();
 
     if (skipEvent !== true) {
-      jS.trigger('sheetAddRow', [rowIndex, isAfter, 1]);
+      this.trigger('sheetAddRow', [rowIndex, isAfter, 1]);
     }
   },
 
@@ -732,13 +725,13 @@ WickedGrid.prototype = {
   addColumn:function (isAfter, columnIndex, skipEvent) {
     var loader = this.loader,
         rowIndex = 0,
-        size = loader.size(jS.i),
+        size = loader.size(this.i),
         rowMax = size.rows,
         row,
         column = [],
         cell,
-        spreadsheet = jS.spreadsheets[jS.i],
-        sheetIndex = jS.i,
+        spreadsheet = this.spreadsheets[this.i],
+        sheetIndex = this.i,
         pane = this.pane();
 
     if (columnIndex === undefined) {
@@ -756,12 +749,12 @@ WickedGrid.prototype = {
       row.splice(columnIndex, 0, cell);
     }
 
-    loader.addColumn(jS.i, columnIndex, column);
+    loader.addColumn(this.i, columnIndex, column);
 
     pane.actionUI.redrawColumns();
 
     if (skipEvent !== true) {
-      jS.trigger('sheetAddColumn', [columnIndex, isAfter, 1]);
+      this.trigger('sheetAddColumn', [columnIndex, isAfter, 1]);
     }
   },
 
@@ -770,7 +763,6 @@ WickedGrid.prototype = {
    */
   autoFillerNotGroup:true,
 
-  tsv: new TSV(),
   /**
    * Sends tab delimited string into cells, usually a paste from external spreadsheet application
    * @param [oldVal] what formula should be when this is done working with all the values
@@ -779,7 +771,7 @@ WickedGrid.prototype = {
   updateCellsAfterPasteToFormula:function (oldVal) {
     var newValCount = 0,
         formula = this.formula(),
-        startCell = jS.cellLast;
+        startCell = this.cellLast;
 
     oldVal = oldVal || formula.val();
 
@@ -791,12 +783,12 @@ WickedGrid.prototype = {
       return false;
     }
 
-    var parsedRows = jS.tsv.parse(val);
+    var parsedRows = this.tsv.parse(val);
 
     //Single cell value
     if (!$.isArray(parsedRows)) {
       formula.val(parsedRows);
-      jS.fillUpOrDown(false, parsedRows);
+      this.fillUpOrDown(false, parsedRows);
       return true;
     }
 
@@ -815,7 +807,7 @@ WickedGrid.prototype = {
         newValCount++;
 
         if (
-            !(spreadsheet = jS.spreadsheets[jS.i])
+            !(spreadsheet = this.spreadsheets[this.i])
             || !(row = spreadsheet[i + startCell.rowIndex])
             || !(cell = row[j + startCell.columnIndex])
         ) continue;
@@ -832,7 +824,7 @@ WickedGrid.prototype = {
               }
             });
           })(cell, parsedColumns[j]);
-          jS.resolveCell(cell);
+          this.resolveCell(cell);
 
           if (i == 0 && j == 0) { //we have to finish the current edit
             firstValue = parsedColumns[j];
@@ -846,9 +838,9 @@ WickedGrid.prototype = {
       formula.val(firstValue);
     }
 
-    jS.fillUpOrDown(false, firstValue);
+    this.fillUpOrDown(false, firstValue);
 
-    jS.evt.cellEditDone(true);
+    this.cellEditDone(true);
 
     return true;
   },
@@ -857,452 +849,7 @@ WickedGrid.prototype = {
    * Event handlers for instance
    * @namespace
    */
-  evt:{
 
-    /**
-     * Used for pasting from other spreadsheets
-     * @param {Object} e jQuery event
-     * @returns {Boolean}.evt
-     */
-    pasteOverCells:function (e) {
-      e = e || window.event;
-      if (e.ctrlKey || e.type == 'paste') {
-        var fnAfter = function () {
-          jS.updateCellsAfterPasteToFormula();
-        };
-
-        var $doc = $document
-            .one('keyup', function () {
-              fnAfter();
-              fnAfter = function () {
-              };
-              $doc.mouseup();
-            })
-            .one('mouseup', function () {
-              fnAfter();
-              fnAfter = function () {
-              };
-              $doc.keyup();
-            });
-
-        jS.setDirty(true);
-        jS.setChanged(true);
-        return true;
-      }
-
-      return false;
-    },
-
-    /**
-     * Updates a cell after edit afterward event 'sheetCellEdited' is called w/ params (td, row, col, spreadsheetIndex, sheetIndex)
-     * @param {Boolean} [force] if set to true forces a calculation of the selected sheet.evt
-     */
-    cellEditDone:function (force) {
-      var inPlaceEdit = this.inPlaceEdit(),
-          inPlaceEditHasFocus = $(inPlaceEdit).is(':focus'),
-          cellLast = jS.cellLast,
-          cell;
-
-      (inPlaceEdit.destroy || empty)();
-      if (cellLast !== null && (cellLast.isEdit || force)) {
-        cell = jS.getCell(cellLast.sheetIndex, cellLast.rowIndex, cellLast.columnIndex);
-        var formula = (inPlaceEditHasFocus ? $(inPlaceEdit) : this.formula()),
-            td = cell.td;
-
-        if (jS.isFormulaEditable(td)) {
-          //Lets ensure that the cell being edited is actually active
-          if (td !== null && cell.rowIndex > 0 && cell.columnIndex > 0) {
-
-            //This should return either a val from textbox or formula, but if fails it tries once more from formula.
-            var v = formula.val(),
-                i = 0,
-                loader = s.loader,
-                loadedFrom;
-
-            if (!cell.edited) {
-              cell.edited = true;
-              this.cellsEdited().push(cell);
-            }
-
-            s.parent.one('sheetPreCalculation', function () {
-              //reset formula to null so it can be re-evaluated
-              cell.parsedFormula = null;
-              if (v.charAt(0) == '=') {
-                //change only formula, previous value will be stored and recalculated momentarily
-                cell.formula = v = v.substring(1);
-              } else {
-                cell.value = v;
-                cell.formula = '';
-
-                if ((loadedFrom = cell.loadedFrom) !== null) {
-                  loader.setCellAttributes(loadedFrom, {
-                    'cache': u,
-                    'formula': '',
-                    'value': v,
-                    'parsedFormula': null
-                  });
-                }
-              }
-
-              cell.setNeedsUpdated();
-            });
-            jS.resolveCell(cell);
-
-            //formula.focus().select();
-            cell.isEdit = false;
-
-            //perform final function call
-            jS.trigger('sheetCellEdited', [cell]);
-          }
-        }
-      }
-    },
-
-    /**
-     * Abandons a cell edit
-     * @param {Boolean} [skipCalc] if set to true will skip sheet calculation;.evt
-     */
-    cellEditAbandon:function (skipCalc) {
-      (this.inPlaceEdit().destroy || empty)();
-
-      jS.highlighter
-          .clearBar()
-          .clear();
-
-      var cell = jS.cellLast;
-      if (!skipCalc && cell !== null) {
-        cell.updateValue();
-      }
-
-      jS.cellLast = null;
-      jS.rowLast = 0;
-      jS.colLast = 0;
-      jS.highlighter.startRowIndex = 0;
-      jS.highlighter.startColumnIndex = 0;
-      jS.highlighter.endRowIndex = 0;
-      jS.highlighter.endColumnIndex = 0;
-
-      jS.labelUpdate('');
-      this.formula()
-          .val('')
-          .blur();
-
-      jS.autoFillerHide();
-
-      return false;
-    },
-
-    /**
-     * Highlights a cell from a key code
-     * @param {Object} e jQuery event
-     * @returns {Boolean}.evt
-     */
-    cellSetHighlightFromKeyCode:function (e) {
-      var grid = jS.orderedGrid(jS.highlighter),
-          size = jS.sheetSize(),
-          cellActive = jS.cellActive,
-          highlighter = jS.highlighter;
-
-      if (cellActive === null) return false;
-
-      switch (e.keyCode) {
-        case key.UP:
-          if (grid.startRowIndex < cellActive.rowIndex) {
-            grid.startRowIndex--;
-            grid.startRowIndex = grid.startRowIndex > 0 ? grid.startRowIndex : 1;
-            break;
-          }
-
-          grid.endRowIndex--;
-          grid.endRowIndex = grid.endRowIndex > 0 ? grid.endRowIndex : 1;
-
-          break;
-        case key.DOWN:
-          //just beginning the highlight
-          if (grid.startRowIndex === grid.endRowIndex) {
-            grid.startRowIndex++;
-            grid.startRowIndex = grid.startRowIndex < size.rows ? grid.startRowIndex : size.rows;
-            break;
-          }
-
-          //if the highlight is above the active cell, then we have selected up and need to move down
-          if (grid.startRowIndex < cell.rowIndex) {
-            grid.startRowIndex++;
-            grid.startRowIndex = grid.startRowIndex > 0 ? grid.startRowIndex : 1;
-            break;
-          }
-
-          //otherwise we increment the row, and limit it to the size of the total grid
-          grid.endRowIndex++;
-          grid.endRowIndex = grid.endRowIndex < size.rows ? grid.endRowIndex : size.rows;
-
-          break;
-        case key.LEFT:
-          if (grid.startColumnIndex < cell.columnIndex) {
-            grid.startColumnIndex--;
-            grid.startColumnIndex = grid.startColumnIndex > 0 ? grid.startColumnIndex : 1;
-            break;
-          }
-
-          grid.endColumnIndex--;
-          grid.endColumnIndex = grid.endColumnIndex > 0 ? grid.endColumnIndex : 1;
-
-          break;
-        case key.RIGHT:
-          if (grid.startColumnIndex < cell.columnIndex) {
-            grid.startColumnIndex++;
-            grid.startColumnIndex = grid.startColumnIndex < size.cols ? grid.startColumnIndex : size.cols;
-            break;
-          }
-
-          grid.endColumnIndex++;
-          grid.endColumnIndex = grid.endColumnIndex < size.cols ? grid.endColumnIndex : size.cols;
-
-          break;
-      }
-
-      //highlight the cells
-      highlighter.startRowIndex = grid.startRowIndex;
-      highlighter.startColumnIndex = grid.startColumnIndex;
-      highlighter.endRowIndex = grid.endRowIndex;
-      highlighter.endColumnIndex = grid.endColumnIndex;
-
-      jS.cycleCellArea(function (o) {
-        highlighter.set(o.td);
-      }, grid);
-
-      return false;
-    },
-
-    /**
-     * Activates a cell from a key code
-     * @param {Object} e jQuery event
-     * @param {Boolean} [skipMove]
-     * @returns {Boolean}.evt
-     */
-    cellSetActiveFromKeyCode:function (e, skipMove) {
-      if (jS.cellLast === null) return false;
-
-      var cell = jS.cellLast,
-          loc = {
-            rowIndex: cell.rowIndex,
-            columnIndex: cell.columnIndex
-          },
-          spreadsheet,
-          row,
-          nextCell,
-          overrideIsEdit = false,
-          highlighted,
-          doNotClearHighlighted = false;
-
-      switch (e.keyCode) {
-        case key.UP:
-          loc.rowIndex--;
-          break;
-        case key.DOWN:
-          loc.rowIndex++;
-          break;
-        case key.LEFT:
-          loc.columnIndex--;
-          break;
-        case key.RIGHT:
-          loc.columnIndex++;
-          break;
-        case key.ENTER:
-          loc = jS.evt.incrementAndStayInGrid(jS.orderedGrid(jS.highlighter), loc, true, e.shiftKey);
-          overrideIsEdit = true;
-          highlighted = jS.highlighted();
-          if (highlighted.length > 1) {
-            doNotClearHighlighted = true;
-          } else {
-            if (!skipMove) {
-              loc.rowIndex += (e.shiftKey ? -1 : 1);
-            }
-            //TODO: go down one row, and possibly scroll to cell if needed
-          }
-          break;
-        case key.TAB:
-          loc = jS.evt.incrementAndStayInGrid(jS.orderedGrid(jS.highlighter), loc, false, e.shiftKey);
-          overrideIsEdit = true;
-          highlighted = jS.highlighted();
-          if (highlighted.length > 1) {
-            doNotClearHighlighted = true;
-          } else {
-            if (!skipMove) {
-              loc.columnIndex += (e.shiftKey ? -1 : 1);
-            }
-            //TODO: go one cell right and scroll if needed
-          }
-          break;
-        case key.HOME:
-          loc.columnIndex = 1;
-          break;
-        case key.END:
-          loc.columnIndex = this.tdActive().parentNode.children.length - 2;
-          break;
-      }
-
-      //we check here and make sure all values are above 0, so that we get a selected cell
-      loc.columnIndex = loc.columnIndex || 1;
-      loc.rowIndex = loc.rowIndex || 1;
-
-      //to get the td could possibly make keystrokes slow, we prevent it here so the user doesn't even know we are listening ;)
-      if (!cell.isEdit || overrideIsEdit) {
-        //get the td that we want to go to
-        if ((spreadsheet = jS.spreadsheets[jS.i]) === u) return false;
-        if ((row = spreadsheet[loc.rowIndex]) === u) return false;
-        if ((nextCell = row[loc.columnIndex]) === u) return false;
-
-        //if the td exists, lets go to it
-        if (nextCell !== null) {
-          jS.cellEdit(nextCell.td, null, doNotClearHighlighted);
-          return false;
-        }
-      }
-      //default, can be overridden above
-      return true;
-    },
-
-    /**
-     * Calculate position for either horizontal movement or vertical movement within a grid, both forward and reverse
-     * @param {Object} grid
-     * @param {Object} loc
-     * @param {Boolean} isRows
-     * @param {Boolean} reverse
-     * @returns {Object} loc.evt
-     */
-    incrementAndStayInGrid: function (grid, loc, isRows, reverse) {
-      if (isRows) {
-        if (reverse) {
-          loc.rowIndex--;
-          if (loc.rowIndex < grid.startRowIndex) {
-            loc.rowIndex = grid.endRowIndex;
-            loc.columnIndex--;
-          }
-          if (loc.columnIndex < grid.startColumnIndex) {
-            loc.columnIndex = grid.endColumnIndex;
-          }
-        } else {
-          loc.rowIndex++;
-          if (loc.rowIndex > grid.endRowIndex) {
-            loc.rowIndex = grid.startRowIndex;
-            loc.columnIndex++;
-          }
-          if (loc.columnIndex > grid.endColumnIndex) {
-            loc.columnIndex = grid.startColumnIndex;
-          }
-        }
-      }
-      else {
-        if (reverse) {
-          loc.columnIndex--;
-          if (loc.columnIndex < grid.startColumnIndex) {
-            loc.columnIndex = grid.endColumnIndex;
-            loc.rowIndex--;
-          }
-          if (loc.rowIndex < grid.startRowIndex) {
-            loc.rowIndex = grid.endRowIndex;
-          }
-        } else {
-          loc.columnIndex++;
-          if (loc.columnIndex > grid.endColumnIndex) {
-            loc.columnIndex = grid.startColumnIndex;
-            loc.rowIndex++;
-          }
-          if (loc.rowIndex > grid.endRowIndex) {
-            loc.rowIndex = grid.startRowIndex;
-          }
-        }
-      }
-      return loc;
-    },
-
-    /**
-     * Cell on mouse down
-     * @param {Object} e jQuery event.evt
-     */
-    cellOnMouseDown:function (e) {
-      this.formula().blur();
-      if (e.shiftKey) {
-        jS.getTdRange(e, this.formula().val());
-      } else {
-        jS.cellEdit(e.target, true);
-      }
-    },
-
-    /**
-     * Cell on double click
-     * @param {Object} e jQuery event.evt
-     */
-    cellOnDblClick:function (e) {
-      if (jS.isBusy()) {
-        return false;
-      }
-
-      jS.controlFactory.inPlaceEdit();
-
-      return true;
-    },
-
-    cellEdit: function(e) {
-      if (jS.isBusy()) {
-        return false;
-      }
-
-      jS.controlFactory.inPlaceEdit(null, true);
-
-      return true;
-    },
-
-    /**
-     * Handles bar events, used for highlighting and activating.evt
-     * @namespace
-     */
-    barInteraction:{
-
-      /**
-       * The first bar that received the event (mousedown).evt.barInteraction
-       */
-      first:null,
-
-      /**
-       * The last bar that received the event (mousedown).evt.barInteraction
-       */
-      last:null,
-
-      /**
-       * Tracks if we are in select mode.evt.barInteraction
-       */
-      selecting:false,
-
-      /**
-       * Manages the bar selection
-       * @param {Object} target
-       * @returns {*}.evt.barInteraction
-       */
-      select:function (target) {
-        if (!target) return;
-        if (!target.type === 'bar') return;
-        var bar = target,
-            entity = bar.entity, //returns 'top' or 'left';
-            index = bar.index;
-
-        if (index < 0) return false;
-
-        jS.evt.barInteraction.last = jS.evt.barInteraction.first = jS[entity + 'Last'] = index;
-
-        jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
-
-        jS.evt.barInteraction.selecting = true;
-        $document
-            .one('mouseup', function () {
-              jS.evt.barInteraction.selecting = false;
-            });
-
-        return false;
-      }
-    }
-  },
 
   /**
    *
@@ -2591,6 +2138,8 @@ WickedGrid.prototype = {
    * @param {Boolean} [refreshCalculations]
    */
   calc:function (sheetIndex, refreshCalculations) {
+    if (this.settings.calcOff) return false;
+
     sheetIndex = (sheetIndex === u ? jS.i : sheetIndex);
     if (
         jS.readOnly[sheetIndex]
@@ -4435,9 +3984,9 @@ WickedGrid.prototype = {
    * @param {Number} I instance index
    */
   switchSheetLocker:function (I) {
-    $.each(WickedGrid.instance, function () {
-      this.s.parent.bind('sheetSwitch', function (e, , i) {
-        $.each($.sheet.instance, function () {
+    WickedGrid.instance.forEach(function () {
+      this.settings.parent.bind('sheetSwitch', function (e, wickedGrid, i) {
+        WickedGrid.instance.forEach(function(w) {
           this.setActiveSheet(i);
         });
       });
@@ -4456,5 +4005,84 @@ WickedGrid.prototype = {
       this.instance = [];
     }
     return I;
+  },
+  formulaParser: function(callStack) {
+    var formulaParser;
+    //we prevent parsers from overwriting each other
+    if (callStack > -1) {
+      //cut down on un-needed parser creation
+      formulaParser = this.spareFormulaParsers[callStack];
+      if (formulaParser === undefined) {
+        formulaParser = this.spareFormulaParsers[callStack] = Formula();
+      }
+    }
+
+    //use the sheet's parser if there aren't many calls in the callStack
+    else {
+      formulaParser = Sheet.defaultFormulaParser;
+    }
+
+    formulaParser.yy.types = [];
+
+    return formulaParser;
+  },
+
+  parseFormulaSync: function(formula, callback) {
+    if (Sheet.defaultFormulaParser === null) {
+      Sheet.defaultFormulaParser = Formula();
+    }
+
+    var formulaParser = Sheet.formulaParser(Sheet.calcStack);
+    callback(formulaParser.parse(formula));
+  },
+
+  parseFormulaAsync: function(formula, callback) {
+    var thread = Sheet.thread();
+
+    if (thread.busy) {
+      thread.stash.push(function() {
+        thread.busy = true;
+        thread.parseFormula(formula, function(parsedFormula) {
+          thread.busy = false;
+          callback(parsedFormula);
+          if (thread.stash.length > 0) {
+            thread.stash.shift()();
+          }
+        });
+      });
+    } else {
+      thread.busy = true;
+      thread.parseFormula(formula, function(parsedFormula) {
+        thread.busy = false;
+        callback(parsedFormula);
+        if (thread.stash.length > 0) {
+          thread.stash.shift()();
+        }
+      });
+    }
   }
 };
+WickedGrid.Event = {};
+WickedGrid.Loader = {};
+WickedGrid.Plugin = {};
+WickedGrid.defaultTheme = 0;
+WickedGrid.themeRollerTheme = 0;
+WickedGrid.bootstrapTheme = 1;
+WickedGrid.customTheme = 2;
+
+WickedGrid.excelSelectModel = 0;
+WickedGrid.googleDriveSelectModel = 1;
+WickedGrid.openOfficeSelectModel = 2;
+
+WickedGrid.defaultColumnWidth = 120;
+WickedGrid.defaultRowHeight = 20;
+
+WickedGrid.domRows = 40;
+WickedGrid.domColumns = 35;
+
+WickedGrid.formulaParserUrl = '../parser/formula/formula.js';
+WickedGrid.threadScopeUrl = '../Sheet/threadScope.js';
+
+WickedGrid.defaultFormulaParser = null;
+
+WickedGrid.spareFormulaParsers = [];

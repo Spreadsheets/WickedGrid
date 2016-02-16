@@ -1,4 +1,4 @@
-;WickedGrid.Loader.HTML = (function($, document, String) {
+WickedGrid.Loader.HTML = (function($, document, String) {
 	"use strict";
 	function HTML(tables) {
 		if (tables !== undefined) {

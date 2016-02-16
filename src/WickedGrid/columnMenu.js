@@ -1,7 +1,7 @@
 WickedGrid.columnMenu = function(wickedGrid, target, x, y) {
-  if (wickedGrid.isBusy()) {
-    return false;
-  }
+  if (!wickedGrid.settings.barMenus) return false;
+  if (wickedGrid.isBusy()) return false;
+
   var menu = wickedGrid.barMenuTop().hide();
 
   if (!menu.length) {

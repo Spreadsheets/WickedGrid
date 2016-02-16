@@ -1,25 +1,26 @@
 /**
  * Creates a textarea for a user to put a value in that floats on top of the current selected cell
+ * @param {WickedGrid} wickedGrid
  * @param {jQuery|HTMLElement} td the td to be edited
  * @param {Boolean} selected selects the text in the inline editor.controlFactory
  */
 WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
-  td = td || this.cellActive().td || null;
+  td = td || wickedGrid.cellActive().td || null;
 
   if (td === null) {
-    td = jS.rowTds(null, 1)[1];
-    jS.cellEdit(td);
+    td = wickedGrid.rowTds(null, 1)[1];
+    wickedGrid.cellEdit(td);
   }
 
   if (td === null) return;
 
-  (this.inPlaceEdit().destroy || empty)();
+  (wickedGrid.inPlaceEdit().destroy || empty)();
 
-  var formula = this.formula(),
+  var formula = wickedGrid.formula(),
       val = formula.val(),
       textarea,
       $textarea,
-      pane = this.pane();
+      pane = wickedGrid.pane();
 
   if (!td.isHighlighted) return; //If the td is a dud, we do not want a textarea
 
@@ -46,7 +47,23 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
     }
   };
   textarea.goToTd();
-  textarea.onkeydown = jS.evt.inPlaceEdit.keydown;
+  textarea.onkeydown = function (e) {
+    e = e || window.event;
+    wickedGrid.trigger('sheetFormulaKeydown', [true]);
+
+    switch (e.keyCode) {
+      case key.ENTER:
+        return jS.evt.inPlaceEdit.enter(e);
+        break;
+      case key.TAB:
+        return jS.evt.inPlaceEdit.tab(e);
+        break;
+      case key.ESCAPE:
+        jS.evt.cellEditAbandon();
+        return false;
+        break;
+    }
+  };
   textarea.onchange =
       textarea.onkeyup =
           function() { formula[0].value = textarea.value; };
@@ -85,5 +102,19 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
   //Make the textarea resizable automatically
   if ($.fn.elastic) {
     $(textarea).elastic();
+  }
+
+  function enter(e) {
+    if (e.shiftKey) {
+      return true;
+    }
+    return wickedGrid.cellSetActiveFromKeyCode(e, true);
+  }
+
+  function tab(e) {
+    if (e.shiftKey) {
+      return true;
+    }
+    return wickedGrid.cellSetActiveFromKeyCode(e, true);
   }
 };

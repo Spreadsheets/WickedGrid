@@ -2,7 +2,7 @@
  * The functions container of all functions used in WickedGrid
  * @namespace
  */
-WickedGrid.Functions = (function(r) {
+WickedGrid.functions = (function(r) {
 
 	r = r || function() {};
 

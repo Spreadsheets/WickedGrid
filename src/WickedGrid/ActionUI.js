@@ -2,7 +2,7 @@
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-Sheet.ActionUI = (function(document, window, Math, Number, $) {
+WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 	var ActionUI = function(jS, enclosure, cl, frozenAt) {
 		this.jS = jS;
 		this.enclosure = enclosure;

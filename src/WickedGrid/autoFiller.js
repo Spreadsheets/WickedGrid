@@ -35,4 +35,4 @@ WickedGrid.autoFiller = function(pane) {
   pane.autoFiller = jS.controls.autoFiller[jS.i] = autoFiller;
   pane.appendChild(autoFiller);
   return true;
-}
+};

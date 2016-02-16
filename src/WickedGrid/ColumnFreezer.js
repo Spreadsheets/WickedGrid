@@ -1,8 +1,8 @@
 //Creates the draggable objects for freezing cells
 WickedGrid.columnFreezer = function(wickedGrid) {
-  if (wickedGrid.isBusy()) {
-    return false;
-  }
+  if (!wickedGrid.settings.freezableCells) return false;
+  if (wickedGrid.isBusy()) return false;
+
   var pane = wickedGrid.pane(),
       actionUI = pane.actionUI,
       tBody = pane.tBody,

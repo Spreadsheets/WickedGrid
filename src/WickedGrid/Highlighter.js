@@ -2,7 +2,7 @@
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-Sheet.Highlighter = (function(document, window, $) {
+WickedGrid.Highlighter = (function(document, window, $) {
 	var Constructor = function(cssClass, cssClassBars, cssClassTabs, callBack) {
 		this.cssClass = cssClass;
 		this.cssClassBars = cssClassBars;

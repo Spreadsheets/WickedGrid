@@ -1,79 +1,119 @@
-var fs = require('fs')
-  , execSync = require('child_process').execSync
+var fs              = require('fs')
+  , execSync        = require('child_process').execSync
 
-
-//compile parsers
-//cd parser/formula
-//node ../../../jison/ports/php/php.js formula.jison
-//cd ../../
-
-//directories of the JS files
-  , inDir = './WickedGrid/'
-	, outDir = '.'
+	//directories of the JS files
+  , inDir           = './src/'
+	, outDir          = ''
 
   //these are the paths to the final combined files that you want to have in the end
-  , temp = ''
-  , result = ''
-	, wrapper = inDir + 'wrapper.js'
-  , combinedFile = outDir + 'wickedgrid.js'
-  , combinedFileMin = outDir + 'wickedgrid.min.js'
+  , temp            = ''
+  , result          = ''
+	, wrapper         = inDir + 'wrapper'
+  , combinedFile    = outDir + 'wickedgrid'
+  , combinedFileMin = outDir + 'wickedgrid.min'
 
-	, files = [
-	    //namespace first
-		  'Base.js',
-
+	, files           = [
+		  'WickedGrid',
 	    //non-constructors next
-    	'fn.js',
-    	'sheet.js',
-    	'thread.js',
-    	'utilities.js',
+			{
+				WickedGrid: [
+					'autoFiller',
+					'cellMenu',
+					'cellTypeHandlers',
+					'cl',
+					'columnFreezer',
+					'columnMenu',
+					'columnResizer',
+					'customTab',
+					'defaults',
+					'enclosure',
+					'functions',
+					'header',
+					'inPlaceEdit',
+					'menu',
+					'rowFreezer',
+					'rowMenu',
+					'rowResizer',
+					'sheetUI',
+					'spreadsheetAdder',
+					'tab',
+					'tabs',
+					'thread',
+					'utilities',
 
-			//children namespaces next
-			'Loader/HTML.js',
-			'Loader/JSON.js',
-			'Loader/XML.js',
+					//children namespaces next
+					{
+						Event: ['Cell', 'Document', 'Formula']
+					},
+					{
+						Loader: ['HTML', 'JSON', 'XML']
+					},
 
-			//constructors next
-			'ActionUI.js',
-			'Cell.js',
-			'CellHandler.js',
-			'CellTypeHandlers.js',
-			'CellRange.js',
-			'Highlighter.js',
-			'SpreadsheetUI.js',
-			'Theme.js',
+					//constructors next
+					'ActionUI',
+					'Cell',
+					'CellHandler',
+					'CellRange',
+					'Highlighter',
+					'SpreadsheetUI',
+					'Theme'
+				]
+			},
+
+		  //jQuery plugin
+			'jQuery.wickedGrid',
 
 			//environment correction last
-			'environmentCorrection.js'
+			'environmentCorrection'
     ]
 	, parserFiles = [
-			'parser/formula/formula.js',
-			'parser/tsv/tsv.js'
+			'parser/formula/formula',
+			'parser/tsv/tsv'
 		]
   ;
 
+function pathify(path, cb, prefix) {
+	prefix = prefix || '';
+	if (path.constructor === Array) {
+		path.forEach(function(file) {
+			pathify(file, cb, prefix);
+		});
+	} else if (typeof path === 'object') {
+		for (var p in path) {
+			if (path.hasOwnProperty(p)) {
+				pathify(path[p], cb, prefix + (prefix ? '/' : '') + p + '/');
+			}
+		}
+	} else if (typeof path === 'string') {
+		cb(prefix + path);
+	}
+}
+
 //run through the JS files
-files.forEach(function(file) {
-	temp += fs.readFileSync(inDir + file, 'utf8').toString();
+pathify(files, function(file) {
+	temp += fs.readFileSync(inDir + file + '.js', 'utf8').toString() + '\n';
 });
 
-result = fs.readFileSync(wrapper, 'utf8').toString().replace('CODE_HERE', function() { return temp; });
+result = fs.readFileSync(wrapper + '.js', 'utf8').toString()
+	.replace('CODE_HERE', function() {
+		return temp;
+	});
 
 //run through the parser files
 parserFiles.forEach(function(file) {
-  result += fs.readFileSync(file, 'utf8').toString();
+  result += fs.readFileSync(file + '.js', 'utf8').toString();
 });
 
-fs.writeFileSync(combinedFile, result);
+fs.writeFileSync(combinedFile + '.js', result);
 
 //compress it
 
 //add the file to the git base
-execSync('git add ' + combinedFile);
+execSync('git add ' + combinedFile + '.js');
 
 try {
-  execSync('yui-compressor -o ' + combinedFileMin + ' ' + combinedFile);
-  execSync('git add ' + combinedFileMin);
+  execSync('yui-compressor -o ' + combinedFileMin + ' ' + combinedFile + '.js');
+  execSync('git add ' + combinedFileMin + '.js');
 } catch (e) {
   console.log('WARNING: attempted to use yui-compressor, but it is not installed correctly');
 }

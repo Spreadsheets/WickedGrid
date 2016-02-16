@@ -1,4 +1,4 @@
-Sheet.CellRange = (function() {
+WickedGrid.CellRange = (function() {
 	function Constructor(cells) {
 		this.cells = cells || [];
 	}
