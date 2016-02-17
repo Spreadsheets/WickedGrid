@@ -4,8 +4,8 @@
  */
 function WickedGrid(settings) {
   this.settings = settings;
-  this.parent = settings.element;
-  this.cl = WickedGrid.cl;
+  this.element = settings.element;
+  this.$element = $(settings.element);
   this.tsv = new TSV();
   this.calcStack = 0;
   /**
@@ -107,6 +107,8 @@ function WickedGrid(settings) {
   this.spreadsheets = [];
 
   var self = this,
+    element = this.element,
+    $element = this.$element,
     children = [],
     $window = $(window),
     u = undefined,
@@ -153,14 +155,14 @@ function WickedGrid(settings) {
     //self.pane().actionUI.redraw();
   });
 
-  //We need to take the sheet out of the parent in order to get an accurate reading of it's height and width
-  while (parent.firstChild !== null) {
-    children.push(parent.removeChild(parent.firstChild));
+  //We need to take the sheet out of the element in order to get an accurate reading of it's height and width
+  while (element.firstChild !== null) {
+    children.push(element.removeChild(element.firstChild));
   }
 
-  parent.className += ' ' + this.cl.parent;
+  element.className += ' ' + WickedGrid.cl.element;
 
-  parent
+  $element
     .bind('sheetSwitch', function (e, js, i) {
       self.switchSheet(i);
     })
@@ -169,8 +171,8 @@ function WickedGrid(settings) {
     });
 
   //Use the setting height/width if they are there, otherwise use parent's
-  this.width = settings.width || parent.clientWidth;
-  this.height = settings.height || parent.clientHeight;
+  this.width = settings.width || element.clientWidth;
+  this.height = settings.height || element.clientHeight;
 
   // Drop functions if they are not needed & save time in recursion
   if (!$.nearest) {
@@ -192,8 +194,8 @@ function WickedGrid(settings) {
   $window
     .resize(function () {
       if (!self.isBusy()) { //We check because this might have been killed
-        self.width = parent.width();
-        self.height = parent.height();
+        self.width = element.clientWidth;
+        self.height = parent.clientHeight;
         self.sheetSyncSize();
       }
     })
@@ -209,14 +211,14 @@ function WickedGrid(settings) {
     WickedGrid.fn = $.extend(WickedGrid.functions, WickedGrid.plugin.finance);
   }
 
-  settings.title = settings.title || parent.getAttribute('title') || '';
+  settings.title = settings.title || element.getAttribute('title') || '';
 
   this.parseFormula = (settings.useMultiThreads ? this.parseFormulaAsync : this.parseFormulaSync);
 
-  parent.className += ' ' + this.theme.parent;
+  element.className += ' ' + this.theme.parent;
 
   if (settings.loader === null) {
-    settings.loader = new WickedGrid.Loader.HTML(children);
+    settings.loader = new WickedGrid.loader.HTML(children);
   }
 
   this.loader = settings.loader
@@ -332,8 +334,8 @@ WickedGrid.prototype = {
   panes:function () {
     return this.controls.panes || $([]);
   },
-  parent:function () {
-    return s.parent;
+  element:function () {
+    return this.settings.element;
   },
   scrolls:function () {
     return this.controls.scrolls || $([]);
@@ -353,37 +355,14 @@ WickedGrid.prototype = {
   title:function () {
     return this.controls.title || $([]);
   },
-  /**
-   * Messages for user interface
-   * @type {Object}
-   */
-  msg:{
-    addRowMulti:'How many rows would you like to add?',
-    addColumnMulti:'How many columns would you like to add?',
-    cellFind:'What are you looking for in this spreadsheet?',
-    cellNoFind:'No results found.',
-    dragToFreezeCol:'Drag to freeze column',
-    dragToFreezeRow:'Drag to freeze row',
-    addSheet:'Add a spreadsheet',
-    openSheet:'Are you sure you want to open a different sheet?  All unsaved changes will be lost.',
-    toggleHideRow:'No row selected.',
-    toggleHideColumn:'No column selected.',
-    loopDetected:'Loop Detected',
-    newSheetTitle:'What would you like the sheet\'s title to be?',
-    notFoundColumn:'Column not found',
-    notFoundRow:'Row not found',
-    notFoundSheet:'Sheet not found',
-    setCellRef:'Enter the name you would like to reference the cell by.',
-    sheetTitleDefault:'Spreadsheet {index}',
-    cellLoading: 'Loading...'
-  },
 
   /**
    * Deletes a WickedGrid instance
    */
   kill:function () {
     var i = WickedGrid.instance.indexOf(this),
-      parent = this.parent;
+      element = this.element,
+      $element = $(element);
 
     if (i < 0) return false;
 
@@ -391,14 +370,14 @@ WickedGrid.prototype = {
     this.fullScreen().remove();
     (this.inPlaceEdit().destroy || empty)();
 
-    parent
+    $element
       .trigger('sheetKill')
-      .removeClass(this.theme.parent)
+      .removeClass(this.theme.element)
       .html('');
 
     this.menus().remove();
 
-    WickedGrid.events.forEach(parent.unbind);
+    WickedGrid.events.forEach($element.unbind);
 
     WickedGrid.instance.splice(i, 1);
 
@@ -421,7 +400,7 @@ WickedGrid.prototype = {
    * @param {Number} sheetIndex
    * @param {Number} rowIndex
    * @param {Number} columnIndex
-   * @returns {Sheet.Cell|Null}
+   * @returns {WickedGrid.Cell|Null}
    */
   getCell: function (sheetIndex, rowIndex, columnIndex) {
     var spreadsheet, row, cell;
@@ -437,7 +416,7 @@ WickedGrid.prototype = {
       return null;
     }
 
-    if (cell.typeName !== 'Sheet.Cell') {
+    if (cell.typeName !== 'WickedGrid.Cell') {
       throw new Error('Wrong Constructor');
     }
 
@@ -609,7 +588,7 @@ WickedGrid.prototype = {
    * @param {Boolean} nav Instance index
    */
   setNav:function (nav) {
-    var instance = $.sheet.instance;
+    var instance = WickedGrid.instance;
     for(var i = 0; i < instance.length; i++) {
       (instance[i] || {}).nav = false;
     }
@@ -931,9 +910,9 @@ WickedGrid.prototype = {
    * @returns {Boolean}
    */
   isSheetEditable:function (i) {
-    i = i || jS.i;
+    i = i || this.i;
     return (
-        s.editable == true && !jS.readOnly[i]
+        this.settings.editable == true && !this.readOnly[i]
     );
   },
 
@@ -980,7 +959,7 @@ WickedGrid.prototype = {
           fullScreen = document.createElement('div'),
           events = $._data(s.parent[0], 'events');
 
-      fullScreen.className = this.cl.fullScreen + ' ' + this.theme.fullScreen + ' ' + this.cl.parent;
+      fullScreen.className = WickedGrid.cl.fullScreen + ' ' + this.theme.fullScreen + ' ' + WickedGrid.cl.parent;
 
       fullScreen.origParent = parent;
       s.parent = jS.controls.fullScreen = $(fullScreen)
@@ -1777,7 +1756,7 @@ WickedGrid.prototype = {
   },
   /**
    * Updates the label so that the user knows where they are currently positioned
-   * @param {Sheet.Cell|*} entity
+   * @param {WickedGrid.Cell|*} entity
    */
   labelUpdate:function (entity) {
     if (entity instanceof WickedGrid.Cell) {
@@ -1832,7 +1811,7 @@ WickedGrid.prototype = {
 
   /**
    * sets cell active to sheet, and highlights it for the user, shouldn't be called directly, should use cellEdit
-   * @param {Sheet.Cell} cell
+   * @param {WickedGrid.Cell} cell
    * @param {Boolean} [isDrag] should be determined by if the user is dragging their mouse around setting cells
    * @param {Boolean} [directional] makes highlighting directional, only left/right or only up/down
    * @param {Function} [fnDone] called after the cells are set active
@@ -1841,35 +1820,36 @@ WickedGrid.prototype = {
   cellSetActive:function (cell, isDrag, directional, fnDone, doNotClearHighlighted) {
     var td = cell.td;
 
-    jS.cellLast = cell;
+    this.cellLast = cell;
 
-    jS.rowLast = cell.rowIndex;
-    jS.colLast = cell.columnIndex;
+    this.rowLast = cell.rowIndex;
+    this.colLast = cell.columnIndex;
 
     if (!doNotClearHighlighted) {
-      jS.highlighter
+      this.highlighter
           .set(cell.td) //highlight the cell and bars
           .setStart(cell)
           .setEnd(cell);
     }
 
-    jS.highlighter
+    this.highlighter
         .setBar('left', td.parentNode.children[0])
         .setBar('top', td.parentNode.parentNode.children[0].children[td.cellIndex]);
 
-    var selectModel,
+    var self = this,
+        selectModel,
         clearHighlightedModel;
 
     switch (s.cellSelectModel) {
-      case Sheet.excelSelectModel:
-      case Sheet.googleDriveSelectModel:
+      case WickedGrid.excelSelectModel:
+      case WickedGrid.googleDriveSelectModel:
         selectModel = function () {};
         clearHighlightedModel = function() {};
         break;
-      case Sheet.openOfficeSelectModel:
+      case WickedGrid.openOfficeSelectModel:
         selectModel = function (target) {
-          if (jS.isCell(target)) {
-            jS.cellEdit(target);
+          if (this.isCell(target)) {
+            this.cellEdit(target);
           }
         };
         clearHighlightedModel = function () {};
@@ -1888,11 +1868,11 @@ WickedGrid.prototype = {
 
         var target = e.target || e.srcElement;
 
-        if (jS.isBusy() || !jS.isCell(target)) {
+        if (self.isBusy() || !self.isCell(target)) {
           return false;
         }
 
-        var touchedCell = jS.cellFromTd(target),
+        var touchedCell = self.cellFromTd(target),
             ok = true;
 
         if (directional) {
@@ -1907,12 +1887,12 @@ WickedGrid.prototype = {
           selectModel(target);
 
           //highlight the cells
-          jS.cycleTableArea(function (tds) {
+          self.cycleTableArea(function (tds) {
             highlighter.set(tds);
           }, td, target, true);
         }
 
-        jS.followMe(target);
+        self.followMe(target);
 
         var mouseY = e.clientY,
             mouseX = e.clientX,
@@ -1940,7 +1920,7 @@ WickedGrid.prototype = {
           }
           //table tbody tr td
           previous = target.parentNode.parentNode.children[up].children[left];
-          jS.followMe(previous, true);
+          self.followMe(previous, true);
         }
 
         lastTouchedColumnIndex = touchedCell.columnIndex;
@@ -2427,21 +2407,21 @@ WickedGrid.prototype = {
    * @param {Function} [callback]
    * @returns {String}
    */
-  sheetTab:function (get, callback) {
+  sheetTab:function (_get, callback) {
     var sheetTab = '';
-    if (get) {
-      sheetTab = s.loader.title(jS.i) || jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1);
+    if (_get) {
+      sheetTab = this.loader.title(jS.i) || WickedGrid.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1);
       if (callback) {
         callback(sheetTab);
       }
       return sheetTab;
-    } else if (jS.isSheetEditable() && s.editableNames) { //ensure that the sheet is editable, then let them change the sheet's name
-      s.prompt(
-          jS.msg.newSheetTitle,
+    } else if (this.isSheetEditable() && s.editableNames) { //ensure that the sheet is editable, then let them change the sheet's name
+      this.settings.prompt(
+          WickedGrid.msg.newSheetTitle,
           function(newTitle) {
             if (!newTitle) { //The user didn't set the new tab name
               sheetTab = s.loader.title(jS.i);
-              newTitle = (sheetTab ? sheetTab : jS.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
+              newTitle = (sheetTab ? sheetTab : WickedGrid.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
             } else {
               jS.setDirty(true);
               this.table().attr('title', newTitle);
@@ -2598,31 +2578,34 @@ WickedGrid.prototype = {
    * opens a spreadsheet into the active sheet instance
    */
   openSheet:function () {
-    var loader = this.loader,
+    var self = this,
+      loader = this.loader,
+      element = this.element,
+      $element = this.$element,
       count = loader.count,
       lastIndex = count - 1,
       open = function() {
-        jS.setBusy(true);
-        jS.s.loader = loader;
-        var header = jS.controlFactory.header(),
-            ui = jS.controlFactory.ui(),
-            sheetAdder = jS.controlFactory.sheetAdder(),
-            tabContainer = jS.controlFactory.tabContainer(),
+        self.setBusy(true);
+        self.loader = loader;
+        var header = WickedGrid.header(self),
+            ui = WickedGrid.ui(self),
+            sheetAdder = WickedGrid.spreadsheetAdder(self),
+            tabContainer = WickedGrid.tabs(self),
             i,
             options = {
               initChildren: function(ui, i) {
-                jS.controlFactory.sheetUI(ui, i);
-                jS.trigger('sheetOpened', [i]);
+                WickedGrid.sheetUI(self, ui, i);
+                self.trigger('sheetOpened', [i]);
               },
               done: function(stack) {
-                jS.sheetSyncSize();
+                self.sheetSyncSize();
 
-                jS.setActiveSheet(0);
+                self.setActiveSheet(0);
 
-                jS.setDirty(false);
-                jS.setBusy(false);
+                self.setDirty(false);
+                self.setBusy(false);
 
-                jS.trigger('sheetAllOpened');
+                self.trigger('sheetAllOpened');
               },
               lastIndex: lastIndex
             },
@@ -2638,18 +2621,17 @@ WickedGrid.prototype = {
         tabContainer.header = header;
         tabContainer.ui = ui;
 
-        s.parent
-            .append(header)
-            .append(ui)
-            .append(sheetAdder)
-            .append(tabContainer);
+        element.appendChild(header);
+        element.appendChild(ui);
+        element.appendChild(sheetAdder);
+        element.appendChild(tabContainer);
 
         // resizable container div
-        jS.resizableSheet(s.parent, {
-          minWidth:s.parent.width() * 0.1,
-          minHeight:s.parent.height() * 0.1,
+        self.resizableSheet($element, {
+          minWidth: element.clientWidth * 0.1,
+          minHeight: element.clientHeight * 0.1,
           start:function () {
-            jS.setBusy(true);
+            self.setBusy(true);
             this.ui.removeChild(this.enclosure());
             ui.sheetAdder.hide();
             ui.tabContainer.hide();
@@ -2658,8 +2640,10 @@ WickedGrid.prototype = {
             this.ui.appendChild(this.enclosure());
             ui.sheetAdder.show();
             ui.tabContainer.show();
-            jS.setBusy(false);
-            jS.sheetSyncSize();
+            self
+                .setBusy(false)
+                .sheetSyncSize();
+
             var pane = this.pane();
             if (pane.inPlaceEdit) {
               pane.inPlaceEdit.goToTd();
@@ -2667,22 +2651,22 @@ WickedGrid.prototype = {
           }
         });
 
-        jS.insertSheet = function(data, i, makeVisible) {
-          jS.sheetCount++;
+        self.insertSheet = function(data, i, makeVisible) {
+          self.sheetCount++;
           data = data || null;
           makeVisible = makeVisible !== u ? makeVisible : true;
-          i = i || jS.sheetCount - 1;
+          i = i || self.sheetCount - 1;
 
           if (data !== null) {
             s.loader.addSpreadsheet(data);
           }
 
           var showSpreadsheet = function() {
-              jS.setBusy(true);
-              var spreadsheetUI = new Sheet.SpreadsheetUI(i, ui, options);
-              jS.setActiveSheet(-1, spreadsheetUI);
-              jS.setBusy(false);
-              jS.sheetSyncSize();
+              self.setBusy(true);
+              var spreadsheetUI = new WickedGrid.SpreadsheetUI(i, ui, options);
+              self.setActiveSheet(-1, spreadsheetUI);
+              self.setBusy(false);
+              self.sheetSyncSize();
             },
             tab;
 
@@ -2691,7 +2675,7 @@ WickedGrid.prototype = {
             return;
           }
 
-          tab = jS.controlFactory.customTab(loader.title(i))
+          tab = WickedGrid.customTab(loader.title(i))
               .mousedown(function () {
                 showSpreadsheet();
                 this.tab().insertBefore(this);
@@ -2705,23 +2689,23 @@ WickedGrid.prototype = {
         };
 
         //always load at least the first spreadsheet
-        firstSpreadsheetUI = new Sheet.SpreadsheetUI(0, ui, options);
-        jS.sheetCount++;
+        firstSpreadsheetUI = new WickedGrid.SpreadsheetUI(0, ui, options);
+        self.sheetCount++;
 
         if (count > 0) {
           //set the others up to load on demand
           for (i = 1; i < count; i++) {
-            jS.insertSheet(null, i, false);
+            self.insertSheet(null, i, false);
           }
-          jS.i = 0;
+          self.i = 0;
 
           firstSpreadsheetUI.loaded();
         }
       };
 
-    if (jS.isDirty) {
-      s.confirm(
-        jS.msg.openSheet,
+    if (this.isDirty) {
+      this.settings.confirm(
+        WickedGrid.msg.openSheet,
         open
       );
     } else {
@@ -2736,7 +2720,7 @@ WickedGrid.prototype = {
    */
   newSheet:function () {
     s.parent
-      .html($.sheet.makeTable())
+      .html(self.makeTable())
       .sheet(s);
   },
 
@@ -2745,10 +2729,11 @@ WickedGrid.prototype = {
    * @function sheetSyncSize
    */
   sheetSyncSize:function () {
-    var $parent = s.parent,
-      parent = $parent[0],
-      h = parent.clientHeight,
-      w = parent.clientWidth,
+    var s = this.settings,
+      element = s.element,
+      $element = s.$element,
+      h = element.clientHeight,
+      w = element.clientWidth,
       $tabContainer = this.tabContainer(),
       tabContainer = $tabContainer[0],
       tabContainerStyle = tabContainer.style,
@@ -2766,10 +2751,10 @@ WickedGrid.prototype = {
 
     if (!h) {
       h = 400; //Height really needs to be set by the parent
-      $parent.height(h);
+      $element.height(h);
     } else if (h < 200) {
       h = 200;
-      $parent.height(h);
+      $element.height(h);
     }
     tabContainerScrollLeft = tabContainer.scrollLeft;
     tabContainerStyle.width = '';
@@ -2779,11 +2764,11 @@ WickedGrid.prototype = {
     heightTabContainer = ((s.colMargin + scrollBarWidth) + 'px');
     if (tabContainerInnerWidth > tabContainerOuterWidth) {
       tabContainerStyle.height = heightTabContainer;
-      $tabContainer.addClass(this.cl.tabContainerScrollable);
+      $tabContainer.addClass(WickedGrid.cl.tabContainerScrollable);
       h -= scrollBarWidth;
     } else {
       tabContainerStyle.height = null;
-      $tabContainer.removeClass(this.cl.tabContainerScrollable);
+      $tabContainer.removeClass(WickedGrid.cl.tabContainerScrollable);
     }
     tabContainerStyle.width = widthTabContainer;
     tabContainer.scrollLeft = tabContainerScrollLeft;
@@ -2810,6 +2795,8 @@ WickedGrid.prototype = {
 
     uiStyle.height = standardHeight;
     uiStyle.width = standardWidth;
+
+    return this;
   },
 
   /**
@@ -3750,7 +3737,7 @@ WickedGrid.prototype = {
       pDoc.write('<html>\
 	<head id="head"></head>\
 	<body>\
-		<div id="entry" class="' + this.cl.parent + '" style="overflow: show;">\
+		<div id="entry" class="' + WickedGrid.cl.parent + '" style="overflow: show;">\
 		</div>\
 	</body>\
 </html>');
@@ -3935,7 +3922,7 @@ WickedGrid.prototype = {
 
     //use the sheet's parser if there aren't many calls in the callStack
     else {
-      formulaParser = Sheet.defaultFormulaParser;
+      formulaParser = WickedGrid.defaultFormulaParser;
     }
 
     formulaParser.yy.types = [];
@@ -3944,16 +3931,16 @@ WickedGrid.prototype = {
   },
 
   parseFormulaSync: function(formula, callback) {
-    if (Sheet.defaultFormulaParser === null) {
-      Sheet.defaultFormulaParser = Formula();
+    if (WickedGrid.defaultFormulaParser === null) {
+      WickedGrid.defaultFormulaParser = Formula();
     }
 
-    var formulaParser = Sheet.formulaParser(Sheet.calcStack);
+    var formulaParser = WickedGrid.formulaParser(WickedGrid.calcStack);
     callback(formulaParser.parse(formula));
   },
 
   parseFormulaAsync: function(formula, callback) {
-    var thread = Sheet.thread();
+    var thread = WickedGrid.thread();
 
     if (thread.busy) {
       thread.stash.push(function() {
@@ -3978,7 +3965,3 @@ WickedGrid.prototype = {
     }
   }
 };
-
-WickedGrid.Event = {};
-WickedGrid.Loader = {};
-WickedGrid.Plugin = {};

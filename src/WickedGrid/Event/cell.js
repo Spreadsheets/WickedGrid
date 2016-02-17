@@ -1,4 +1,4 @@
-WickedGrid.Event.Cell = (function() {
+WickedGrid.event.Cell = (function() {
   function Cell(wickedGrid) {
     this.wickedGrid = wickedGrid;
   }

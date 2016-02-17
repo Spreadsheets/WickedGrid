@@ -377,7 +377,7 @@ $.fn.extend({
     }
 
     $(this).each(function () {
-      var parent = this,
+      var element = this,
         me = $(this),
         instance = me.getWickedGrid();
 
@@ -393,7 +393,7 @@ $.fn.extend({
         WickedGrid.events.forEach(me.unbind);
       }
 
-      settings.parent = parent;
+      settings.element = element;
 
       if ((this.className || '').match(/\bnot-editable\b/i) != null) {
         settings.editable = false;
@@ -403,7 +403,7 @@ $.fn.extend({
           me.bind(event, settings[event]);
       });
 
-      me.children().each(function() {
+      me.children().each(function(i) {
         //override frozenAt settings with table's data-frozenatrow and data-frozenatcol
         var frozenAtRow = this.getAttribute('data-frozenatrow') * 1,
             frozenAtCol = this.getAttribute('data-frozenatcol') * 1;
@@ -419,7 +419,7 @@ $.fn.extend({
         }
       });
 
-      new WickedGrid.createInstance(settings);
+      new WickedGrid(settings);
     });
 
     return this;

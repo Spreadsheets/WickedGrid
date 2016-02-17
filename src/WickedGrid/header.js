@@ -15,7 +15,7 @@ WickedGrid.header = function(wickedGrid) {
       formula,
       formulaParent;
 
-  header.className = wickedGrid.cl.header + ' ' + wickedGrid.theme.control;
+  header.className = WickedGrid.cl.header + ' ' + wickedGrid.theme.control;
 
   wickedGrid.controls.header = $(header);
 
@@ -24,18 +24,19 @@ WickedGrid.header = function(wickedGrid) {
       s.title = wickedGrid.title(I);
     }
 
-    title.className = wickedGrid.cl.title;
+    title.className = WickedGrid.cl.title;
     wickedGrid.controls.title = $(title).html(s.title)
   } else {
-    $(title).hide();
+    title.style.display = 'none';
   }
+
   header.appendChild(title);
 
-  if (this.isSheetEditable()) {
+  if (wickedGrid.isSheetEditable()) {
     if (s.menu) {
       menu = document.createElement('div');
       $menu = $(menu);
-      menu.className = wickedGrid.cl.menu + ' ' + wickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed;
+      menu.className = WickedGrid.cl.menu + ' ' + WickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed;
       header.appendChild(menu);
 
       wickedGrid.controls.menu[wickedGrid.i] = $menu
@@ -49,13 +50,13 @@ WickedGrid.header = function(wickedGrid) {
     }
 
     label = document.createElement('td');
-    label.className = wickedGrid.cl.label + ' ' + wickedGrid.theme.control;
+    label.className = WickedGrid.cl.label + ' ' + wickedGrid.theme.control;
     wickedGrid.controls.label = $(label);
 
     //Edit box menu
     formula = document.createElement('textarea');
-    formula.className = wickedGrid.cl.formula + ' ' + wickedGrid.theme.controlTextBox;
-    formula.onkeydown = wickedGrid.evt.formula.keydown;
+    formula.className = WickedGrid.cl.formula + ' ' + wickedGrid.theme.controlTextBox;
+    formula.onkeydown = WickedGrid.event.formula.keydown;
     formula.onkeyup = function () {
       wickedGrid.inPlaceEdit().value = this.value;
     };
@@ -112,7 +113,7 @@ WickedGrid.header = function(wickedGrid) {
 
     wickedGrid.setNav(true);
 
-    $(document).keydown(WickedGrid.document.keydown);
+    $(document).keydown(WickedGrid.event.document.keydown);
   }
 
   return header;

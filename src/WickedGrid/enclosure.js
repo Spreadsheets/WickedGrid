@@ -2,11 +2,11 @@
 WickedGrid.enclosure = function(wickedGrid) {
   var enclosure = document.createElement('div'),
       $enclosure = $(enclosure),
-      actionUI = new Sheet.ActionUI(jS, enclosure, this.cl.scroll, wickedGrid.settings.frozenAt[wickedGrid.i]),
+      actionUI = new WickedGrid.ActionUI(wickedGrid, enclosure, this.cl.scroll, wickedGrid.settings.frozenAt[wickedGrid.i]),
       pane = actionUI.pane;
 
-  pane.className = wickedGrid.cl.pane + ' ' + wickedGrid.theme.pane;
-  enclosure.className = wickedGrid.cl.enclosure;
+  pane.className = WickedGrid.cl.pane + ' ' + wickedGrid.theme.pane;
+  enclosure.className = WickedGrid.cl.enclosure;
 
   enclosure.pane = pane;
 

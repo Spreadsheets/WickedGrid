@@ -1,4 +1,4 @@
-WickedGrid.Plugin.advanced = (function (fns) {
+WickedGrid.plugin.advanced = (function (fns) {
   function sum(arr) {
     arr = sanitize(arr);
     var sum = 0,

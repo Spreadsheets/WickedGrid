@@ -4,6 +4,16 @@
  * @type {Object}
  */
 WickedGrid.cl = {
+  list: function(list) {
+    var result = [],
+        self = WickedGrid.cl;
+    list.forEach(function(prop) {
+      if (!self.hasOwnProperty(prop)) throw new Error('prop ' + prop + ' not found on WickedGrid.cl');
+      result.push(self[prop]);
+    });
+
+    return result.join(' ');
+  },
   autoFiller: 'wg-auto-filler',
   autoFillerHandle: 'wg-auto-filler-handle',
   autoFillerCover: 'wg-auto-filler-cover',

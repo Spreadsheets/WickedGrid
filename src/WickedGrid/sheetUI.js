@@ -5,7 +5,7 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
   //TODO: readOnly from metadata
   //jS.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
 
-  var enclosure = WickedGrid.enclosure(),
+  var enclosure = WickedGrid.enclosure(wickedGrid),
       pane = enclosure.pane,
       $pane = $(pane),
       paneContextmenuEvent = function (e) {

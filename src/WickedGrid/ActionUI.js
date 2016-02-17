@@ -3,8 +3,8 @@
  * Creates the scrolling system used by each spreadsheet
  */
 WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
-	var ActionUI = function(jS, enclosure, cl, frozenAt) {
-		this.jS = jS;
+	var ActionUI = function(wickedGrid, enclosure, cl, frozenAt) {
+		this.wickedGrid = wickedGrid;
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
 		this.active = true;
@@ -17,14 +17,14 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 		this.frozenAt.row = Math.max(this.frozenAt.row, 0);
 		this.frozenAt.col = Math.max(this.frozenAt.col, 0);
 
-		jS.s.loader.bindActionUI(jS.i, this);
+		wickedGrid.loader.bindActionUI(wickedGrid.i, this);
 
-		this.hiddenRows = jS.s.loader.hiddenRows(this);
+		this.hiddenRows = wickedGrid.loader.hiddenRows(this);
 		this.visibleRows = [];
-		this.hiddenColumns = jS.s.loader.hiddenColumns(this);
+		this.hiddenColumns = wickedGrid.loader.hiddenColumns(this);
 		this.visibleColumns = [];
 
-		this.loader = jS.s.loader;
+		this.loader = wickedGrid.loader;
 
 		this
 			.setupVisibleRows()
@@ -48,8 +48,8 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 			},
 
 			megaTable = this.megaTable = new MegaTable({
-				columns: Sheet.domColumns,
-				rows: Sheet.domRows,
+				columns: WickedGrid.domColumns,
+				rows: WickedGrid.domRows,
 				element: pane,
 				updateCell: this._updateCell = function(rowVisibleIndex, columnVisibleIndex, td) {
 					var rowIndex = (that.visibleRows.length === 0 ? rowVisibleIndex : that.visibleRows[rowVisibleIndex]),
@@ -60,11 +60,11 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 						td.jSCell.td = null;
 					}
 
-					var cell = jS.getCell(jS.i, rowIndex, columnIndex);
+					var cell = wickedGrid.getCell(wickedGrid.i, rowIndex, columnIndex);
 
 					if (cell === null) return;
 
-					var spreadsheet = jS.spreadsheets[jS.i] || (jS.spreadsheets[jS.i] = []),
+					var spreadsheet = wickedGrid.spreadsheets[wickedGrid.i] || (wickedGrid.spreadsheets[wickedGrid.i] = []),
 						row = spreadsheet[rowIndex] || (spreadsheet[rowIndex] = []);
 
 					if (!row[columnIndex]) {
@@ -87,7 +87,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					th.index = -1;
 					th.entity = 'corner';
 					th.col = col;
-					th.className = jS.cl.barCorner + ' ' + jS.theme.bar;
+					th.className = WickedGrid.cl.barCorner + ' ' + wickedGrid.theme.bar;
 				},
 				updateRowHeader: this._updateRowHeader = function(rowVisibleIndex, header) {
 					var rowIndex,
@@ -107,9 +107,9 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 
 					header.index = rowIndex;
 					header.entity = 'left';
-					header.className = jS.cl.barLeft + ' ' + jS.theme.bar;
+					header.className = WickedGrid.cl.barLeft + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
-					header.parentNode.style.height = header.style.height = loader.getHeight(jS.i, rowIndex) + 'px';
+					header.parentNode.style.height = header.style.height = loader.getHeight(wickedGrid.i, rowIndex) + 'px';
 				},
 				updateColumnHeader: this._updateColumnHeader = function(columnVisibleIndex, header, col) {
 					var columnIndex,
@@ -117,23 +117,23 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 
 					if (that.visibleColumns.length === 0) {
 						columnIndex = columnVisibleIndex;
-						label = document.createTextNode(jS.cellHandler.columnLabelString(columnIndex));
+						label = document.createTextNode(wickedGrid.cellHandler.columnLabelString(columnIndex));
 					} else {
 						if (columnVisibleIndex >= that.visibleColumns.length) {
 							columnIndex = columnVisibleIndex + that.hiddenColumns.length;
 						} else {
 							columnIndex = that.visibleColumns[columnVisibleIndex];
 						}
-						label = document.createTextNode(jS.cellHandler.columnLabelString(columnIndex));
+						label = document.createTextNode(wickedGrid.cellHandler.columnLabelString(columnIndex));
 					}
 
 					header.index = columnIndex;
 					header.th = header;
 					header.col = col;
 					header.entity = 'top';
-					header.className = jS.cl.barTop + ' ' + jS.theme.bar;
+					header.className = WickedGrid.cl.barTop + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
-					col.style.width = loader.getWidth(jS.i, columnIndex) + 'px';
+					col.style.width = loader.getWidth(wickedGrid.i, columnIndex) + 'px';
 				}
 			}),
 
@@ -151,7 +151,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 
 		new MouseWheel(pane, infiniscroll._out);
 
-		megaTable.table.className += ' ' + jS.cl.table + ' ' + jS.theme.table;
+		megaTable.table.className += ' ' + WickedGrid.cl.table + ' ' + wickedGrid.theme.table;
 		megaTable.table.setAttribute('cellSpacing', '0');
 		megaTable.table.setAttribute('cellPadding', '0');
 		pane.scroll = infiniscroll._out;
@@ -265,8 +265,8 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 		},
 
 		hide: function() {
-			var jS = this.jS,
-				ui = jS.obj.ui,
+			var wickedGrid = this.wickedGrid,
+				ui = wickedGrid.ui,
 				pane = this.pane,
 				parent = pane.parentNode,
 				infiniscroll = this.infiniscroll;
@@ -281,8 +281,8 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 		},
 
 		show: function() {
-			var jS = this.jS,
-				ui = jS.obj.ui,
+			var wickedGrid = this.wickedGrid,
+				ui = wickedGrid.ui,
 				pane = this.pane,
 				parent = pane.parentNode,
 				infiniscroll = this.infiniscroll;
@@ -494,7 +494,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 			var i = 0,
 				visibleRows = this.visibleRows = [],
 				hiddenRows = this.hiddenRows,
-				max = this.loader.size(this.jS.i).rows;
+				max = this.loader.size(this.wickedGrid.i).rows;
 
 			for (;i < max; i++) {
 				if (hiddenRows.indexOf(i) < 0) {
@@ -508,7 +508,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 			var i = 0,
 				visibleColumns = this.visibleColumns = [],
 				hiddenColumns = this.hiddenColumns,
-				max = this.loader.size(this.jS.i).cols;
+				max = this.loader.size(this.wickedGrid.i).cols;
 
 			for (;i < max; i++) {
 				if (hiddenColumns.indexOf(i) < 0) {

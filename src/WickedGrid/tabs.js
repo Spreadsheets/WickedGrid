@@ -1,8 +1,10 @@
 //Creates the tab interface
 WickedGrid.tabs = function(wickedGrid) {
   var tabContainer = document.createElement('span'),
+      $tabContainer = $(tabContainer),
       startPosition;
-  tabContainer.setAttribute('class', wickedGrid.cl.tabContainer);
+  wickedGrid.controls.tabContainer = $tabContainer;
+  tabContainer.setAttribute('class', WickedGrid.cl.tabContainer);
 
   tabContainer.onmousedown = function (e) {
     e = e || window.event;
@@ -23,21 +25,21 @@ WickedGrid.tabs = function(wickedGrid) {
   };
 
   if (wickedGrid.isSheetEditable() && $.fn.sortable) {
-    return wickedGrid.controls.tabContainer = $(tabContainer).sortable({
-      placeholder:'ui-state-highlight',
-      axis:'x',
-      forceHelperSize:true,
-      forcePlaceholderSize:true,
-      opacity:0.6,
-      start:function (e, ui) {
+    $tabContainer.sortable({
+      placeholder: 'ui-state-highlight',
+      axis: 'x',
+      forceHelperSize: true,
+      forcePlaceholderSize: true,
+      opacity: 0.6,
+      start: function (e, ui) {
         startPosition = ui.item.index();
         wickedGrid.trigger('sheetTabSortStart', [e, ui]);
       },
-      update:function (e, ui) {
+      update: function (e, ui) {
         wickedGrid.trigger('sheetTabSortUpdate', [e, ui, startPosition]);
       }
     });
   }
 
-  return wickedGrid.controls.tabContainer = $(tabContainer);
+  return tabContainer;
 };

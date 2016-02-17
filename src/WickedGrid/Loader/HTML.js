@@ -1,4 +1,4 @@
-WickedGrid.Loader.HTML = (function($, document, String) {
+WickedGrid.loader.HTML = (function($, document, String) {
 	"use strict";
 	function HTML(tables) {
 		if (tables !== undefined) {
@@ -56,11 +56,11 @@ WickedGrid.Loader.HTML = (function($, document, String) {
 			columns = table.querySelectorAll('col');
 
 			if (columns.length > columnIndex) {
-				width = columns[columnIndex].style.width.replace('px', '') || Sheet.defaultColumnWidth;
+				width = columns[columnIndex].style.width.replace('px', '') || WickedGrid.defaultColumnWidth;
 				return width * 1;
 			}
 
-			return Sheet.defaultColumnWidth;
+			return WickedGrid.defaultColumnWidth;
 		},
 		getHeight: function(sheetIndex, rowIndex) {
 			var tables = this.tables,

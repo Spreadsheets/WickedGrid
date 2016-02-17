@@ -1,4 +1,4 @@
-WickedGrid.Loader.XML = (function($, document) {
+WickedGrid.loader.XML = (function($, document) {
 	"use strict";
 
 	/**

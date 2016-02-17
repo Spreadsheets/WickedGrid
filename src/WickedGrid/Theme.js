@@ -1,27 +1,27 @@
 WickedGrid.Theme = (function() {
-	function Constructor(theme) {
+	function Theme(theme) {
 		theme = theme || Sheet.defaultTheme;
 
 		switch (theme) {
-			case Sheet.customTheme:
-				this.cl = Constructor.customClasses;
+			case WickedGrid.customTheme:
+				this.cl = Theme.customClasses;
 				break;
 
 
-			case Sheet.bootstrapTheme:
-				this.cl = Constructor.bootstrapClasses;
+			case WickedGrid.bootstrapTheme:
+				this.cl = Theme.bootstrapClasses;
 				break;
 
 			default:
-			case Sheet.themeRollerTheme:
-				this.cl = Constructor.themeRollerClasses;
+			case WickedGrid.themeRollerTheme:
+				this.cl = Theme.themeRollerClasses;
 				break;
 		}
 
 		extend(this, this.cl);
 	}
 
-	Constructor.themeRollerClasses = {
+	Theme.themeRollerClasses = {
 		autoFiller:'ui-state-active',
 		bar:'ui-widget-header',
 		barHighlight:'ui-state-active',
@@ -49,7 +49,7 @@ WickedGrid.Theme = (function() {
 		barFreezeIndicator:'ui-state-highlight'
 	};
 
-	Constructor.bootstrapClasses = {
+	Theme.bootstrapClasses = {
 		autoFiller:'btn-info',
 		bar:'input-group-addon',
 		barHighlight:'label-info',
@@ -77,7 +77,7 @@ WickedGrid.Theme = (function() {
 		barFreezeIndicator:'bg-warning'
 	};
 
-	Constructor.customClasses = {
+	Theme.customClasses = {
 		autoFiller:'',
 		bar:'',
 		barHighlight:'',
@@ -105,5 +105,5 @@ WickedGrid.Theme = (function() {
 		barFreezeIndicator:''
 	};
 
-	return Constructor;
+	return Theme;
 })();

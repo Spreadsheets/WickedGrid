@@ -1,4 +1,4 @@
-WickedGrid.Event.document = {
+WickedGrid.event.document = {
   /**
    *
    * @param {Object} e jQuery event

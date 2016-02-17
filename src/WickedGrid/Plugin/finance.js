@@ -1,5 +1,5 @@
-WickedGrid.Plugin.finance = (function(fns){
-  return {
+WickedGrid.plugin.finance = (function(){
+  var finance = {
     NPV: function(rate) {
       rate = rate * 1;
       var factor = 1,
@@ -76,8 +76,8 @@ WickedGrid.Plugin.finance = (function(fns){
       return result;
     },
     IPMT: function(rate, per, nper, pv, fv, type) {
-      var pmt = fns.PMT(rate, nper, pv, fv, type),
-        fv = fns.FV(rate, per - 1, pmt, pv, type),
+      var pmt = finance.PMT(rate, nper, pv, fv, type),
+        fv = finance.FV(rate, per - 1, pmt, pv, type),
         result = fv * rate;
 
       // account for payments at beginning of period versus end.
@@ -154,4 +154,5 @@ WickedGrid.Plugin.finance = (function(fns){
       return result;
     }
   };
-})(WickedGrid.functions);
+  return finance;
+})();

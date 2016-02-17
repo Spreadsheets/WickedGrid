@@ -1,4 +1,4 @@
-WickedGrid.Event.formula = {
+WickedGrid.event.formula = {
   /**
    *
    * @param {Object} e jQuery event

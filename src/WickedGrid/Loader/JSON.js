@@ -1,4 +1,4 @@
-WickedGrid.Loader.JSON = (function($, document, String) {
+WickedGrid.loader.JSON = (function($, document, String) {
 	"use strict";
 	function JSONLoader(json) {
 		if (json !== undefined) {
@@ -52,7 +52,7 @@ WickedGrid.Loader.JSON = (function($, document, String) {
 				jsonSpreadsheet = json[sheetIndex] || {},
 				metadata = jsonSpreadsheet.metadata || {},
 				widths = metadata.widths || [],
-				width = widths[columnIndex] || Sheet.defaultColumnWidth;
+				width = widths[columnIndex] || WickedGrid.defaultColumnWidth;
 
 			return width * 1;
 		},
@@ -61,7 +61,7 @@ WickedGrid.Loader.JSON = (function($, document, String) {
 				jsonSpreadsheet = json[sheetIndex] || {},
 				rows = jsonSpreadsheet.rows || [],
 				row = rows[rowIndex] || {},
-				height = row.height || Sheet.defaultRowHeight;
+				height = row.height || WickedGrid.defaultRowHeight;
 
 			return height * 1;
 		},

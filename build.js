@@ -42,14 +42,15 @@ var fs              = require('fs')
 					'tab',
 					'tabs',
 					'thread',
+					'ui',
 					'utilities',
 
 					//children namespaces next
 					{
-						Event: ['Cell', 'Document', 'Formula']
+						event: ['Cell', 'Document', 'Formula']
 					},
 					{
-						Loader: ['HTML', 'JSON', 'XML']
+						loader: ['HTML', 'JSON', 'XML']
 					},
 
 					//constructors next

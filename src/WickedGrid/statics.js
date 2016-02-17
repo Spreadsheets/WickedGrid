@@ -1,3 +1,7 @@
+WickedGrid.event = {};
+WickedGrid.loader = {};
+WickedGrid.plugin = {};
+
 /**
  * Array of instances of jQuery.sheet, generally short-handed to jS
  */
@@ -45,6 +49,30 @@ WickedGrid.events = [
   'sheetFormulaKeydown'
 ];
 
+/**
+ * Messages for user interface
+ * @type {Object}
+ */
+WickedGrid.msg = {
+  addRowMulti:'How many rows would you like to add?',
+  addColumnMulti:'How many columns would you like to add?',
+  cellFind:'What are you looking for in this spreadsheet?',
+  cellNoFind:'No results found.',
+  dragToFreezeCol:'Drag to freeze column',
+  dragToFreezeRow:'Drag to freeze row',
+  addSheet:'Add a spreadsheet',
+  openSheet:'Are you sure you want to open a different sheet?  All unsaved changes will be lost.',
+  toggleHideRow:'No row selected.',
+  toggleHideColumn:'No column selected.',
+  loopDetected:'Loop Detected',
+  newSheetTitle:'What would you like the sheet\'s title to be?',
+  notFoundColumn:'Column not found',
+  notFoundRow:'Row not found',
+  notFoundSheet:'Sheet not found',
+  setCellRef:'Enter the name you would like to reference the cell by.',
+  sheetTitleDefault:'Spreadsheet {index}',
+  cellLoading: 'Loading...'
+};
 /**
  * Contains the dependencies if you use $.sheet.preLoad();
  */
