@@ -17,6 +17,9 @@ var fs              = require('fs')
 	    //non-constructors next
 			{
 				WickedGrid: [
+					//statics off of WickedGrid
+					'statics',
+
 					'autoFiller',
 					'cellMenu',
 					'cellTypeHandlers',

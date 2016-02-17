@@ -271,8 +271,8 @@
 			.done(function(sheetGet, menuGet) {
 				jS = $('#sheet')
 					.html(parseHtml(sheetGet[0], 'div#sheetParent table'))
-					.sheet({
-						theme: Sheet.bootstrapTheme,
+					.wickedGrid({
+						theme: WickedGrid.bootstrapTheme,
 						title: 'Demo',
 						menu: function() {
 							var jS = this,
