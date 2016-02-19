@@ -25,14 +25,14 @@
 				    <span class="icon-bar"></span>
 				    <span class="icon-bar"></span>
 			    </button>
-			    <a class="navbar-brand" href="http://github.com/Spreadsheets/jQuery.sheet"><img alt="jQuery.sheet" title="jQuery.sheet" src="images/svg/logo.svg" width="40" style="margin-top: -10px;"></a>
+			    <a class="navbar-brand" href="http://github.com/Spreadsheets/WickedGrid"><img alt="WickedGrid" title="WickedGrid" src="images/svg/logo.svg" width="40" style="margin-top: -10px;"></a>
 		    </div>
 		    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 			    <ul class="nav navbar-nav">
-                    <li><a href="https://github.com/Spreadsheets/jQuery.sheet/releases">Download</a></li>
+                    <li><a href="https://github.com/Spreadsheets/WickedGrid/releases">Download</a></li>
 				    <li><a href="http://visop-dev.com/contact+us">Support</a></li>
 				    <li><a href="http://www.VisOp-Dev.com">Sponsor</a></li>
-				    <li><a href="https://github.com/Spreadsheets/jQuery.sheet/">Code</a></li>
+				    <li><a href="https://github.com/Spreadsheets/WickedGrid/">Code</a></li>
 				    <li><a href="http://visop-dev.com/doc/js3/index.html">API</a></li>
 				    <li><a href="http://visop-dev.com/jQuery.sheet+-+End+User+Documentation">End User Documentation</a></li>
 				    <li class="dropdown">
@@ -129,8 +129,8 @@
 	    <div class="container">
 		    <h1>WickedGrid 4 (alpha)</h1>
 		    <p>Easy & Wicked Fast spreadsheets for the web...  Finally!</p>
-		    <div id="sheet" class="jQuerySheet" style="height: 450px;"></div>
-		    <p><a class="btn btn-primary btn-lg" href="https://github.com/Spreadsheets/jQuery.sheet/wiki/jQuery.sheet,-a-different-approach" role="button">Learn more &raquo;</a></p>
+		    <div id="sheet" style="height: 450px;"></div>
+		    <p><a class="btn btn-primary btn-lg" href="https://github.com/Spreadsheets/WickedGrid/wiki/WickedGrid,-a-different-approach" role="button">Learn more &raquo;</a></p>
 	    </div>
     </div>
 
@@ -252,7 +252,7 @@
 		};
 
 		//Here is where we initiate the sheets
-		//every time sheet is created it creates a new jQuery.sheet.instance (array), to manipulate each sheet, the jQuery object is returned
+		//every time sheet is created it creates a new WickedGrid.instance (array), to manipulate each sheet, the jQuery object is returned
 		window.loadSheet = function (loadWhat) {
 			var url;
 
@@ -275,17 +275,17 @@
 						theme: WickedGrid.bootstrapTheme,
 						title: 'Demo',
 						menu: function() {
-							var jS = this,
+							var wickedGrid = this,
 									menu = $(menuGet[0]),
-									copy = menu.find('.jSCopy').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
-									cut = menu.find('.jSCut').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
-									paste = menu.find('.jSPaste').click(function() {
+									copy = menu.find('.wg-copy').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
+									cut = menu.find('.wg-cut').mouseover(function() { $(this).one('mouseout', function() {return false;})}),
+									paste = menu.find('.wg-paste').click(function() {
 										alert('Press Ctrl + V to paste over highlighted cells');
 									});
 
 							//Give anchors access to jS them
 							menu.find('a').each(function() {
-								this.jS = jS;
+								this.wickedGrid = wickedGrid;
 							});
 
 							var clip = new ZeroClipboard(copy.add(cut), {
@@ -293,25 +293,25 @@
 							});
 
 							clip.on('mousedown', function(client) {
-								clip.setText(jS.tdsToTsv());
+								clip.setText(wickedGrid.tdsToTsv());
 								$(this).mousedown();
 							});
 
 							cut.mousedown(function() {
-								jS.tdsToTsv(null, true);
+								wickedGrid.tdsToTsv(null, true);
 							});
 
 							//The following is just so you get an idea of how to style cells
 							var colorPickerCell = menu.find('.colorPickerCell')
 											.colorPicker()
 											.change(function(){
-												jS.cellChangeStyle('background-color', $(this).val());
+												wickedGrid.cellChangeStyle('background-color', $(this).val());
 											}),
 
 									colorPickerFont = menu.find('.colorPickerFont')
 											.colorPicker()
 											.change(function(){
-												jS.cellChangeStyle('color', $(this).val());
+												wickedGrid.cellChangeStyle('color', $(this).val());
 											});
 
 							colorPickerCell.next()

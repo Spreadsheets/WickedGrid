@@ -401,7 +401,7 @@
 	background-image: none ! important;
 }
 
-.color-pickers *
+.colorPickers *
 {
 	display: inline-block;
 	background-color: transparent ! important;
