@@ -33,7 +33,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     this.element = settings.element;
     this.$element = $(settings.element);
     this.tsv = new TSV();
+
     this.cellEvents = new WickedGrid.event.Cell(this);
+    this.documentEvents = new WickedGrid.event.Document(this);
+    this.formulaEvents = new WickedGrid.event.Formula(this);
+
+    this.cl = WickedGrid.cl;
+    this.msg = WickedGrid.msg;
+
     /**
      * Internal storage array of controls for an instance
      */
@@ -970,7 +977,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       }
 
       if (i > -1) {
-        jS.sheetTab();
+        this.sheetTab();
       }
 
       return true;
@@ -986,11 +993,11 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       }
 
       if (i == -1) {
-        jS.addSheet();
-      } else if (i != jS.i) {
-        jS.setActiveSheet(i);
-        if (s.loader === null) {
-          jS.calc(i);
+        this.addSheet();
+      } else if (i != this.i) {
+        this.setActiveSheet(i);
+        if (this.loader === null) {
+          this.calc(i);
         }
       }
 
@@ -999,7 +1006,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
     toggleHideRow: function(i) {
       if (i === undefined) {
-        i = jS.rowLast;
+        i = this.rowLast;
       }
 
       if (i === undefined) return;
@@ -1012,7 +1019,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         actionUI.hideRow(i);
       }
 
-      jS.autoFillerGoToTd();
+      this.autoFillerGoToTd();
     },
     toggleHideRowRange: function(startIndex, endIndex) {
       var actionUI = this.pane().actionUI;
@@ -1023,11 +1030,11 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         actionUI.hideRowRange(startIndex, endIndex);
       }
 
-      jS.autoFillerGoToTd();
+      this.autoFillerGoToTd();
     },
     toggleHideColumn: function(i) {
       if (i === undefined) {
-        i = jS.colLast;
+        i = this.colLast;
       }
 
       if (i === undefined) return;
@@ -1040,7 +1047,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         actionUI.hideColumn(i);
       }
 
-      jS.autoFillerGoToTd();
+      this.autoFillerGoToTd();
     },
     toggleHideColumnRange: function(startIndex, endIndex) {
       var actionUI = this.pane().actionUI;
@@ -1051,7 +1058,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         actionUI.hideColumnRange(startIndex, endIndex);
       }
 
-      jS.autoFillerGoToTd();
+      this.autoFillerGoToTd();
     },
     rowShowAll: function() {
       this.pane().actionUI.rowShowAll();
@@ -1064,7 +1071,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Object} [tds]
      */
     merge:function (tds) {
-      tds = tds || jS.highlighted();
+      tds = tds || this.highlighted();
       if (!tds.length) {
         return;
       }
@@ -1072,8 +1079,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           cellsValue = [],
           firstTd = tds[0],
           lastTd = tds[tds.length - 1],
-          firstLocRaw = jS.getTdLocation(firstTd),
-          lastLocRaw = jS.getTdLocation(lastTd),
+          firstLocRaw = this.getTdLocation(firstTd),
+          lastLocRaw = this.getTdLocation(lastTd),
           firstLoc = {},
           lastLoc = {},
           colSpan = 0,
@@ -1085,8 +1092,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           loc;
 
       if (firstLocRaw.row) {
-        jS.setDirty(true);
-        jS.setChanged(true);
+        this.setDirty(true);
+        this.setChanged(true);
 
         if (firstLocRaw.row < lastLocRaw.row) {
           firstLoc.row = firstLocRaw.row;
@@ -1113,7 +1120,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         rowSpan = (lastLoc.row - firstLoc.row) + 1;
         colSpan = (lastLoc.col - firstLoc.col) + 1;
 
-        loc = jS.getTdLocation(td);
+        loc = this.getTdLocation(td);
 
         do {
           _td = tds[i];
@@ -1135,7 +1142,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
             }
           });
 
-          jS.resolveCell(cell);
+          this.resolveCell(cell);
         } while(i--);
 
         td.jSCell.value = $.trim(cellsValue.join(' '));
@@ -1150,10 +1157,10 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         td.style.width = td.clientWidth + 'px';
         td.style.position = 'absolute';
 
-        jS.resolveCell(td.jSCell);
-        jS.evt.cellEditDone();
-        jS.autoFillerGoToTd(td);
-        jS.cellSetActive(td, loc);
+        this.resolveCell(td.jSCell);
+        this.cellEvents.done();
+        this.autoFillerGoToTd(td);
+        this.cellSetActive(td, loc);
       }
       return true;
     },
@@ -1163,14 +1170,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {jQuery} [td]
      */
     unmerge:function (td) {
-      td = td || jS.highlighted();
+      td = td || this.highlighted();
       if (!td) {
         return;
       }
-      var loc = jS.getTdLocation(td),
+      var loc = this.getTdLocation(td),
           last = new Date(),
-          row = math.max(td.getAttribute('rowSpan') * 1, 1) - 1,
-          col = math.max(td.getAttribute('colSpan') * 1, 1) - 1,
+          row = Math.max(td.getAttribute('rowSpan') * 1, 1) - 1,
+          col = Math.max(td.getAttribute('colSpan') * 1, 1) - 1,
           i = row + loc.row,
           j,
           _td,
@@ -1183,7 +1190,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       do {
         j = loc.col + col;
         do {
-          _td = jS.getTd(-1, i, j);
+          _td = this.getTd(-1, i, j);
           if (_td === null) continue;
           _td.style.display = '';
           _td.style.visibility = '';
@@ -1191,16 +1198,16 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           _td.removeAttribute('rowSpan');
           _td.jSCell.defer = null;
 
-          jS.resolveCell(_td.jSCell, last);
+          this.resolveCell(_td.jSCell, last);
 
           tds.push(_td);
         } while (j-- > loc.col);
       } while (i-- > loc.row);
 
-      jS.evt.cellEditDone();
-      jS.autoFillerGoToTd(td);
-      jS.cellSetActive(td, loc);
-      jS.highlighter.set(tds);
+      this.cellEvents.done();
+      this.autoFillerGoToTd(td);
+      this.cellSetActive(td, loc);
+      this.highlighter.set(tds);
       return true;
     },
 
@@ -1212,8 +1219,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {Boolean}
      */
     fillUpOrDown:function (goUp, v, cells) {
-      jS.evt.cellEditDone();
-      cells = cells || jS.highlighted(true);
+      this.cellEvents.done();
+      cells = cells || this.highlighted(true);
 
       if (cells.length < 1) {
         return false;
@@ -1225,9 +1232,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         return false;
       }
 
-      var startLoc = jS.getTdLocation(cells[0].td),
-          endLoc = jS.getTdLocation(cells[cells.length - 1].td),
-          relativeLoc = jS.getTdLocation(activeTd),
+      var startLoc = this.getTdLocation(cells[0].td),
+          endLoc = this.getTdLocation(cells[cells.length - 1].td),
+          relativeLoc = this.getTdLocation(activeTd),
           offset = {
             row:0,
             col:0
@@ -1251,14 +1258,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
                 offset.col = relativeLoc.col - startLoc.col;
               }
 
-              newV = jS.reparseFormula(v, offset);
+              newV = this.reparseFormula(v, offset);
 
               s.parent.one('sheetPreCalculation', function () {
                 cells[i].formula = newV;
                 cells[i].value = '';
               });
 
-              jS.resolveCell(cells[i]);
+              this.resolveCell(cells[i]);
             } while (i--);
             return true;
           }
@@ -1282,7 +1289,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
               cells[i].value = newV + '';
             });
 
-            jS.resolveCell(cells[i]);
+            this.resolveCell(cells[i]);
 
             fn();
           } while (i--);
@@ -1301,7 +1308,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {String}
      */
     toTsv:function (cells, clearValue, fnEach) {
-      cells = cells || jS.highlighted(true);
+      cells = cells || this.highlighted(true);
       if (cells.type) {
         cells = [cells];
       }
@@ -1311,7 +1318,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
                 cell.formula = '';
                 cell.value = '';
               });
-              jS.resolveCell(cell);
+              this.resolveCell(cell);
             }
           };
       var cellValues = [],
@@ -1323,16 +1330,16 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           col;
 
       if (i >= 0) {
-        firstLoc = jS.getTdLocation(cells[0].td);
-        lastLoc = jS.getTdLocation(cells[cells.length - 1].td);
-        minLoc.row = math.min(firstLoc.row, lastLoc.row);
-        minLoc.col = math.min(firstLoc.col, lastLoc.col);
+        firstLoc = this.getTdLocation(cells[0].td);
+        lastLoc = this.getTdLocation(cells[cells.length - 1].td);
+        minLoc.row = Math.min(firstLoc.row, lastLoc.row);
+        minLoc.col = Math.min(firstLoc.col, lastLoc.col);
         do {
-          var loc = jS.getTdLocation(cells[i].td),
+          var loc = this.getTdLocation(cells[i].td),
               value = (cells[i].formula ? '=' + cells[i].formula : cells[i].value);
 
-          row = math.abs(loc.row - minLoc.row);
-          col = math.abs(loc.col - minLoc.col);
+          row = Math.abs(loc.row - minLoc.row);
+          col = Math.abs(loc.col - minLoc.col);
 
           if (!cellValues[row]) cellValues[row] = [];
 
@@ -1363,7 +1370,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Boolean} [wasDeleted]
      */
     offsetFormulas:function (loc, offset, isBefore, wasDeleted) {
-      var size = jS.sheetSize(),
+      var self = this,
+          size = this.sheetSize(),
       //effected range is the entire spreadsheet
           affectedRange = {
             first:{
@@ -1378,14 +1386,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           cellStack = [];
 
 
-      jS.cycleCells(function () {
+      this.cycleCells(function () {
         var cell = this;
-        if (this.formula && typeof this.formula == 'string' && jS.isFormulaEditable(this.td)) {
-          this.formula = jS.reparseFormula(this.formula, offset, loc, isBefore, wasDeleted);
+        if (this.formula && typeof this.formula == 'string' && self.isFormulaEditable(this.td)) {
+          this.formula = self.reparseFormula(this.formula, offset, loc, isBefore, wasDeleted);
         }
 
         cellStack.push(function() {
-          jS.resolveCell(cell, true);
+          self.resolveCell(cell, true);
         });
 
       }, affectedRange.first, affectedRange.last);
@@ -1394,7 +1402,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         cellStack.pop()();
       }
 
-      jS.evt.cellEditDone();
+      self.cellEvents.done();
     },
 
     cellRegex: /(\$?[a-zA-Z]+|[#]REF[!])(\$?[0-9]+|[#]REF[!])/gi,
@@ -1408,13 +1416,15 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {String}
      */
     reparseFormula:function (formula, offset, loc, isBefore, wasDeleted) {
+      var self = this;
+
       return formula.replace(this.cellRegex, function (ignored, col, row, pos) {
         if (col == 'SHEET') return ignored;
         offset = offset || {loc: -1, row: -1};
 
         var oldLoc = {
               row: row * 1,
-              col: jS.cellHandler.columnLabelIndex(col)
+              col: self.cellHandler.columnLabelIndex(col)
             },
             moveCol,
             moveRow,
@@ -1466,12 +1476,12 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
             if (moveCol) {
               oldLoc.col += offset.col;
-              return jS.makeFormula(oldLoc);
+              return self.makeFormula(oldLoc);
             }
 
             if (moveRow) {
               oldLoc.row += offset.row;
-              return jS.makeFormula(oldLoc);
+              return self.makeFormula(oldLoc);
             }
           } else {
             if (isBefore) {
@@ -1492,16 +1502,16 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
             if (moveCol) {
               oldLoc.col += offset.col;
-              return jS.makeFormula(oldLoc);
+              return self.makeFormula(oldLoc);
             }
 
             if (moveRow) {
               oldLoc.row += offset.row;
-              return jS.makeFormula(oldLoc);
+              return self.makeFormula(oldLoc);
             }
           }
         } else {
-          return jS.makeFormula(oldLoc, offset);
+          return self.makeFormula(oldLoc, offset);
         }
 
         return ignored;
@@ -1525,7 +1535,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       if (loc.col < 0) loc.col = 0;
       if (loc.row < 0) loc.row = 0;
 
-      return jS.cellHandler.parseCellName(loc.col, loc.row);
+      return self.cellHandler.parseCellName(loc.col, loc.row);
     },
 
     /**
@@ -1536,15 +1546,15 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Number} [i] spreadsheet index within instance
      */
     cycleCells:function (fn, firstLoc, lastLoc, i) {
-      i = i || jS.i;
+      i = i || this.i;
       firstLoc = firstLoc || {rowIndex:0, col:0};
 
       if (!lastLoc) {
-        var size = jS.sheetSize();
+        var size = this.sheetSize();
         lastLoc = {row:size.rows, col:size.cols};
       }
 
-      var spreadsheet = jS.spreadsheets[i],
+      var spreadsheet = this.spreadsheets[i],
           rowIndex,
           colIndex,
           row,
@@ -1570,14 +1580,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param fn
      */
     cycleCellsAll:function (fn) {
-      var jSI = jS.i, i,size,endLoc;
-      for (i = 0; i <= jS.sheetCount; i++) {
-        jS.i = i;
-        size = jS.sheetSize();
+      var savedIndex = this.i, i,size,endLoc;
+      for (i = 0; i <= this.sheetCount; i++) {
+        this.i = i;
+        size = this.sheetSize();
         endLoc = {row:size.rows, col:size.cols};
-        jS.cycleCells(fn, {row:0, col:0}, endLoc, i);
+        this.cycleCells(fn, {row:0, col:0}, endLoc, i);
       }
-      jS.i = jSI;
+      this.i = savedIndex;
     },
 
     /**
@@ -1590,9 +1600,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           columnIndex,
           row,
           cell,
-          i = jS.i,
+          i = this.i,
           o = {cell: [], td: []},
-          spreadsheet = jS.spreadsheets[i];
+          spreadsheet = this.spreadsheets[i];
 
       for(rowIndex = grid.startRowIndex; rowIndex <= grid.endRowIndex; rowIndex++) {
         if ((row = spreadsheet[rowIndex]) === u) continue;
@@ -1727,7 +1737,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      */
     labelUpdate:function (entity) {
       if (entity instanceof WickedGrid.Cell) {
-        var name = jS.cellHandler.parseCellName(entity.columnIndex, entity.rowIndex);
+        var name = this.cellHandler.parseCellName(entity.columnIndex, entity.rowIndex);
         this.label().text(name);
       } else {
         this.label().text(entity);
@@ -1741,27 +1751,27 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Boolean} [doNotClearHighlighted]
      */
     cellEdit:function (td, isDrag, doNotClearHighlighted) {
-      jS.autoFillerNotGroup = true; //make autoFiller directional again.
+      this.autoFillerNotGroup = true; //make autoFiller directional again.
       //This finished up the edit of the last cell
-      jS.evt.cellEditDone();
+      this.cellEvents.done();
 
       if (td === null) return;
 
-      var cell = jS.cellFromTd(td),
+      var cell = this.cellFromTd(td),
           v;
 
       if (cell.uneditable) return;
 
-      jS.trigger('sheetCellEdit', [cell]);
+      this.trigger('sheetCellEdit', [cell]);
 
-      if (jS.cellLast !== null && td !== jS.cellLast.td) {
-        jS.followMe(td);
+      if (this.cellLast !== null && td !== this.cellLast.td) {
+        this.followMe(td);
       } else {
-        jS.autoFillerGoToTd(td);
+        this.autoFillerGoToTd(td);
       }
 
       //Show where we are to the user
-      jS.labelUpdate(cell);
+      this.labelUpdate(cell);
 
       if (cell.formula.length > 0) {
         v = '=' + cell.formula;
@@ -1773,7 +1783,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           .val(v)
           .blur();
 
-      jS.cellSetActive(cell, isDrag, false, null, doNotClearHighlighted);
+      this.cellSetActive(cell, isDrag, false, null, doNotClearHighlighted);
     },
 
     /**
@@ -1825,7 +1835,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
       if (isDrag) {
         var pane = this.pane(),
-            highlighter = jS.highlighter,
+            highlighter = this.highlighter,
             x1, y1, x2, y2,
             lastTouchedRowIndex = cell.rowIndex,
             lastTouchedColumnIndex = cell.columnIndex;
@@ -1948,11 +1958,11 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {Boolean}
      */
     cellStyleToggle:function (setClass, removeClass, tds) {
-      tds = tds || jS.highlighted();
+      tds = tds || this.highlighted();
       if (tds.length < 1) {
         return false;
       }
-      jS.setDirty(true);
+      this.setDirty(true);
       //Lets check to remove any style classes
       var td,
           $td,
@@ -1999,7 +2009,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {Boolean}
      */
     cellTypeToggle:function(type, cells) {
-      cells = cells || jS.highlighted(true);
+      cells = cells || this.highlighted(true);
 
       if (cells.length < 1) {
         return;
@@ -2031,7 +2041,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {Boolean}
      */
     fontReSize:function (direction, tds) {
-      tds = tds || jS.highlighted();
+      tds = tds || this.highlighted();
       if (tds.length < 1) {
         return false;
       }
@@ -2080,23 +2090,23 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     cellHandler: null,
 
     /**
-     * Where jS.spreadsheets are calculated, and returned to their td counterpart
+     * Where this.spreadsheets are calculated, and returned to their td counterpart
      * @param {Number} [sheetIndex] table index
      * @param {Boolean} [refreshCalculations]
      */
     calc:function (sheetIndex, refreshCalculations) {
       if (this.settings.calcOff) return false;
 
-      sheetIndex = (sheetIndex === u ? jS.i : sheetIndex);
+      sheetIndex = (sheetIndex === u ? this.i : sheetIndex);
       if (
-          jS.readOnly[sheetIndex]
-          || jS.isChanged(sheetIndex) === false
+          this.readOnly[sheetIndex]
+          || this.isChanged(sheetIndex) === false
           && !refreshCalculations
       ) {
         return false;
       } //readonly is no calc at all
 
-      var loader = s.loader,
+      var loader = this.loader,
           cell;
 
       loader.cycleCells(sheetIndex, function(sheetIndex, rowIndex, columnIndex) {
@@ -2104,16 +2114,16 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         cell.updateValue();
       });
 
-      jS.trigger('sheetCalculation', [
+      this.trigger('sheetCalculation', [
         {which:'spreadsheet', index:sheetIndex}
       ]);
 
-      jS.setChanged(false);
+      this.setChanged(false);
       return true;
     },
 
     /**
-     * Where jS.spreadsheets are all calculated, and returned to their td counterpart
+     * Where this.spreadsheets are all calculated, and returned to their td counterpart
      * @param {Boolean} [refreshCalculations]
      */
     calcAll: function(refreshCalculations) {
@@ -2123,7 +2133,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       max = s.loader.count;
 
       for(;sheetIndex < max; sheetIndex++) {
-        jS.calc(sheetIndex, refreshCalculations);
+        this.calc(sheetIndex, refreshCalculations);
       }
     },
 
@@ -2133,17 +2143,19 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Boolean} [skipUndoable]
      */
     resolveCell:function (cell, skipUndoable) {
-      var updateDependencies = !cell.needsUpdated;
+      var updateDependencies = !cell.needsUpdated,
+          self = this;
+
       if (!skipUndoable) {
-        jS.undo.createCells([cell], function(cells) {
-          jS.trigger('sheetPreCalculation', [
+        this.undo.createCells([cell], function(cells) {
+          self.trigger('sheetPreCalculation', [
             {which:'cell', cell:cell}
           ]);
 
-          jS.setDirty(true);
-          jS.setChanged(true);
+          self.setDirty(true);
+          self.setChanged(true);
           cell.updateValue(function() {
-            jS.trigger('sheetCalculation', [
+            self.trigger('sheetCalculation', [
               {which:'cell', cell: cell}
             ]);
 
@@ -2154,14 +2166,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           return cells;
         });
       } else {
-        jS.trigger('sheetPreCalculation', [
+        self.trigger('sheetPreCalculation', [
           {which:'cell', cell:cell}
         ]);
 
-        jS.setDirty(true);
-        jS.setChanged(true);
+        self.setDirty(true);
+        self.setChanged(true);
         cell.updateValue(function() {
-          jS.trigger('sheetCalculation', [
+          self.trigger('sheetCalculation', [
             {which:'cell', cell: cell}
           ]);
 
@@ -2176,23 +2188,23 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * adds a spreadsheet table
      */
     addSheet:function () {
-      jS.evt.cellEditAbandon();
-      jS.setDirty(true);
-      s.loader.addSpreadsheet(null, jS.sheetCount);
-      jS.controlFactory.sheetUI(this.ui, jS.sheetCount);
+      this.cellEvents.editAbandon();
+      this.setDirty(true);
+      this.loader.addSpreadsheet(null, this.sheetCount);
+      WickedGrid.sheetUI(this, this.ui, this.sheetCount);
 
-      jS.setActiveSheet(jS.sheetCount);
+      this.setActiveSheet(this.sheetCount);
 
-      jS.sheetCount++;
+      this.sheetCount++;
 
-      jS.sheetSyncSize();
+      this.sheetSyncSize();
 
       var pane = this.pane();
       if (pane.inPlaceEdit) {
         pane.inPlaceEdit.goToTd();
       }
 
-      jS.trigger('sheetAdd', [jS.i]);
+      this.trigger('sheetAdd', [this.i]);
     },
 
     insertSheet: null,
@@ -2202,8 +2214,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Number} [i] spreadsheet index within instance
      */
     deleteSheet:function (i) {
-      var oldI = i || jS.i,
-          enclosureArray = jS.controls.enclosure,
+      var oldI = i || this.i,
+          enclosureArray = this.controls.enclosure,
           tabIndex;
 
       enclosureArray.splice(oldI,1);
@@ -2212,65 +2224,65 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
       $(this.enclosure()).remove();
       this.menus().remove();
-      this.tabContainer().children().eq(jS.i).remove();
-      jS.spreadsheets.splice(oldI, 1);
-      jS.controls.autoFiller.splice(oldI, 1);
-      jS.controls.bar.helper.splice(oldI, 1);
-      jS.controls.bar.corner.splice(oldI, 1);
-      jS.controls.bar.x.controls.splice(oldI, 1);
-      jS.controls.bar.x.handleFreeze.splice(oldI, 1);
-      jS.controls.bar.x.controls.splice(oldI, 1);
-      jS.controls.bar.x.menu.splice(oldI, 1);
-      if (jS.controls.bar.x.menuParent && jS.controls.bar.x.menuParent[oldI]) {
-        jS.controls.bar.x.menuParent.splice(oldI, 1);
+      this.tabContainer().children().eq(this.i).remove();
+      this.spreadsheets.splice(oldI, 1);
+      this.controls.autoFiller.splice(oldI, 1);
+      this.controls.bar.helper.splice(oldI, 1);
+      this.controls.bar.corner.splice(oldI, 1);
+      this.controls.bar.x.controls.splice(oldI, 1);
+      this.controls.bar.x.handleFreeze.splice(oldI, 1);
+      this.controls.bar.x.controls.splice(oldI, 1);
+      this.controls.bar.x.menu.splice(oldI, 1);
+      if (this.controls.bar.x.menuParent && this.controls.bar.x.menuParent[oldI]) {
+        this.controls.bar.x.menuParent.splice(oldI, 1);
       }
-      jS.controls.bar.x.parent.splice(oldI, 1);
-      jS.controls.bar.x.th.splice(oldI, 1);
-      jS.controls.bar.y.controls.splice(oldI, 1);
-      jS.controls.bar.y.handleFreeze.splice(oldI, 1);
-      jS.controls.bar.y.controls.splice(oldI, 1);
-      jS.controls.bar.y.menu.splice(oldI, 1);
-      if (jS.controls.bar.y.menuParent && jS.controls.bar.y.menuParent[oldI]) {
-        jS.controls.bar.y.menuParent.splice(oldI, 1);
+      this.controls.bar.x.parent.splice(oldI, 1);
+      this.controls.bar.x.th.splice(oldI, 1);
+      this.controls.bar.y.controls.splice(oldI, 1);
+      this.controls.bar.y.handleFreeze.splice(oldI, 1);
+      this.controls.bar.y.controls.splice(oldI, 1);
+      this.controls.bar.y.menu.splice(oldI, 1);
+      if (this.controls.bar.y.menuParent && this.controls.bar.y.menuParent[oldI]) {
+        this.controls.bar.y.menuParent.splice(oldI, 1);
       }
-      jS.controls.bar.y.parent.splice(oldI, 1);
-      jS.controls.bar.y.th.splice(oldI, 1);
-      jS.controls.barMenuLeft.splice(oldI, 1);
-      jS.controls.barMenuTop.splice(oldI, 1);
-      jS.controls.barLeft.splice(oldI, 1);
-      jS.controls.barTop.splice(oldI, 1);
-      jS.controls.barTopParent.splice(oldI, 1);
-      jS.controls.chart.splice(oldI, 1);
-      jS.controls.tdMenu.splice(oldI, 1);
-      jS.controls.enclosure.splice(oldI, 1);
-      jS.controls.inPlaceEdit.splice(oldI, 1);
-      jS.controls.menus.splice(oldI, 1);
-      jS.controls.menu.splice(oldI, 1);
-      jS.controls.pane.splice(oldI, 1);
-      jS.controls.tables.splice(oldI, 1);
-      jS.controls.table.splice(oldI, 1);
+      this.controls.bar.y.parent.splice(oldI, 1);
+      this.controls.bar.y.th.splice(oldI, 1);
+      this.controls.barMenuLeft.splice(oldI, 1);
+      this.controls.barMenuTop.splice(oldI, 1);
+      this.controls.barLeft.splice(oldI, 1);
+      this.controls.barTop.splice(oldI, 1);
+      this.controls.barTopParent.splice(oldI, 1);
+      this.controls.chart.splice(oldI, 1);
+      this.controls.tdMenu.splice(oldI, 1);
+      this.controls.enclosure.splice(oldI, 1);
+      this.controls.inPlaceEdit.splice(oldI, 1);
+      this.controls.menus.splice(oldI, 1);
+      this.controls.menu.splice(oldI, 1);
+      this.controls.pane.splice(oldI, 1);
+      this.controls.tables.splice(oldI, 1);
+      this.controls.table.splice(oldI, 1);
       //BUGFIX - After removing of sheet, we need update the tab.i property - start from removed sheet's position.
-      for (tabIndex = oldI+1; tabIndex < jS.controls.tab.length; ++tabIndex) {
-        var tab = jS.controls.tab[tabIndex].get(0);
+      for (tabIndex = oldI+1; tabIndex < this.controls.tab.length; ++tabIndex) {
+        var tab = this.controls.tab[tabIndex].get(0);
         tab.i--;
       }
-      jS.controls.tab.splice(oldI, 1);
-      jS.controls.toggleHide.x.splice(oldI, 1);
-      jS.controls.toggleHide.y.splice(oldI, 1);
-      jS.readOnly.splice(oldI, 1);
-      jS.i = 0;
-      jS.sheetCount--;
-      jS.sheetCount = math.max(jS.sheetCount, 0);
+      this.controls.tab.splice(oldI, 1);
+      this.controls.toggleHide.x.splice(oldI, 1);
+      this.controls.toggleHide.y.splice(oldI, 1);
+      this.readOnly.splice(oldI, 1);
+      this.i = 0;
+      this.sheetCount--;
+      this.sheetCount = Math.max(this.sheetCount, 0);
 
-      if (jS.sheetCount == 0) {
-        jS.addSheet();
+      if (this.sheetCount == 0) {
+        this.addSheet();
       }
 
-      jS.setActiveSheet(jS.i);
-      jS.setDirty(true);
-      jS.setChanged(true);
+      this.setActiveSheet(this.i);
+      this.setDirty(true);
+      this.setChanged(true);
 
-      jS.trigger('sheetDelete', [oldI]);
+      this.trigger('sheetDelete', [oldI]);
     },
 
     /**
@@ -2278,18 +2290,18 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Number} [rowIndex]
      */
     deleteRow:function (rowIndex) {
-      rowIndex = rowIndex || jS.rowLast;
+      rowIndex = rowIndex || this.rowLast;
 
       var pane = this.pane(),
-          row = jS.spreadsheets[jS.i].splice(rowIndex, 1)[0],
+          row = this.spreadsheets[this.i].splice(rowIndex, 1)[0],
           columnIndex = 0,
           cell,
           columnMax = row.length,
           loader = s.loader;
 
-      jS.setChanged(true);
+      this.setChanged(true);
 
-      jS.offsetFormulas({
+      this.offsetFormulas({
             row: rowIndex,
             col: 0
           }, {
@@ -2300,7 +2312,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           true
       );
 
-      loader.deleteRow(jS.i, rowIndex);
+      loader.deleteRow(this.i, rowIndex);
 
       for (;columnIndex < columnMax; columnIndex++) {
         cell = row[columnIndex];
@@ -2309,15 +2321,15 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         cell.updateDependencies();
       }
 
-      jS.setDirty(true);
+      this.setDirty(true);
 
-      jS.evt.cellEditAbandon();
+      this.cellEvents.editAbandon();
 
       if (pane.inPlaceEdit) {
         pane.inPlaceEdit.goToTd();
       }
 
-      jS.trigger('sheetDeleteRow', rowIndex);
+      this.trigger('sheetDeleteRow', rowIndex);
     },
 
     /**
@@ -2325,18 +2337,18 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Number} [columnIndex]
      */
     deleteColumn:function (columnIndex) {
-      columnIndex = columnIndex || jS.colLast;
+      columnIndex = columnIndex || this.colLast;
 
       var pane = this.pane(),
           rowIndex = 0,
           cell,
-          rows = jS.spreadsheets[jS.i],
+          rows = this.spreadsheets[this.i],
           loader = s.loader,
-          rowMax = loader.size(jS.i);
+          rowMax = loader.size(this.i);
 
-      jS.setChanged(true);
+      this.setChanged(true);
 
-      jS.offsetFormulas({
+      this.offsetFormulas({
             row: 0,
             col: columnIndex
           }, {
@@ -2347,7 +2359,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           true
       );
 
-      loader.deleteColumn(jS.i, columnIndex);
+      loader.deleteColumn(this.i, columnIndex);
 
       for (;rowIndex < rowMax; rowIndex++) {
         cell = rows[rowIndex].splice(columnIndex, 1)[0];
@@ -2356,15 +2368,15 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         cell.updateDependencies();
       }
 
-      jS.setDirty(true);
+      this.setDirty(true);
 
-      jS.evt.cellEditAbandon();
+      this.cellEvents.editAbandon();
 
       if (pane.inPlaceEdit) {
         pane.inPlaceEdit.goToTd();
       }
 
-      jS.trigger('sheetDeleteColumn', columnIndex);
+      this.trigger('sheetDeleteColumn', columnIndex);
     },
 
     /**
@@ -2388,7 +2400,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
             function(newTitle) {
               if (!newTitle) { //The user didn't set the new tab name
                 sheetTab = self.loader.title(self.i);
-                newTitle = (sheetTab ? sheetTab : self.msg.sheetTitleDefault.replace(/[{]index[}]/gi, jS.i + 1));
+                newTitle = (sheetTab ? sheetTab : self.msg.sheetTitleDefault.replace(/[{]index[}]/gi, self.i + 1));
               } else {
                 self.setDirty(true);
                 self.table().attr('title', newTitle);
@@ -2487,6 +2499,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       parent.insertBefore(autoFiller, parent.firstChild);
       return this;
     },
+
+
 
     /**
      * sets active a spreadsheet inside of a sheet instance
@@ -2867,7 +2881,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Number} end end highlighting to
      */
     cellSetActiveBar:function (type, begin, end) {
-      var size = s.loader.size(),
+      var self = this,
+          settings = this.settings,
+          size = this.loader.size(),
           startIndex,
           endIndex,
           start = {},
@@ -2878,21 +2894,25 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
            * Sets active bar
            */
           SetActive = function (highlighter) {
-            switch (s.cellSelectModel) {
-              case Sheet.openOfficeSelectModel: //follow cursor behavior
+            switch (settings.cellSelectModel) {
+              case WickedGrid.openOfficeSelectModel: //follow cursor behavior
                 this.row = highlighter.startRowIndex;
                 this.col = highlighter.startColumnIndex;
-                this.td = this.getTd(-1, this.row, this.col);
-                if (this.td !== null && (this.cellLast !== null && this.td !== this.cellLast.td)) {
-                  this.cellEdit(this.td, false, true);
+                this.td = self.getTd(-1, self.row, self.col);
+                if (this.td !== null
+                    && self.cellLast !== null
+                    && this.td !== self.cellLast.td) {
+                  self.cellEdit(self.td, false, true);
                 }
                 break;
               default: //stay at initial cell
                 this.row = highlighter.endRowIndex;
                 this.col = highlighter.endColumnIndex;
-                this.td = this.getTd(-1, this.row, this.col);
-                if (this.td !== null && (this.cellLast !== null && this.td !== this.cellLast.td)) {
-                  this.cellEdit(this.td, false, true);
+                this.td = self.getTd(-1, this.row, this.col);
+                if (this.td !== null
+                    && self.cellLast !== null
+                    && this.td !== self.cellLast.td) {
+                  self.cellEdit(this.td, false, true);
                 }
                 break;
             }
@@ -2905,7 +2925,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           highlighter = this.highlighter;
 
       switch (type) {
-        case 'top':
+        case 'column':
           start.row = scrolledArea.row;
           stop.row = scrolledArea.row;
 
@@ -2943,7 +2963,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
             obj.push(obj[obj.length - 1].nextSibling);
           }
           break;
-        case 'left':
+        case 'row':
           start.row = begin;
           start.col = scrolledArea.col;
           stop.row = end;
@@ -3699,7 +3719,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Boolean} [skipStyles]
      */
     print: function(i, skipStyles) {
-      i = i || jS.i;
+      i = i || this.i;
 
       var pWin = window.open(),
           pDoc;
@@ -3861,9 +3881,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      */
     switchSheetLocker:function (I) {
       WickedGrid.instance.forEach(function () {
-        this.settings.parent.bind('sheetSwitch', function (e, wickedGrid, i) {
+        this.$element.bind('sheetSwitch', function (e, wickedGrid, i) {
           WickedGrid.instance.forEach(function(w) {
-            this.setActiveSheet(i);
+            w.setActiveSheet(i);
           });
         });
       });

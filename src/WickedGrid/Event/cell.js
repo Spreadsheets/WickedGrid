@@ -12,12 +12,12 @@ WickedGrid.event.Cell = (function() {
       var wickedGrid = this.wickedGrid,
           inPlaceEdit = wickedGrid.inPlaceEdit(),
           inPlaceEditHasFocus = $(inPlaceEdit).is(':focus'),
-          cellLast = jS.cellLast,
+          cellLast = wickedGrid.cellLast,
           cell;
 
       (inPlaceEdit.destroy || empty)();
       if (cellLast !== null && (cellLast.isEdit || force)) {
-        cell = jS.getCell(cellLast.sheetIndex, cellLast.rowIndex, cellLast.columnIndex);
+        cell = wickedGrid.getCell(cellLast.sheetIndex, cellLast.rowIndex, cellLast.columnIndex);
         var formula = (inPlaceEditHasFocus ? $(inPlaceEdit) : wickedGrid.formula()),
             td = cell.td;
 
@@ -80,7 +80,7 @@ WickedGrid.event.Cell = (function() {
 
       (wickedGrid.inPlaceEdit().destroy || empty)();
 
-      jS.highlighter
+      wickedGrid.highlighter
           .clearBar()
           .clear();
 
@@ -113,7 +113,7 @@ WickedGrid.event.Cell = (function() {
      */
     setHighlightFromKeyCode: function (e) {
       var wickedGrid = this.wickedGrid,
-          grid = wickedGrid.orderedGrid(jS.highlighter),
+          grid = wickedGrid.orderedGrid(wickedGrid.highlighter),
           size = wickedGrid.sheetSize(),
           cellActive = wickedGrid.cellActive,
           highlighter = wickedGrid.highlighter;
@@ -198,7 +198,8 @@ WickedGrid.event.Cell = (function() {
     setActiveFromKeyCode: function (e, skipMove) {
       if (this.cellLast === null) return false;
 
-      var cell = jS.cellLast,
+      var wickedGrid = this.wickedGrid,
+          cell = wickedGrid.cellLast,
           loc = {
             rowIndex: cell.rowIndex,
             columnIndex: cell.columnIndex
@@ -224,9 +225,9 @@ WickedGrid.event.Cell = (function() {
           loc.columnIndex++;
           break;
         case key.ENTER:
-          loc = jS.evt.incrementAndStayInGrid(jS.orderedGrid(jS.highlighter), loc, true, e.shiftKey);
+          loc = wickedGrid.cellEvents.incrementAndStayInGrid(wickedGrid.orderedGrid(wickedGrid.highlighter), loc, true, e.shiftKey);
           overrideIsEdit = true;
-          highlighted = jS.highlighted();
+          highlighted = wickedGrid.highlighted();
           if (highlighted.length > 1) {
             doNotClearHighlighted = true;
           } else {
@@ -237,9 +238,9 @@ WickedGrid.event.Cell = (function() {
           }
           break;
         case key.TAB:
-          loc = jS.evt.incrementAndStayInGrid(jS.orderedGrid(jS.highlighter), loc, false, e.shiftKey);
+          loc = wickedGrid.cellEvents.incrementAndStayInGrid(wickedGrid.orderedGrid(wickedGrid.highlighter), loc, false, e.shiftKey);
           overrideIsEdit = true;
-          highlighted = jS.highlighted();
+          highlighted = wickedGrid.highlighted();
           if (highlighted.length > 1) {
             doNotClearHighlighted = true;
           } else {
@@ -264,13 +265,13 @@ WickedGrid.event.Cell = (function() {
       //to get the td could possibly make keystrokes slow, we prevent it here so the user doesn't even know we are listening ;)
       if (!cell.isEdit || overrideIsEdit) {
         //get the td that we want to go to
-        if ((spreadsheet = jS.spreadsheets[jS.i]) === u) return false;
+        if ((spreadsheet = wickedGrid.spreadsheets[wickedGrid.i]) === u) return false;
         if ((row = spreadsheet[loc.rowIndex]) === u) return false;
         if ((nextCell = row[loc.columnIndex]) === u) return false;
 
         //if the td exists, lets go to it
         if (nextCell !== null) {
-          jS.cellEdit(nextCell.td, null, doNotClearHighlighted);
+          wickedGrid.cellEdit(nextCell.td, null, doNotClearHighlighted);
           return false;
         }
       }
@@ -360,69 +361,22 @@ WickedGrid.event.Cell = (function() {
       return true;
     },
 
-    edit: function (e) {
-      if (jS.isBusy()) {
+    edit: function (td) {
+      var wickedGrid = this.wickedGrid;
+      if (wickedGrid.isBusy()) {
         return false;
       }
 
-      WickedGrid.inPlaceEdit(this.wickedGrid, null, true);
+      WickedGrid.inPlaceEdit(wickedGrid, td, true);
 
       return true;
     },
 
-    /**
-     * Handles bar events, used for highlighting and activating.evt
-     * @namespace
-     */
-    barInteraction: {
-
-      /**
-       * The first bar that received the event (mousedown).evt.barInteraction
-       */
-      first: null,
-
-      /**
-       * The last bar that received the event (mousedown).evt.barInteraction
-       */
-      last: null,
-
-      /**
-       * Tracks if we are in select mode.evt.barInteraction
-       */
-      selecting: false,
-
-      /**
-       * Manages the bar selection
-       * @param {Object} target
-       * @returns {*}.evt.barInteraction
-       */
-      select: function (target) {
-        if (!target) return;
-        if (target.type !== 'bar') return;
-        var bar = target,
-            entity = bar.entity, //returns 'top' or 'left';
-            index = bar.index;
-
-        if (index < 0) return false;
-
-        jS.evt.barInteraction.last = jS.evt.barInteraction.first = jS[entity + 'Last'] = index;
-
-        jS.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
-
-        jS.evt.barInteraction.selecting = true;
-        $document
-            .one('mouseup', function () {
-              jS.evt.barInteraction.selecting = false;
-            });
-
-        return false;
-      }
-    },
     paste: function (e) {
       e = e || window.event;
       if (e.ctrlKey || e.type == 'paste') {
         var fnAfter = function () {
-          jS.updateCellsAfterPasteToFormula();
+          wickedGrid.updateCellsAfterPasteToFormula();
         };
 
         var $doc = $document
@@ -439,8 +393,8 @@ WickedGrid.event.Cell = (function() {
               $doc.keyup();
             });
 
-        jS.setDirty(true);
-        jS.setChanged(true);
+        wickedGrid.setDirty(true);
+        wickedGrid.setChanged(true);
         return true;
       }
 

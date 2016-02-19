@@ -3,31 +3,37 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
   wickedGrid.i = i;
 
   //TODO: readOnly from metadata
-  //jS.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
+  //wickedGrid.readOnly[i] = (table.className || '').match(/\breadonly\b/i) != null;
 
   var enclosure = WickedGrid.enclosure(wickedGrid),
       pane = enclosure.pane,
       $pane = $(pane),
+      actionUI = pane.actionUI,
       paneContextmenuEvent = function (e) {
         e = e || window.event;
+
         if (wickedGrid.isBusy()) {
           return false;
         }
+
+        if (wickedGrid.isCell(e.target)) {
+          WickedGrid.cellMenu(wickedGrid, e.pageX, e.pageY);
+          return false;
+        }
+
         if (wickedGrid.isBar(e.target)) {
           var bar = e.target,
-              index = bar.index,
-              entity = bar.entity;
+              index = bar.index;
 
           if (index < 0) return false;
 
-          if (wickedGrid.evt.barInteraction.first === jS.evt.barInteraction.last) {
-            //TODO: change this
-            jS.controlFactory.barMenu[entity](e, index);
+          if (actionUI.columnCache.first === actionUI.columnCache.last) {
+            WickedGrid.columnMenu(wickedGrid, index, e.pageX, e.pageY);
+          } else if (actionUI.columnCache.first === actionUI.columnCache.last) {
+            WickedGrid.rowMenu(wickedGrid, index, e.pageX, e.pageY);
           }
-        } else {
-          WickedGrid.cellMenu(e);
+          return false;
         }
-        return false;
       };
 
   ui.appendChild(enclosure);
@@ -49,10 +55,10 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
       if (wickedGrid.isCell(e.target)) {
         if (e.button == 2) {
           paneContextmenuEvent.call(this, e);
-          wickedGrid.evt.cellOnMouseDown(e);
+          wickedGrid.cellEvents.mouseDown(e);
           return true;
         }
-        wickedGrid.evt.cellOnMouseDown(e);
+        wickedGrid.cellEvents.mouseDown(e);
         return false;
       }
 
@@ -61,7 +67,7 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
           paneContextmenuEvent.call(this, e);
         }
         mouseDownEntity = e.target.entity;
-        wickedGrid.evt.barInteraction.select(e.target);
+        actionUI.selectBar(e.target);
         return false;
       }
 
@@ -74,39 +80,50 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
 
     pane.onmouseover = function (e) {
       e = e || window.event;
-
-      var target = e.target || e.srcElement;
-
       //This manages bar resize, bar menu, and bar selection
-      if (jS.isBusy()) {
+      if (wickedGrid.isBusy()) {
         return false;
       }
 
-      if (!jS.isBar(target)) {
+      if (!wickedGrid.isBar(e.target)) {
         return false;
       }
-      var bar = target,
-          entity = bar.entity,
-          index = bar.index;
+
+      var bar = e.target || e.srcElement,
+          index = bar.index,
+          entity = bar.entity;
 
       if (index < 0) {
         return false;
       }
 
-      if (wickedGrid.evt.barInteraction.selecting && bar === mouseDownEntity) {
-        wickedGrid.evt.barInteraction.last = index;
 
-        wickedGrid.cellSetActiveBar(entity, jS.evt.barInteraction.first, jS.evt.barInteraction.last);
-      } else {
-        jS.resizeBar[entity](bar, index, pane);
+      switch (entity) {
+        case WickedGrid.columnEntity:
+          if (actionUI.columnCache.selecting && bar === mouseDownEntity) {
+            actionUI.columnCache.last = index;
+            wickedGrid.cellSetActiveBar(WickedGrid.columnEntity, actionUI.columnCache.first, actionUI.columnCache.last);
+          } else {
+            WickedGrid.columnResizer(wickedGrid, bar, index, pane);
 
-        if (wickedGrid.isSheetEditable()) {
-          jS.controlFactory.barHandleFreeze[entity](index, pane);
-
-          if (entity == 'top') {
-            jS.controlFactory.barMenu[entity](e, index, bar);
+            if (wickedGrid.isSheetEditable()) {
+              WickedGrid.columnFreezer(wickedGrid, index, pane);
+              WickedGrid.columnMenu(wickedGrid, bar, index, e.pageX, e.pageY);
+            }
           }
-        }
+          break;
+        case WickedGrid.rowEntity:
+          if (actionUI.rowCache.selecting && bar === mouseDownEntity) {
+            actionUI.rowCache.last = index;
+            wickedGrid.cellSetActiveBar(WickedGrid.rowEntity, actionUI.rowCache.first, actionUI.rowCache.last);
+          } else {
+            WickedGrid.rowResizer(wickedGrid, bar, index, pane);
+
+            if (wickedGrid.isSheetEditable()) {
+              WickedGrid.rowFreezer(wickedGrid, index, pane);
+            }
+          }
+          break;
       }
 
       return true;

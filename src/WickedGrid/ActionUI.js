@@ -3,11 +3,23 @@
  * Creates the scrolling system used by each spreadsheet
  */
 WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
+	var $document = $(document);
+
 	var ActionUI = function(wickedGrid, enclosure, cl, frozenAt) {
 		this.wickedGrid = wickedGrid;
 		this.enclosure = enclosure;
 		this.pane = document.createElement('div');
 		this.active = true;
+		this.rowCache = {
+			last: null,
+			first: null,
+			selecting: false
+		};
+		this.columnCache = {
+			last: null,
+			first: null,
+			selecting: false
+		};
 		enclosure.appendChild(this.pane);
 
 		if (!(this.frozenAt = frozenAt)) {
@@ -106,7 +118,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					}
 
 					header.index = rowIndex;
-					header.entity = 'left';
+					header.entity = 'row';
 					header.className = WickedGrid.cl.barLeft + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					header.parentNode.style.height = header.style.height = loader.getHeight(wickedGrid.i, rowIndex) + 'px';
@@ -130,7 +142,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					header.index = columnIndex;
 					header.th = header;
 					header.col = col;
-					header.entity = 'top';
+					header.entity = 'column';
 					header.className = WickedGrid.cl.barTop + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					col.style.width = loader.getWidth(wickedGrid.i, columnIndex) + 'px';
@@ -525,6 +537,66 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 
 		redrawColumns: function() {
 			this.megaTable.forceRedrawColumns();
+		},
+
+		selectBar: function(th) {
+			switch (th.entity) {
+				case WickedGrid.columnEntity:
+					return this.selectColumn(th);
+				case WickedGrid.rowEntity:
+					return this.selectRow(th);
+			}
+			return null;
+		},
+		/**
+		 * Manages the bar selection
+		 * @param {Object} target
+		 * @returns {WickedGrid.ActionUI}
+		 */
+		selectColumn: function (target) {
+			if (!target) return this;
+			if (target.type !== 'bar') return this;
+			var columnCache = this.columnCache,
+					index = target.index;
+
+			if (index < 0) return this;
+
+			columnCache.last = columnCache.first = index;
+
+			this.wickedGrid.cellSetActiveBar('column', columnCache.first, columnCache.last);
+
+			columnCache.selecting = true;
+			$document
+					.one('mouseup', function () {
+						columnCache.selecting = false;
+					});
+
+			return this;
+		},
+		/**
+		 * Manages the bar selection
+		 * @param {Object} target
+		 */
+		selectRow: function (target) {
+			if (!target) return;
+			if (target.type !== 'bar') return;
+			var rowCache = this.rowCache,
+					bar = target,
+					index = bar.index;
+
+			if (index < 0) return false;
+
+			rowCache.last = rowCache.first = index;
+
+			this.wickedGrid.cellSetActiveBar('row', rowCache.first, rowCache.last);
+
+			rowCache.selecting = true;
+			$document
+					.one('mouseup', function () {
+						rowCache.selecting = false;
+					});
+
+			return false;
 		},
 
 		pixelScrollDensity: 30,

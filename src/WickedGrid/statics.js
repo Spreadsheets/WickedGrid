@@ -28,6 +28,10 @@ WickedGrid.defaultFormulaParser = null;
 
 WickedGrid.spareFormulaParsers = [];
 
+WickedGrid.cornderEntity = 'corner';
+WickedGrid.columnEntity = 'column';
+WickedGrid.rowEntity = 'row';
+
 WickedGrid.events = [
   'sheetAddRow',
   'sheetAddColumn',

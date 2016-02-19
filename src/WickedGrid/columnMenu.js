@@ -1,17 +1,17 @@
-WickedGrid.columnMenu = function(wickedGrid, target, x, y) {
+WickedGrid.columnMenu = function(wickedGrid, bar, index, x, y) {
   if (!wickedGrid.settings.barMenus) return false;
   if (wickedGrid.isBusy()) return false;
 
   var menu = wickedGrid.barMenuTop().hide();
 
   if (!menu.length) {
-    menu = WickedGrid.menu(wickedGrid.settings.contextmenuTop);
+    menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuTop);
     wickedGrid.controls.bar.x.menu[wickedGrid.i] = menu;
   }
 
   wickedGrid.menus().hide();
 
-  if (!target) {
+  if (!bar) {
     menu
         .css('left', (x - 5) + 'px')
         .css('top', (y - 5) + 'px')
@@ -35,8 +35,8 @@ WickedGrid.columnMenu = function(wickedGrid, target, x, y) {
               .mouseup();
 
           menu
-              .css('left', (e.pageX - 5) + 'px')
-              .css('top', (e.pageY - 5) + 'px')
+              .css('left', (x - 5) + 'px')
+              .css('top', (y - 5) + 'px')
               .show();
         })
         .blur(function () {
@@ -52,6 +52,6 @@ WickedGrid.columnMenu = function(wickedGrid, target, x, y) {
   }
 
   barMenuParentTop
-      .prependTo(target)
+      .prependTo(bar)
       .show();
 };

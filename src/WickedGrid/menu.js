@@ -6,17 +6,6 @@ WickedGrid.menu = function(wickedGrid, menuItems) {
 
   menu.className = wickedGrid.theme.menu + ' ' + wickedGrid.cl.tdMenu;
 
-  switch (bar) {
-    case 'top':
-
-      break;
-    case 'left':
-
-      break;
-    case 'cell':
-      break;
-  }
-
   wickedGrid.controls.menus[wickedGrid.i] = wickedGrid.menus().add(menu);
 
   $menu

@@ -1,4 +1,4 @@
-WickedGrid.cellMenu = function(wickedGrid) {
+WickedGrid.cellMenu = function(wickedGrid, x, y) {
   if (this.isBusy()) {
     return false;
   }
@@ -14,8 +14,8 @@ WickedGrid.cellMenu = function(wickedGrid) {
   this.menus().hide();
 
   menu
-      .css('left', (e.pageX - 5) + 'px')
-      .css('top', (e.pageY - 5) + 'px')
+      .css('left', (x - 5) + 'px')
+      .css('top', (y - 5) + 'px')
       .show();
 
   return true;

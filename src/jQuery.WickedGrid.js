@@ -55,7 +55,7 @@ $.fn.extend({
 	 *		  })
    *		  .sheet();
    *
-   * sheetRename - occurs just after a spreadsheet is renamed, to obtain new title jS.obj.table().attr('title');
+   * sheetRename - occurs just after a spreadsheet is renamed, to obtain new title wickedGrid.obj.table().attr('title');
    *	  arguments: e (jQuery event), jS (jQuery.sheet instance), i (spreadsheet index)
    *	  example:
    *		  $(obj).sheet({
@@ -236,7 +236,7 @@ $.fn.extend({
 	 *		  })
    *		  .sheet();
    *
-   * sheetSave - an assistance event called when calling jS.toggleState(), but not tied to anything internally
+   * sheetSave - an assistance event called when calling wickedGrid.toggleState(), but not tied to anything internally
    *	  arguments: e (jQuery event), jS (jQuery.sheet instance), tables (tables from spreadsheet)
    *	  example:
    *		  $(obj).sheet({
@@ -412,14 +412,14 @@ $.fn.extend({
           settings.frozenAt[i] = {row:0, col:0};
         }
         if (frozenAtRow) {
-          settings.frozenAt[jS.i].row = frozenAtRow;
+          settings.frozenAt[wickedGrid.i].row = frozenAtRow;
         }
         if (frozenAtCol) {
-          settings.frozenAt[jS.i].col = frozenAtCol;
+          settings.frozenAt[wickedGrid.i].col = frozenAtCol;
         }
       });
 
-      new WickedGrid(settings);
+      var wickedGrid = new WickedGrid(settings);
     });
 
     return this;
@@ -499,7 +499,7 @@ $.fn.extend({
     if (!wickedGrid) return this;
 
     sheetIndex = (sheetIndex || 0);
-    cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+    cell = wickedGrid.getCell(sheetIndex, rowIndex, colIndex);
 
     if (!cell) return this;
 
@@ -534,7 +534,7 @@ $.fn.extend({
 
     if (!wickedGrid) return this;
 
-    cell = jS.getCell(sheetIndex, rowIndex, colIndex);
+    cell = wickedGrid.getCell(sheetIndex, rowIndex, colIndex);
     if (cell === null) return this;
 
     cell.formula = formula;
@@ -554,7 +554,7 @@ $.fn.extend({
 
     if (!wickedGrid) return false;
 
-    return jS.obj.fullScreen().is(':visible');
+    return wickedGrid.fullScreen().is(':visible');
   },
 
   /**

@@ -1,10 +1,10 @@
-WickedGrid.rowMenu = function(wickedGrid) {
+WickedGrid.rowMenu = function(wickedGrid, index, x, y) {
   if (!wickedGrid.settings.barMenus) return false;
   if (wickedGrid.isBusy()) return false;
 
   wickedGrid.barMenuLeft().hide();
 
-  if (i) {
+  if (index > 0) {
     wickedGrid.barHandleFreezeLeft().remove();
   }
   var menu;
@@ -12,15 +12,15 @@ WickedGrid.rowMenu = function(wickedGrid) {
   menu = wickedGrid.barMenuLeft();
 
   if (!menu.length) {
-    menu = WickedGrid.menu(wickedGrid.settings.contextmenuLeft);
+    menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuLeft);
     wickedGrid.controls.bar.y.menu[wickedGrid.i] = menu;
   }
 
   wickedGrid.menus().hide();
 
   menu
-      .css('left', (e.pageX - 5) + 'px')
-      .css('top', (e.pageY - 5) + 'px')
+      .css('left', (x - 5) + 'px')
+      .css('top', (y - 5) + 'px')
       .show();
 
   return true;

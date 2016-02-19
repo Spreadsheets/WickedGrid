@@ -1,64 +1,73 @@
-WickedGrid.event.formula = {
-  /**
-   *
-   * @param {Object} e jQuery event
-   * @returns {*}.evt.formula
-   */
-  keydown:function (e) {
-    e = e || window.event;
-    if (jS.readOnly[jS.i]) return false;
-    if (jS.cellLast === null) return false;
-    if (jS.cellLast.rowIndex < 0 || jS.cellLast.columnIndex < 0) return false;
-
-    jS.trigger('sheetFormulaKeydown', [false]);
-
-    switch (e.keyCode) {
-      case key.C:
-        if (e.ctrlKey) {
-          return jS.evt.document.copy(e);
-        }
-      case key.X:
-        if (e.ctrlKey) {
-          return jS.evt.document.cut(e);
-        }
-      case key.Y:
-        if (e.ctrlKey) {
-          jS.evt.document.redo(e);
-          return false;
-        }
-        break;
-      case key.Z:
-        if (e.ctrlKey) {
-          jS.evt.document.undo(e);
-          return false;
-        }
-        break;
-      case key.ESCAPE:
-        jS.evt.cellEditAbandon();
-        return true;
-        break;
-      case key.ENTER:
-        jS.evt.cellSetActiveFromKeyCode(e, true);
-        return false;
-        break;
-      case key.UNKNOWN:
-        return false;
-    }
-
-    jS.cellLast.isEdit = true;
-  },
-
-  /**
-   * Helper for events
-   * @param {Boolean} ifTrue
-   * @param e {Object} jQuery event
-   * @returns {*}.evt.keydownHandler
-   */
-  If:function (ifTrue, e) {
-    if (ifTrue) {
-      $(jS.obj.tdActive()).dblclick();
-      return true;
-    }
-    return false;
+WickedGrid.event.Formula = (function() {
+  function Formula(wickedGrid) {
+    this.wickedGrid = wickedGrid;
   }
-};
+
+  Formula.prototype = {
+    /**
+     *
+     * @param {Object} e jQuery event
+     * @returns {*}.evt.formula
+     */
+    keydown:function (e) {
+      e = e || window.event;
+      var wickedGrid = this.wickedGrid;
+      if (wickedGrid.readOnly[wickedGrid.i]) return false;
+      if (wickedGrid.cellLast === null) return false;
+      if (wickedGrid.cellLast.rowIndex < 0 || wickedGrid.cellLast.columnIndex < 0) return false;
+
+      wickedGrid.trigger('sheetFormulaKeydown', [false]);
+
+      switch (e.keyCode) {
+        case key.C:
+          if (e.ctrlKey) {
+            return wickedGrid.documentEvents.copy(e);
+          }
+        case key.X:
+          if (e.ctrlKey) {
+            return wickedGrid.documentEvents.cut(e);
+          }
+        case key.Y:
+          if (e.ctrlKey) {
+            wickedGrid.documentEvents.redo(e);
+            return false;
+          }
+          break;
+        case key.Z:
+          if (e.ctrlKey) {
+            wickedGrid.documentEvents.undo(e);
+            return false;
+          }
+          break;
+        case key.ESCAPE:
+          wickedGrid.cellEvents.editAbandon();
+          return true;
+          break;
+        case key.ENTER:
+          wickedGrid.cellEvents.setActiveFromKeyCode(e, true);
+          return false;
+          break;
+        case key.UNKNOWN:
+          return false;
+      }
+
+      wickedGrid.cellLast.isEdit = true;
+    },
+
+    /**
+     * Helper for events
+     * @param {Boolean} ifTrue
+     * @param e {Object} jQuery event
+     * @returns {*}.evt.keydownHandler
+     */
+    If:function (ifTrue, e) {
+      if (ifTrue) {
+        $(this.wickedGrid.tdActive()).dblclick();
+        return true;
+      }
+      return false;
+    }
+  };
+
+  return Formula;
+})();

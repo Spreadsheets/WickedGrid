@@ -1,4 +1,4 @@
-WickedGrid.rowResizer = function(wickedGrid) {
+WickedGrid.rowResizer = function(wickedGrid, bar, index, pane) {
   wickedGrid.barLeftControls().remove();
   var barRectangle = bar.getBoundingClientRect(),
       barOffsetTop = barRectangle.top + document.body.scrollTop,
@@ -19,7 +19,7 @@ WickedGrid.rowResizer = function(wickedGrid) {
           .prependTo($barController),
       handle;
 
-  wickedGrid.controls.bar.y.controls[jS.i] = wickedGrid.barLeftControls().add($barController);
+  wickedGrid.controls.bar.y.controls[wickedGrid.i] = wickedGrid.barLeftControls().add($barController);
 
   wickedGrid.resizableCells($child, {
     handles:'s',

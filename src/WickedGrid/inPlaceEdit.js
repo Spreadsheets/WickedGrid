@@ -27,7 +27,7 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
   textarea = document.createElement('textarea');
   $textarea = $(textarea);
   pane.inPlaceEdit = textarea;
-  textarea.i = jS.i;
+  textarea.i = wickedGrid.i;
   textarea.className = this.cl.inPlaceEdit + ' ' + this.theme.inPlaceEdit;
   textarea.td = td;
   //td / tr / tbody / table
@@ -53,13 +53,13 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
 
     switch (e.keyCode) {
       case key.ENTER:
-        return jS.evt.inPlaceEdit.enter(e);
+        return wickedGrid.formulaEvents.enter(e);
         break;
       case key.TAB:
-        return jS.evt.inPlaceEdit.tab(e);
+        return wickedGrid.formulaEvents.tab(e);
         break;
       case key.ESCAPE:
-        jS.evt.cellEditAbandon();
+        wickedGrid.cellEvents.editAbandon();
         return false;
         break;
     }
@@ -68,26 +68,28 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
       textarea.onkeyup =
           function() { formula[0].value = textarea.value; };
 
-  textarea.onfocus = function () { jS.setNav(false); };
+  textarea.onfocus = function () { wickedGrid.setNav(false); };
 
   textarea.onblur =
       textarea.onfocusout =
-          function () { jS.setNav(true); };
+          function () { wickedGrid.setNav(true); };
 
-  textarea.onpaste = jS.evt.pasteOverCells;
+  textarea.onpaste = function(e) {
+    wickedGrid.cellEvents.paste(e);
+  };
 
   textarea.destroy = function () {
     pane.inPlaceEdit = null;
-    jS.cellLast.isEdit = (textarea.value != val);
+    wickedGrid.cellLast.isEdit = (textarea.value != val);
     textarea.parentNode.removeChild(textarea);
-    jS.controls.inPlaceEdit[textarea.i] = false;
+    wickedGrid.controls.inPlaceEdit[textarea.i] = false;
   };
 
   pane.appendChild(textarea);
 
   textarea.onfocus();
 
-  jS.controls.inPlaceEdit[jS.i] = textarea;
+  wickedGrid.controls.inPlaceEdit[wickedGrid.i] = textarea;
 
   //This is a little trick to get the cursor to the end of the textarea
   $textarea

@@ -56,14 +56,18 @@ WickedGrid.header = function(wickedGrid) {
     //Edit box menu
     formula = document.createElement('textarea');
     formula.className = WickedGrid.cl.formula + ' ' + wickedGrid.theme.controlTextBox;
-    formula.onkeydown = WickedGrid.event.formula.keydown;
+    formula.onkeydown = function (e) {
+      return wickedGrid.formulaEvents.keydown(e);
+    };
     formula.onkeyup = function () {
       wickedGrid.inPlaceEdit().value = this.value;
     };
     formula.onchange = function () {
       wickedGrid.inPlaceEdit().value = this.value;
     };
-    formula.onpaste = wickedGrid.pasteOverCells;
+    formula.onpaste = function (e) {
+      return wickedGrid.pasteOverCells(e);
+    };
     formula.onfocus = function () {
       wickedGrid.setNav(false);
     };
@@ -113,7 +117,9 @@ WickedGrid.header = function(wickedGrid) {
 
     wickedGrid.setNav(true);
 
-    $(document).keydown(WickedGrid.event.document.keydown);
+    $(document).keydown(function(e) {
+      return wickedGrid.documentEvents.keydown(e);
+    });
   }
 
   return header;

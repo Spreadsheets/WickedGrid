@@ -23,12 +23,12 @@ WickedGrid.columnFreezer = function(wickedGrid) {
       handle = document.createElement('div'),
       $handle = pane.freezeHandleTop = $(handle)
           .appendTo(pane)
-          .addClass(this.theme.barHandleFreezeTop + ' ' + this.cl.barHelper + ' ' + this.cl.barHandleFreezeTop)
+          .addClass(wickedGrid.theme.barHandleFreezeTop + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barHandleFreezeTop)
           .height(bar.clientHeight - 1)
           .css('left', (bar.offsetLeft - handle.clientWidth) + 'px')
           .attr('title', wickedGrid.msg.dragToFreezeCol);
 
-  wickedGrid.controls.bar.helper[wickedGrid.i] = this.barHelper().add(handle);
+  wickedGrid.controls.bar.helper[wickedGrid.i] = wickedGrid.barHelper().add(handle);
   wickedGrid.controls.bar.x.handleFreeze[wickedGrid.i] = $handle;
 
   wickedGrid.draggable($handle, {

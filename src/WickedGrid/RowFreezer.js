@@ -1,5 +1,5 @@
 //Creates the draggable objects for freezing cells
-WickedGrid.rowFreezer = function(wickedGrid) {
+WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
   if (wickedGrid.isBusy()) {
     return false;
   }

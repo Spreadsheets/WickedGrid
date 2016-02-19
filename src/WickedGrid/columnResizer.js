@@ -1,4 +1,4 @@
-WickedGrid.columnResizer = function(wickedGrid) {
+WickedGrid.columnResizer = function(wickedGrid, bar) {
   wickedGrid.barTopControls().remove();
   var barController = document.createElement('div'),
       $barController = $(barController)
