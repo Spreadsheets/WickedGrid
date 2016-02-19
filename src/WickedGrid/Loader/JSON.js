@@ -336,7 +336,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
 			hasUneditable = (uneditable !== undefined && uneditable !== null);
 			hasDependencies = (dependencies !== undefined && dependencies !== null);
 
-			jitCell = new Sheet.Cell(sheetIndex, null, this.wickedGrid, this.handler);
+			jitCell = new WickedGrid.Cell(sheetIndex, null, this.wickedGrid, this.handler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = jsonCell;
@@ -596,7 +596,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 		/**
 		 *
-		 * @param {Sheet.Cell} cell
+		 * @param {WickedGrid.Cell} cell
 		 */
 		setDependencies: function(cell) {
 			//TODO: need to handle the cell's cache that are dependent on this one so that it changes when it is in view
@@ -730,7 +730,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
 		 *  ]
 		 * }]</pre>
 		 * @returns {*|jQuery|HTMLElement} a simple html table
-		 * @memberOf Sheet.JSONLoader
+		 * @memberOf WickedGrid.loader.JSON
 		 */
 		toTables: function() {
 
@@ -829,7 +829,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
 		},
 
 		/**
-		 * Create json from jQuery.sheet Sheet instance
+		 * Create json from WickedGrid instance
 		 * @param {Boolean} [doNotTrim] cut down on added json by trimming to only edited area
 		 * @returns {Array}  - schema:<pre>
 		 * [{ // sheet 1, can repeat
@@ -878,7 +878,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
 				 *	  }
 				 *  ]
 				 * }]</pre>
-		 * @memberOf Sheet.JSONLoader
+		 * @memberOf WickedGrid.loader.JSON
 		 */
 		fromSheet: function(doNotTrim) {
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
@@ -989,7 +989,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
 			return this.json = output;
 		},
 		type: JSONLoader,
-		typeName: 'Sheet.JSONLoader',
+		typeName: 'WickedGrid.loader.JSON',
 
 		clearCaching: function() {
 			var json = this.json,

@@ -351,7 +351,7 @@ WickedGrid.event.Cell = (function() {
      * @param {Object} e jQuery event.evt
      */
     dblClick: function (e) {
-      if (jS.isBusy()) {
+      if (this.wickedGrid.isBusy()) {
         return false;
       }
 
@@ -447,4 +447,6 @@ WickedGrid.event.Cell = (function() {
       return false;
     }
   };
+
+  return Cell;
 })();

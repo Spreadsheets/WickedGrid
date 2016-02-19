@@ -1,5 +1,5 @@
 /* Controls styling */
-.wg-Parent .wg-loc
+.wg-element .wg-loc
 {
 	border-width: 0 ! important;
 	background: none ! important;
@@ -8,7 +8,7 @@
 	padding: 0;
 }
 
-.wg-parent .wg-formula
+.wg-element .wg-formula
 {
 	width: 100%;
 	height: 22px;
@@ -18,13 +18,13 @@
 	resize: none;
 }
 
-.wg-parent .wg-formula-parent
+.wg-element .wg-formula-element
 {
 	border: none ! important;
 	padding: 0;
 }
 
-.wg-parent .wg-header, .wg-header table
+.wg-element .wg-header, .wg-header table
 {
 	padding: 0 ! important;
 	border: none ! important;
@@ -35,31 +35,31 @@
 	border-bottom-right-radius: 0;
 }
 
-.wg-parent .wg-header img
+.wg-element .wg-header img
 {
 	border: none;
 }
 
 /* Menu */
-.wg-parent .wg-bar-helper {
+.wg-element .wg-bar-helper {
 	height: 0;
 	border: none ! important;
 	width: 0;
 }
-.wg-parent .wg-bar-top-menu-button {
+.wg-element .wg-column-menu-button {
 	width: inherit ! important;
 	height: 0 ! important;
 	float: right;
 	margin-right: 30px;
 }
-.wg-Parent .wg-BarTopMenuButton * {
+.wg-element .wg-column-menu-button * {
 	position: absolute;
 	height: 16px ! important;
 	width: 18px ! important;
 	background-color: inherit ! important;
 }
 
-.wg-parent .wg-menu-fixed {
+.wg-element .wg-menu-fixed {
 	position: relative ! important;
 }
 
@@ -164,12 +164,12 @@
 	filter:alpha(opacity=1);
 }
 
-.wg-parent .wg-ui
+.wg-element .wg-ui
 {
 	width: inherit ! important;
 	border-color: inherit ! important;
 }
-.wg-parent .wg-tab-container
+.wg-element .wg-tab-container
 {
 	overflow-x: hidden;
 	height: 21px;
@@ -177,10 +177,10 @@
 	position: absolute;
 	margin-left: 19px;
 }
-.wg-parent .wg-tab-container-scrollable {
+.wg-element .wg-tab-container-scrollable {
 	overflow-x: auto;
 }
-.wg-parent .wg-tab-container span
+.wg-element .wg-tab-container span
 {
 	border-width: 0 1px 0 1px;
 	padding: 2px 5px 2px 5px ! important;
@@ -189,7 +189,7 @@
 	border-radius: 0;
 	height: 22px;
 }
-.wg-parent .wg-sheet-adder {
+.wg-element .wg-sheet-adder {
 	border-width: 0 1px 0 0;
 	display: block;
 	position: absolute;
@@ -198,21 +198,21 @@
 	height: 20px;
 	border-bottom-left-radius: inherit;
 }
-.wg-parent .wg-tab {
+.wg-element .wg-tab {
 	cursor: pointer;
 }
-.wg-parent .wg-tab-container *, .div *
+.wg-element .wg-tab-container *, .div *
 {
 	font-size: 1em;
 }
 
-.wg-parent .wg-scroll {
+.wg-element .wg-scroll {
 	position: absolute;
 	overflow: scroll;
 	height: inherit;
 	width: inherit;
 }
-.wg-parent .wg-scroll > div {
+.wg-element .wg-scroll > div {
 	min-height: 1000%;
 	min-width: 500%;
 	height: 1000%;
@@ -221,7 +221,7 @@
 	transition: 0.2s;
 }
 /* Sheet styling */
-.wg-parent .wg
+.wg-element .wg
 {
 	left: 0;
 	top: 0;
@@ -234,27 +234,27 @@
 	cursor: cell;
 	width: 0 ! important;
 }
-.wg-parent .wg tbody
+.wg-element .wg tbody
 {
 	background-color: transparent;
 	color: inherit ! important;
 	border-color: inherit ! important;
 }
 
-.wg-parent .wg colgroup {
+.wg-element .wg colgroup {
 	border-color: inherit ! important;
 }
-.wg-parent .wg col {
+.wg-element .wg col {
 	background-image: none ! important;
 	border-color: inherit ! important;
 }
 
-.wg-parent .wg tr {
+.wg-element .wg tr {
 	border-color: inherit ! important;
 	color:  inherit ! important;
 	background-image: none ! important;
 }
-.wg-parent .wg td, .wg-parent .wg th {
+.wg-element .wg td, .wg-element .wg th {
 	height: inherit;
 	border-width: 0 0 1px 1px;
 	border-color: inherit;
@@ -269,29 +269,29 @@
 	white-space: nowrap;
 	-ms-text-overflow: ellipsis;
 }
-.wg-parent .wg td.wg-merged {
+.wg-element .wg td.wg-merged {
 	position: absolute;
 	visibility: hidden;
 }
 
-.wg-parent .wg th.wg-bar-corner {
+.wg-element .wg th.wg-bar-corner {
 	border-width: 0 0 1px 0;
 }
 
-.wg-parent .wg- th.wg-bar-left {
+.wg-element .wg- th.wg-bar-left {
 	border-width: 0 0 1px 0;
 }
 
-.wg-parent .wg- th.wg-bar-top {
+.wg-element .wg- th.wg-bar-top {
 	border-width: 0 0 1px 1px;
 	text-align: center;
 }
 
-.wg-parent .wg-cell-highighted {
+.wg-element .wg-cell-highighted {
 	background-image: none ! important;
 }
 
-.wg-parent .wg-error {
+.wg-element .wg-error {
 	text-align: left;
 	overflow: hidden;
 	padding: 0;
@@ -299,12 +299,12 @@
 }
 
 /* Containers styleing*/
-.wg-parent th
+.wg-element th
 {
 	cursor: pointer;
 }
 
-.wg-parent .wg-edit-pane
+.wg-element .wg-edit-pane
 {
 	overflow: hidden;
 	background-image: none ! important;
@@ -315,21 +315,21 @@
 	border-radius: 0 !important;
 }
 
-.wg-parent .wg-enclosure {
+.wg-element .wg-enclosure {
 	border-width: 0 ! important;
 	position: absolute;
 }
 /* Bar item styling */
 
-.wg-parent .wg-bar-controller {
+.wg-element .wg-bar-controller {
 	border: none ! important;
 	position: absolute ! important;
 }
-.wg-parent .wg-bar-top-parent .wg-bar-controller {
+.wg-element .wg-bar-top-element .wg-bar-controller {
 	height: 0 !important;
 	max-height: 0 !important;
 }
-.wg-parent .wg-bar-top-parent .wg-bar-controller .ui-resizable-handle {
+.wg-element .wg-bar-top-element .wg-bar-controller .ui-resizable-handle {
 	width: 10px;
 	top: -1px !important;
 	right: -6px;
@@ -337,40 +337,40 @@
 	border-bottom-width: 0;
 }
 
-.wg-parent .wg-bar-left {
+.wg-element .wg-bar-left {
 	border-left-width: 0 ! important;
 }
-.wg-parent .wg-bar-left .wg-bar-controller {
+.wg-element .wg-bar-left .wg-bar-controller {
 	height: 0;
 	position: absolute;
 }
-.wg-parent .wg-bar-left .wg-bar-controller .ui-resizable-handle {
+.wg-element .wg-bar-left .wg-bar-controller .ui-resizable-handle {
 	display: inline ! important;
 	height: 10px;
 	border: none ! important;
 	padding-left:1px;
 }
 
-.wg-parent .wg-bar-controller .ui-resizable-handle {
+.wg-element .wg-bar-controller .ui-resizable-handle {
 	border-width: 0;
 }
 
-.wg-parent .wg-BarController .ui-resizable-handle:hover {
+.wg-element .wg-BarController .ui-resizable-handle:hover {
 	background: inherit;
 }
 
-.wg-parent .wg-bar-controller-child {
+.wg-element .wg-bar-controller-child {
 	background: inherit;
 	top: 3px ! important;
 	left: 0;
 }
 
-.wg-parent .wg-bar-controller-child .ui-resizable-handle {
+.wg-element .wg-bar-controller-child .ui-resizable-handle {
 	border-left-width: 1px;
 	border-right-width: 1px;
 }
 
-.wg-parent .wg-bar-handle-freeze-top
+.wg-element .wg-bar-handle-freeze-top
 {
 	top: 1px;
 	cursor: move ! important;
@@ -379,7 +379,7 @@
 	background-image: none ! important;
 }
 
-.wg-parent .wg-bar-handle-freeze-left
+.wg-element .wg-bar-handle-freeze-left
 {
 	left: 0;
 	cursor: move ! important;
@@ -387,7 +387,7 @@
 	position: absolute;
 	background-image: none ! important;
 }
-.wg-parent .wg-bar-left
+.wg-element .wg-bar-left
 {
 	text-align: center;
 	vertical-align: middle ! important;
@@ -421,7 +421,7 @@
 	display: none;
 }
 
-.wg-parent .wg-auto-filler
+.wg-element .wg-auto-filler
 {
 	position: absolute;
 	height: 8px;
@@ -432,7 +432,7 @@
 	display: none;
 }
 
-.wg-parent .wg-title
+.wg-element .wg-title
 {
 	width: auto;
 	text-align: left;
@@ -448,27 +448,27 @@ body > .wg-chart {
 	left: -9000px;
 }
 
-.wg-parent .wg-chart
+.wg-element .wg-chart
 {
 	width: inherit;
 	height: inherit;
 }
 
-.wg-parent .wg-chart svg {
+.wg-element .wg-chart svg {
 	position: relative ! important;
 }
 
-.wg-parent .wg-dropdown {
+.wg-element .wg-dropdown {
 	cursor: pointer;
 	width: 100%;
 }
-.wg-parent .wg-checkbox, .wg-checkbox * {
+.wg-element .wg-checkbox, .wg-checkbox * {
 	cursor: pointer;
 }
-.wg-parent .wg-radio, .wg-radio * {
+.wg-element .wg-radio, .wg-radio * {
 	cursor: pointer;
 }
-.wg-parent .wg-dropdown {
+.wg-element .wg-dropdown {
 	background-color: transparent;
 	border: none;
 	height: inherit;

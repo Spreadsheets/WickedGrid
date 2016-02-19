@@ -14,13 +14,13 @@ WickedGrid.functions = (function(r) {
 	 * title: "",
 	 * data: [0], //chart data
 	 * legend: "",
-	 * td: jS.getTd(this.sheet, this.row, this.col), //td container for cell
-	 * chart: jQuery('<div class="' + jS.cl.chart + '" />') //chart
+	 * td: wickedGrid.getTd(this.sheet, this.row, this.col), //td container for cell
+	 * chart: jQuery('<div class="' + WickedGrid.cl.chart + '" />') //chart
 	 * @returns {jQuery|HTMLElement}
 	 */
 	function chart (o) {
-		var jS = this.jS,
-			loader = jS.s.loader,
+		var wickedGrid = this.wickedGrid,
+			loader = wickedGrid.settings.loader,
 			chart = document.createElement('div'),
 			td = this.td,
 			gR,
@@ -53,7 +53,7 @@ WickedGrid.functions = (function(r) {
 			legend:""
 		}, o);
 
-		chart.className = jS.cl.chart;
+		chart.className = WickedGrid.cl.chart;
 		chart.onmousedown = function () {
 			$(td).mousedown();
 		};
@@ -195,8 +195,8 @@ WickedGrid.functions = (function(r) {
 		 * information function
 		 * @param v
 		 * @returns {Boolean}
-		 * @this jSCell
-		 * @memberOf Sheet.fn
+		 * @this Cell
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		ISNUMBER:function (v) {
@@ -213,7 +213,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * information function
 		 * @param v
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @returns {*}
 		 * @this Sheet.Cell
 		 */
@@ -243,20 +243,10 @@ WickedGrid.functions = (function(r) {
 		},
 
 		/**
-		 * information function
-		 * @returns {*|string}
-		 * @memberOf Sheet.fn
-		 * @this Sheet.Cell
-		 */
-		VERSION:function () {
-			return this.jS.version;
-		},
-
-		/**
 		 * math function
 		 * @param v
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		ABS:function (v) {
@@ -268,7 +258,7 @@ WickedGrid.functions = (function(r) {
 		 * @param value
 		 * @param significance
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		CEILING:function (value, significance) {
@@ -280,7 +270,7 @@ WickedGrid.functions = (function(r) {
 		 * math function
 		 * @param v
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		EVEN:function (v) {
@@ -300,7 +290,7 @@ WickedGrid.functions = (function(r) {
 		 * math function
 		 * @param v
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		EXP:function (v) {
@@ -312,7 +302,7 @@ WickedGrid.functions = (function(r) {
 		 * @param value
 		 * @param significance
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		FLOOR:function (value, significance) {
@@ -336,7 +326,7 @@ WickedGrid.functions = (function(r) {
 		 * math function
 		 * @param v
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		INT:function (v) {
@@ -347,7 +337,7 @@ WickedGrid.functions = (function(r) {
 		 * math function
 		 * @param v
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		LN:function (v) {
@@ -359,7 +349,7 @@ WickedGrid.functions = (function(r) {
 		 * @param v
 		 * @param n
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		LOG:function (v, n) {
@@ -371,7 +361,7 @@ WickedGrid.functions = (function(r) {
 		 * math function
 		 * @param v
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		LOG10:function (v) {
@@ -383,7 +373,7 @@ WickedGrid.functions = (function(r) {
 		 * @param x
 		 * @param y
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		MOD:function (x, y) {
@@ -398,7 +388,7 @@ WickedGrid.functions = (function(r) {
 		 * math function
 		 * @param v
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		ODD:function (v) {
@@ -425,7 +415,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * math function
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		PI:function () {
@@ -437,7 +427,7 @@ WickedGrid.functions = (function(r) {
 		 * @param x
 		 * @param y
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		POWER:function (x, y) {
@@ -448,7 +438,7 @@ WickedGrid.functions = (function(r) {
 		 * math function
 		 * @param v
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		SQRT:function (v) {
@@ -458,7 +448,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * math function
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		RAND:function () {
@@ -468,7 +458,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * math function
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		RND:function () {
@@ -480,7 +470,7 @@ WickedGrid.functions = (function(r) {
 		 * @param v
 		 * @param decimals
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		ROUND:function (v, decimals) {
@@ -493,7 +483,7 @@ WickedGrid.functions = (function(r) {
 		 * @param v
 		 * @param decimals
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		ROUNDDOWN:function (v, decimals) {
@@ -509,7 +499,7 @@ WickedGrid.functions = (function(r) {
 		 * @param v
 		 * @param decimals
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		ROUNDUP:function (v, decimals) {
@@ -523,7 +513,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * math function
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		SUM:function () {
@@ -557,7 +547,7 @@ WickedGrid.functions = (function(r) {
 		 * @param number
 		 * @param digits
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		TRUNC:function (number, digits) {
@@ -584,7 +574,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * statistical function
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		AVERAGE:function () {
@@ -594,7 +584,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * statistical function
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		AVG:function () {
@@ -604,7 +594,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * statistical function
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		COUNT:function () {
@@ -628,7 +618,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * statistical function
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		COUNTA:function () {
@@ -652,7 +642,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * statistical function
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		MAX:function () {
@@ -674,7 +664,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * statistical function
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		MIN:function () {
@@ -697,7 +687,7 @@ WickedGrid.functions = (function(r) {
 		 * string function
 		 * @param v
 		 * @returns {Number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		ASC:function (v) {
@@ -707,7 +697,7 @@ WickedGrid.functions = (function(r) {
 		 * string function
 		 * @param v
 		 * @returns {string}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		CHAR:function (v) {
@@ -717,7 +707,7 @@ WickedGrid.functions = (function(r) {
 		 * string function
 		 * @param v
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		CLEAN:function (v) {
@@ -728,7 +718,7 @@ WickedGrid.functions = (function(r) {
 		 * string function
 		 * @param v
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		CODE:function (v) {
@@ -737,7 +727,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * string function
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		CONCATENATE:function () {
@@ -755,7 +745,7 @@ WickedGrid.functions = (function(r) {
 		 * @param decimals
 		 * @param symbol
 		 * @returns {Number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		DOLLAR:function (v, decimals, symbol) {
@@ -778,7 +768,7 @@ WickedGrid.functions = (function(r) {
 		 * @param decimals
 		 * @param noCommas
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		FIXED:function (v, decimals, noCommas) {
@@ -804,7 +794,7 @@ WickedGrid.functions = (function(r) {
 		 * @param v
 		 * @param numberOfChars
 		 * @returns {string}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		LEFT:function (v, numberOfChars) {
@@ -816,7 +806,7 @@ WickedGrid.functions = (function(r) {
 		 * string function
 		 * @param v
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		LEN:function (v) {
@@ -829,7 +819,7 @@ WickedGrid.functions = (function(r) {
 		 * string function
 		 * @param v
 		 * @returns {string}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		LOWER:function (v) {
@@ -842,7 +832,7 @@ WickedGrid.functions = (function(r) {
 		 * @param start
 		 * @param end
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		MID:function (v, start, end) {
@@ -860,7 +850,7 @@ WickedGrid.functions = (function(r) {
 		 * @param numberOfChars
 		 * @param newText
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		REPLACE:function (oldText, start, numberOfChars, newText) {
@@ -879,7 +869,7 @@ WickedGrid.functions = (function(r) {
 		 * @param v
 		 * @param times
 		 * @returns {string}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		REPT:function (v, times) {
@@ -894,7 +884,7 @@ WickedGrid.functions = (function(r) {
 		 * @param v
 		 * @param numberOfChars
 		 * @returns {string}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		RIGHT:function (v, numberOfChars) {
@@ -907,7 +897,7 @@ WickedGrid.functions = (function(r) {
 		 * @param body
 		 * @param start
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		SEARCH:function (find, body, start) {
@@ -934,7 +924,7 @@ WickedGrid.functions = (function(r) {
 		 * @param newText
 		 * @param nthAppearance
 		 * @returns {string}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		SUBSTITUTE:function (text, oldText, newText, nthAppearance) {
@@ -959,7 +949,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * string function
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		TEXT:function (value, formatText) {
@@ -971,7 +961,7 @@ WickedGrid.functions = (function(r) {
 		 * string function
 		 * @param v
 		 * @returns {string}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		UPPER:function (v) {
@@ -981,7 +971,7 @@ WickedGrid.functions = (function(r) {
 		 * string function
 		 * @param v
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		VALUE:function (v) {
@@ -997,7 +987,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * date/time function
 		 * @returns {Date}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		NOW:function () {
@@ -1008,7 +998,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * date/time function
 		 * @returns {Number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		TODAY:function () {
@@ -1021,7 +1011,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param weeksBack
 		 * @returns {Date}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		WEEKENDING:function (weeksBack) {
@@ -1040,7 +1030,7 @@ WickedGrid.functions = (function(r) {
 		 * @param date
 		 * @param returnValue
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		WEEKDAY:function (date, returnValue) {
@@ -1082,7 +1072,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param date
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		WEEKNUM:function (date) {//TODO: implement week starting
@@ -1093,7 +1083,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param date
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		YEAR:function (date) {
@@ -1106,7 +1096,7 @@ WickedGrid.functions = (function(r) {
 		 * @param month
 		 * @param day
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		DAYSFROM:function (year, month, day) {
@@ -1117,7 +1107,7 @@ WickedGrid.functions = (function(r) {
 		 * @param v1
 		 * @param v2
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		DAYS:function (v1, v2) {
@@ -1130,7 +1120,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param date
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		DAY:function (date) {
@@ -1143,7 +1133,7 @@ WickedGrid.functions = (function(r) {
 		 * @param date2
 		 * @param method
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		DAYS360:function (date1, date2, method) {
@@ -1181,7 +1171,7 @@ WickedGrid.functions = (function(r) {
 		 * @param month
 		 * @param day
 		 * @returns {Number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		DATE:function (year, month, day) {
@@ -1195,7 +1185,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param date
 		 * @returns {Number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		DATEVALUE:function (date) {
@@ -1209,7 +1199,7 @@ WickedGrid.functions = (function(r) {
 		 * @param date
 		 * @param months
 		 * @returns {Number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		EDATE:function (date, months) {
@@ -1224,7 +1214,7 @@ WickedGrid.functions = (function(r) {
 		 * @param date
 		 * @param months
 		 * @returns {Number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		EOMONTH:function (date, months) {
@@ -1239,7 +1229,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param time
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		HOUR:function (time) {
@@ -1250,7 +1240,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param time
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		MINUTE:function (time) {
@@ -1260,7 +1250,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param date
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		MONTH:function (date) {
@@ -1271,7 +1261,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param time
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		SECOND:function (time) {
@@ -1283,7 +1273,7 @@ WickedGrid.functions = (function(r) {
 		 * @param minute
 		 * @param second
 		 * @returns {number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		TIME:function (hour, minute, second) {
@@ -1311,7 +1301,7 @@ WickedGrid.functions = (function(r) {
 		 * date/time function
 		 * @param time
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		TIMEVALUE:function (time) {
@@ -1331,7 +1321,7 @@ WickedGrid.functions = (function(r) {
 		 * @param days
 		 * @param holidays
 		 * @returns {Number}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		WORKDAY:function (startDate, days, holidays) {
@@ -1379,7 +1369,7 @@ WickedGrid.functions = (function(r) {
 		 * @param endDate
 		 * @param basis
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		YEARFRAC:function (startDate, endDate, basis) {
@@ -1403,7 +1393,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * logical function
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		AND:function () {
@@ -1423,7 +1413,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * logical function
 		 * @returns {Boolean}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		FALSE:function () {
@@ -1437,7 +1427,7 @@ WickedGrid.functions = (function(r) {
 		 * @param resultTrue
 		 * @param resultFalse
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		IF:function (expression, resultTrue, resultFalse) {
@@ -1481,7 +1471,7 @@ WickedGrid.functions = (function(r) {
 		 * logical function
 		 * @param v
 		 * @returns {Boolean}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		NOT:function (v) {
@@ -1499,7 +1489,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * logical function
 		 * @returns {Boolean}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		OR:function () {
@@ -1525,7 +1515,7 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * logical function
 		 * @returns {Boolean}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		TRUE:function () {
@@ -1538,7 +1528,7 @@ WickedGrid.functions = (function(r) {
 		 * @param left
 		 * @param right
 		 * @returns {Boolean}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		GREATER:function(left, right) {
@@ -1559,7 +1549,7 @@ WickedGrid.functions = (function(r) {
 		 * @param left
 		 * @param right
 		 * @returns {Boolean}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		LESS:function(left, right) {
@@ -1580,7 +1570,7 @@ WickedGrid.functions = (function(r) {
 		 * @param left
 		 * @param right
 		 * @returns {Boolean}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		EQUAL: function(left, right) {
@@ -1610,7 +1600,7 @@ WickedGrid.functions = (function(r) {
 		 * @param left
 		 * @param right
 		 * @returns {Boolean}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		GREATER_EQUAL:function(left, right) {
@@ -1631,7 +1621,7 @@ WickedGrid.functions = (function(r) {
 		 * @param left
 		 * @param right
 		 * @returns {Boolean}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		LESS_EQUAL:function(left, right) {
@@ -1652,7 +1642,7 @@ WickedGrid.functions = (function(r) {
 		 * html function
 		 * @param v
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		IMG:function (v) {
@@ -1665,7 +1655,7 @@ WickedGrid.functions = (function(r) {
 		 * html function
 		 * @param v
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		TRIM:function (v) {
@@ -1679,7 +1669,7 @@ WickedGrid.functions = (function(r) {
 		 * @param link
 		 * @param [name]
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		HYPERLINK:function (href, name) {
@@ -1697,12 +1687,12 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * html function
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		DROPDOWN:function () {
 			var cell = this,
-				jS = this.jS,
+				wickedGrid = this.wickedGrid,
 				td = this.td,
 				value,
 				v,
@@ -1725,18 +1715,18 @@ WickedGrid.functions = (function(r) {
 				if (this.id !== null) {
 					id = this.id + '-dropdown';
 				} else if (td !== null) {
-					id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
+					id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + wickedGrid.I;
 				}
 
 				select = document.createElement('select');
 				select.setAttribute('name', id);
 				select.setAttribute('id', id);
-				select.className = 'jSDropdown';
+				select.className = 'wg-dropdown';
 				select.cell = this;
 
 				select.onmouseup = function() {
 					if (this.cell.td !== null) {
-						jS.cellEdit(this.cell.td);
+						wickedGrid.cellEdit(this.cell.td);
 					}
 				};
 				select.onchange = function () {
@@ -1745,8 +1735,8 @@ WickedGrid.functions = (function(r) {
 					value.cell = cell;
 					cell.value = value;
 					cell.setNeedsUpdated(false);
-					jS.resolveCell(cell);
-					jS.trigger('sheetCellEdited', [cell]);
+					wickedGrid.resolveCell(cell);
+					wickedGrid.trigger('sheetCellEdited', [cell]);
 				};
 
 				max = (v.length <= 50 ? v.length : 50);
@@ -1759,10 +1749,10 @@ WickedGrid.functions = (function(r) {
 					}
 				}
 
-				if (!jS.s.editable) {
+				if (!wickedGrid.settings.editable) {
 					select.setAttribute('disabled', true);
 				} else {
-					jS.s.parent.bind('sheetKill', function() {
+					wickedGrid.settings.$element.bind('sheetKill', function() {
 						td.innerText = td.textContent = cell.value.valueOf();
 					});
 				}
@@ -1782,12 +1772,12 @@ WickedGrid.functions = (function(r) {
 		/**
 		 * html function
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		RADIO:function () {
 			var cell = this,
-				jS = this.jS,
+				wickedGrid = this.wickedGrid,
 				td = this.td,
 				v,
 				value,
@@ -1808,14 +1798,14 @@ WickedGrid.functions = (function(r) {
 				if (this.id !== null) {
 					id = this.id + '-radio';
 				} else if (td !== null) {
-					id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
+					id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + wickedGrid.I;
 				}
 
 				html = document.createElement('span');
-				html.className = 'jSRadio';
+				html.className = 'wg-radio';
 				html.onmousedown = function () {
 					if (this.cell.td !== null) {
-						jS.cellEdit(cell.td);
+						wickedGrid.cellEdit(cell.td);
 					}
 				};
 				html.cell = cell;
@@ -1829,7 +1819,7 @@ WickedGrid.functions = (function(r) {
 						input.setAttribute('name', id);
 						input.className = id;
 						input.value = v[i];
-						if (!jS.s.editable) {
+						if (!wickedGrid.settings.editable) {
 							input.setAttribute('disabled', 'disabled');
 						}
 						input.onchange = function() {
@@ -1838,8 +1828,8 @@ WickedGrid.functions = (function(r) {
 							value.cell = cell;
 							cell.value = value;
 							cell.setNeedsUpdated(false);
-							jS.resolveCell(cell);
-							jS.trigger('sheetCellEdited', [cell]);
+							wickedGrid.resolveCell(cell);
+							wickedGrid.trigger('sheetCellEdited', [cell]);
 						};
 
 						if (v[i].valueOf() === cell.value.valueOf()) {
@@ -1856,7 +1846,7 @@ WickedGrid.functions = (function(r) {
 					}
 				}
 
-				jS.s.parent.bind('sheetKill', function() {
+				wickedGrid.settings.$element.bind('sheetKill', function() {
 					td.textContent = td.innerText = cell.value.valueOf();
 				});
 			}
@@ -1875,14 +1865,14 @@ WickedGrid.functions = (function(r) {
 		 * html function
 		 * @param v
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		CHECKBOX:function (v) {
 			if ($.isArray(v)) v = v[0];
 
 			var cell = this,
-				jS = this.jS,
+				wickedGrid = this.wickedGrid,
 				td = this.td,
 				html,
 				label,
@@ -1900,7 +1890,7 @@ WickedGrid.functions = (function(r) {
 				if (this.id !== null) {
 					id = this.id + '-checkbox';
 				} else if (td !== null) {
-					id = "checkbox" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + jS.I;
+					id = "checkbox" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + wickedGrid.I;
 				}
 
 				checkbox = document.createElement('input');
@@ -1919,14 +1909,14 @@ WickedGrid.functions = (function(r) {
 					value.cell = cell;
 					cell.value = value;
 					cell.setNeedsUpdated(false);
-					jS.resolveCell(cell);
-					jS.trigger('sheetCellEdited', [cell]);
+					wickedGrid.resolveCell(cell);
+					wickedGrid.trigger('sheetCellEdited', [cell]);
 				};
 
-				if (!jS.s.editable) {
+				if (!wickedGrid.settings.editable) {
 					checkbox.setAttribute('disabled', 'true');
 				} else {
-					jS.s.parent.bind('sheetKill', function() {
+					wickedGrid.settings.$element.bind('sheetKill', function() {
 						cell.value = (cell.value == 'true' || checkbox.checked ? v : '');
 						if (cell.td !== null) {
 							cell.td.innerText = cell.td.textContent = cell.value.valueOf();
@@ -1935,7 +1925,7 @@ WickedGrid.functions = (function(r) {
 				}
 
 				html = document.createElement('span');
-				html.className='jSCheckbox';
+				html.className='wg-checkbox';
 				html.appendChild(checkbox);
 				label = document.createElement('span');
 				label.textContent = label.innerText = v;
@@ -1943,7 +1933,7 @@ WickedGrid.functions = (function(r) {
 				html.appendChild(document.createElement('br'));
 				html.onmousedown = function () {
 					if (this.cell.td !== null) {
-						jS.cellEdit(this.cell.td);
+						wickedGrid.cellEdit(this.cell.td);
 					}
 				};
 				html.cell = cell;
@@ -1978,7 +1968,7 @@ WickedGrid.functions = (function(r) {
 		 * @param legend
 		 * @param title
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		BARCHART:function (values, legend, title) {
@@ -1997,7 +1987,7 @@ WickedGrid.functions = (function(r) {
 		 * @param legend
 		 * @param title
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		HBARCHART:function (values, legend, title) {
@@ -2015,7 +2005,7 @@ WickedGrid.functions = (function(r) {
 		 * @param valuesX
 		 * @param valuesY
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		LINECHART:function (valuesX, valuesY) {
@@ -2038,7 +2028,7 @@ WickedGrid.functions = (function(r) {
 		 * @param legend
 		 * @param title
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		PIECHART:function (values, legend, title) {
@@ -2060,7 +2050,7 @@ WickedGrid.functions = (function(r) {
 		 * @param legendY
 		 * @param title
 		 * @returns {String}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		DOTCHART:function (valuesX, valuesY, values, legendX, legendY, title) {
@@ -2084,11 +2074,12 @@ WickedGrid.functions = (function(r) {
 		 * html function
 		 * @param v
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		CELLREF:function (v) {
-			return (this.jS.spreadsheets[v] ? this.jS.spreadsheets[v] : 'Cell Reference Not Found');
+			var wickedGrid = this.wickedGrid;
+			return (wickedGrid.spreadsheets[v] ? wickedGrid.spreadsheets[v] : 'Cell Reference Not Found');
 		},
 
 
@@ -2099,14 +2090,14 @@ WickedGrid.functions = (function(r) {
 		 * @param indexNumber
 		 * @param notExactMatch
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		HLOOKUP:function (value, range, indexNumber, notExactMatch) {
 
 			if (value === undefined) return null;
 
-			var jS = this.jS,
+			var wickedGrid = this.wickedGrid,
 				found,
 				foundCell,
 				result = '',
@@ -2137,7 +2128,7 @@ WickedGrid.functions = (function(r) {
 
 			if (found !== undefined) {
 				foundCell = found.cell;
-				foundCell = jS.getCell(foundCell.sheetIndex, indexNumber, foundCell.columnIndex);
+				foundCell = wickedGrid.getCell(foundCell.sheetIndex, indexNumber, foundCell.columnIndex);
 				if (foundCell !== null) {
 					result = foundCell.updateValue();
 				} else {
@@ -2157,14 +2148,14 @@ WickedGrid.functions = (function(r) {
 		 * @param indexNumber
 		 * @param notExactMatch
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		VLOOKUP:function (value, range, indexNumber, notExactMatch) {
 
 			if (value === undefined) return null;
 
-			var jS = this.jS,
+			var wickedGrid = this.wickedGrid,
 				found,
 				foundCell,
 				result,
@@ -2194,7 +2185,7 @@ WickedGrid.functions = (function(r) {
 
 			if (found !== undefined) {
 				foundCell = found.cell;
-				foundCell = jS.getCell(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
+				foundCell = wickedGrid.getCell(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
 				if (foundCell !== null) {
 					result = foundCell.value;
 				} else {
@@ -2210,12 +2201,12 @@ WickedGrid.functions = (function(r) {
 
 		/**
 		 * Gets the adjacent value for the reference array. Ip- reference array
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		TRANSPOSE: function (range) {
 			var i = 0,
-				jS = this.jS,
+				wickedGrid = this.wickedGrid,
 				sheetIndex = this.sheetIndex,
 				firstValue = range[0],
 				firstCell = firstValue.cell,
@@ -2240,7 +2231,7 @@ WickedGrid.functions = (function(r) {
 				rowIndex = this.rowIndex + (cell.columnIndex - startColumn);
 				columnIndex = this.columnIndex + (cell.rowIndex - startRow);
 
-				transposedCell = jS.getCell(this.sheetIndex, rowIndex, columnIndex);
+				transposedCell = wickedGrid.getCell(this.sheetIndex, rowIndex, columnIndex);
 				if (transposedCell !== null && transposedCell !== this) {
 					if (transposedCell.value != '') {
 						isOverwrite = true;
@@ -2275,27 +2266,27 @@ WickedGrid.functions = (function(r) {
 		 * cell function
 		 * @param col
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		THISROWCELL:function (col) {
-			var jS = this.jS;
+			var wickedGrid = this.wickedGrid;
 
 			if (isNaN(col)) {
-				col = jS.cellHandler.columnLabelIndex(col);
+				col = wickedGrid.cellHandler.columnLabelIndex(col);
 			}
-			return jS.getCell(this.sheetIndex, this.rowIndex, col).updateValue();
+			return wickedGrid.getCell(this.sheetIndex, this.rowIndex, col).updateValue();
 		},
 		/**
 		 * cell function
 		 * @param row
 		 * @returns {*}
-		 * @memberOf Sheet.fn
+		 * @memeberOf WickedGrid.functions
 		 * @this Sheet.Cell
 		 */
 		THISCOLCELL:function (row) {
-			var jS = this.jS;
-			return jS.getCell(this.sheetIndex, row, this.columnIndex).updateValue();
+			var wickedGrid = this.wickedGrid;
+			return wickedGrid.getCell(this.sheetIndex, row, this.columnIndex).updateValue();
 		}
 	};
 

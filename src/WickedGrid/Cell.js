@@ -3,7 +3,7 @@ WickedGrid.Cell = (function() {
 
 	function Cell(sheetIndex, td, wickedGrid) {
 		if (Cell.cellLoading === null) {
-			Cell.cellLoading = wickedGrid.msg.cellLoading;
+			Cell.cellLoading = WickedGrid.msg.cellLoading;
 		}
 		if (td !== undefined && td !== null) {
 			this.td = td;
@@ -57,7 +57,7 @@ WickedGrid.Cell = (function() {
 		addDependency:function(cell) {
 			if (cell === undefined || cell === null) return;
 
-			if (cell.type !== Sheet.Cell) {
+			if (cell.type !== Cell) {
 				throw new Error('Wrong Type');
 			}
 
@@ -131,11 +131,11 @@ WickedGrid.Cell = (function() {
 								value = value.valueOf();
 							}
 
-							Sheet.calcStack--;
+							WickedGrid.calcStack--;
 
 							if (
 								cellType !== null
-								&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+								&& (cellTypeHandler = WickedGrid.CellTypeHandlers[cellType]) !== u
 							) {
 								value = cellTypeHandler(cell, value);
 							}
@@ -286,7 +286,7 @@ WickedGrid.Cell = (function() {
 					cell.td.appendChild(document.createTextNode(Cell.cellLoading));
 				}
 
-				Sheet.calcStack++;
+				WickedGrid.calcStack++;
 
 				if (this.parsedFormula !== null) {
 					resolveFormula(this.parsedFormula);
@@ -494,7 +494,7 @@ WickedGrid.Cell = (function() {
 				},
 				doneFn;
 
-			if (cell.jS.s.useStack) {
+			if (cell.wickedGrid.settings.useStack) {
 				doneFn = function(value) {
 					var j = Cell.thawIndex,
 						thaws = Cell.thaws,
@@ -798,7 +798,7 @@ WickedGrid.Cell = (function() {
 		},
 
 		type: Cell,
-		typeName: 'Sheet.Cell'
+		typeName: 'WickedGrid.Cell'
 	};
 
 

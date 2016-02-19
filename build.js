@@ -8,12 +8,11 @@ var fs              = require('fs')
   //these are the paths to the final combined files that you want to have in the end
   , temp            = ''
   , result          = ''
-	, wrapper         = inDir + 'wrapper'
+	, wrapper         = 'WickedGrid'
   , combinedFile    = outDir + 'wickedgrid'
   , combinedFileMin = outDir + 'wickedgrid.min'
 
 	, files           = [
-		  'WickedGrid',
 	    //non-constructors next
 			{
 				WickedGrid: [
@@ -98,7 +97,7 @@ pathify(files, function(file) {
 	temp += fs.readFileSync(inDir + file + '.js', 'utf8').toString() + '\n';
 });
 
-result = fs.readFileSync(wrapper + '.js', 'utf8').toString()
+result = fs.readFileSync(inDir + wrapper + '.js', 'utf8').toString()
 	.replace('CODE_HERE', function() {
 		return temp;
 	});

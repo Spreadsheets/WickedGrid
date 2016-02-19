@@ -74,12 +74,12 @@ WickedGrid.loader.HTML = (function($, document, String) {
 			if (rows.length > rowIndex) {
 				row = rows[rowIndex];
 
-				height = row.style.height.replace('px', '') || Sheet.defaultRowHeight;
+				height = row.style.height.replace('px', '') || WickedGrid.defaultRowHeight;
 
 				return height * 1;
 			}
 
-			return Sheet.defaultRowHeight;
+			return WickedGrid.defaultRowHeight;
 		},
 		isHidden: function(sheetIndex) {
 			var tables = this.tables,
@@ -339,7 +339,7 @@ WickedGrid.loader.HTML = (function($, document, String) {
 			hasCellType = cellType !== null;
 			hasUneditable = uneditable !== null;
 
-			jitCell = new Sheet.Cell(sheetIndex, null, this.wickedGrid, this.handler);
+			jitCell = new WickedGrid.Cell(sheetIndex, null, this.wickedGrid, this.handler);
 			jitCell.rowIndex = rowIndex;
 			jitCell.columnIndex = columnIndex;
 			jitCell.loadedFrom = tdCell;
@@ -598,7 +598,7 @@ WickedGrid.loader.HTML = (function($, document, String) {
 
 		/**
 		 *
-		 * @param {Sheet.Cell} cell
+		 * @param {WickedGrid.Cell} cell
 		 */
 		setDependencies: function(cell) {
 			return this;
@@ -768,7 +768,7 @@ WickedGrid.loader.HTML = (function($, document, String) {
 			return this.json = output;
 		},
 		type: HTML,
-		typeName: 'Sheet.Loader.HTML',
+		typeName: 'WickedGrid.loader.HTML',
 
 		clearCaching: function() {
 			return this;

@@ -33,7 +33,7 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
   ui.appendChild(enclosure);
 
   if (wickedGrid.isSheetEditable()) {
-    WickedGrid.autoFiller(pane);
+    WickedGrid.autoFiller(wickedGrid, pane);
   }
 
   if (wickedGrid.isSheetEditable()) {
@@ -112,15 +112,19 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
       return true;
     };
 
-    pane.ondblclick = jS.evt.cellOnDblClick;
+    pane.ondblclick = function(e) {
+      return wickedGrid.cellEvents.dblClick(e);
+    };
 
     $pane
         .bind('contextmenu', paneContextmenuEvent)
         .disableSelectionSpecial()
-        .bind('cellEdit', jS.evt.cellEdit);
+        .bind('cellEdit', function(e) {
+          return wickedGrid.cellEvents.edit(e);
+        });
   }
 
-  WickedGrid.tab();
+  WickedGrid.tab(wickedGrid);
 
   wickedGrid.setChanged(true);
 };

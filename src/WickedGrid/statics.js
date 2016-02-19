@@ -1,7 +1,7 @@
 WickedGrid.event = {};
 WickedGrid.loader = {};
 WickedGrid.plugin = {};
-
+WickedGrid.calcStack = 0;
 /**
  * Array of instances of jQuery.sheet, generally short-handed to jS
  */

@@ -34,7 +34,7 @@ WickedGrid.cl = {
   inPlaceEdit: 'wg-in-place-edit',
   menu: 'wg-menu',
   menuFixed: 'wg-menu-fixed',
-  parent: 'wg-parent',
+  element: 'wg-element',
   scroll: 'wg-scroll',
   sheetAdder: 'wg-sheet-adder',
   table: 'wg',

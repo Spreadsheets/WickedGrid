@@ -1,38 +1,39 @@
 /**
  * Created the autoFiller object
  * @returns {*|jQuery|null}.controlFactory
+ * @param {WickedGrid} wickedGrid
  * @param {HTMLElement} pane
  */
-WickedGrid.autoFiller = function(pane) {
-  if (!this.settings.autoFiller) return false;
+WickedGrid.autoFiller = function(wickedGrid, pane) {
+  if (!wickedGrid.settings.autoFiller) return false;
 
   var autoFiller = document.createElement('div'),
       handle = document.createElement('div'),
       cover = document.createElement('div');
 
-  autoFiller.i = jS.i;
+  autoFiller.i = wickedGrid.i;
 
-  autoFiller.className = this.cl.autoFiller + ' ' + this.theme.autoFiller;
-  handle.className = this.cl.autoFillerHandle;
-  cover.className = this.cl.autoFillerCover;
+  autoFiller.className = WickedGrid.cl.autoFiller + ' ' + wickedGrid.theme.autoFiller;
+  handle.className = WickedGrid.cl.autoFillerHandle;
+  cover.className = WickedGrid.cl.autoFillerCover;
 
   autoFiller.onmousedown = function () {
     var td = this.tdActive();
     if (td) {
-      var loc = jS.getTdLocation(td);
-      jS.cellSetActive(td, loc, true, jS.autoFillerNotGroup, function () {
-        var highlighted = jS.highlighted(),
-            hLoc = jS.getTdLocation(highlighted.last());
-        jS.fillUpOrDown(hLoc.row < loc.row || hLoc.col < loc.col);
-        jS.autoFillerGoToTd(td);
-        jS.autoFillerNotGroup = false;
+      var loc = wickedGrid.getTdLocation(td);
+      wickedGrid.cellSetActive(td, loc, true, WickedGrid.autoFillerNotGroup, function () {
+        var highlighted = wickedGrid.highlighted(),
+            hLoc = wickedGrid.getTdLocation(highlighted.last());
+        wickedGrid.fillUpOrDown(hLoc.row < loc.row || hLoc.col < loc.col);
+        wickedGrid.autoFillerGoToTd(td);
+        wickedGrid.autoFillerNotGroup = false;
       });
     }
 
     return false;
   };
 
-  pane.autoFiller = jS.controls.autoFiller[jS.i] = autoFiller;
+  pane.autoFiller = wickedGrid.controls.autoFiller[wickedGrid.i] = autoFiller;
   pane.appendChild(autoFiller);
   return true;
 };

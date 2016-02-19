@@ -450,9 +450,9 @@ WickedGrid.CellHandler = (function(Math) {
 			//we prevent parsers from overwriting each other
 			if (callStack > -1) {
 				//cut down on un-needed parser creation
-				formulaParser = this.spareFormulaParsers[callStack];
+				formulaParser = WickedGrid.spareFormulaParsers[callStack];
 				if (formulaParser === u) {
-					formulaParser = this.spareFormulaParsers[callStack] = Formula(this);
+					formulaParser = WickedGrid.spareFormulaParsers[callStack] = Formula(this);
 				}
 			}
 
