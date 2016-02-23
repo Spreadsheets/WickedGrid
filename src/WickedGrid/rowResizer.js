@@ -6,11 +6,11 @@ WickedGrid.rowResizer = function(wickedGrid, bar, index, pane) {
       barController = document.createElement('div'),
       $barController = $(barController)
           .addClass(wickedGrid.cl.barController + ' ' + wickedGrid.theme.barResizer)
-          .prependTo(bar)
           .offset({
             top: barOffsetTop,
             left: barOffsetLeft
-          }),
+          })
+          .prependTo(bar),
       parent = bar.parentNode,
       child = document.createElement('div'),
       $child = $(child)

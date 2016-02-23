@@ -46,6 +46,7 @@
     "testify.js": "*",
     "operative": "~0.4.0",
     "megatable.js": "*",
-    "infiniscroll.js": "*"
+    "infiniscroll.js": "*",
+    "font-awesome": "~4.5.0"
   }
 }

@@ -28,7 +28,7 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
   $textarea = $(textarea);
   pane.inPlaceEdit = textarea;
   textarea.i = wickedGrid.i;
-  textarea.className = this.cl.inPlaceEdit + ' ' + this.theme.inPlaceEdit;
+  textarea.className = wickedGrid.cl.inPlaceEdit + ' ' + wickedGrid.theme.inPlaceEdit;
   textarea.td = td;
   //td / tr / tbody / table
   textarea.table = td.parentNode.parentNode.parentNode;

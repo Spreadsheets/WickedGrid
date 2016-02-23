@@ -207,7 +207,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     this.height = settings.height || element.clientHeight;
 
     // Drop functions if they are not needed & save time in recursion
-    if (!$.nearest) {
+    if (!$.nearest) { //Eventually it'd be nice to have raw js http://jsfiddle.net/julianlam/dQMXY/1/
       $.nearest = empty;
     }
 
@@ -4133,19 +4133,19 @@ WickedGrid.autoFiller = function(wickedGrid, pane) {
   return true;
 };
 WickedGrid.cellMenu = function(wickedGrid, x, y) {
-  if (this.isBusy()) {
+  if (wickedGrid.isBusy()) {
     return false;
   }
-  this.tdMenu().hide();
+  wickedGrid.tdMenu().hide();
 
-  var menu = this.tdMenu();
+  var menu = wickedGrid.tdMenu();
 
   if (!menu.length) {
-    menu = WickedGrid.menu(wickedGrid.settings.contextmenuCell);
+    menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuCell);
     wickedGrid.controls.tdMenu[wickedGrid.i] = menu;
   }
 
-  this.menus().hide();
+  wickedGrid.menus().hide();
 
   menu
       .css('left', (x - 5) + 'px')
@@ -4248,11 +4248,11 @@ WickedGrid.cl = {
   barController: 'wg-bar-controller',
   barControllerChild: 'wg-bar-controller-child',
   barHelper: 'wg-bar-helper',
-  barLeft: 'wg-bar-left',
-  barHandleFreezeLeft: 'wg-bar-handle-freeze-left',
-  barTop: 'wg-bar-top',
-  barTopMenuButton: 'wg-bar-top-menu-button',
-  barHandleFreezeTop: 'wg-bar-handle-freeze-top',
+  barRow: 'wg-bar-row',
+  barRowFreezeHandle: 'wg-bar-row-freeze-handle',
+  barColumn: 'wg-bar-column',
+  barColumnMenuButton: 'wg-bar-column-menu-button',
+  barColumnFreezeHandle: 'wg-bar-column-freeze-handle',
   chart: 'wg-chart',
   formula: 'wg-formula',
   formulaParent: 'wg-formula-parent',
@@ -4300,7 +4300,7 @@ WickedGrid.columnFreezer = function(wickedGrid) {
       handle = document.createElement('div'),
       $handle = pane.freezeHandleTop = $(handle)
           .appendTo(pane)
-          .addClass(wickedGrid.theme.barHandleFreezeTop + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barHandleFreezeTop)
+          .addClass(wickedGrid.theme.barColumnFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barColumnFreezeHandle)
           .height(bar.clientHeight - 1)
           .css('left', (bar.offsetLeft - handle.clientWidth) + 'px')
           .attr('title', wickedGrid.msg.dragToFreezeCol);
@@ -4314,15 +4314,15 @@ WickedGrid.columnFreezer = function(wickedGrid) {
       wickedGrid.setBusy(true);
 
       highlighter = $(document.createElement('div'))
-          .appendTo(pane)
           .css('position', 'absolute')
           .addClass(wickedGrid.theme.barFreezeIndicator + ' ' + wickedGrid.cl.barHelper)
           .height(bar.clientHeight - 1)
-          .fadeTo(0,0.33);
+          .fadeTo(0,0.33)
+          .appendTo(pane);
     },
     drag:function() {
-      var target = wickedGrid.nearest($handle, bar.parentNode.children).prev();
-      if (target.length && target.position) {
+      var target = $handle.nearest(bar.parentNode.children).prev();
+      if (target.length > 0 && typeof target.position === 'function') {
         highlighter.width(target.position().left + target.width());
       }
     },
@@ -4330,10 +4330,10 @@ WickedGrid.columnFreezer = function(wickedGrid) {
       highlighter.remove();
       wickedGrid.setBusy(false);
       wickedGrid.setDirty(true);
-      var target = wickedGrid.nearest($handle, bar.parentNode.children);
+      var target = $.nearest($handle, bar.parentNode.children);
 
       wickedGrid.barHelper().remove();
-      scrolledArea.col = actionUI.frozenAt.col = wickedGrid.getTdLocation(target[0]).col - 1;
+      scrolledArea.col = actionUI.frozenAt.col = Math.max(wickedGrid.getTdLocation(target[0]).col - 1, 0);
       wickedGrid.autoFillerHide();
     },
     containment:[paneLeft, paneTop, paneLeft + pane.clientWidth - window.scrollBarSize.width, paneTop]
@@ -4347,7 +4347,7 @@ WickedGrid.columnMenu = function(wickedGrid, bar, index, x, y) {
 
   var menu = wickedGrid.barMenuTop().hide();
 
-  if (!menu.length) {
+  if (menu.length < 1) {
     menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuTop);
     wickedGrid.controls.bar.x.menu[wickedGrid.i] = menu;
   }
@@ -4367,7 +4367,7 @@ WickedGrid.columnMenu = function(wickedGrid, bar, index, x, y) {
   if (!barMenuParentTop.length) {
 
     barMenuParentTop = $(document.createElement('div'))
-        .addClass(wickedGrid.theme.barMenuTop + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barTopMenuButton)
+        .addClass(wickedGrid.theme.barColumnMenu + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barColumnMenuButton)
         .append(
             $(document.createElement('span'))
                 .addClass('ui-icon ui-icon-triangle-1-s')
@@ -4405,7 +4405,8 @@ WickedGrid.columnResizer = function(wickedGrid, bar) {
           .addClass(wickedGrid.cl.barController + ' ' + wickedGrid.theme.barResizer)
           .width(bar.clientWidth)
           .prependTo(bar),
-      handle;
+      handle,
+      pane = wickedGrid.pane();
 
   wickedGrid.controls.bar.x.controls[wickedGrid.i] = wickedGrid.barTopControls().add($barController);
 
@@ -7068,7 +7069,7 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
   $textarea = $(textarea);
   pane.inPlaceEdit = textarea;
   textarea.i = wickedGrid.i;
-  textarea.className = this.cl.inPlaceEdit + ' ' + this.theme.inPlaceEdit;
+  textarea.className = wickedGrid.cl.inPlaceEdit + ' ' + wickedGrid.theme.inPlaceEdit;
   textarea.td = td;
   //td / tr / tbody / table
   textarea.table = td.parentNode.parentNode.parentNode;
@@ -7233,7 +7234,7 @@ WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
       handle = document.createElement('div'),
       $handle = pane.freezeHandleLeft = $(handle)
           .appendTo(pane)
-          .addClass(wickedGrid.theme.barHandleFreezeLeft + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barHandleFreezeLeft)
+          .addClass(wickedGrid.theme.barRowFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barRowFreezeHandle)
           .width(bar.clientWidth)
           .css('top', (bar.offsetTop - handle.clientHeight + 1) + 'px')
           .attr('title', wickedGrid.msg.dragToFreezeRow),
@@ -7255,7 +7256,7 @@ WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
           .fadeTo(0,0.33);
     },
     drag:function() {
-      var target = $.nearest($handle, bar.parentNode.parentNode.children).prev();
+      var target = $handle.nearest(bar.parentNode.parentNode.children).prev();
       if (target.length && target.position) {
         highlighter.height(target.position().top + target.height());
       }
@@ -7267,7 +7268,7 @@ WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
           .setDirty(true);
 
       var target = $.nearest($handle, bar.parentNode.parentNode.children);
-      this.barHelper().remove();
+      wickedGrid.barHelper().remove();
       scrolledArea.row = actionUI.frozenAt.row = Math.max(wickedGrid.getTdLocation(target.children(0)[0]).row - 1, 0);
       wickedGrid.autoFillerHide();
     },
@@ -7289,7 +7290,7 @@ WickedGrid.rowMenu = function(wickedGrid, index, x, y) {
 
   menu = wickedGrid.barMenuLeft();
 
-  if (!menu.length) {
+  if (menu.length < 1) {
     menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuLeft);
     wickedGrid.controls.bar.y.menu[wickedGrid.i] = menu;
   }
@@ -7311,11 +7312,11 @@ WickedGrid.rowResizer = function(wickedGrid, bar, index, pane) {
       barController = document.createElement('div'),
       $barController = $(barController)
           .addClass(wickedGrid.cl.barController + ' ' + wickedGrid.theme.barResizer)
-          .prependTo(bar)
           .offset({
             top: barOffsetTop,
             left: barOffsetLeft
-          }),
+          })
+          .prependTo(bar),
       parent = bar.parentNode,
       child = document.createElement('div'),
       $child = $(child)
@@ -7390,9 +7391,9 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
           if (index < 0) return false;
 
           if (actionUI.columnCache.first === actionUI.columnCache.last) {
-            WickedGrid.columnMenu(wickedGrid, index, e.pageX, e.pageY);
+            WickedGrid.columnMenu(wickedGrid, bar, index, e.pageX, e.pageY);
           } else if (actionUI.columnCache.first === actionUI.columnCache.last) {
-            WickedGrid.rowMenu(wickedGrid, index, e.pageX, e.pageY);
+            WickedGrid.rowMenu(wickedGrid, bar, index, e.pageX, e.pageY);
           }
           return false;
         }
@@ -11624,7 +11625,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 
 					header.index = rowIndex;
 					header.entity = 'row';
-					header.className = WickedGrid.cl.barLeft + ' ' + wickedGrid.theme.bar;
+					header.className = WickedGrid.cl.barRow + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					header.parentNode.style.height = header.style.height = loader.getHeight(wickedGrid.i, rowIndex) + 'px';
 				},
@@ -11648,7 +11649,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					header.th = header;
 					header.col = col;
 					header.entity = 'column';
-					header.className = WickedGrid.cl.barTop + ' ' + wickedGrid.theme.bar;
+					header.className = WickedGrid.cl.barColumn + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					col.style.width = loader.getWidth(wickedGrid.i, columnIndex) + 'px';
 				}
@@ -13748,9 +13749,9 @@ WickedGrid.Theme = (function() {
 		autoFiller:'ui-state-active',
 		bar:'ui-widget-header',
 		barHighlight:'ui-state-active',
-		barHandleFreezeLeft:'ui-state-default',
-		barHandleFreezeTop:'ui-state-default',
-		barMenuTop:'ui-state-default',
+		barRowFreezeHandle:'ui-state-default',
+		barColumnFreezeHandle:'ui-state-default',
+		barColumnMenu:'ui-state-default',
 		tdActive:'ui-state-active',
 		tdHighlighted:'ui-state-highlight',
 		control:'ui-widget-header ui-corner-top',
@@ -13776,9 +13777,9 @@ WickedGrid.Theme = (function() {
 		autoFiller:'btn-info',
 		bar:'input-group-addon',
 		barHighlight:'label-info',
-		barHandleFreezeLeft:'bg-warning',
-		barHandleFreezeTop:'bg-warning',
-		barMenuTop:'bg-warning',
+		barRowFreezeHandle:'bg-warning',
+		barColumnFreezeHandle:'bg-warning',
+		barColumnMenu:'bg-warning',
 		tdActive:'active',
 		tdHighlighted:'bg-info disabled',
 		control:'panel-heading',
@@ -13804,9 +13805,9 @@ WickedGrid.Theme = (function() {
 		autoFiller:'',
 		bar:'',
 		barHighlight:'',
-		barHandleFreezeLeft:'',
-		barHandleFreezeTop:'',
-		barMenuTop:'',
+		barRowFreezeHandle:'',
+		barColumnFreezeHandle:'',
+		barColumnMenu:'',
 		tdActive:'',
 		tdHighlighted:'',
 		control:'',

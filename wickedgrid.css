@@ -46,13 +46,13 @@
 	border: none ! important;
 	width: 0;
 }
-.wg-element .wg-column-menu-button {
+.wg-element .wg-bar-column-menu-button {
 	width: inherit ! important;
 	height: 0 ! important;
 	float: right;
 	margin-right: 30px;
 }
-.wg-element .wg-column-menu-button * {
+.wg-element .wg-bar-column-menu-button * {
 	position: absolute;
 	height: 16px ! important;
 	width: 18px ! important;
@@ -82,81 +82,6 @@
 .wg-td-menu hr
 {
 	margin: 0;
-}
-.wg-menu {
-	padding: 3px;
-	background-image: none ! important;
-	border: none ! important;
-	position: absolute;
-	z-index: 1001;
-}
-.wg-menu *
-{
-	border-color: inherit ! important;
-	border-width: 1px;
-	text-decoration: none ! important;
-	width: auto;
-}
-
-.wg-menu ul,.wg-menu div
-{
-	cursor: pointer;
-	padding: 0 ! important;
-	margin: 0 ! important;
-	border: none ! important;
-	z-index: 1001;
-	position:relative;
-	margin:0;
-	padding:0;
-	list-style:none;
-	list-style-position:outside;
-}
-
-.wg-menu a
-{
-	padding:0px 5px;
-}
-
-.wg-menu li
-{
-	float:left;
-	position:relative;
-	border: none;
-	background-image: none;
-	border-width: 1px;
-	width: inherit;
-}
-.wg-menu li:hover,.wg-menu div:hover .wg-td-menu div:hover {
-	background-image: inherit;
-}
-
-.wg-menu ul ul {
-	position:absolute;
-	display:none;
-	width:12em;
-	top:1.5em;
-}
-
-.wg-menu li ul a{
-	width:12em;
-	height:auto;
-	float:left;
-}
-
-.wg-menu ul ul{
-	top:auto;
-}
-
-.wg-menu li ul ul {
-	left:12em;
-	margin:0px 0 0 10px;
-}
-
-.wg-menu li:hover ul ul, .wg-menu li:hover ul ul ul, .wg-menu li:hover ul ul ul ul{
-	display:none;
-}
-.wg-menu li:hover ul, .wg-menu li li:hover ul, .wg-menu li li li:hover ul, .wg-menu li li li li:hover ul{
-	display:block;
 }
 
 #global-zeroclipboard-html-bridge {
@@ -278,11 +203,11 @@
 	border-width: 0 0 1px 0;
 }
 
-.wg-element .wg- th.wg-bar-left {
+.wg-element .wg th.wg-bar-row {
 	border-width: 0 0 1px 0;
 }
 
-.wg-element .wg- th.wg-bar-top {
+.wg-element .wg th.wg-bar-column {
 	border-width: 0 0 1px 1px;
 	text-align: center;
 }
@@ -325,30 +250,32 @@
 	border: none ! important;
 	position: absolute ! important;
 }
-.wg-element .wg-bar-top-element .wg-bar-controller {
+.wg-element .wg-bar-column .wg-bar-controller {
 	height: 0 !important;
 	max-height: 0 !important;
 }
-.wg-element .wg-bar-top-element .wg-bar-controller .ui-resizable-handle {
+.wg-element .wg-bar-column .wg-bar-controller .ui-resizable-handle {
 	width: 10px;
 	top: -1px !important;
 	right: -6px;
 	border-top-width: 0;
 	border-bottom-width: 0;
+	cursor: ew-resize ! important;
 }
 
-.wg-element .wg-bar-left {
+.wg-element .wg-bar-row {
 	border-left-width: 0 ! important;
 }
-.wg-element .wg-bar-left .wg-bar-controller {
+.wg-element .wg-bar-row .wg-bar-controller {
 	height: 0;
 	position: absolute;
 }
-.wg-element .wg-bar-left .wg-bar-controller .ui-resizable-handle {
+.wg-element .wg-bar-row .wg-bar-controller .wg-bar-controller-child .ui-resizable-handle {
 	display: inline ! important;
 	height: 10px;
 	border: none ! important;
 	padding-left:1px;
+	cursor: ns-resize !important;
 }
 
 .wg-element .wg-bar-controller .ui-resizable-handle {
@@ -370,7 +297,7 @@
 	border-right-width: 1px;
 }
 
-.wg-element .wg-bar-handle-freeze-top
+.wg-element .wg-bar-column-freeze-handle
 {
 	top: 1px;
 	cursor: move ! important;
@@ -379,7 +306,7 @@
 	background-image: none ! important;
 }
 
-.wg-element .wg-bar-handle-freeze-left
+.wg-element .wg-bar-row-freeze-handle
 {
 	left: 0;
 	cursor: move ! important;
@@ -387,7 +314,7 @@
 	position: absolute;
 	background-image: none ! important;
 }
-.wg-element .wg-bar-left
+.wg-element .wg-bar-row
 {
 	text-align: center;
 	vertical-align: middle ! important;

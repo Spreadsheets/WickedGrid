@@ -11,7 +11,7 @@ WickedGrid.rowMenu = function(wickedGrid, index, x, y) {
 
   menu = wickedGrid.barMenuLeft();
 
-  if (!menu.length) {
+  if (menu.length < 1) {
     menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuLeft);
     wickedGrid.controls.bar.y.menu[wickedGrid.i] = menu;
   }

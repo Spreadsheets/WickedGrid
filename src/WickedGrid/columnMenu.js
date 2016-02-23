@@ -4,7 +4,7 @@ WickedGrid.columnMenu = function(wickedGrid, bar, index, x, y) {
 
   var menu = wickedGrid.barMenuTop().hide();
 
-  if (!menu.length) {
+  if (menu.length < 1) {
     menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuTop);
     wickedGrid.controls.bar.x.menu[wickedGrid.i] = menu;
   }
@@ -24,7 +24,7 @@ WickedGrid.columnMenu = function(wickedGrid, bar, index, x, y) {
   if (!barMenuParentTop.length) {
 
     barMenuParentTop = $(document.createElement('div'))
-        .addClass(wickedGrid.theme.barMenuTop + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barTopMenuButton)
+        .addClass(wickedGrid.theme.barColumnMenu + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barColumnMenuButton)
         .append(
             $(document.createElement('span'))
                 .addClass('ui-icon ui-icon-triangle-1-s')

@@ -1,17 +1,17 @@
 WickedGrid.cellMenu = function(wickedGrid, x, y) {
-  if (this.isBusy()) {
+  if (wickedGrid.isBusy()) {
     return false;
   }
-  this.tdMenu().hide();
+  wickedGrid.tdMenu().hide();
 
-  var menu = this.tdMenu();
+  var menu = wickedGrid.tdMenu();
 
   if (!menu.length) {
-    menu = WickedGrid.menu(wickedGrid.settings.contextmenuCell);
+    menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuCell);
     wickedGrid.controls.tdMenu[wickedGrid.i] = menu;
   }
 
-  this.menus().hide();
+  wickedGrid.menus().hide();
 
   menu
       .css('left', (x - 5) + 'px')

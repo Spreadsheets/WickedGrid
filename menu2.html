@@ -1,0 +1,218 @@
+<link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
+<style>
+  .fa-rotate-45 {
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    -o-transform: rotate(45deg);
+    transform: rotate(45deg);
+  }
+</style>
+<div>
+  <!--div class="btn-group ">
+    <div class="btn-group">
+      <button data-toggle="dropdown" class="btn navbar-btn btn-default dropdown-toggle fa">File <span class="caret"></span></button>
+      <ul class="dropdown-menu">
+        <li><a href="#" onclick="wickedGrid.newSheet(); return false;" title="new spreadsheet">New</a></li>
+      </ul>
+    </div>
+    <div class="btn-group">
+      <button type="button" data-toggle="dropdown" class="btn navbar-btn btn-default dropdown-toggle fa">Edit <span class="caret"></span></button>
+      <ul class="dropdown-menu">
+        <li><a onclick="wickedGrid.undo(); return false;">Undo</a></li>
+        <li><a onclick="wickedGrid.redo(); return false;">Redo</a></li>
+        <li><a class="wg-cut">Cut</a></li>
+        <li><a class="wg-copy">Copy</a></li>
+        <li><a class="wg-paste">Paste</a></li>
+        <li><a onclick="wickedGrid.merge(); return false;">Merge</a></li>
+        <li><a onclick="wickedGrid.unmerge(); return false;">Un-Merge</a></li>
+        <li><a onclick="wickedGrid.find(); return false;">Find</a></li>
+        <li>
+          <a href="#">Cell</a>
+          <ul>
+            <li><a onclick="wickedGrid.setCellRef(); return false;">Set Reference</a></li>
+          </ul>
+        </li>
+        <li>
+          <a>Row</a>
+          <ul>
+            <li><a onclick="wickedGrid.addRow(); return false;" title="Adds an additional row to bottom of the spreadsheet.">Add Row</a></li>
+            <li><a onclick="wickedGrid.addRowMulti(); return false;" title="Adds an additional rows to bottom of the spreadsheet.">Add Multi-Rows</a></li>
+            <li><a onclick="wickedGrid.deleteRow(); return false;" title="Deletes the current rows that are associated with highlighted cells.">Delete Row(s)</a></li>
+            <li><a onclick="wickedGrid.addRow(wickedGrid.cellLast.row, true); return false;" title="Inserts an additional row after currently selected row.">Insert Row Before</a></li>
+            <li><a onclick="wickedGrid.addRow(wickedGrid.cellLast.row); return false;" title="Inserts an additional row after currently selected row.">Insert Row After</a></li>
+            <li><a onclick="wickedGrid.rowShowAll();" title="Show all the hidden rows.">Show All</a></li>
+            <li><a onclick="wickedGrid.toggleHideRow();" title="Hides or shows the currently selected row.">Toggle Hide Row</a></li>
+          </ul>
+        </li>
+        <li>
+          <a>Column</a>
+          <ul>
+            <li><a onclick="wickedGrid.addColumn(); return false;" title="Adds an additional column to the right of the spreadsheet.">Add Column</a></li>
+            <li><a onclick="wickedGrid.addColumnMulti(); return false;" title="Adds an additional columns to the right of the spreadsheet.">Add Multi-Columns</a></li>
+            <li><a onclick="wickedGrid.deleteColumn(); return false;" title="Deletes the current columns that are associated with highlighted cells.">Delete Column(s)</a></li>
+            <li><a onclick="wickedGrid.addColumn(wickedGrid.cellLast.col, true); return false;" title="Inserts an additional column after currently selected column.">Insert Column Before</a></li>
+            <li><a onclick="wickedGrid.addColumn(wickedGrid.cellLast.col); return false;" title="Inserts an additional column after currently selected column.">Insert Column After</a></li>
+            <li><a onclick="wickedGrid.fillUpOrDown(); return false;" title="Fill down current cell value.">Fill Down</a></li>
+            <li><a onclick="wickedGrid.fillUpOrDown(true); return false;" title="Fill up current cell value.">Fill Up</a></li>
+            <li><a onclick="wickedGrid.columnShowAll();" title="Show all the hidden columns.">Show All</a></li>
+            <li><a onclick="wickedGrid.toggleHideColumn();" title="Hides or shows the currently selected column.">Toggle Hide Column</a></li>
+          </ul>
+        </li>
+        <li>
+          <a>Sheet</a>
+          <ul>
+            <li><a onclick="wickedGrid.addSheet(); return false;" title="Add new spreadsheet.">Add Spreadsheet</a></li>
+            <li><a onclick="wickedGrid.deleteSheet(); return false;" title="Delete the current spreadsheet.">Delete Spreadsheet</a></li>
+            <li><a onclick="wickedGrid.calc(); return false;" title="Re-Calculates the current sheet">Refresh Calculations</a></li>
+            <li><a onclick="wickedGrid.sheetTab(); return false;" title="Change the title of the sheet.">Title</a></li>
+            <li><a onclick="wickedGrid.toggleState(); return false;">Toggle Edit & ReadOnly</a></li>
+          </ul>
+        </li>
+        <li><a onclick="wickedGrid.getTdRange(null, wickedGrid.formula().val()); return false;">Get Cell Range</a></li>
+        <li>
+          <a href="#">Wrap Cell Range</a>
+          <ul>
+            <li><a onclick="wickedGrid.getTdRange(null, wickedGrid.formula().val(), 'SUM'); return false;" title="Wrap with SUM">SUM()</a></li>
+            <li><a onclick="wickedGrid.getTdRange(null, wickedGrid.formula().val(), 'CEILING'); return false;" title="Wrap with CEILING">CEILING()</a></li>
+            <li><a onclick="wickedGrid.getTdRange(null, wickedGrid.formula().val(), 'COUNT'); return false;" title="Wrap with COUNT">COUNT()</a></li>
+            <li><a onclick="wickedGrid.getTdRange(null, wickedGrid.formula().val(), 'MAX'); return false;" title="Wrap with MAX">MAX()</a></li>
+            <li><a onclick="wickedGrid.getTdRange(null, wickedGrid.formula().val(), 'MIN'); return false;" title="Wrap with MIN">MIN()</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div class="btn-group">
+      <button type="button" data-toggle="dropdown" class="btn navbar-btn btn-default dropdown-toggle fa">View <span class="caret"></span></button>
+      <ul class="dropdown-menu">
+        <li><a href="#" onclick="wickedGrid.newSheet(); return false;" title="Creates a new spreadsheet.">New</a></li>
+      </ul>
+    </div>
+    <div class="btn-group">
+      <button type="button" data-toggle="dropdown" class="btn navbar-btn btn-default dropdown-toggle fa">Format <span class="caret"></span></button>
+      <ul class="dropdown-menu">
+        <li><a href="#" onclick="wickedGrid.newSheet(); return false;" title="Creates a new spreadsheet.">New</a></li>
+      </ul>
+    </div>
+  </div>
+  <br-->
+  <div class="btn-group">
+    <button class="btn navbar-btn btn-default fa fa-print"></button>
+    <button class="btn navbar-btn btn-default fa fa-backward"></button>
+    <button class="btn navbar-btn btn-default fa fa-forward"></button>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn navbar-btn btn-default fa fa-dollar"></button>
+    <button class="btn navbar-btn btn-default fa fa-percent"></button>
+    <div class="btn-group">
+      <button type="button" data-toggle="dropdown" class="btn navbar-btn btn-default dropdown-toggle fa"><small>123</small> <span class="caret"></span></button>
+      <ul class="dropdown-menu">
+        <li><a onclick="wickedGrid.undo(); return false;">Undo</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <div class="btn-group">
+      <button type="button" data-toggle="dropdown" class="btn navbar-btn btn-default dropdown-toggle fa"><small>Arial</small> <span class="caret"></span></button>
+      <ul class="dropdown-menu">
+        <li><a onclick="wickedGrid.undo(); return false;">Arial</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-default fa fa-bold" onclick="wickedGrid.cellStyleToggle('styleBold'); return false;" title="Bold"></button>
+    <button class="btn btn-default fa fa-italic" onclick="wickedGrid.cellStyleToggle('styleItalics'); return false;" title="Italic"></button>
+    <button class="btn btn-default fa fa-strikethrough"></button>
+    <button class="btn btn-default fa fa-underline" onclick="wickedGrid.cellStyleToggle('style-underline', 'style-strike'); return false;"></button>
+    <button class="btn btn-default fa fa-tint" title="font color"></button>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-default fa fa-paint-brush" title="background color"></button>
+    <button class="btn btn-default fa" title="merge cells"><span class="fa fa-compress fa-rotate-45"></span></button>
+    <button class="btn btn-default fa" title="un-merge cells"><span class="fa fa-expand fa-rotate-45"></span></button>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn navbar-btn btn-default fa fa-arrows-alt" title="toggle full screen"></button>
+  </div>
+</div>
+  <!--a href="#" onclick="wickedGrid.cellStyleToggle('styleLeft', 'styleCenter styleRight'); return false;" title="Align Left">
+    <span alt="Align Left" src="images/svg/left181.svg"/></a>
+  <a href="#" onclick="wickedGrid.cellStyleToggle('styleCenter', 'styleLeft styleRight'); return false;" title="Align Center">
+    <span alt="Align Center" src="images/svg/centered5.svg"/></a>
+  <a href="#" onclick="wickedGrid.cellStyleToggle('styleRight', 'styleLeft styleCenter'); return false;" title="Align Right">
+    <span alt="Align Right" src="images/svg/right183.svg"/></a>
+  <a href="#" onclick="wickedGrid.cellStyleToggle('styleWrap'); return false;" title="Wrap Text">
+    <span alt="Web Link" src="images/svg/justify9.svg"/></a>
+  <a href="#" onclick="wickedGrid.merge(); return false;" title="Merge Cells">
+    <span alt="Fill Down" src="images/svg/two266.svg"/></a>
+  <a href="#" onclick="wickedGrid.unmerge(); return false;" title="Un-Merge Cells">
+    <span alt="Fill Down" src="images/svg/two258.svg"/></a>
+  <!--<a href="#" onclick="wickedGrid.rowShowAll(); return false;" title="Show All Rows">
+    <span alt="Fill Down" src="images/svg/human90.svg"/></a>
+  <a href="#" onclick="wickedGrid.columnShowAll(); return false;" title="Show All Columns">
+    <span alt="Fill Down" src="images/svg/human90.svg"/></a>-->
+  <!--<a href="#" onclick="wickedGrid.fillUpOrDown(); return false;" title="Fill Down">
+    <span alt="Fill Up" src="images/arrow_down.png"/></a>
+  <a href="#" onclick="wickedGrid.fillUpOrDown(true); return false;" title="Fill Up">
+    <span alt="Fill Up" src="images/arrow_up.png"/></a>-->
+
+  <!--<a href="#" onclick="wickedGrid.sortVerticalSingle(); return false" title="Sort Ascending">-->
+  <!--<a href="#" onclick="wickedGrid.sortVerticalSelectAscending();" title="Sort Ascending">
+    <span alt="Sort Ascending" src="images/sort_up.png"/></a>-->
+
+  <!--<a href="#" onclick="wickedGrid.sortVerticalSingle(true); return true;" title="Sort Descending">-->
+  <!--<a href="#" onclick="wickedGrid.sortVerticalSelectDescending(true); return true;" title="Sort Descending">
+    <span alt="Sort Descending" src="images/sort_down.png"/></a>-->
+
+  <!--<a href="#" onclick="wickedGrid.sortHorizontal(); return true;" title="Sort Right">-->
+  <!--<a href="#" onclick="wickedGrid.sortHorizontalSelectAscending(); return true;" title="Sort Right">
+    <span alt="Sort Right" src="images/sort_right.png"/></a>-->
+
+  <!--<a href="#" onclick="wickedGrid.sortHorizontal(); return false;" title="Sort Left">-->
+  <!--<a href="#" onclick="wickedGrid.sortHorizontalSelectDescending(); return false;" title="Sort Left">
+    <span alt="Sort Left" src="images/sort_left.png"/></a>-->
+<!--
+  <span class="colorPickers">
+      <input title="Foreground color" class="colorPickerFont" data-img="images/svg/color6.svg"/>
+      <input title="Background Color" class="colorPickerCell" data-img="images/svg/fill1.svg"/>
+  </span>
+  <a href="#" onclick="
+          var jS = jS,
+              cell = ((wickedGrid.tdActive()[0] || {}).jSCell || {}),
+              url = prompt('Enter Web Address', 'http://www.visop-dev.com/'),
+              args = [],
+              doubleQuote = String.fromCharCode(34);
+
+          if (!url) {
+              return false;
+          }
+
+          cell.calcLast = 0;
+          args.push(doubleQuote + url + doubleQuote);
+
+          if (cell.value) {
+              args.push(doubleQuote + cell.value + doubleQuote);
+              cell.value = '';
+          }
+
+          cell.formula = 'HYPERLINK(' + args.join(',') + ')';
+
+          wickedGrid.setDirty(true);
+          wickedGrid.calcDependencies.call(cell);
+          return false;
+      " title="HyperLink">
+    <span alt="Web Link" src="images/svg/link23.svg"/></a>
+  <!--<a href="#" onclick="wickedGrid.getTdRange(null, wickedGrid.formula().val()); return false;" title="Get Cell Range">
+    <span alt="Get Cell Range" src="images/sheet_get_range.png"/></a>-->
+  <!--<a href="#" onclick="wickedGrid.calc(wickedGrid.i, true); return false;" title="Refresh Calculations">
+    <span alt="Refresh Calculations" src="images/arrow_refresh.png"/></a>-->
+  <!--a href="#" onclick="wickedGrid.cellFind(); return false;" title="Find">
+    <span alt="Find" src="images/svg/zoom19.svg"/></a>
+  <a href="#" onclick="wickedGrid.toggleFullScreen(); return false;" title="Toggle Full Screen">
+    <span alt="Toggle Full Screen" src="images/svg/full40.svg"/></a><!--<a href="#" onclick="insertAt('jSheetControls_formula', '~np~text~'+'/np~');return false;" title="Non-parsed"><span alt="Non-parsed" src="images/noparse.png"/></a>-->
+

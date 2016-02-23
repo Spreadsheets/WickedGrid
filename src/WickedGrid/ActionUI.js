@@ -119,7 +119,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 
 					header.index = rowIndex;
 					header.entity = 'row';
-					header.className = WickedGrid.cl.barLeft + ' ' + wickedGrid.theme.bar;
+					header.className = WickedGrid.cl.barRow + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					header.parentNode.style.height = header.style.height = loader.getHeight(wickedGrid.i, rowIndex) + 'px';
 				},
@@ -143,7 +143,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					header.th = header;
 					header.col = col;
 					header.entity = 'column';
-					header.className = WickedGrid.cl.barTop + ' ' + wickedGrid.theme.bar;
+					header.className = WickedGrid.cl.barColumn + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					col.style.width = loader.getWidth(wickedGrid.i, columnIndex) + 'px';
 				}

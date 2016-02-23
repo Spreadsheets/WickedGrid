@@ -28,9 +28,9 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
           if (index < 0) return false;
 
           if (actionUI.columnCache.first === actionUI.columnCache.last) {
-            WickedGrid.columnMenu(wickedGrid, index, e.pageX, e.pageY);
+            WickedGrid.columnMenu(wickedGrid, bar, index, e.pageX, e.pageY);
           } else if (actionUI.columnCache.first === actionUI.columnCache.last) {
-            WickedGrid.rowMenu(wickedGrid, index, e.pageX, e.pageY);
+            WickedGrid.rowMenu(wickedGrid, bar, index, e.pageX, e.pageY);
           }
           return false;
         }

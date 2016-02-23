@@ -23,7 +23,7 @@ WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
       handle = document.createElement('div'),
       $handle = pane.freezeHandleLeft = $(handle)
           .appendTo(pane)
-          .addClass(wickedGrid.theme.barHandleFreezeLeft + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barHandleFreezeLeft)
+          .addClass(wickedGrid.theme.barRowFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barRowFreezeHandle)
           .width(bar.clientWidth)
           .css('top', (bar.offsetTop - handle.clientHeight + 1) + 'px')
           .attr('title', wickedGrid.msg.dragToFreezeRow),
@@ -45,7 +45,7 @@ WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
           .fadeTo(0,0.33);
     },
     drag:function() {
-      var target = $.nearest($handle, bar.parentNode.parentNode.children).prev();
+      var target = $handle.nearest(bar.parentNode.parentNode.children).prev();
       if (target.length && target.position) {
         highlighter.height(target.position().top + target.height());
       }
@@ -57,7 +57,7 @@ WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
           .setDirty(true);
 
       var target = $.nearest($handle, bar.parentNode.parentNode.children);
-      this.barHelper().remove();
+      wickedGrid.barHelper().remove();
       scrolledArea.row = actionUI.frozenAt.row = Math.max(wickedGrid.getTdLocation(target.children(0)[0]).row - 1, 0);
       wickedGrid.autoFillerHide();
     },

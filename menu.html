@@ -14,6 +14,81 @@
 		padding-top:4px ! important;
 		padding-bottom:4px ! important;
 	}
+	.wg-menu {
+		padding: 3px;
+		background-image: none ! important;
+		border: none ! important;
+		position: absolute;
+		z-index: 1001;
+	}
+	.wg-menu *
+	{
+		border-color: inherit ! important;
+		border-width: 1px;
+		text-decoration: none ! important;
+		width: auto;
+	}
+
+	.wg-menu ul,.wg-menu div
+	{
+		cursor: pointer;
+		padding: 0 ! important;
+		margin: 0 ! important;
+		border: none ! important;
+		z-index: 1001;
+		position:relative;
+		margin:0;
+		padding:0;
+		list-style:none;
+		list-style-position:outside;
+	}
+
+	.wg-menu a
+	{
+		padding:0px 5px;
+	}
+
+	.wg-menu li
+	{
+		float:left;
+		position:relative;
+		border: none;
+		background-image: none;
+		border-width: 1px;
+		width: inherit;
+	}
+	.wg-menu li:hover,.wg-menu div:hover .wg-td-menu div:hover {
+		background-image: inherit;
+	}
+
+	.wg-menu ul ul {
+		position:absolute;
+		display:none;
+		width:12em;
+		top:1.5em;
+	}
+
+	.wg-menu li ul a{
+		width:12em;
+		height:auto;
+		float:left;
+	}
+
+	.wg-menu ul ul{
+		top:auto;
+	}
+
+	.wg-menu li ul ul {
+		left:12em;
+		margin:0px 0 0 10px;
+	}
+
+	.wg-menu li:hover ul ul, .wg-menu li:hover ul ul ul, .wg-menu li:hover ul ul ul ul{
+		display:none;
+	}
+	.wg-menu li:hover ul, .wg-menu li li:hover ul, .wg-menu li li li:hover ul, .wg-menu li li li li:hover ul{
+		display:block;
+	}
 </style>
 <ul>
 	<li>

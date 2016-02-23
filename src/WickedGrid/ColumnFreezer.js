@@ -23,7 +23,7 @@ WickedGrid.columnFreezer = function(wickedGrid) {
       handle = document.createElement('div'),
       $handle = pane.freezeHandleTop = $(handle)
           .appendTo(pane)
-          .addClass(wickedGrid.theme.barHandleFreezeTop + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barHandleFreezeTop)
+          .addClass(wickedGrid.theme.barColumnFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barColumnFreezeHandle)
           .height(bar.clientHeight - 1)
           .css('left', (bar.offsetLeft - handle.clientWidth) + 'px')
           .attr('title', wickedGrid.msg.dragToFreezeCol);
@@ -37,15 +37,15 @@ WickedGrid.columnFreezer = function(wickedGrid) {
       wickedGrid.setBusy(true);
 
       highlighter = $(document.createElement('div'))
-          .appendTo(pane)
           .css('position', 'absolute')
           .addClass(wickedGrid.theme.barFreezeIndicator + ' ' + wickedGrid.cl.barHelper)
           .height(bar.clientHeight - 1)
-          .fadeTo(0,0.33);
+          .fadeTo(0,0.33)
+          .appendTo(pane);
     },
     drag:function() {
-      var target = wickedGrid.nearest($handle, bar.parentNode.children).prev();
-      if (target.length && target.position) {
+      var target = $handle.nearest(bar.parentNode.children).prev();
+      if (target.length > 0 && typeof target.position === 'function') {
         highlighter.width(target.position().left + target.width());
       }
     },
@@ -53,10 +53,10 @@ WickedGrid.columnFreezer = function(wickedGrid) {
       highlighter.remove();
       wickedGrid.setBusy(false);
       wickedGrid.setDirty(true);
-      var target = wickedGrid.nearest($handle, bar.parentNode.children);
+      var target = $.nearest($handle, bar.parentNode.children);
 
       wickedGrid.barHelper().remove();
-      scrolledArea.col = actionUI.frozenAt.col = wickedGrid.getTdLocation(target[0]).col - 1;
+      scrolledArea.col = actionUI.frozenAt.col = Math.max(wickedGrid.getTdLocation(target[0]).col - 1, 0);
       wickedGrid.autoFillerHide();
     },
     containment:[paneLeft, paneTop, paneLeft + pane.clientWidth - window.scrollBarSize.width, paneTop]

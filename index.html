@@ -267,13 +267,13 @@
 
 			$.when(
 				$.get(url),
-				$.get('menu.html'))
+				$.get('menu2.html'))
 			.done(function(sheetGet, menuGet) {
 				jS = $('#sheet')
 					.html(parseHtml(sheetGet[0], 'div#sheetParent table'))
 					.wickedGrid({
 						theme: WickedGrid.bootstrapTheme,
-						title: 'Demo',
+						title: '',
 						menu: function() {
 							var wickedGrid = this,
 									menu = $(menuGet[0]),

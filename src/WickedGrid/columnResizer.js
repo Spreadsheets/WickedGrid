@@ -5,7 +5,8 @@ WickedGrid.columnResizer = function(wickedGrid, bar) {
           .addClass(wickedGrid.cl.barController + ' ' + wickedGrid.theme.barResizer)
           .width(bar.clientWidth)
           .prependTo(bar),
-      handle;
+      handle,
+      pane = wickedGrid.pane();
 
   wickedGrid.controls.bar.x.controls[wickedGrid.i] = wickedGrid.barTopControls().add($barController);
 

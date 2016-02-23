@@ -207,7 +207,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     this.height = settings.height || element.clientHeight;
 
     // Drop functions if they are not needed & save time in recursion
-    if (!$.nearest) {
+    if (!$.nearest) { //Eventually it'd be nice to have raw js http://jsfiddle.net/julianlam/dQMXY/1/
       $.nearest = empty;
     }
 
