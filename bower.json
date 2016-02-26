@@ -28,8 +28,7 @@
     "tests"
   ],
   "dependencies": {
-    "jquery-legacy": "jquery#^1",
-    "jquery": "jquery#~2.1.1",
+    "jquery": "~2.1.4",
     "jquery-nearest": "~1.3.0",
     "globalize": "~0.1.1",
     "zeroclipboard": "~2.1.6",
@@ -39,7 +38,7 @@
     "really-simple-color-picker": "https://github.com/laktek/really-simple-color-picker.git",
     "Javascript-Undo-Manager": "*",
     "ThemeSwitcher": "https://github.com/josephbulger/ThemeSwitcher.git",
-    "jquery-ui": "~1.11.0",
+    "jquery-ui": "~1.11.4",
     "MouseWheel": "https://github.com/robertleeplummerjr/MouseWheel.git",
     "bootstrap": "~3.2.0",
     "thaw.js": "~1.2.0",

@@ -53,5 +53,4 @@ WickedGrid.rowResizer = function(wickedGrid, bar, index, pane) {
 
   handle = child.children[0];
   handle.style.width = bar.offsetWidth + 'px';
-  handle.style.position = 'absolute';
 };

@@ -37,7 +37,7 @@ WickedGrid.cl = {
   element: 'wg-element',
   scroll: 'wg-scroll',
   sheetAdder: 'wg-sheet-adder',
-  table: 'wg',
+  table: 'wg-table',
   label: 'wg-loc',
   pane: 'wg-edit-pane',
   tab: 'wg-tab',

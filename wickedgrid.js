@@ -4264,7 +4264,7 @@ WickedGrid.cl = {
   element: 'wg-element',
   scroll: 'wg-scroll',
   sheetAdder: 'wg-sheet-adder',
-  table: 'wg',
+  table: 'wg-table',
   label: 'wg-loc',
   pane: 'wg-edit-pane',
   tab: 'wg-tab',
@@ -4439,7 +4439,6 @@ WickedGrid.columnResizer = function(wickedGrid, bar) {
 
   handle = barController.children[0];
   handle.style.height = bar.clientHeight + 'px';
-  handle.style.position = 'absolute';
 };
 WickedGrid.customTab = function(wickedGrid) {
   var tab = document.createElement('span'),
@@ -7359,7 +7358,6 @@ WickedGrid.rowResizer = function(wickedGrid, bar, index, pane) {
 
   handle = child.children[0];
   handle.style.width = bar.offsetWidth + 'px';
-  handle.style.position = 'absolute';
 };
 WickedGrid.sheetUI = function(wickedGrid, ui, i) {
   //TODO: move to SpreadsheetUI

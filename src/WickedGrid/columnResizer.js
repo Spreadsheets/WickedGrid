@@ -39,5 +39,4 @@ WickedGrid.columnResizer = function(wickedGrid, bar) {
 
   handle = barController.children[0];
   handle.style.height = bar.clientHeight + 'px';
-  handle.style.position = 'absolute';
 };

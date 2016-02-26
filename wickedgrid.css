@@ -146,40 +146,39 @@
 	transition: 0.2s;
 }
 /* Sheet styling */
-.wg-element .wg
+.wg-element table.wg-table
 {
 	left: 0;
 	top: 0;
-	position: absolute;
-    table-layout: fixed;
-    empty-cells: show;
+	table-layout: fixed;
+	empty-cells: show;
 	background-image: none ! important;
 	border-color: inherit ! important;
 	border-width: 1px 1px 0 0 ! important;
 	cursor: cell;
 	width: 0 ! important;
 }
-.wg-element .wg tbody
+.wg-element .wg-table tbody
 {
 	background-color: transparent;
 	color: inherit ! important;
 	border-color: inherit ! important;
 }
 
-.wg-element .wg colgroup {
+.wg-element .wg-table colgroup {
 	border-color: inherit ! important;
 }
-.wg-element .wg col {
+.wg-element .wg-table col {
 	background-image: none ! important;
 	border-color: inherit ! important;
 }
 
-.wg-element .wg tr {
+.wg-element .wg-table tr {
 	border-color: inherit ! important;
 	color:  inherit ! important;
 	background-image: none ! important;
 }
-.wg-element .wg td, .wg-element .wg th {
+.wg-element .wg-table td, .wg-element .wg-table th {
 	height: inherit;
 	border-width: 0 0 1px 1px;
 	border-color: inherit;
@@ -194,20 +193,20 @@
 	white-space: nowrap;
 	-ms-text-overflow: ellipsis;
 }
-.wg-element .wg td.wg-merged {
+.wg-element .wg-table td.wg-merged {
 	position: absolute;
 	visibility: hidden;
 }
 
-.wg-element .wg th.wg-bar-corner {
+.wg-element .wg-table th.wg-bar-corner {
 	border-width: 0 0 1px 0;
 }
 
-.wg-element .wg th.wg-bar-row {
+.wg-element .wg-table th.wg-bar-row {
 	border-width: 0 0 1px 0;
 }
 
-.wg-element .wg th.wg-bar-column {
+.wg-element .wg-table th.wg-bar-column {
 	border-width: 0 0 1px 1px;
 	text-align: center;
 }
@@ -244,8 +243,8 @@
 	border-width: 0 ! important;
 	position: absolute;
 }
-/* Bar item styling */
 
+/* column resizing functionality & overrides */
 .wg-element .wg-bar-controller {
 	border: none ! important;
 	position: absolute ! important;
@@ -253,6 +252,7 @@
 .wg-element .wg-bar-column .wg-bar-controller {
 	height: 0 !important;
 	max-height: 0 !important;
+	position: relative;
 }
 .wg-element .wg-bar-column .wg-bar-controller .ui-resizable-handle {
 	width: 10px;
@@ -261,17 +261,26 @@
 	border-top-width: 0;
 	border-bottom-width: 0;
 	cursor: ew-resize ! important;
+	position: absolute;
+	background-color: transparent !important;
 }
 
+/* row resizing functionality & overrides */
 .wg-element .wg-bar-row {
 	border-left-width: 0 ! important;
 }
 .wg-element .wg-bar-row .wg-bar-controller {
-	height: 0;
+	height: 0 !important;
+	position: static !important;
+}
+.wg-element .wg-bar-row .wg-bar-controller .wg-bar-controller-child {
+	display: block;
 	position: absolute;
+	background-color: transparent !important;
 }
 .wg-element .wg-bar-row .wg-bar-controller .wg-bar-controller-child .ui-resizable-handle {
-	display: inline ! important;
+	position: absolute;
+	bottom: 0;
 	height: 10px;
 	border: none ! important;
 	padding-left:1px;
@@ -282,13 +291,12 @@
 	border-width: 0;
 }
 
-.wg-element .wg-BarController .ui-resizable-handle:hover {
+.wg-element .wg-bar-controller .ui-resizable-handle:hover {
 	background: inherit;
 }
 
 .wg-element .wg-bar-controller-child {
 	background: inherit;
-	top: 3px ! important;
 	left: 0;
 }
 
@@ -344,7 +352,7 @@
 	left: expression(eval(document.body.scrollLeft) + "px");
 }
 
-.wg-fullScreen > .ui-resizable-handle {
+.wg-full-screen > .ui-resizable-handle {
 	display: none;
 }
 
