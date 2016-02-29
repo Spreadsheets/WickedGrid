@@ -28,7 +28,7 @@ WickedGrid.defaultFormulaParser = null;
 
 WickedGrid.spareFormulaParsers = [];
 
-WickedGrid.cornderEntity = 'corner';
+WickedGrid.cornerEntity = 'corner';
 WickedGrid.columnEntity = 'column';
 WickedGrid.rowEntity = 'row';
 

@@ -666,3 +666,24 @@ $.printSource = function (s) {
 	w.document.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
 	w.document.close();
 };
+
+function widget(html) {
+	var child = null,
+			parser = widget.parser || (widget.parser = document.createElement('span'));
+
+	parser.innerHTML = html;
+
+	while (parser.lastChild !== null) {
+		child = parser.removeChild(parser.lastChild);
+	}
+
+	return child;
+}
+
+function disableSelectionSpecial(element) {
+	element.onselectstart = function () {
+		return false;
+	};
+	element.unselectable = 'on';
+	element.style['-moz-user-select'] = 'none';
+}

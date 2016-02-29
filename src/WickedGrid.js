@@ -95,7 +95,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           barTop:[],
           barTopParent:[],
           chart:[],
-          tdMenu:[],
+          menu:[],
           cellsEdited:[],
           enclosures:[],
           formula:null,
@@ -103,7 +103,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           inPlaceEdit:[],
           inputs:[],
           label:null,
-          menu:[],
+          headerMenu:[],
           menus:[],
           pane:[],
           panes:null,
@@ -257,6 +257,12 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       .bindWickedGrid(this)
       .bindHandler(this.cellHandler);
 
+    this.cellContextMenu = null;
+    this.columnMenu = null;
+    this.columnContextMenu = null;
+    this.rowContextMenu = null;
+    this.setupMenus();
+
     this
       .openSheet()
       .setBusy(false);
@@ -265,6 +271,16 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
   WickedGrid.prototype = {
     cl: WickedGrid.cl,
     msg: WickedGrid.msg,
+    setupMenus: function() {
+      var settings = this.settings;
+
+      this.cellContextMenu = new WickedGrid.CellContextMenu(this, WickedGrid.menu(this, settings.cellContextMenuButtons));
+      this.columnMenu = new WickedGrid.ColumnMenu(this,  WickedGrid.menu(this, settings.columnMenuButtons));
+      this.columnContextMenu = new WickedGrid.ColumnContextMenu(this, WickedGrid.menu(this, settings.columnContextMenuButtons));
+      this.rowContextMenu = new WickedGrid.RowContextMenu(this, WickedGrid.menu(this, settings.rowContextMenuButtons));
+
+      return this;
+    },
     /**
      * Object selectors for interacting with a spreadsheet
      * @type {Object}
@@ -272,7 +288,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     autoFiller:function () {
       return this.controls.autoFiller[this.i] || null;
     },
-    barCorner:function () {
+    corner:function () {
       return this.controls.bar.corner[this.i] || $([]);
     },
     barHelper:function () {
@@ -320,8 +336,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     cellActive:function() {
       return this.cellLast;
     },
-    tdMenu:function () {
-      return this.controls.tdMenu[this.i] || $([]);
+    menu:function () {
+      return this.controls.menu[this.i] || $([]);
     },
     cellsEdited: function () {
       return (this.controls.cellsEdited !== u ? this.controls.cellsEdited : this.controls.cellsEdited = []);
@@ -356,8 +372,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     menus:function() {
       return this.controls.menus[this.i] || $([]);
     },
-    menu:function () {
-      return this.controls.menu[this.i] || $([]);
+    headerMenu:function () {
+      return this.controls.headerMenu[this.i] || $([]);
     },
     pane:function () {
       return this.controls.pane[this.i] || {};
@@ -1065,6 +1081,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     },
     columnShowAll: function() {
       this.pane().actionUI.columnShowAll();
+    },
+
+    hideMenus: function() {
+      this.columnMenu.hide();
+      this.columnContextMenu.hide();
+      this.rowContextMenu.hide();
+
+      return this;
     },
     /**
      * Merges cells together

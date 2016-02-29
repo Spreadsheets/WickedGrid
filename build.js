@@ -20,11 +20,9 @@ var fs              = require('fs')
 					'statics',
 
 					'autoFiller',
-					'cellMenu',
 					'cellTypeHandlers',
 					'cl',
 					'columnFreezer',
-					'columnMenu',
 					'columnResizer',
 					'customTab',
 					'defaults',
@@ -34,7 +32,6 @@ var fs              = require('fs')
 					'inPlaceEdit',
 					'menu',
 					'rowFreezer',
-					'rowMenu',
 					'rowResizer',
 					'sheetUI',
 					'spreadsheetAdder',
@@ -55,10 +52,14 @@ var fs              = require('fs')
 					//constructors next
 					'ActionUI',
 					'Cell',
+					'CellContextMenu',
 					'CellHandler',
 					'CellRange',
+					'ColumnMenu',
+					'ColumnContextMenu',
 					'Highlighter',
 					'SpreadsheetUI',
+					'RowContextMenu',
 					'Theme'
 				]
 			},

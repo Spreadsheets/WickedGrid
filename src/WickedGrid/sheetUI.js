@@ -11,29 +11,31 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
       actionUI = pane.actionUI,
       paneContextmenuEvent = function (e) {
         e = e || window.event;
+        var target = e.target,
+            parent = target.parentNode;
 
         if (wickedGrid.isBusy()) {
           return false;
         }
 
         if (wickedGrid.isCell(e.target)) {
-          WickedGrid.cellMenu(wickedGrid, e.pageX, e.pageY);
+          wickedGrid.cellContextMenu.show(e.pageX, e.pageY);
           return false;
         }
 
-        if (wickedGrid.isBar(e.target)) {
-          var bar = e.target,
-              index = bar.index;
+        if (!wickedGrid.isBar(target)) return;
 
-          if (index < 0) return false;
+        //corner
+        if (target.cellIndex === 0 && parent.rowIndex === 0) return;
 
-          if (actionUI.columnCache.first === actionUI.columnCache.last) {
-            WickedGrid.columnMenu(wickedGrid, bar, index, e.pageX, e.pageY);
-          } else if (actionUI.columnCache.first === actionUI.columnCache.last) {
-            WickedGrid.rowMenu(wickedGrid, bar, index, e.pageX, e.pageY);
-          }
-          return false;
+        //row
+        if (parent.rowIndex === 0) {
+          wickedGrid.columnContextMenu.show(e.pageX, e.pageY);
+        } else {
+          wickedGrid.rowContextMenu.show(e.pageX, e.pageY);
         }
+
+        return false;
       };
 
   ui.appendChild(enclosure);
@@ -108,7 +110,9 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
 
             if (wickedGrid.isSheetEditable()) {
               WickedGrid.columnFreezer(wickedGrid, index, pane);
-              WickedGrid.columnMenu(wickedGrid, bar, index, e.pageX, e.pageY);
+              wickedGrid.columnMenu
+                  .setColumn(bar)
+                  .show(e.pageX, e.pageY);
             }
           }
           break;
@@ -133,8 +137,9 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
       return wickedGrid.cellEvents.dblClick(e);
     };
 
+    pane.oncontextmenu = paneContextmenuEvent;
+
     $pane
-        .bind('contextmenu', paneContextmenuEvent)
         .disableSelectionSpecial()
         .bind('cellEdit', function(e) {
           return wickedGrid.cellEvents.edit(e);

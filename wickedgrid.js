@@ -95,7 +95,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           barTop:[],
           barTopParent:[],
           chart:[],
-          tdMenu:[],
+          menu:[],
           cellsEdited:[],
           enclosures:[],
           formula:null,
@@ -103,7 +103,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           inPlaceEdit:[],
           inputs:[],
           label:null,
-          menu:[],
+          headerMenu:[],
           menus:[],
           pane:[],
           panes:null,
@@ -257,6 +257,12 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       .bindWickedGrid(this)
       .bindHandler(this.cellHandler);
 
+    this.cellContextMenu = null;
+    this.columnMenu = null;
+    this.columnContextMenu = null;
+    this.rowContextMenu = null;
+    this.setupMenus();
+
     this
       .openSheet()
       .setBusy(false);
@@ -265,6 +271,16 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
   WickedGrid.prototype = {
     cl: WickedGrid.cl,
     msg: WickedGrid.msg,
+    setupMenus: function() {
+      var settings = this.settings;
+
+      this.cellContextMenu = new WickedGrid.CellContextMenu(this, WickedGrid.menu(this, settings.cellContextMenuButtons));
+      this.columnMenu = new WickedGrid.ColumnMenu(this,  WickedGrid.menu(this, settings.columnMenuButtons));
+      this.columnContextMenu = new WickedGrid.ColumnContextMenu(this, WickedGrid.menu(this, settings.columnContextMenuButtons));
+      this.rowContextMenu = new WickedGrid.RowContextMenu(this, WickedGrid.menu(this, settings.rowContextMenuButtons));
+
+      return this;
+    },
     /**
      * Object selectors for interacting with a spreadsheet
      * @type {Object}
@@ -272,7 +288,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     autoFiller:function () {
       return this.controls.autoFiller[this.i] || null;
     },
-    barCorner:function () {
+    corner:function () {
       return this.controls.bar.corner[this.i] || $([]);
     },
     barHelper:function () {
@@ -320,8 +336,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     cellActive:function() {
       return this.cellLast;
     },
-    tdMenu:function () {
-      return this.controls.tdMenu[this.i] || $([]);
+    menu:function () {
+      return this.controls.menu[this.i] || $([]);
     },
     cellsEdited: function () {
       return (this.controls.cellsEdited !== u ? this.controls.cellsEdited : this.controls.cellsEdited = []);
@@ -356,8 +372,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     menus:function() {
       return this.controls.menus[this.i] || $([]);
     },
-    menu:function () {
-      return this.controls.menu[this.i] || $([]);
+    headerMenu:function () {
+      return this.controls.headerMenu[this.i] || $([]);
     },
     pane:function () {
       return this.controls.pane[this.i] || {};
@@ -1065,6 +1081,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     },
     columnShowAll: function() {
       this.pane().actionUI.columnShowAll();
+    },
+
+    hideMenus: function() {
+      this.columnMenu.hide();
+      this.columnContextMenu.hide();
+      this.rowContextMenu.hide();
+
+      return this;
     },
     /**
      * Merges cells together
@@ -3990,7 +4014,7 @@ WickedGrid.defaultFormulaParser = null;
 
 WickedGrid.spareFormulaParsers = [];
 
-WickedGrid.cornderEntity = 'corner';
+WickedGrid.cornerEntity = 'corner';
 WickedGrid.columnEntity = 'column';
 WickedGrid.rowEntity = 'row';
 
@@ -4132,28 +4156,6 @@ WickedGrid.autoFiller = function(wickedGrid, pane) {
   pane.appendChild(autoFiller);
   return true;
 };
-WickedGrid.cellMenu = function(wickedGrid, x, y) {
-  if (wickedGrid.isBusy()) {
-    return false;
-  }
-  wickedGrid.tdMenu().hide();
-
-  var menu = wickedGrid.tdMenu();
-
-  if (!menu.length) {
-    menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuCell);
-    wickedGrid.controls.tdMenu[wickedGrid.i] = menu;
-  }
-
-  wickedGrid.menus().hide();
-
-  menu
-      .css('left', (x - 5) + 'px')
-      .css('top', (y - 5) + 'px')
-      .show();
-
-  return true;
-};
 WickedGrid.cellTypeHandlers = {
 	percent: function (cell, value) {
 		//https://stackoverflow.com/questions/2652319/how-do-you-check-that-a-number-is-nan-in-javascript/16988441#16988441
@@ -4244,22 +4246,24 @@ WickedGrid.cl = {
   autoFiller: 'wg-auto-filler',
   autoFillerHandle: 'wg-auto-filler-handle',
   autoFillerCover: 'wg-auto-filler-cover',
-  barCorner: 'wg-bar-corner',
+  corner: 'wg-corner',
   barController: 'wg-bar-controller',
   barControllerChild: 'wg-bar-controller-child',
   barHelper: 'wg-bar-helper',
-  barRow: 'wg-bar-row',
-  barRowFreezeHandle: 'wg-bar-row-freeze-handle',
-  barColumn: 'wg-bar-column',
-  barColumnMenuButton: 'wg-bar-column-menu-button',
-  barColumnFreezeHandle: 'wg-bar-column-freeze-handle',
+  row: 'wg-row',
+  rowFreezeHandle: 'wg-row-freeze-handle',
+  column: 'wg-column',
+  columnHelper: 'wg-column-helper',
+  columnFocus: 'wg-column-focus',
+  columnButton: 'wg-column-button',
+  columnFreezeHandle: 'wg-column-freeze-handle',
   chart: 'wg-chart',
   formula: 'wg-formula',
   formulaParent: 'wg-formula-parent',
   header: 'wg-header',
   fullScreen: 'wg-full-screen',
   inPlaceEdit: 'wg-in-place-edit',
-  menu: 'wg-menu',
+  headerMenu: 'wg-header-menu',
   menuFixed: 'wg-menu-fixed',
   element: 'wg-element',
   scroll: 'wg-scroll',
@@ -4270,7 +4274,8 @@ WickedGrid.cl = {
   tab: 'wg-tab',
   tabContainer: 'wg-tab-container',
   tabContainerScrollable: 'wg-tab-container-scrollable',
-  tdMenu: 'wg-td-menu',
+  menu: 'wg-menu',
+  menuButton: 'wg-menu-button',
   title: 'wg-title',
   enclosure: 'wg-enclosure',
   ui: 'wg-ui'
@@ -4300,7 +4305,7 @@ WickedGrid.columnFreezer = function(wickedGrid) {
       handle = document.createElement('div'),
       $handle = pane.freezeHandleTop = $(handle)
           .appendTo(pane)
-          .addClass(wickedGrid.theme.barColumnFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barColumnFreezeHandle)
+          .addClass(wickedGrid.theme.columnFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.columnFreezeHandle)
           .height(bar.clientHeight - 1)
           .css('left', (bar.offsetLeft - handle.clientWidth) + 'px')
           .attr('title', wickedGrid.msg.dragToFreezeCol);
@@ -4340,63 +4345,6 @@ WickedGrid.columnFreezer = function(wickedGrid) {
   });
 
   return true;
-};
-WickedGrid.columnMenu = function(wickedGrid, bar, index, x, y) {
-  if (!wickedGrid.settings.barMenus) return false;
-  if (wickedGrid.isBusy()) return false;
-
-  var menu = wickedGrid.barMenuTop().hide();
-
-  if (menu.length < 1) {
-    menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuTop);
-    wickedGrid.controls.bar.x.menu[wickedGrid.i] = menu;
-  }
-
-  wickedGrid.menus().hide();
-
-  if (!bar) {
-    menu
-        .css('left', (x - 5) + 'px')
-        .css('top', (y - 5) + 'px')
-        .show();
-    return menu;
-  }
-
-  var barMenuParentTop = wickedGrid.barMenuParentTop().hide();
-
-  if (!barMenuParentTop.length) {
-
-    barMenuParentTop = $(document.createElement('div'))
-        .addClass(wickedGrid.theme.barColumnMenu + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barColumnMenuButton)
-        .append(
-            $(document.createElement('span'))
-                .addClass('ui-icon ui-icon-triangle-1-s')
-        )
-        .mousedown(function (e) {
-          barMenuParentTop.parent()
-              .mousedown()
-              .mouseup();
-
-          menu
-              .css('left', (x - 5) + 'px')
-              .css('top', (y - 5) + 'px')
-              .show();
-        })
-        .blur(function () {
-          if (menu) menu.hide();
-        });
-
-    barMenuParentTop.get(0).destroy = function(){
-      barMenuParentTop.remove();
-      wickedGrid.controls.bar.x.menuParent[wickedGrid.i] = null;
-    };
-
-    wickedGrid.controls.bar.x.menuParent[wickedGrid.i] = barMenuParentTop;
-  }
-
-  barMenuParentTop
-      .prependTo(bar)
-      .show();
 };
 WickedGrid.columnResizer = function(wickedGrid, bar) {
   wickedGrid.barTopControls().remove();
@@ -4449,154 +4397,161 @@ WickedGrid.customTab = function(wickedGrid) {
 
   return $tab;
 };
-WickedGrid.defaults = {
-  editable:true,
-  editableNames:true,
-  barMenus:true,
-  freezableCells:true,
-  allowToggleState:true,
-  menu:null,
-  newColumnWidth:120,
-  title:null,
-  calcOff:false,
-  lockFormulas:false,
-  parent:null,
-  colMargin:20,
-  boxModelCorrection:2,
-  formulaFunctions:{},
-  formulaVariables:{},
-  cellSelectModel:WickedGrid.excelSelectModel,
-  autoAddCells:true,
-  resizableCells:true,
-  resizableSheet:true,
-  autoFiller:true,
-  error:function (e) {
-    return e.error;
-  },
-  endOfNumber: false,
-  frozenAt:[],
-  contextmenuTop: {
-    'Insert column after':function () {
-      this.addColumn(false, this.colLast);
-      return false;
+WickedGrid.defaults = (function() {
+  var defaults = {
+    editable: true,
+    editableNames: true,
+    barMenus: true,
+    freezableCells: true,
+    allowToggleState: true,
+    headerMenu: null,
+    newColumnWidth: 120,
+    title: null,
+    calcOff: false,
+    lockFormulas: false,
+    parent: null,
+    colMargin: 20,
+    boxModelCorrection: 2,
+    formulaFunctions: {},
+    formulaVariables: {},
+    cellSelectModel: WickedGrid.excelSelectModel,
+    autoAddCells: true,
+    resizableCells: true,
+    resizableSheet: true,
+    autoFiller: true,
+    error: function (e) {
+      return e.error;
     },
-    'Insert column before':function () {
-      this.addColumn(true, this.colLast);
-      return false;
+    endOfNumber: false,
+    frozenAt: [],
+    columnMenuButtons: null,
+    columnContextMenuButtons: {
+      'Insert column after': function () {
+        this.addColumn(false, this.colLast);
+        return false;
+      },
+      'Insert column before': function () {
+        this.addColumn(true, this.colLast);
+        return false;
+      },
+      'Add column to end': function () {
+        this.addColumn(true);
+        return false;
+      },
+      'Delete this column': function () {
+        this.deleteColumn();
+        return false;
+      },
+      'Hide column': function () {
+        this.toggleHideColumn(this.colLast);
+        return false;
+      },
+      'Show all columns': function () {
+        this.columnShowAll();
+      },
+      'Toggle freeze columns to here': function () {
+        var col = this.getTdLocation(this.tdActive()).col,
+            actionUI = this.pane().actionUI;
+        actionUI.frozenAt.col = (actionUI.frozenAt.col == col ? 0 : col);
+      }
     },
-    'Add column to end':function () {
-      this.addColumn(true);
-      return false;
+    rowContextMenuButtons: {
+      'Insert row after': function () {
+        this.addRow(true, this.rowLast);
+        return false;
+      },
+      'Insert row before': function () {
+        this.addRow(false, this.rowLast);
+        return false;
+      },
+      'Add row to end': function () {
+        this.addRow(true);
+        return false;
+      },
+      'Delete this row': function () {
+        this.deleteRow();
+        return false;
+      },
+      'Hide row': function () {
+        this.toggleHideRow(this.rowLast);
+        return false;
+      },
+      'Show all rows': function () {
+        this.rowShowAll();
+      },
+      'Toggle freeze rows to here': function () {
+        var row = this.getTdLocation(this.tdActive()).row,
+            actionUI = this.pane().actionUI;
+        actionUI.frozenAt.row = (actionUI.frozenAt.row == row ? 0 : row);
+      }
     },
-    'Delete this column':function () {
-      this.deleteColumn();
-      return false;
+    cellContextMenuButtons: {
+      /*'Copy': false,
+       'Cut': false,
+       'line1': 'line',*/
+      'Insert row after': function () {
+        this.addRow(true, this.rowLast);
+        return false;
+      },
+      'Insert row before': function () {
+        this.addRow(false, this.rowLast);
+        return false;
+      },
+      'Add row to end': function () {
+        this.addRow(true);
+        return false;
+      },
+      'Delete this row': function () {
+        this.deleteRow();
+        return false;
+      },
+      'line2': 'line',
+      'Insert column after': function () {
+        this.addColumn(true, this.colLast);
+        return false;
+      },
+      'Insert column before': function () {
+        this.addColumn(false, this.colLast);
+        return false;
+      },
+      'Add column to end': function () {
+        this.addColumn(true);
+        return false;
+      },
+      'Delete this column': function () {
+        this.deleteColumn();
+        return false;
+      },
+      'line3': 'line',
+      'Add spreadsheet': function () {
+        this.addSheet();
+      },
+      'Delete spreadsheet': function () {
+        this.deleteSheet();
+      }
     },
-    'Hide column':function () {
-      this.toggleHideColumn(this.colLast);
-      return false;
+    alert: function(msg) {
+      alert(msg);
     },
-    'Show all columns': function () {
-      this.columnShowAll();
+    prompt: function(msg, callback, initialValue) {
+      callback(prompt(msg, initialValue));
     },
-    'Toggle freeze columns to here':function () {
-      var col = this.getTdLocation(this.tdActive()).col,
-          actionUI = this.pane().actionUI;
-      actionUI.frozenAt.col = (actionUI.frozenAt.col == col ? 0 : col);
-    }
-  },
-  contextmenuLeft:{
-    'Insert row after':function () {
-      this.addRow(true, this.rowLast);
-      return false;
+    confirm: function(msg, callbackIfTrue, callbackIfFalse) {
+      if (confirm(msg)) {
+        callbackIfTrue();
+      } else if (callbackIfFalse) {
+        callbackIfFalse();
+      }
     },
-    'Insert row before':function () {
-      this.addRow(false, this.rowLast);
-      return false;
-    },
-    'Add row to end':function () {
-      this.addRow(true);
-      return false;
-    },
-    'Delete this row':function () {
-      this.deleteRow();
-      return false;
-    },
-    'Hide row':function () {
-      this.toggleHideRow(this.rowLast);
-      return false;
-    },
-    'Show all rows': function () {
-      this.rowShowAll();
-    },
-    'Toggle freeze rows to here':function () {
-      var row = this.getTdLocation(this.tdActive()).row,
-          actionUI = this.pane().actionUI;
-      actionUI.frozenAt.row = (actionUI.frozenAt.row == row ? 0 : row);
-    }
-  },
-  contextmenuCell:{
-    /*'Copy':false,
-     'Cut':false,
-     'line1':'line',*/
-    'Insert row after':function () {
-      this.addRow(true, this.rowLast);
-      return false;
-    },
-    'Insert row before':function () {
-      this.addRow(false, this.rowLast);
-      return false;
-    },
-    'Add row to end':function () {
-      this.addRow(true);
-      return false;
-    },
-    'Delete this row':function () {
-      this.deleteRow();
-      return false;
-    },
-    'line2':'line',
-    'Insert column after':function () {
-      this.addColumn(true, this.colLast);
-      return false;
-    },
-    'Insert column before':function () {
-      this.addColumn(false, this.colLast);
-      return false;
-    },
-    'Add column to end':function () {
-      this.addColumn(true);
-      return false;
-    },
-    'Delete this column':function () {
-      this.deleteColumn();
-      return false;
-    },
-    'line3':'line',
-    'Add spreadsheet':function () {
-      this.addSheet();
-    },
-    'Delete spreadsheet':function () {
-      this.deleteSheet();
-    }
-  },
-  alert: function(msg) {
-    alert(msg);
-  },
-  prompt: function(msg, callback, initialValue) {
-    callback(prompt(msg, initialValue));
-  },
-  confirm: function(msg, callbackIfTrue, callbackIfFalse) {
-    if (confirm(msg)) {
-      callbackIfTrue();
-    } else if (callbackIfFalse) {
-      callbackIfFalse();
-    }
-  },
-  loader: null,
-  useStack: true,
-  useMultiThreads: true
-};
+    loader: null,
+    useStack: true,
+    useMultiThreads: true
+  };
+
+  defaults.columnMenuButtons = defaults.columnContextMenuButtons;
+
+  return defaults;
+})();
 // The viewing console for spreadsheet
 WickedGrid.enclosure = function(wickedGrid) {
   var enclosure = document.createElement('div'),
@@ -6929,7 +6884,7 @@ WickedGrid.header = function(wickedGrid) {
       formula,
       formulaParent;
 
-  header.className = WickedGrid.cl.header + ' ' + wickedGrid.theme.control;
+  header.className = wickedGrid.cl.header + ' ' + wickedGrid.theme.control;
 
   wickedGrid.controls.header = $(header);
 
@@ -6938,7 +6893,7 @@ WickedGrid.header = function(wickedGrid) {
       s.title = wickedGrid.title(I);
     }
 
-    title.className = WickedGrid.cl.title;
+    title.className = wickedGrid.cl.title;
     wickedGrid.controls.title = $(title).html(s.title)
   } else {
     title.style.display = 'none';
@@ -6947,14 +6902,14 @@ WickedGrid.header = function(wickedGrid) {
   header.appendChild(title);
 
   if (wickedGrid.isSheetEditable()) {
-    if (s.menu) {
+    if (s.headerMenu) {
       menu = document.createElement('div');
       $menu = $(menu);
-      menu.className = WickedGrid.cl.menu + ' ' + WickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed;
+      menu.className = wickedGrid.cl.headerMenu + ' ' + wickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed;
       header.appendChild(menu);
 
-      wickedGrid.controls.menu[wickedGrid.i] = $menu
-          .append(s.menu)
+      wickedGrid.controls.headerMenu[wickedGrid.i] = $menu
+          .append(s.headerMenu)
           .children()
           .addClass(wickedGrid.theme.menuFixed);
 
@@ -6964,12 +6919,12 @@ WickedGrid.header = function(wickedGrid) {
     }
 
     label = document.createElement('td');
-    label.className = WickedGrid.cl.label + ' ' + wickedGrid.theme.control;
+    label.className = wickedGrid.cl.label + ' ' + wickedGrid.theme.control;
     wickedGrid.controls.label = $(label);
 
     //Edit box menu
     formula = document.createElement('textarea');
-    formula.className = WickedGrid.cl.formula + ' ' + wickedGrid.theme.controlTextBox;
+    formula.className = wickedGrid.cl.formula + ' ' + wickedGrid.theme.controlTextBox;
     formula.onkeydown = function (e) {
       return wickedGrid.formulaEvents.keydown(e);
     };
@@ -7105,14 +7060,14 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
     }
   };
   textarea.onchange =
-      textarea.onkeyup =
-          function() { formula[0].value = textarea.value; };
+  textarea.onkeyup =
+      function() { formula[0].value = textarea.value; };
 
   textarea.onfocus = function () { wickedGrid.setNav(false); };
 
   textarea.onblur =
-      textarea.onfocusout =
-          function () { wickedGrid.setNav(true); };
+  textarea.onfocusout =
+      function () { wickedGrid.setNav(true); };
 
   textarea.onpaste = function(e) {
     wickedGrid.cellEvents.paste(e);
@@ -7160,53 +7115,65 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
     return wickedGrid.cellSetActiveFromKeyCode(e, true);
   }
 };
-WickedGrid.menu = function(wickedGrid, menuItems) {
+WickedGrid.menu = function(wickedGrid, menuEntities) {
+  if (typeof menuEntities === 'undefined') throw new Error('no menuEntities defined');
+
   var menu = document.createElement('div'),
-      $menu = $(menu),
-      buttons = $([]),
-      hoverClass = wickedGrid.theme.menuHover;
+      hoverClasses = wickedGrid.theme.menuHover.split(' ');
 
-  menu.className = wickedGrid.theme.menu + ' ' + wickedGrid.cl.tdMenu;
+  menu.className = wickedGrid.theme.menu + ' ' + wickedGrid.cl.menu;
+  disableSelectionSpecial(menu);
 
-  wickedGrid.controls.menus[wickedGrid.i] = wickedGrid.menus().add(menu);
+  menu.onmouseleave = function () {
+    menu.parentNode.removeChild(menu);
+  };
+  menu.oncontextmenu = function() {
+    return false;
+  };
+  menu.onscroll = function() {
+    return false;
+  };
 
-  $menu
-      .mouseleave(function () {
-        $menu.hide();
-      })
-      .bind('contextmenu', function() {return false;})
-      .appendTo('body')
-      .hide()
-      .disableSelectionSpecial();
-
-  for (var msg in menuItems) {
-    if (menuItems.hasOwnProperty(msg)) {
-      if (typeof menuItems[msg] === 'function') {
-        buttons.pushStack(
-          $(document.createElement('div'))
-            .text(msg)
-            .data('msg', msg)
-            .click(function () {
-              menuItems[$(this).data('msg')].call(this, this);
-              $menu.hide();
+  for (var key in menuEntities) {
+    if (menuEntities.hasOwnProperty(key)) {
+      (function(key, menuEntity) {
+        switch (typeof menuEntity) {
+          case 'function':
+            var button = document.createElement('div');
+            button.className = wickedGrid.cl.menuButton;
+            button.textContent = key;
+            button.onclick = function (e) {
+              menuEntity.call(wickedGrid, e);
+              menu.parentNode.removeChild(menu);
               return false;
-            })
-            .appendTo(menu)
-            .hover(function() {
-              buttons.removeClass(hoverClass);
-              $(this).addClass(hoverClass);
-            }, function() {
-              $(this).removeClass(hoverClass);
-            })
-        );
-
-      } else if (menuItems[msg] == 'line') {
-        menu.appendChild(document.createElement('hr'));
-      }
+            };
+            if (hoverClasses.length > 0) {
+              button.onmouseover = function () {
+                for (var i = 0, max = menu.children.length; i < max; i++) {
+                  hoverClasses.forEach(function(hoverClass) {
+                    menu.children[i].classList.remove(hoverClass);
+                  });
+                }
+                hoverClasses.forEach(function(hoverClass) {
+                  button.classList.add(hoverClass);
+                });
+              };
+            }
+            menu.appendChild(button);
+            break;
+          case 'string':
+              if (menuEntity === 'line') {
+                menu.appendChild(document.createElement('hr'));
+                break;
+              }
+          default:
+            throw new Error('Unknown menu type');
+        }
+      })(key, menuEntities[key]);
     }
   }
 
-  return $menu;
+  return menu;
 };
 //Creates the draggable objects for freezing cells
 WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
@@ -7233,7 +7200,7 @@ WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
       handle = document.createElement('div'),
       $handle = pane.freezeHandleLeft = $(handle)
           .appendTo(pane)
-          .addClass(wickedGrid.theme.barRowFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barRowFreezeHandle)
+          .addClass(wickedGrid.theme.rowFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.rowFreezeHandle)
           .width(bar.clientWidth)
           .css('top', (bar.offsetTop - handle.clientHeight + 1) + 'px')
           .attr('title', wickedGrid.msg.dragToFreezeRow),
@@ -7273,33 +7240,6 @@ WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
     },
     containment:[paneLeft, paneTop, paneLeft, paneTop + pane.clientHeight - window.scrollBarSize.height]
   });
-
-  return true;
-};
-WickedGrid.rowMenu = function(wickedGrid, index, x, y) {
-  if (!wickedGrid.settings.barMenus) return false;
-  if (wickedGrid.isBusy()) return false;
-
-  wickedGrid.barMenuLeft().hide();
-
-  if (index > 0) {
-    wickedGrid.barHandleFreezeLeft().remove();
-  }
-  var menu;
-
-  menu = wickedGrid.barMenuLeft();
-
-  if (menu.length < 1) {
-    menu = WickedGrid.menu(wickedGrid, wickedGrid.settings.contextmenuLeft);
-    wickedGrid.controls.bar.y.menu[wickedGrid.i] = menu;
-  }
-
-  wickedGrid.menus().hide();
-
-  menu
-      .css('left', (x - 5) + 'px')
-      .css('top', (y - 5) + 'px')
-      .show();
 
   return true;
 };
@@ -7372,29 +7312,31 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
       actionUI = pane.actionUI,
       paneContextmenuEvent = function (e) {
         e = e || window.event;
+        var target = e.target,
+            parent = target.parentNode;
 
         if (wickedGrid.isBusy()) {
           return false;
         }
 
         if (wickedGrid.isCell(e.target)) {
-          WickedGrid.cellMenu(wickedGrid, e.pageX, e.pageY);
+          wickedGrid.cellContextMenu.show(e.pageX, e.pageY);
           return false;
         }
 
-        if (wickedGrid.isBar(e.target)) {
-          var bar = e.target,
-              index = bar.index;
+        if (!wickedGrid.isBar(target)) return;
 
-          if (index < 0) return false;
+        //corner
+        if (target.cellIndex === 0 && parent.rowIndex === 0) return;
 
-          if (actionUI.columnCache.first === actionUI.columnCache.last) {
-            WickedGrid.columnMenu(wickedGrid, bar, index, e.pageX, e.pageY);
-          } else if (actionUI.columnCache.first === actionUI.columnCache.last) {
-            WickedGrid.rowMenu(wickedGrid, bar, index, e.pageX, e.pageY);
-          }
-          return false;
+        //row
+        if (parent.rowIndex === 0) {
+          wickedGrid.columnContextMenu.show(e.pageX, e.pageY);
+        } else {
+          wickedGrid.rowContextMenu.show(e.pageX, e.pageY);
         }
+
+        return false;
       };
 
   ui.appendChild(enclosure);
@@ -7469,7 +7411,9 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
 
             if (wickedGrid.isSheetEditable()) {
               WickedGrid.columnFreezer(wickedGrid, index, pane);
-              WickedGrid.columnMenu(wickedGrid, bar, index, e.pageX, e.pageY);
+              wickedGrid.columnMenu
+                  .setColumn(bar)
+                  .show(e.pageX, e.pageY);
             }
           }
           break;
@@ -7494,8 +7438,9 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
       return wickedGrid.cellEvents.dblClick(e);
     };
 
+    pane.oncontextmenu = paneContextmenuEvent;
+
     $pane
-        .bind('contextmenu', paneContextmenuEvent)
         .disableSelectionSpecial()
         .bind('cellEdit', function(e) {
           return wickedGrid.cellEvents.edit(e);
@@ -8417,6 +8362,27 @@ $.printSource = function (s) {
 	w.document.write("<html><body><xmp>" + s + "\n</xmp></body></html>");
 	w.document.close();
 };
+
+function widget(html) {
+	var child = null,
+			parser = widget.parser || (widget.parser = document.createElement('span'));
+
+	parser.innerHTML = html;
+
+	while (parser.lastChild !== null) {
+		child = parser.removeChild(parser.lastChild);
+	}
+
+	return child;
+}
+
+function disableSelectionSpecial(element) {
+	element.onselectstart = function () {
+		return false;
+	};
+	element.unselectable = 'on';
+	element.style['-moz-user-select'] = 'none';
+}
 WickedGrid.event.Cell = (function() {
   function Cell(wickedGrid) {
     this.wickedGrid = wickedGrid;
@@ -11603,7 +11569,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					th.index = -1;
 					th.entity = 'corner';
 					th.col = col;
-					th.className = WickedGrid.cl.barCorner + ' ' + wickedGrid.theme.bar;
+					th.className = wickedGrid.cl.corner + ' ' + wickedGrid.theme.bar;
 				},
 				updateRowHeader: this._updateRowHeader = function(rowVisibleIndex, header) {
 					var rowIndex,
@@ -11623,7 +11589,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 
 					header.index = rowIndex;
 					header.entity = 'row';
-					header.className = WickedGrid.cl.barRow + ' ' + wickedGrid.theme.bar;
+					header.className = wickedGrid.cl.row + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					header.parentNode.style.height = header.style.height = loader.getHeight(wickedGrid.i, rowIndex) + 'px';
 				},
@@ -11647,7 +11613,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					header.th = header;
 					header.col = col;
 					header.entity = 'column';
-					header.className = WickedGrid.cl.barColumn + ' ' + wickedGrid.theme.bar;
+					header.className = wickedGrid.cl.column + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					col.style.width = loader.getWidth(wickedGrid.i, columnIndex) + 'px';
 				}
@@ -12923,6 +12889,36 @@ WickedGrid.Cell = (function() {
 
 	return Cell;
 })();
+WickedGrid.CellContextMenu = (function() {
+  function CellContextMenu(wickedGrid, menu) {
+    this.wickedGrid = wickedGrid;
+    this.menu = menu;
+  }
+
+  CellContextMenu.prototype = {
+    show: function(x, y) {
+      var wickedGrid = this.wickedGrid,
+          menu = this.menu,
+          style = menu.style;
+
+      style.left = (x - 5) + 'px';
+      style.top = (y - 5) + 'px';
+
+      wickedGrid.hideMenus();
+      wickedGrid.pane().appendChild(menu);
+      return this;
+    },
+    hide: function() {
+      if (this.menu.parentNode === null) return this;
+
+      this.menu.parentNode.removeChild(this.menu);
+
+      return this;
+    }
+  };
+
+  return CellContextMenu;
+})();
 WickedGrid.CellHandler = (function(Math) {
 	function isNum(num) {
 		return !isNaN(num);
@@ -13512,6 +13508,103 @@ WickedGrid.CellRange = (function() {
 
 	return Constructor;
 })();
+WickedGrid.ColumnMenu = (function() {
+  function ColumnMenu(wickedGrid, menu) {
+    this.wickedGrid = wickedGrid;
+    this.menu = menu;
+    this.index = -1;
+    this.column = null;
+
+    var self = this,
+        barHelper = this.barHelper = widget(
+          '<div class="' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.columnHelper + '">\
+            <span class="' + wickedGrid.cl.columnButton + ' ' + wickedGrid.theme.columnMenu + ' ' + wickedGrid.theme.columnMenuIcon + '"></span>\
+          </div>'
+        ),
+        button = barHelper.children[0];
+
+    button.onmousedown = function () {
+      self.showMenu();
+    };
+  }
+
+  ColumnMenu.prototype = {
+    setColumn: function(column, index) {
+      if (this.column !== null) {
+        this.column.classList.remove(this.wickedGrid.cl.columnFocus);
+      }
+      this.hideMenu();
+      this.column = column;
+      this.index = index;
+
+      return this;
+    },
+    kill: function() {
+      this.hide();
+      this.column = null;
+      this.index = -1;
+      return this;
+    },
+    show: function() {
+      this.wickedGrid.hideMenus();
+
+      this.column.appendChild(this.barHelper);
+      this.column.classList.add(this.wickedGrid.cl.columnFocus);
+
+      return this;
+    },
+    hide: function() {
+      if (this.barHelper.parentNode === null) return this;
+      this.barHelper.parentNode.removeChild(this.barHelper);
+      return this;
+    },
+    showMenu: function() {
+      this.barHelper.appendChild(this.menu);
+      return this;
+    },
+    hideMenu: function() {
+      if (this.menu.parentNode === null) return this;
+      this.menu.parentNode.removeChild(this.menu);
+      return this;
+    }
+  };
+  return ColumnMenu;
+})();
+WickedGrid.ColumnContextMenu = (function() {
+  function ColumnContextMenu(wickedGrid, menu) {
+    this.wickedGrid = wickedGrid;
+    this.menu = menu;
+  }
+
+  ColumnContextMenu.prototype = {
+    kill: function() {
+      if (this.menu.parentNode !== null) {
+        this.menu.parentNode.removeChild(this.menu);
+      }
+
+      return this;
+    },
+    show: function(x, y) {
+      this.wickedGrid.hideMenus();
+
+      var wickedGrid = this.wickedGrid,
+          menu = this.menu,
+          style = menu.style;
+
+      style.left = (x - 5) + 'px';
+      style.top = (y - 5) + 'px';
+
+      wickedGrid.pane().appendChild(menu);
+      return this;
+    },
+    hide: function() {
+      if (this.menu.parentNode === null) return this;
+      this.menu.parentNode.removeChild(this.menu);
+      return this;
+    }
+  };
+  return ColumnContextMenu;
+})();
 
 /**
  * Creates the scrolling system used by each spreadsheet
@@ -13720,6 +13813,39 @@ WickedGrid.SpreadsheetUI = (function() {
 
 	return Constructor;
 })();
+WickedGrid.RowContextMenu = (function() {
+  function RowContextMenu(wickedGrid, menu) {
+    this.wickedGrid = wickedGrid;
+    this.menu = menu;
+  }
+
+  RowContextMenu.prototype = {
+    show: function(x, y) {
+      this.wickedGrid.hideMenus();
+
+      var wickedGrid = this.wickedGrid,
+          menu = this.menu,
+          style = menu.style;
+
+      style.left = (x - 5) + 'px';
+      style.top = (y - 5) + 'px';
+
+      wickedGrid.pane().appendChild(menu);
+
+      return this;
+    },
+    hide: function() {
+      var menu = this.menu;
+      if (menu.parentNode === null) return this;
+
+      menu.parentNode.removeChild(menu);
+
+      return this;
+    }
+  };
+
+  return RowContextMenu;
+})();
 WickedGrid.Theme = (function() {
 	function Theme(theme) {
 		theme = theme || Sheet.defaultTheme;
@@ -13744,87 +13870,90 @@ WickedGrid.Theme = (function() {
 	}
 
 	Theme.themeRollerClasses = {
-		autoFiller:'ui-state-active',
-		bar:'ui-widget-header',
-		barHighlight:'ui-state-active',
-		barRowFreezeHandle:'ui-state-default',
-		barColumnFreezeHandle:'ui-state-default',
-		barColumnMenu:'ui-state-default',
-		tdActive:'ui-state-active',
-		tdHighlighted:'ui-state-highlight',
-		control:'ui-widget-header ui-corner-top',
-		controlTextBox:'ui-widget-content',
-		fullScreen:'ui-widget-content ui-corner-all',
-		inPlaceEdit:'ui-state-highlight',
-		menu:'ui-widget-header',
+		autoFiller: 'ui-state-active',
+		bar: 'ui-widget-header',
+		barHighlight: 'ui-state-active',
+		rowFreezeHandle: 'ui-state-default',
+		columnFreezeHandle: 'ui-state-default',
+		columnMenu: 'ui-state-default',
+		columnMenuIcon: 'ui-icon ui-icon-triangle-1-s',
+		tdActive: 'ui-state-active',
+		tdHighlighted: 'ui-state-highlight',
+		control: 'ui-widget-header ui-corner-top',
+		controlTextBox: 'ui-widget-content',
+		fullScreen: 'ui-widget-content ui-corner-all',
+		inPlaceEdit: 'ui-state-highlight',
+		menu: 'ui-widget-header',
 		menuFixed: '',
-		menuUl:'ui-widget-header',
-		menuLi:'ui-widget-header',
+		menuUl: 'ui-widget-header',
+		menuLi: 'ui-widget-header',
 		menuHover: 'ui-state-highlight',
 		pane: 'ui-widget-content',
-		parent:'ui-widget-content ui-corner-all',
-		table:'ui-widget-content',
-		tab:'ui-widget-header',
-		tabActive:'ui-state-highlight',
-		barResizer:'ui-state-highlight',
-		barFreezer:'ui-state-highlight',
-		barFreezeIndicator:'ui-state-highlight'
+		parent: 'ui-widget-content ui-corner-all',
+		table: 'ui-widget-content',
+		tab: 'ui-widget-header',
+		tabActive: 'ui-state-highlight',
+		barResizer: 'ui-state-highlight',
+		barFreezer: 'ui-state-highlight',
+		barFreezeIndicator: 'ui-state-highlight'
 	};
 
 	Theme.bootstrapClasses = {
-		autoFiller:'btn-info',
-		bar:'input-group-addon',
-		barHighlight:'label-info',
-		barRowFreezeHandle:'bg-warning',
-		barColumnFreezeHandle:'bg-warning',
-		barColumnMenu:'bg-warning',
-		tdActive:'active',
-		tdHighlighted:'bg-info disabled',
-		control:'panel-heading',
-		controlTextBox:'form-control',
-		fullScreen:'',
-		inPlaceEdit:'form-control',
-		menu:'panel panel-default',
+		autoFiller: 'btn-info',
+		bar: 'input-group-addon',
+		barHighlight: 'label-info',
+		rowFreezeHandle: 'bg-warning',
+		columnFreezeHandle: 'bg-warning',
+		columnMenu: '',
+		columnMenuIcon: 'fa fa-sort-desc',
+		tdActive: 'active',
+		tdHighlighted: 'bg-info disabled',
+		control: 'panel-heading',
+		controlTextBox: 'form-control',
+		fullScreen: '',
+		inPlaceEdit: 'form-control',
+		menu: 'panel panel-default',
 		menuFixed: 'nav navbar-nav',
-		menuUl:'panel-info',
-		menuLi:'active',
+		menuUl: 'panel-info',
+		menuLi: 'active',
 		menuHover: 'bg-primary active',
 		pane: 'well',
-		parent:'panel panel-default',
-		table:'table table-bordered table-condensed',
-		tab:'btn-default btn-xs',
-		tabActive:'active',
-		barResizer:'bg-info',
-		barFreezer:'bg-warning',
-		barFreezeIndicator:'bg-warning'
+		parent: 'panel panel-default',
+		table: 'table-bordered table-condensed',
+		tab: 'btn-default btn-xs',
+		tabActive: 'active',
+		barResizer: 'bg-info',
+		barFreezer: 'bg-warning',
+		barFreezeIndicator: 'bg-warning'
 	};
 
 	Theme.customClasses = {
-		autoFiller:'',
-		bar:'',
-		barHighlight:'',
-		barRowFreezeHandle:'',
-		barColumnFreezeHandle:'',
-		barColumnMenu:'',
-		tdActive:'',
-		tdHighlighted:'',
-		control:'',
-		controlTextBox:'',
-		fullScreen:'',
-		inPlaceEdit:'',
-		menu:'',
+		autoFiller: '',
+		bar: '',
+		barHighlight: '',
+		rowFreezeHandle: '',
+		columnFreezeHandle: '',
+		columnMenu: '',
+		columnMenuIcon: '',
+		tdActive: '',
+		tdHighlighted: '',
+		control: '',
+		controlTextBox: '',
+		fullScreen: '',
+		inPlaceEdit: '',
+		menu: '',
 		menuFixed: '',
-		menuUl:'',
-		menuLi:'',
+		menuUl: '',
+		menuLi: '',
 		menuHover: '',
 		pane: '',
-		parent:'',
-		table:'',
-		tab:'',
-		tabActive:'',
-		barResizer:'',
-		barFreezer:'',
-		barFreezeIndicator:''
+		parent: '',
+		table: '',
+		tab: '',
+		tabActive: '',
+		barResizer: '',
+		barFreezer: '',
+		barFreezeIndicator: ''
 	};
 
 	return Theme;

@@ -65,14 +65,14 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
     }
   };
   textarea.onchange =
-      textarea.onkeyup =
-          function() { formula[0].value = textarea.value; };
+  textarea.onkeyup =
+      function() { formula[0].value = textarea.value; };
 
   textarea.onfocus = function () { wickedGrid.setNav(false); };
 
   textarea.onblur =
-      textarea.onfocusout =
-          function () { wickedGrid.setNav(true); };
+  textarea.onfocusout =
+      function () { wickedGrid.setNav(true); };
 
   textarea.onpaste = function(e) {
     wickedGrid.cellEvents.paste(e);

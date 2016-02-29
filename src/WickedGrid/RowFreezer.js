@@ -23,7 +23,7 @@ WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
       handle = document.createElement('div'),
       $handle = pane.freezeHandleLeft = $(handle)
           .appendTo(pane)
-          .addClass(wickedGrid.theme.barRowFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.barRowFreezeHandle)
+          .addClass(wickedGrid.theme.rowFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.rowFreezeHandle)
           .width(bar.clientWidth)
           .css('top', (bar.offsetTop - handle.clientHeight + 1) + 'px')
           .attr('title', wickedGrid.msg.dragToFreezeRow),

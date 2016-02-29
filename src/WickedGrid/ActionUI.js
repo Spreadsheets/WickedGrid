@@ -99,7 +99,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					th.index = -1;
 					th.entity = 'corner';
 					th.col = col;
-					th.className = WickedGrid.cl.barCorner + ' ' + wickedGrid.theme.bar;
+					th.className = wickedGrid.cl.corner + ' ' + wickedGrid.theme.bar;
 				},
 				updateRowHeader: this._updateRowHeader = function(rowVisibleIndex, header) {
 					var rowIndex,
@@ -119,7 +119,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 
 					header.index = rowIndex;
 					header.entity = 'row';
-					header.className = WickedGrid.cl.barRow + ' ' + wickedGrid.theme.bar;
+					header.className = wickedGrid.cl.row + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					header.parentNode.style.height = header.style.height = loader.getHeight(wickedGrid.i, rowIndex) + 'px';
 				},
@@ -143,7 +143,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					header.th = header;
 					header.col = col;
 					header.entity = 'column';
-					header.className = WickedGrid.cl.barColumn + ' ' + wickedGrid.theme.bar;
+					header.className = wickedGrid.cl.column + ' ' + wickedGrid.theme.bar;
 					header.appendChild(label);
 					col.style.width = loader.getWidth(wickedGrid.i, columnIndex) + 'px';
 				}

@@ -15,7 +15,7 @@ WickedGrid.header = function(wickedGrid) {
       formula,
       formulaParent;
 
-  header.className = WickedGrid.cl.header + ' ' + wickedGrid.theme.control;
+  header.className = wickedGrid.cl.header + ' ' + wickedGrid.theme.control;
 
   wickedGrid.controls.header = $(header);
 
@@ -24,7 +24,7 @@ WickedGrid.header = function(wickedGrid) {
       s.title = wickedGrid.title(I);
     }
 
-    title.className = WickedGrid.cl.title;
+    title.className = wickedGrid.cl.title;
     wickedGrid.controls.title = $(title).html(s.title)
   } else {
     title.style.display = 'none';
@@ -33,14 +33,14 @@ WickedGrid.header = function(wickedGrid) {
   header.appendChild(title);
 
   if (wickedGrid.isSheetEditable()) {
-    if (s.menu) {
+    if (s.headerMenu) {
       menu = document.createElement('div');
       $menu = $(menu);
-      menu.className = WickedGrid.cl.menu + ' ' + WickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed;
+      menu.className = wickedGrid.cl.headerMenu + ' ' + wickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed;
       header.appendChild(menu);
 
-      wickedGrid.controls.menu[wickedGrid.i] = $menu
-          .append(s.menu)
+      wickedGrid.controls.headerMenu[wickedGrid.i] = $menu
+          .append(s.headerMenu)
           .children()
           .addClass(wickedGrid.theme.menuFixed);
 
@@ -50,12 +50,12 @@ WickedGrid.header = function(wickedGrid) {
     }
 
     label = document.createElement('td');
-    label.className = WickedGrid.cl.label + ' ' + wickedGrid.theme.control;
+    label.className = wickedGrid.cl.label + ' ' + wickedGrid.theme.control;
     wickedGrid.controls.label = $(label);
 
     //Edit box menu
     formula = document.createElement('textarea');
-    formula.className = WickedGrid.cl.formula + ' ' + wickedGrid.theme.controlTextBox;
+    formula.className = wickedGrid.cl.formula + ' ' + wickedGrid.theme.controlTextBox;
     formula.onkeydown = function (e) {
       return wickedGrid.formulaEvents.keydown(e);
     };
