@@ -1,5 +1,5 @@
 {
-  "name": "wicked-grid",
+  "name": "wickedgrid",
   "version": "4.0.0a",
   "description": "a wicked fast spreadsheet editor for the web",
   "main": "wickedgrid.js",
