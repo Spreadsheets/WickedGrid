@@ -1,5 +1,6 @@
 var fs              = require('fs')
   , execSync        = require('child_process').execSync
+  , uglify          = require('uglify-js')
 
 	//directories of the JS files
   , inDir           = './src/'
@@ -115,11 +116,17 @@ fs.writeFileSync(combinedFile + '.js', result);
 //add the file to the git base
 execSync('git add ' + combinedFile + '.js');
 
-try {
-  execSync('yui-compressor -o ' + combinedFileMin + ' ' + combinedFile + '.js');
-  execSync('git add ' + combinedFileMin + '.js');
-} catch (e) {
-  console.log('WARNING: attempted to use yui-compressor, but it is not installed correctly');
-}
 
+var tiny = uglify.minify([combinedFile + '.js'], {
+    compress: {
+      dead_code: true,
+      global_defs: {
+        DEBUG: false
+      }
+    }
+  });
+
+
+fs.writeFileSync(combinedFileMin + '.js', tiny.code);
+execSync('git add ' + combinedFileMin + '.js');
 process.exit(0);

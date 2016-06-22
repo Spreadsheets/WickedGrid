@@ -1,9 +1,9 @@
 {
-  "name": "jQuery.sheet",
+  "name": "wicked-grid",
   "version": "master",
-  "homepage": "https://github.com/Spreadsheets/jQuery.sheet",
+  "homepage": "https://github.com/Spreadsheets/WickedGrid",
   "authors": [
-    "Robert Plummer <robertleeplummerjr@gmail.com> (http://visop-dev.com)"
+    "Robert Plummer <robertleeplummerjr@gmail.com>"
   ],
   "description": "The Ajax Spreadsheet",
   "main": "jquery.sheet.js",
