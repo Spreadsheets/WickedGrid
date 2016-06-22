@@ -1,6 +1,6 @@
 WickedGrid.Theme = (function() {
 	function Theme(theme) {
-		theme = theme || Sheet.defaultTheme;
+		theme = theme || WickedGrid.defaultTheme;
 
 		switch (theme) {
 			case WickedGrid.customTheme:

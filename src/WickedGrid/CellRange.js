@@ -22,7 +22,7 @@ WickedGrid.CellRange = (function() {
 			return new Constructor(clones);
 		},
 		type: Constructor,
-		typeName: 'Sheet.CellRange'
+		typeName: 'WickedGrid.CellRange'
 	};
 
 	return Constructor;

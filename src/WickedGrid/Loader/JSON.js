@@ -730,7 +730,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
 		 *  ]
 		 * }]</pre>
 		 * @returns {*|jQuery|HTMLElement} a simple html table
-		 * @memberOf WickedGrid.loader.JSON
+		 * @memberof WickedGrid.loader.JSON
 		 */
 		toTables: function() {
 
@@ -878,7 +878,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
 				 *	  }
 				 *  ]
 				 * }]</pre>
-		 * @memberOf WickedGrid.loader.JSON
+		 * @memberof WickedGrid.loader.JSON
 		 */
 		fromSheet: function(doNotTrim) {
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);

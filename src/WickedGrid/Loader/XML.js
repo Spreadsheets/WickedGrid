@@ -188,7 +188,7 @@ WickedGrid.loader.XML = (function($, document) {
 		},
 		/**
 		 * @returns {*|jQuery|HTMLElement} a simple html table
-		 * @memberOf Sheet.XMLLoader
+		 * @memberof WickedGrid.XMLLoader
 		 */
 		toTables: function() {
 			var xml = this.xml,
@@ -317,7 +317,7 @@ WickedGrid.loader.XML = (function($, document) {
 		 *		 </rows>
 		 *	 </spreadsheet>
 		 * </spreadsheets></textarea>
-		 * @memberOf Sheet.XMLLoader
+		 * @memberof WickedGrid.XMLLoader
 		 */
 		fromSheet: function(jS, doNotTrim, doNotParse) {
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
@@ -434,7 +434,7 @@ WickedGrid.loader.XML = (function($, document) {
 			return output;
 		},
 		type: Constructor,
-		typeName: 'Sheet.XMLLoader'
+		typeName: 'WickedGrid.XMLLoader'
 	};
 
 	return Constructor;

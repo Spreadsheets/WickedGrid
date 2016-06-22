@@ -320,7 +320,7 @@ $.fn.extend({
    *	  Formula Example (will output 200)
    *		  =newVariable + 100
    *
-   * cellSelectModel {String} default Sheet.excelSelectModel, accepts Sheet.excelSelectModel, Sheet.openOfficeSelectModel, or Sheet.googleDriveSelectModel, makes the select model act differently
+   * cellSelectModel {String} default WickedGrid.excelSelectModel, accepts WickedGrid.excelSelectModel, WickedGrid.openOfficeSelectModel, or WickedGrid.googleDriveSelectModel, makes the select model act differently
    *
    * autoAddCells {Boolean} default true, allows you to add cells by selecting the last row/column and add cells by pressing either tab (column) or enter (row)
    *

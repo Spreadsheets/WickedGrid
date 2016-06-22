@@ -14,7 +14,7 @@ WickedGrid.CellHandler = (function(Math) {
 	CellHandler.prototype = {
 		/**
 		 * Variable handler for formulaParser, arguments are the variable split by '.'.  Expose variables by using jQuery.sheet setting formulaVariables
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {*} variable
 		 * @returns {*}
 		 */
@@ -51,7 +51,7 @@ WickedGrid.CellHandler = (function(Math) {
 
 		/**
 		 * time to fraction of day 1 / 0-24
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {String} time
 		 * @param {Boolean} isAmPm
 		 * @returns {*}
@@ -62,7 +62,7 @@ WickedGrid.CellHandler = (function(Math) {
 
 		/**
 		 * get a number from variable
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {*} num
 		 * @returns {Number}
 		 */
@@ -88,7 +88,7 @@ WickedGrid.CellHandler = (function(Math) {
 
 		/**
 		 * get a number from variable
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {*} _num
 		 * @returns {Number}
 		 */
@@ -108,7 +108,7 @@ WickedGrid.CellHandler = (function(Math) {
 
 		/**
 		 * Perform math internally for parser
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {String} mathType
 		 * @param {*} num1
 		 * @param {*} num2
@@ -248,10 +248,10 @@ WickedGrid.CellHandler = (function(Math) {
 
 		/**
 		 * Get cell value
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {Object} cellRef
 		 * @param {Function} [callback]
-		 * @returns {Sheet.CellHandler}
+		 * @returns {WickedGrid.CellHandler}
 		 */
 		cellValue:function (parentCell, cellRef, callback) {
 			var wickedGrid = this.wickedGrid,
@@ -272,11 +272,11 @@ WickedGrid.CellHandler = (function(Math) {
 
 		/**
 		 * Get cell values as an array
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {Object} start
 		 * @param {Object} end
 		 * @param {Function} [callback]
-		 * @returns {Sheet.CellHandler}
+		 * @returns {WickedGrid.CellHandler}
 		 */
 		cellRangeValue:function (parentCell, start, end, callback) {
 			return this.remoteCellRangeValue(parentCell, parentCell.sheetIndex, start, end, callback);
@@ -285,11 +285,11 @@ WickedGrid.CellHandler = (function(Math) {
 
 		/**
 		 * Get cell value from a different sheet within an instance
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {String} sheet example "SHEET1"
 		 * @param {Object} cellRef
 		 * @param {Function} [callback]
-		 * @returns {Sheet.CellHandler}
+		 * @returns {WickedGrid.CellHandler}
 		 */
 		remoteCellValue:function (parentCell, sheet, cellRef, callback) {
 			var wickedGrid = this.wickedGrid,
@@ -314,7 +314,7 @@ WickedGrid.CellHandler = (function(Math) {
 
 		/**
 		 * Get cell values as an array from a different sheet within an instance
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {String} sheetTitle example "SHEET1"
 		 * @param {Object} start
 		 * @param {Object} end
@@ -420,7 +420,7 @@ WickedGrid.CellHandler = (function(Math) {
 
 		/**
 		 * Calls a function either from jQuery.sheet.engine or defined in jQuery sheet setting formulaFunctions.  When calling a function the cell being called from is "this".
-		 * @param {Sheet.Cell} parentCell
+		 * @param {WickedGrid.Cell} parentCell
 		 * @param {String} fn function name (Will be converted to upper case)
 		 * @param {Array} [args] arguments needing to be sent to function
 		 * @returns {*}

@@ -1,11 +1,11 @@
-Sheet.JSONStreamer = {
+WickedGrid.JSONStreamer = {
 	sheetRows: function(sheetUrl, rowUrls, sheet, callback) {
 
 		var t = new Thaw([], {each: function() {
 			sheet.rows.push(JSON.parse(this));
 		}});
 
-		Sheet.thread()
+		WickedGrid.thread()
 			.streamJSONSheetRows(operative.getBaseURL(), sheetUrl, rowUrls, function(type, str) {
 				var i, json;
 
@@ -40,7 +40,7 @@ Sheet.JSONStreamer = {
 			sheet.rows.push(JSON.parse(this));
 		}});
 
-		Sheet.thread()
+		WickedGrid.thread()
 			.streamJSONRows(operative.getBaseURL(), urls, function(type, str) {
 				switch (type) {
 					case 'row':
@@ -59,7 +59,7 @@ Sheet.JSONStreamer = {
 			sheet.rows.push(JSON.parse(this));
 		}});
 
-		Sheet.thread()
+		WickedGrid.thread()
 			.streamJSONSheet(operative.getBaseURL(), url, function(type, str) {
 				var json, i;
 

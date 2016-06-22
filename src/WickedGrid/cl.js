@@ -1,6 +1,6 @@
 /**
  * Internal css classes of objects
- * @memberOf WickedGrid
+ * @memberof WickedGrid
  * @type {Object}
  */
 WickedGrid.cl = {

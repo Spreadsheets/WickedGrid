@@ -114,8 +114,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           tabs:null,
           title:null,
           toggleHide:{
-        x:[],
-            y:[]
+          x:[],
+          y:[]
       },
       ui:null
     };
@@ -2109,7 +2109,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
     /**
      * Object handler for formulaParser
-     * @type {Sheet.CellHandler}
+     * @type {WickedGrid.CellHandler}
      */
     cellHandler: null,
 
@@ -2163,7 +2163,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
     /**
      * Calculates just the dependencies of a single cell, and their dependencies recursively
-     * @param {Sheet.Cell} cell
+     * @param {WickedGrid.Cell} cell
      * @param {Boolean} [skipUndoable]
      */
     resolveCell:function (cell, skipUndoable) {

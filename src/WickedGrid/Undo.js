@@ -18,8 +18,8 @@ WickedGrid.Undo = (function() {
       id = jS.undo.id;
     }
 
-    var before = (new Sheet.CellRange(cells)).clone().cells,
-        after = (fn !== u ? (new Sheet.CellRange(fn(cells)).clone()).cells : before);
+    var before = (new WickedGrid.CellRange(cells)).clone().cells,
+        after = (fn !== u ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
 
     before.id = id;
     after.id = id;
@@ -62,7 +62,7 @@ WickedGrid.Undo = (function() {
         loc = jS.getTdLocation(clone.td);
         cell = jS.spreadsheets[clone.sheetIndex][loc.row][loc.col];
 
-        //TODO add clone method to Sheet.Cell
+        //TODO add clone method to WickedGrid.Cell
         cell.value = clone.value;
         cell.formula = clone.formula;
         td = cell.td = clone.td;

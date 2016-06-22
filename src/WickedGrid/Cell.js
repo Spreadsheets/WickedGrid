@@ -298,7 +298,7 @@ WickedGrid.Cell = (function() {
 				value !== u
 				&& value !== null
 				&& cellType !== null
-				&& (cellTypeHandler = Sheet.CellTypeHandlers[cellType]) !== u
+				&& (cellTypeHandler = WickedGrid.CellTypeHandlers[cellType]) !== u
 			) {
 				value = cellTypeHandler(cell, value);
 				doneFn(value);
