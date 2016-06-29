@@ -1,51 +1,50 @@
+/**
+ * @type {Object}
+ * @memberof WickedGrid.loader
+ * @param {String|jQuery|HTMLElement} xml - schema:<textarea disabled=disabled>
+ * <spreadsheets>
+ *	 <spreadsheet title="spreadsheet title">
+ *		 <metadata>
+ *			 <widths>
+ *				 <width>120</width>
+ *				 <width>80</width>
+ *			 </widths>
+ *			 <frozenAt>
+ *				 <row>0</row>
+ *				 <col>0</col>
+ *			 </frozenAt>
+ *		 </metadata>
+ *		 <rows>
+ *			 <row height=15>
+ *				  <columns>
+ *					  <column>
+ *						  <cellType></cellType>
+ *						  <formula>=cell formula</formula>
+ *						  <value>cell value</value>
+ *						  <style>cells style</style>
+ *						  <class>cells class</class>
+ *					  </column>
+ *					  <column></column>
+ *				  </columns>
+ *			  </row>
+ *			 <row height=15>
+ *				  <columns>
+ *					  <column>
+ *						  <cellType></cellType>
+ *						  <formula>=cell formula</formula>
+ *						  <value>cell value</value>
+ *						  <style>cells style</style>
+ *						  <class>cells class</class>
+ *					  </column>
+ *					  <column></column>
+ *				  </columns>
+ *			  </row>
+ *		 </rows>
+ *	 </spreadsheet>
+ * </spreadsheets></textarea>
+ */
 WickedGrid.loader.XML = (function($, document) {
-	"use strict";
-
-	/**
-	 *
-	 * @param {String|jQuery|HTMLElement} xml - schema:<textarea disabled=disabled>
-	 * <spreadsheets>
-	 *	 <spreadsheet title="spreadsheet title">
-	 *		 <metadata>
-	 *			 <widths>
-	 *				 <width>120</width>
-	 *				 <width>80</width>
-	 *			 </widths>
-	 *			 <frozenAt>
-	 *				 <row>0</row>
-	 *				 <col>0</col>
-	 *			 </frozenAt>
-	 *		 </metadata>
-	 *		 <rows>
-	 *			 <row height=15>
-	 *				  <columns>
-	 *					  <column>
-	 *						  <cellType></cellType>
-	 *						  <formula>=cell formula</formula>
-	 *						  <value>cell value</value>
-	 *						  <style>cells style</style>
-	 *						  <class>cells class</class>
-	 *					  </column>
-	 *					  <column></column>
-	 *				  </columns>
-	 *			  </row>
-	 *			 <row height=15>
-	 *				  <columns>
-	 *					  <column>
-	 *						  <cellType></cellType>
-	 *						  <formula>=cell formula</formula>
-	 *						  <value>cell value</value>
-	 *						  <style>cells style</style>
-	 *						  <class>cells class</class>
-	 *					  </column>
-	 *					  <column></column>
-	 *				  </columns>
-	 *			  </row>
-	 *		 </rows>
-	 *	 </spreadsheet>
-	 * </spreadsheets></textarea>
-	 */
-	function Constructor(xml) {
+	function XML(xml) {
 		if (xml !== undefined) {
 			this.xml = $.parseXML(xml);
 			this.spreadsheets = this.xml.getElementsByTagName('spreadsheets')[0].getElementsByTagName('spreadsheet');
@@ -57,7 +56,7 @@ WickedGrid.loader.XML = (function($, document) {
 		}
 	}
 
-	Constructor.prototype = {
+	XML.prototype = {
 		size: function(spreadsheetIndex) {
 			var xmlSpreadsheet = this.xml[spreadsheetIndex],
 				rows = xmlSpreadsheet.rows,
@@ -188,7 +187,7 @@ WickedGrid.loader.XML = (function($, document) {
 		},
 		/**
 		 * @returns {*|jQuery|HTMLElement} a simple html table
-		 * @memberof WickedGrid.XMLLoader
+		 * @memberof WickedGrid.loader.XML
 		 */
 		toTables: function() {
 			var xml = this.xml,
@@ -317,7 +316,7 @@ WickedGrid.loader.XML = (function($, document) {
 		 *		 </rows>
 		 *	 </spreadsheet>
 		 * </spreadsheets></textarea>
-		 * @memberof WickedGrid.XMLLoader
+		 * @memberof WickedGrid.loader.XML
 		 */
 		fromSheet: function(jS, doNotTrim, doNotParse) {
 			doNotTrim = (doNotTrim == undefined ? false : doNotTrim);
@@ -433,9 +432,9 @@ WickedGrid.loader.XML = (function($, document) {
 
 			return output;
 		},
-		type: Constructor,
+		type: XML,
 		typeName: 'WickedGrid.XMLLoader'
 	};
 
-	return Constructor;
+	return XML;
 })(jQuery, document);

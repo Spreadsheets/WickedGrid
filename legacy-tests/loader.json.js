@@ -267,7 +267,7 @@ tf.test('Cell Operator: Percent Addition', function() {
 	td = div.find('table.jS td').first();
 
 	tf.assertEquals(td.html(), '1.6', 'html is properly displayed');
-	tf.assertEquals(td[0].jSCell.value.valueOf(), 1.6, 'value remains a number');
+	tf.assertEquals(td[0]._cell.value.valueOf(), 1.6, 'value remains a number');
 	div.getSheet().kill();
 });
 

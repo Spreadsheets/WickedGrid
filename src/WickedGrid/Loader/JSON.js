@@ -1,3 +1,7 @@
+/**
+ * @type {Object}
+ * @memberof WickedGrid.loader
+ */
 WickedGrid.loader.JSON = (function($, document, String) {
 	"use strict";
 	function JSONLoader(json) {
@@ -15,17 +19,37 @@ WickedGrid.loader.JSON = (function($, document, String) {
 	}
 
 	JSONLoader.prototype = {
+    /**
+     *
+     * @param wickedGrid
+     * @returns {JSONLoader}
+     */
 		bindWickedGrid: function(wickedGrid) {
 			this.wickedGrid = wickedGrid;
 			return this;
 		},
+    /**
+     *
+     * @param handler
+     * @returns {JSONLoader}
+     */
 		bindHandler: function(handler) {
 			this.handler = handler;
 			return this;
 		},
+    /**
+     *
+     * @param spreadsheetIndex
+     * @param actionUI
+     */
 		bindActionUI: function(spreadsheetIndex, actionUI) {
 			actionUI.loadedFrom = this.json[spreadsheetIndex];
 		},
+    /**
+     *
+     * @param spreadsheetIndex
+     * @returns {*}
+     */
 		size: function(spreadsheetIndex) {
 			var size = {
 					cols: 0,
@@ -47,6 +71,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 				cols: firstRowColumns.length
 			};
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @param columnIndex
+     * @returns {number}
+     */
 		getWidth: function(sheetIndex, columnIndex) {
 			var json = this.json,
 				jsonSpreadsheet = json[sheetIndex] || {},
@@ -56,6 +86,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return width * 1;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @param rowIndex
+     * @returns {number}
+     */
 		getHeight: function(sheetIndex, rowIndex) {
 			var json = this.json,
 				jsonSpreadsheet = json[sheetIndex] || {},
@@ -65,6 +101,11 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return height * 1;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @returns {boolean}
+     */
 		isHidden: function(sheetIndex) {
 			var json = this.json,
 				jsonSpreadsheet = json[sheetIndex] || {},
@@ -72,6 +113,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return metadata.hidden === true;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @param isHidden
+     * @returns {JSONLoader}
+     */
 		setHidden: function(sheetIndex, isHidden) {
 			var json = this.json,
 				jsonSpreadsheet = json[sheetIndex] || {},
@@ -81,6 +128,13 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @param rowIndex
+     * @param spreadsheetCells
+     * @returns {JSONLoader}
+     */
 		addRow: function(sheetIndex, rowIndex, spreadsheetCells) {
 			var json = this.json[sheetIndex],
 				columnIndex = 0,
@@ -110,6 +164,13 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @param columnIndex
+     * @param spreadsheetCells
+     * @returns {JSONLoader}
+     */
 		addColumn: function(sheetIndex, columnIndex, spreadsheetCells) {
 			var json = this.json[sheetIndex],
 				rowIndex = 0,
@@ -139,6 +200,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @param rowIndex
+     * @returns {JSONLoader}
+     */
 		deleteRow: function(sheetIndex, rowIndex) {
 			var json = this.json[sheetIndex],
 				rows,
@@ -164,6 +231,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @param columnIndex
+     * @returns {JSONLoader}
+     */
 		deleteColumn: function(sheetIndex, columnIndex) {
 			var json = this.json[sheetIndex],
 				rows,
@@ -199,6 +272,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
+    /**
+     *
+     * @param cell
+     * @param td
+     * @returns {JSONLoader}
+     */
 		setupTD: function(cell, td) {
 			if (cell.covered) {
 				td.style.visibility = 'hidden';
@@ -268,6 +347,13 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @param rowIndex
+     * @param columnIndex
+     * @returns {*}
+     */
 		getCell: function(sheetIndex, rowIndex, columnIndex) {
 			var json = this.json,
 				jsonSpreadsheet,
@@ -287,6 +373,13 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return cell;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @param rowIndex
+     * @param columnIndex
+     * @returns {*}
+     */
 		jitCell: function(sheetIndex, rowIndex, columnIndex) {
 			var jsonCell = this.getCell(sheetIndex, rowIndex, columnIndex);
 
@@ -393,6 +486,13 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return jitCell;
 		},
+    /**
+     *
+     * @param id
+     * @param sheetIndex
+     * @param callback
+     * @returns {JSONLoader}
+     */
 		jitCellById: function(id, sheetIndex, callback) {
 			switch(this.cellIds[id]) {
 				//we do want this function to run, we have not defined anything yet
@@ -466,6 +566,11 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
+    /**
+     *
+     * @param sheetIndex
+     * @returns {*}
+     */
 		title: function(sheetIndex) {
 			var json = this.json,
 				jsonSpreadsheet;
@@ -474,6 +579,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return jsonSpreadsheet.title || '';
 		},
+    /**
+     *
+     * @param actionUI
+     * @param rowIndex
+     * @returns {Array}
+     */
 		hideRow: function(actionUI, rowIndex) {
 			var json = actionUI.loadedFrom,
 				metadata = json.metadata || (json.metadata = {}),
@@ -486,6 +597,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return hiddenRows;
 		},
+    /**
+     *
+     * @param actionUI
+     * @param columnIndex
+     * @returns {Array}
+     */
 		hideColumn: function(actionUI, columnIndex) {
 			var json = actionUI.loadedFrom,
 				metadata = json.metadata || (json.metadata = {}),
@@ -498,6 +615,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return hiddenColumns;
 		},
+    /**
+     *
+     * @param actionUI
+     * @param rowIndex
+     * @returns {Array}
+     */
 		showRow: function(actionUI, rowIndex) {
 			var json = actionUI.loadedFrom,
 				metadata = json.metadata || (json.metadata = {}),
@@ -510,6 +633,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return hiddenRows;
 		},
+    /**
+     *
+     * @param actionUI
+     * @param columnIndex
+     * @returns {Array}
+     */
 		showColumn: function(actionUI, columnIndex) {
 			var json = actionUI.loadedFrom,
 				metadata = json.metadata || (json.metadata = {}),
@@ -522,6 +651,11 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return hiddenColumns;
 		},
+    /**
+     *
+     * @param actionUI
+     * @returns {Array}
+     */
 		hiddenRows: function(actionUI) {
 			var json = actionUI.loadedFrom,
 				metadata = json.metadata || (json.metadata = {}),
@@ -534,6 +668,11 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return result;
 		},
+    /**
+     *
+     * @param actionUI
+     * @returns {Array}
+     */
 		hiddenColumns: function(actionUI) {
 			var json = actionUI.loadedFrom,
 				metadata = json.metadata || (json.metadata = {}),
@@ -546,9 +685,19 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return result;
 		},
+    /**
+     *
+     * @param index
+     * @returns {boolean}
+     */
 		hasSpreadsheetAtIndex: function(index) {
 			return (this.json[index] !== undefined);
 		},
+    /**
+     *
+     * @param title
+     * @returns {number}
+     */
 		getSpreadsheetIndexByTitle: function(title) {
 			var json = this.json,
 				max = this.count,
@@ -568,6 +717,11 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return -1;
 		},
+    /**
+     *
+     * @param jsonSpreadsheet
+     * @param atIndex
+     */
 		addSpreadsheet: function(jsonSpreadsheet, atIndex) {
 			jsonSpreadsheet = jsonSpreadsheet || {};
 
@@ -578,12 +732,30 @@ WickedGrid.loader.JSON = (function($, document, String) {
 			}
 			this.count = this.json.length;
 		},
+    /**
+     *
+     * @param cell
+     * @param attribute
+     * @returns {*}
+     */
 		getCellAttribute: function(cell, attribute) {
 			return cell[attribute];
 		},
+    /**
+     *
+     * @param cell
+     * @param attribute
+     * @param value
+     */
 		setCellAttribute: function(cell, attribute, value) {
 			cell[attribute] = value;
 		},
+    /**
+     *
+     * @param cell
+     * @param attributes
+     * @returns {JSONLoader}
+     */
 		setCellAttributes: function(cell, attributes) {
 			var i;
 			for (i in attributes) if (i !== undefined && attributes.hasOwnProperty(i)) {
@@ -592,7 +764,6 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
-
 
 		/**
 		 *
@@ -624,7 +795,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
-
+    /**
+     *
+     * @param parentCell
+     * @param dependencyCell
+     * @returns {JSONLoader}
+     */
 		addDependency: function(parentCell, dependencyCell) {
 			var loadedFrom = parentCell.loadedFrom;
 
@@ -640,7 +816,12 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 		    return this;
 		},
-
+    /**
+     *
+     * @param sheetIndex
+     * @param fn
+     * @returns {JSONLoader}
+     */
 		cycleCells: function(sheetIndex, fn) {
 			var json = this.json,
 				jsonSpreadsheet,
@@ -671,6 +852,11 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this;
 		},
+    /**
+     *
+     * @param fn
+     * @returns {JSONLoader}
+     */
 		cycleCellsAll: function(fn) {
 			var json = this.json,
 				sheetIndex = json.length - 1;
@@ -988,9 +1174,18 @@ WickedGrid.loader.JSON = (function($, document, String) {
 
 			return this.json = output;
 		},
+    /**
+     *
+     */
 		type: JSONLoader,
+    /**
+     *
+     */
 		typeName: 'WickedGrid.loader.JSON',
-
+    /**
+     *
+     * @returns {JSONLoader}
+     */
 		clearCaching: function() {
 			var json = this.json,
 				spreadsheet,
@@ -1141,6 +1336,10 @@ WickedGrid.loader.JSON = (function($, document, String) {
 		}
 	};
 
+  /**
+   * 
+   * @type {number}
+   */
 	JSONLoader.maxStoredDependencies = 100;
 
 	return JSONLoader;

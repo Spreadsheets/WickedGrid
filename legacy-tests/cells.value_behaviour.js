@@ -39,7 +39,7 @@ tf.test('Value Behaviour: Parenthesis', function() {
 		cellValue;
 
 	td = div.find('table.jS td');
-	td[0].jSCell.updateValue(function(_cellValue) {
+	td[0]._cell.updateValue(function(_cellValue) {
 		cellValue = _cellValue;
 	});
 	tf.assertEquals(cellValue.valueOf(), true);

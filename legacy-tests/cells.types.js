@@ -22,7 +22,7 @@ tf.test('Cell Types: Currency & rounding', function() {
 	td = div.find('table.jS td');
 
 	tf.assertEquals(td.html(), '$100.12');
-	tf.assertEquals(td[0].jSCell.value, 100.123);
+	tf.assertEquals(td[0]._cell.value, 100.123);
 	div.getSheet().kill();
 });
 
@@ -37,7 +37,7 @@ tf.test('Cell Types: Currency', function() {
 	td = div.find('table.jS td');
 
 	tf.assertEquals(td.html(), '$100.00');
-	tf.assertEquals(td[0].jSCell.value, 100);
+	tf.assertEquals(td[0]._cell.value, 100);
 	div.getSheet().kill();
 });
 
@@ -48,7 +48,7 @@ tf.test('Cell Types: Date', function() {
 			.sheet(),
 		jS = div.getSheet(),
 		td = div.find('table.jS td'),
-		cell = td[0].jSCell,
+		cell = td[0]._cell,
 		val;
 
 	cell.updateValue(function(_val) {
@@ -70,7 +70,7 @@ tf.test('Cell Types: Number', function() {
 
 	td = div.find('table.jS td');
 
-	tf.assertSame(td[0].jSCell.value.valueOf(), 100);
+	tf.assertSame(td[0]._cell.value.valueOf(), 100);
 	div.getSheet().kill();
 });
 
@@ -85,7 +85,7 @@ tf.test('Cell Types: Percent', function() {
 	td = div.find('table.jS td');
 
 	tf.assertEquals(td.html(), '10.00 %', 'html is properly displayed');
-	tf.assertEquals(td[0].jSCell.value.valueOf(), 0.1, 'value remains a number');
+	tf.assertEquals(td[0]._cell.value.valueOf(), 0.1, 'value remains a number');
 	div.getSheet().kill();
 });
 

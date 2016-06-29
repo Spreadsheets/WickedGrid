@@ -321,7 +321,7 @@
     </span>
 	<a href="#" onclick="
             var jS = jS,
-                cell = ((wickedGrid.tdActive()[0] || {}).jSCell || {}),
+                cell = ((wickedGrid.tdActive()[0] || {})._cell || {}),
                 url = prompt('Enter Web Address', 'http://www.visop-dev.com/'),
                 args = [],
                 doubleQuote = String.fromCharCode(34);

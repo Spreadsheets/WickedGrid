@@ -9,7 +9,7 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
 
   if (td === null) {
     td = wickedGrid.rowTds(null, 1)[1];
-    wickedGrid.cellEdit(td);
+    wickedGrid.cellEdit(td._cell);
   }
 
   if (td === null) return;
@@ -22,8 +22,6 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
       $textarea,
       pane = wickedGrid.pane();
 
-  if (!td.isHighlighted) return; //If the td is a dud, we do not want a textarea
-
   textarea = document.createElement('textarea');
   $textarea = $(textarea);
   pane.inPlaceEdit = textarea;
@@ -33,17 +31,17 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
   //td / tr / tbody / table
   textarea.table = td.parentNode.parentNode.parentNode;
   textarea.goToTd = function() {
-    this.offset = $(td).position();
-    if (!this.offset.left && !this.offset.right) {
+    textarea.offset = $(td).position();
+    if (!textarea.offset.left && !textarea.offset.right) {
       $(textarea).hide();
     } else {
-      this.setAttribute('style',
-          'left:' + (this.offset.left - 1) + 'px;' +
-          'top:' + (this.offset.top - 1) + 'px;' +
-          'width:' + this.td.clientWidth + 'px;' +
-          'height:' + this.td.clientHeight + 'px;' +
-          'min-width:' + this.td.clientWidth + 'px;' +
-          'min-height:' + this.td.clientHeight + 'px;');
+      textarea.setAttribute('style',
+          'left:' + (textarea.offset.left - 1) + 'px;' +
+          'top:' + (textarea.offset.top - 1) + 'px;' +
+          'width:' + textarea.td.clientWidth + 'px;' +
+          'height:' + textarea.td.clientHeight + 'px;' +
+          'min-width:' + textarea.td.clientWidth + 'px;' +
+          'min-height:' + textarea.td.clientHeight + 'px;');
     }
   };
   textarea.goToTd();
@@ -53,10 +51,10 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
 
     switch (e.keyCode) {
       case key.ENTER:
-        return wickedGrid.formulaEvents.enter(e);
+        return wickedGrid.formulaEvents.keydown(e);
         break;
       case key.TAB:
-        return wickedGrid.formulaEvents.tab(e);
+        return wickedGrid.formulaEvents.keydown(e);
         break;
       case key.ESCAPE:
         wickedGrid.cellEvents.editAbandon();
@@ -80,7 +78,9 @@ WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
 
   textarea.destroy = function () {
     pane.inPlaceEdit = null;
-    wickedGrid.cellLast.isEdit = (textarea.value != val);
+    if (wickedGrid.cellLast !== null) {
+      wickedGrid.cellLast.isEdit = (textarea.value != val);
+    }
     textarea.parentNode.removeChild(textarea);
     wickedGrid.controls.inPlaceEdit[textarea.i] = false;
   };

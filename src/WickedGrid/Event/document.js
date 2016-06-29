@@ -199,7 +199,7 @@ WickedGrid.event.Document = (function() {
             }
             break;
           case key.ESCAPE:
-            jS.evt.cellEditAbandon();
+            wickedGrid.cellEvents.editAbandon();
             break;
           case key.F:
             if (e.ctrlKey) {

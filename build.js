@@ -28,6 +28,7 @@ var fs              = require('fs')
 					'customTab',
 					'defaults',
 					'enclosure',
+          'formulaEditor',
 					'functions',
 					'header',
 					'inPlaceEdit',
@@ -61,7 +62,8 @@ var fs              = require('fs')
 					'Highlighter',
 					'SpreadsheetUI',
 					'RowContextMenu',
-					'Theme'
+					'Theme',
+          'Undo'
 				]
 			},
 

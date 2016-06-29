@@ -8,7 +8,9 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/.bin/mocha --reporter spec",
+    "build": "node build.js",
+    "docs": "node build.js && rm -rf docs && node ./node_modules/documentation/bin/documentation.js build wickedgrid.js --github --output docs --format html"
   },
   "repository": {
     "type": "git",
@@ -20,7 +22,6 @@
     "fast",
     "ajax",
     "json",
-    "spreadheet",
     "csv"
   ],
   "author": "Robert Lee Plummer Jr. <robertleeplummerjr@gmail.com>",
@@ -30,6 +31,7 @@
   },
   "homepage": "https://github.com/Spreadsheets/WickedGrid#readme",
   "devDependencies": {
+    "mocha": "^2.5.3",
     "uglify-js": "^2.6.4"
   }
 }

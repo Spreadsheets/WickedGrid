@@ -1,4 +1,4 @@
-/**
+/*
  * @project WickedGrid - Easy & Wicked Fast spreadsheets for the web - https://github.com/Spreadsheets/WickedGrid
  * @author RobertLeePlummerJr@gmail.com
  * Licensed under MIT
@@ -16,18 +16,14 @@
  */
 
 /**
- * @namespace
- * @type {Object|Function}
+ * @param {Object} settings
+ * @constructor
  */
 var WickedGrid = (function($, document, window, Date, String, Number, Boolean, Math, RegExp, Error, undefined) {
   'use strict';
 
   function empty() {}
   var u = undefined;
-  /**
-   * @param {Object} settings
-   * @constructor
-   */
   function WickedGrid(settings) {
     this.settings = settings;
     this.element = settings.element;
@@ -41,26 +37,29 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     this.cl = WickedGrid.cl;
     this.msg = WickedGrid.msg;
 
+    this.undo = new WickedGrid.Undo(this);
+    
     /**
      * Internal storage array of controls for an instance
+     * @memeberof WickedGrid
      */
     this.controls = {
       autoFiller:[],
-          bar:{
+      bar: {
         helper:[],
-            corner:[],
-            x:{
+        corner:[],
+        x: {
           controls:[],
-              handleFreeze:[],
-              menu:[],
-              menuParent:[],
-              parent:[],
-              th:[],
-              ths:function () {
+          handleFreeze:[],
+          menu:[],
+          menuParent:[],
+          parent:[],
+          th:[],
+          ths:function () {
             var ths = [],
-                i = 0,
-                _ths = this.th[wickedGrid.i],
-                max = _ths.length;
+              i = 0,
+              _ths = this.th[wickedGrid.i],
+              max = _ths.length;
 
             for (; i < max; i++) {
               ths.push(_ths[i]);
@@ -69,13 +68,13 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
             return ths;
           }
         },
-        y:{
+        y: {
           controls:[],
-              handleFreeze:[],
-              menu:[],
-              parent:[],
-              th:[],
-              ths:function () {
+          handleFreeze:[],
+          menu:[],
+          parent:[],
+          th:[],
+          ths:function () {
             var ths = [],
                 i = 0,
                 _ths = this.th[wickedGrid.i],
@@ -90,32 +89,32 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         }
       },
       barMenuLeft:[],
-          barMenuTop:[],
-          barLeft:[],
-          barTop:[],
-          barTopParent:[],
-          chart:[],
-          menu:[],
-          cellsEdited:[],
-          enclosures:[],
-          formula:null,
-          header:null,
-          inPlaceEdit:[],
-          inputs:[],
-          label:null,
-          headerMenu:[],
-          menus:[],
-          pane:[],
-          panes:null,
-          scrolls:null,
-          sheetAdder:null,
-          tab:[],
-          tabContainer:null,
-          tabs:null,
-          title:null,
-          toggleHide:{
-          x:[],
-          y:[]
+      barMenuTop:[],
+      barLeft:[],
+      barTop:[],
+      barTopParent:[],
+      chart:[],
+      menu:[],
+      cellsEdited:[],
+      enclosures:[],
+      formula:null,
+      header:null,
+      inPlaceEdit:[],
+      inputs:[],
+      label:null,
+      headerMenu:[],
+      menus:[],
+      pane:[],
+      panes:null,
+      scrolls:null,
+      sheetAdder:null,
+      tab:[],
+      tabContainer:null,
+      tabs:null,
+      title:null,
+      toggleHide:{
+        x:[],
+        y:[]
       },
       ui:null
     };
@@ -281,124 +280,238 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
       return this;
     },
+
     /**
-     * Object selectors for interacting with a spreadsheet
-     * @type {Object}
+     * control
      */
     autoFiller:function () {
       return this.controls.autoFiller[this.i] || null;
     },
+    /**
+     * control
+     */
     corner:function () {
       return this.controls.bar.corner[this.i] || $([]);
     },
+    /**
+     * control
+     */
     barHelper:function () {
       return this.controls.bar.helper[this.i] || (this.controls.bar.helper[this.i] = $([]));
     },
+    /**
+     * control
+     */
     barLeft:function (i) {
       return (this.controls.bar.y.th[this.i] && this.controls.bar.y.th[this.i][i] ? this.controls.bar.y.th[this.i][i] : []);
     },
+    /**
+     * control
+     */
     barLeftControls:function () {
       return this.controls.bar.y.controls[this.i] || $([]);
     },
+    /**
+     * control
+     */
     barLefts:function () {
       return this.controls.bar.y.ths();
     },
+    /**
+     * control
+     */
     barHandleFreezeLeft:function () {
       return this.controls.bar.y.handleFreeze[this.i] || $([]);
     },
+    /**
+     * control
+     */
     barMenuLeft:function () {
       return this.controls.bar.y.menu[this.i] || $([]);
     },
+    /**
+     * control
+     */
     barTop:function (i) {
       return (this.controls.bar.x.th[this.i] && this.controls.bar.x.th[this.i][i] ? this.controls.bar.x.th[this.i][i] : []);
     },
+    /**
+     * control
+     */
     barTopControls:function () {
       return this.controls.bar.x.controls[this.i] || $([]);
     },
+    /**
+     * control
+     */
     barTops:function () {
       return this.controls.bar.x.ths();
     },
+    /**
+     * control
+     */
     barTopParent:function () {
       return this.controls.bar.x.parent[this.i] || $([]);
     },
+    /**
+     * control
+     */
     barHandleFreezeTop:function () {
       return this.controls.bar.x.handleFreeze[this.i] || $([]);
     },
+    /**
+     * control
+     */
     barMenuParentTop:function () {
       return this.controls.bar.x.menuParent[this.i] || $([]);
     },
+    /**
+     * control
+     */
     barMenuTop:function () {
       return this.controls.bar.x.menu[this.i] || $([]);
     },
+    /**
+     * control
+     */
     tdActive:function () {
       return this.cellLast !== null ? this.cellLast.td : null;
     },
+    /**
+     * control
+     */
     cellActive:function() {
       return this.cellLast;
     },
+    /**
+     * control
+     */
     menu:function () {
       return this.controls.menu[this.i] || $([]);
     },
+    /**
+     * control
+     */
     cellsEdited: function () {
       return (this.controls.cellsEdited !== u ? this.controls.cellsEdited : this.controls.cellsEdited = []);
     },
+    /**
+     * control
+     */
     chart:function () {
       return this.controls.chart[this.i] || $([]);
     },
+    /**
+     * control
+     */
     enclosure:function () {
       return this.controls.enclosures[this.i] || [];
     },
+    /**
+     * control
+     */
     enclosures:function () {
       return this.controls.enclosures || [];
     },
+    /**
+     * control
+     */
     formula:function () {
       return this.controls.formula || $([]);
     },
+    /**
+     * control
+     */
     header:function () {
       return this.controls.header || $([]);
     },
+    /**
+     * control
+     */
     highlighted: function() {
       return this.highlighter.last || $([]);
     },
+    /**
+     * control
+     */
     inPlaceEdit:function () {
       return this.controls.inPlaceEdit[this.i] || $([]);
     },
+    /**
+     * control
+     */
     inputs:function() {
       return this.controls.inputs[this.i] || $([]);
     },
+    /**
+     * control
+     */
     label:function () {
       return this.controls.label || $([]);
     },
+    /**
+     * control
+     */
     menus:function() {
       return this.controls.menus[this.i] || $([]);
     },
+    /**
+     * control
+     */
     headerMenu:function () {
       return this.controls.headerMenu[this.i] || $([]);
     },
+    /**
+     * control
+     */
     pane:function () {
       return this.controls.pane[this.i] || {};
     },
+    /**
+     * control
+     */
     panes:function () {
       return this.controls.panes || $([]);
     },
+    /**
+     * control
+     */
     element:function () {
       return this.settings.element;
     },
+    /**
+     * control
+     */
     scrolls:function () {
       return this.controls.scrolls || $([]);
     },
+    /**
+     * control
+     */
     sheetAdder:function () {
       return this.controls.sheetAdder || $([]);
     },
+    /**
+     * control
+     */
     tab:function () {
       return this.controls.tab[this.i] || $([]);
     },
+    /**
+     * control
+     */
     tabs:function () {
       return this.controls.tabs || $([]);
     },
+    /**
+     * control
+     */
     tabContainer:function () {
       return this.controls.tabContainer || $([]);
     },
+    /**
+     * control
+     */
     title:function () {
       return this.controls.title || $([]);
     },
@@ -407,7 +520,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * Deletes a WickedGrid instance
      */
     kill:function () {
-      var i = WickedGrid.instance.indexOf(this),
+      var i = WickedGrid.instances.indexOf(this),
         element = this.element,
         $element = $(element);
 
@@ -426,7 +539,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
       WickedGrid.events.forEach($element.unbind);
 
-      WickedGrid.instance.splice(i, 1);
+      WickedGrid.instances.splice(i, 1);
 
       return true;
     },
@@ -439,7 +552,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     trigger:function (eventType, extraParameters) {
       //wrapper for $ trigger of parent, in case of further mods in the future
       extraParameters = extraParameters || [];
-      return this.$element.triggerHandler(eventType, [this].concat(extraParameters));
+      this.$element.triggerHandler(eventType, [this].concat(extraParameters));
+      return this;
     },
 
     /**
@@ -479,7 +593,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {*}
      */
     cellFromTd: function(td) {
-      if (td.thisCell !== u && td.jSCell !== null) return td.jSCell;
+      if (td.thisCell !== u && td._cell !== null) return td._cell;
 
       var loc = this.locationFromTd(td),
           spreadsheet = this.spreadsheets[this.i],
@@ -635,9 +749,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Boolean} nav Instance index
      */
     setNav:function (nav) {
-      var instance = WickedGrid.instance;
-      for(var i = 0; i < instance.length; i++) {
-        (instance[i] || {}).nav = false;
+      var instances = WickedGrid.instances;
+      for(var i = 0; i < instances.length; i++) {
+        (instances[i] || {}).nav = false;
       }
 
       this.nav = nav;
@@ -812,7 +926,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       var parsedRows = this.tsv.parse(val);
 
       //Single cell value
-      if (!$.isArray(parsedRows)) {
+      if (parsedRows.constructor !== Array) {
         formula.val(parsedRows);
         this.fillUpOrDown(false, parsedRows);
         return true;
@@ -829,35 +943,30 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       for (; i < parsedRows.length; i++) {
         startCell.isEdit = true;
         parsedColumns = parsedRows[i];
-        for (j = 0; j < parsedColumns.length; j++) {
+        parsedColumns.forEach(function(parsedColumn, j) {
           newValCount++;
 
           if (
               !(spreadsheet = this.spreadsheets[this.i])
               || !(row = spreadsheet[i + startCell.rowIndex])
               || !(cell = row[j + startCell.columnIndex])
-          ) continue;
+              || !cell
+          ) return;
 
-          if (cell) {
-            (function(cell, parsedColumn) {
-              s.parent.one('sheetPreCalculation', function () {
-                if ((parsedColumn + '').charAt(0) == '=') { //we need to know if it's a formula here
-                  cell.formula = parsedColumn.substring(1);
-                  cell.value = '';
-                } else {
-                  cell.formula = '';
-                  cell.value = parsedColumn;
-                }
-              });
-            })(cell, parsedColumns[j]);
-            this.resolveCell(cell);
-
-            if (i == 0 && j == 0) { //we have to finish the current edit
-              firstValue = parsedColumns[j];
+          this.resolveCell(cell, function() {
+            if ((parsedColumn + '').charAt(0) == '=') { //we need to know if it's a formula here
+              cell.formula = parsedColumn.substring(1);
+              cell.value = '';
+            } else {
+              cell.formula = '';
+              cell.value = parsedColumn;
             }
-          }
+          });
 
-        }
+          if (i == 0 && j == 0) { //we have to finish the current edit
+            firstValue = parsedColumn;
+          }
+        });
       }
 
       if (val != firstValue) {
@@ -934,7 +1043,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {Boolean}
      */
     isCell:function (element) {
-      return element.nodeName === 'TD' && element.parentNode.parentNode.parentNode.parentNode === this.pane();
+      return element.nodeName === 'TD' && element.parentNode.parentNode.parentNode.parentNode === this.pane() && element.hasOwnProperty('_cell');
     },
 
     /**
@@ -969,7 +1078,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {Boolean}
      */
     isFormulaEditable:function (o) {
-      if (s.lockFormulas) {
+      if (this.settings.lockFormulas) {
         if (o.data('formula') !== u) {
           return false;
         }
@@ -981,7 +1090,10 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * Toggles full screen mode
      */
     toggleFullScreen:function () {
-
+      if (!this.controls.fullscreen) {
+        this.controls.fullscreen = new WickedGrid.FullScreen(this);
+      }
+      this.controls.fullscreen.toggle();
     },
 
     /**
@@ -1099,8 +1211,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       if (!tds.length) {
         return;
       }
-      var
-          cellsValue = [],
+
+      var cellsValue = [],
           firstTd = tds[0],
           lastTd = tds[tds.length - 1],
           firstLocRaw = this.getTdLocation(firstTd),
@@ -1113,7 +1225,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           cell,
           _td,
           td,
-          loc;
+          loc,
+          element = this.settings.element,
+          self = this;
 
       if (firstLocRaw.row) {
         this.setDirty(true);
@@ -1146,17 +1260,18 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
         loc = this.getTdLocation(td);
 
-        do {
+        tds.forEach(function() {
           _td = tds[i];
-          cell = _td.jSCell;
+          cell = _td._cell;
           if (cell.formula || cell.value) {
             cellsValue.unshift(cell.formula ? '(' + cell.formula.substring(1) + ')' : cell.value);
           }
-          s.parent.one('sheetPreCalculation', function () {
+
+          self.resolveCell(cell, function() {
             if (_td.cellIndex != loc.col || _td.parentNode.rowIndex != loc.row) {
               cell.formula = '';
               cell.value = '';
-              cell.defer = td.jSCell;
+              cell.defer = td._cell;
 
               _td.innerHTML = '';
               //_td.style.display = 'none';
@@ -1165,12 +1280,10 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
               //_td.rowSpan = rowSpan - (_td.parentNode.rowIndex - td.parentNode.rowIndex);
             }
           });
+        });
 
-          this.resolveCell(cell);
-        } while(i--);
-
-        td.jSCell.value = $.trim(cellsValue.join(' '));
-        td.jSCell.formula = $.trim(td.jSCell.formula ? cellsValue.join(' ') : '');
+        td._cell.value = $.trim(cellsValue.join(' '));
+        td._cell.formula = $.trim(td._cell.formula ? cellsValue.join(' ') : '');
 
         td.setAttribute('rowSpan', rowSpan);
         td.setAttribute('colSpan', colSpan);
@@ -1181,7 +1294,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         td.style.width = td.clientWidth + 'px';
         td.style.position = 'absolute';
 
-        this.resolveCell(td.jSCell);
+        this.resolveCell(td._cell);
         this.cellEvents.done();
         this.autoFillerGoToTd(td);
         this.cellSetActive(td, loc);
@@ -1199,7 +1312,6 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         return;
       }
       var loc = this.getTdLocation(td),
-          last = new Date(),
           row = Math.max(td.getAttribute('rowSpan') * 1, 1) - 1,
           col = Math.max(td.getAttribute('colSpan') * 1, 1) - 1,
           i = row + loc.row,
@@ -1220,9 +1332,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           _td.style.visibility = '';
           _td.removeAttribute('colSpan');
           _td.removeAttribute('rowSpan');
-          _td.jSCell.defer = null;
+          _td._cell.defer = null;
 
-          this.resolveCell(_td.jSCell, last);
+          this.resolveCell(_td._cell);
 
           tds.push(_td);
         } while (j-- > loc.col);
@@ -1263,12 +1375,13 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
             row:0,
             col:0
           },
-          newV = v || activeTd.jSCell.value,
+          newV = v || activeTd._cell.value,
           isNumber = false,
           i = cells.length - 1,
-          fn = function() {};
+          fn = function() {},
+          $element = this.settings.$element;
 
-      v = v || activeTd.jSCell.value;
+      v = v || activeTd._cell.value;
 
       if (i >= 0) {
         if (v.charAt && v.charAt(0) == '=') {
@@ -1284,7 +1397,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
               newV = this.reparseFormula(v, offset);
 
-              s.parent.one('sheetPreCalculation', function () {
+              $element.one('sheetPreCalculation', function () {
                 cells[i].formula = newV;
                 cells[i].value = '';
               });
@@ -1308,7 +1421,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           }
 
           do {
-            s.parent.one('sheetPreCalculation', function () {
+            $element.one('sheetPreCalculation', function () {
               cells[i].formula = '';
               cells[i].value = newV + '';
             });
@@ -1338,20 +1451,22 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       }
       fnEach = fnEach || function (loc, cell) {
             if (clearValue) {
-              s.parent.one('sheetPreCalculation', function () {
+              $element.one('sheetPreCalculation', function () {
                 cell.formula = '';
                 cell.value = '';
               });
-              this.resolveCell(cell);
+              self.resolveCell(cell);
             }
           };
-      var cellValues = [],
+      var $element = this.settings.$element,
+          cellValues = [],
           firstLoc,
           lastLoc,
           minLoc = {},
           i = cells.length - 1,
           row,
-          col;
+          col,
+          self = this;
 
       if (i >= 0) {
         firstLoc = this.getTdLocation(cells[0].td);
@@ -1409,7 +1524,6 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           },
           cellStack = [];
 
-
       this.cycleCells(function () {
         var cell = this;
         if (this.formula && typeof this.formula == 'string' && self.isFormulaEditable(this.td)) {
@@ -1417,7 +1531,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         }
 
         cellStack.push(function() {
-          self.resolveCell(cell, true);
+          self.resolveCellWithoutUndo(cell, true);
         });
 
       }, affectedRange.first, affectedRange.last);
@@ -1770,26 +1884,23 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
     /**
      * Starts td to be edited
-     * @param {HTMLElement} td
+     * @param {WickedGrid.Cell} cell
      * @param {Boolean} [isDrag] should be determined by if the user is dragging their mouse around setting cells
      * @param {Boolean} [doNotClearHighlighted]
      */
-    cellEdit:function (td, isDrag, doNotClearHighlighted) {
+    cellEdit:function (cell, isDrag, doNotClearHighlighted) {
       this.autoFillerNotGroup = true; //make autoFiller directional again.
       //This finished up the edit of the last cell
       this.cellEvents.done();
 
-      if (td === null) return;
-
-      var cell = this.cellFromTd(td),
-          v;
+      var td = cell.td, v;
 
       if (cell.uneditable) return;
-
+      this.cellLast = cell;
       this.trigger('sheetCellEdit', [cell]);
 
       if (this.cellLast !== null && td !== this.cellLast.td) {
-        this.followMe(td);
+        this.followMe(cell.td);
       } else {
         this.autoFillerGoToTd(td);
       }
@@ -1838,10 +1949,11 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           .setBar('top', td.parentNode.parentNode.children[0].children[td.cellIndex]);
 
       var self = this,
+          settings = this.settings,
           selectModel,
           clearHighlightedModel;
 
-      switch (s.cellSelectModel) {
+      switch (settings.cellSelectModel) {
         case WickedGrid.excelSelectModel:
         case WickedGrid.googleDriveSelectModel:
           selectModel = function () {};
@@ -1850,7 +1962,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         case WickedGrid.openOfficeSelectModel:
           selectModel = function (target) {
             if (this.isCell(target)) {
-              this.cellEdit(target);
+              this.cellEdit(target._cell);
             }
           };
           clearHighlightedModel = function () {};
@@ -2013,9 +2125,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
             $td.addClass(setClass);
           }
 
-          if (!td.jSCell.edited) {
-            td.jSCell.edited = true;
-            cells.push(td.jSCell);
+          if (!td._cell.edited) {
+            td._cell.edited = true;
+            cells.push(td._cell);
           }
 
         } while (i--);
@@ -2096,9 +2208,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           size = ($td.css('font-size') + '').replace('px', '') * 1;
           $td.css('font-size', ((size || 10) + resize) + 'px');
 
-          if (!td.jSCell.edited) {
-            td.jSCell.edited = true;
-            cells.push(td.jSCell);
+          if (!td._cell.edited) {
+            td._cell.edited = true;
+            cells.push(td._cell);
           }
         } while(i--);
         return true;
@@ -2154,7 +2266,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       var sheetIndex = 0,
           max;
 
-      max = s.loader.count;
+      max = this.settings.loader.count;
 
       for(;sheetIndex < max; sheetIndex++) {
         this.calc(sheetIndex, refreshCalculations);
@@ -2164,39 +2276,23 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     /**
      * Calculates just the dependencies of a single cell, and their dependencies recursively
      * @param {WickedGrid.Cell} cell
-     * @param {Boolean} [skipUndoable]
+     * @param {Function} [cb]
      */
-    resolveCell:function (cell, skipUndoable) {
+    resolveCell:function (cell, cb) {
       var updateDependencies = !cell.needsUpdated,
-          self = this;
+        self = this;
 
-      if (!skipUndoable) {
-        this.undo.createCells([cell], function(cells) {
-          self.trigger('sheetPreCalculation', [
+      this.undo.createCells([cell], function(cells) {
+        self
+          .trigger('sheetPreCalculation', [
             {which:'cell', cell:cell}
-          ]);
+          ])
+          .setDirty(true)
+          .setChanged(true);
 
-          self.setDirty(true);
-          self.setChanged(true);
-          cell.updateValue(function() {
-            self.trigger('sheetCalculation', [
-              {which:'cell', cell: cell}
-            ]);
-
-            if (updateDependencies) {
-              cell.updateDependencies();
-            }
-          });
-          return cells;
-        });
-      } else {
-        self.trigger('sheetPreCalculation', [
-          {which:'cell', cell:cell}
-        ]);
-
-        self.setDirty(true);
-        self.setChanged(true);
         cell.updateValue(function() {
+          if (cb) cb(cell);
+
           self.trigger('sheetCalculation', [
             {which:'cell', cell: cell}
           ]);
@@ -2205,7 +2301,38 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
             cell.updateDependencies();
           }
         });
-      }
+
+        return cells;
+      });
+    },
+
+    /**
+     * Calculates just the dependencies of a single cell, and their dependencies recursively
+     * @param {WickedGrid.Cell} cell
+     * @param {Function} [cb]
+     */
+    resolveCellWithoutUndo: function(cell, cb) {
+      var self = this;
+      var updateDependencies = !cell.needsUpdated;
+
+      this
+        .trigger('sheetPreCalculation', [
+          {which:'cell', cell:cell}
+        ])
+        .setDirty(true)
+        .setChanged(true);
+
+      cell.updateValue(function() {
+        if (cb) cb(cell);
+
+        self.trigger('sheetCalculation', [
+          {which:'cell', cell: cell}
+        ]);
+
+        if (updateDependencies) {
+          cell.updateDependencies();
+        }
+      });
     },
 
     /**
@@ -2321,7 +2448,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           columnIndex = 0,
           cell,
           columnMax = row.length,
-          loader = s.loader;
+          loader = this.settings.loader;
 
       this.setChanged(true);
 
@@ -2367,7 +2494,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           rowIndex = 0,
           cell,
           rows = this.spreadsheets[this.i],
-          loader = s.loader,
+          loader = this.settings.loader,
           rowMax = loader.size(this.i);
 
       this.setChanged(true);
@@ -2418,7 +2545,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           callback(sheetTab);
         }
         return sheetTab;
-      } else if (this.isSheetEditable() && s.editableNames) { //ensure that the sheet is editable, then let them change the sheet's name
+      } else if (this.isSheetEditable() && this.settings.editableNames) { //ensure that the sheet is editable, then let them change the sheet's name
         this.settings.prompt(
             this.msg.newSheetTitle,
             function(newTitle) {
@@ -2576,12 +2703,12 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     },
 
     getSpreadsheetIndexByTitle: function(title) {
-      var spreadsheetIndex = s.loader.getSpreadsheetIndexByTitle(title);
+      var spreadsheetIndex = this.settings.loader.getSpreadsheetIndexByTitle(title);
       return spreadsheetIndex;
     },
 
     getSpreadsheetTitleByIndex: function(index) {
-      return s.loader.json[index].title;
+      return this.settings.loader.json[index].title;
     },
 
     /**
@@ -2668,7 +2795,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
             i = i || self.sheetCount - 1;
 
             if (data !== null) {
-              s.loader.addSpreadsheet(data);
+              self.settings.loader.addSpreadsheet(data);
             }
 
             var showSpreadsheet = function() {
@@ -2729,9 +2856,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * creates a new sheet from size from prompt
      */
     newSheet:function () {
-      s.parent
-        .html(self.makeTable())
-        .sheet(s);
+      this.settings.element
+        .html(this.makeTable())
+        .sheet(this.settings);
     },
 
     /**
@@ -2739,9 +2866,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @function sheetSyncSize
      */
     sheetSyncSize:function () {
-      var s = this.settings,
-        element = s.element,
-        $element = s.$element,
+      var element = this.settings.element,
+        $element = this.settings.$element,
         h = element.clientHeight,
         w = element.clientWidth,
         $tabContainer = this.tabContainer(),
@@ -2769,9 +2895,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       tabContainerScrollLeft = tabContainer.scrollLeft;
       tabContainerStyle.width = '';
       tabContainerInnerWidth = tabContainer.clientWidth;
-      tabContainerOuterWidth = (w - (s.colMargin + scrollBarWidth));
-      widthTabContainer = (w - s.colMargin * 2) + 'px';
-      heightTabContainer = ((s.colMargin + scrollBarWidth) + 'px');
+      tabContainerOuterWidth = (w - (this.settings.colMargin + scrollBarWidth));
+      widthTabContainer = (w - this.settings.colMargin * 2) + 'px';
+      heightTabContainer = ((this.settings.colMargin + scrollBarWidth) + 'px');
       if (tabContainerInnerWidth > tabContainerOuterWidth) {
         tabContainerStyle.height = heightTabContainer;
         $tabContainer.addClass(WickedGrid.cl.tabContainerScrollable);
@@ -2783,10 +2909,10 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       tabContainerStyle.width = widthTabContainer;
       tabContainer.scrollLeft = tabContainerScrollLeft;
 
-      h -= this.header().outerHeight() + s.boxModelCorrection;
-      h -= tabContainer.clientHeight + s.boxModelCorrection;
+      h -= this.header().outerHeight() + this.settings.boxModelCorrection;
+      h -= tabContainer.clientHeight + this.settings.boxModelCorrection;
 
-      paneHeight = (h - window.scrollBarSize.height - s.boxModelCorrection) + 'px';
+      paneHeight = (h - window.scrollBarSize.height - this.settings.boxModelCorrection) + 'px';
       paneWidth = (w - window.scrollBarSize.width) + 'px';
       standardHeight = (h + 'px');
       standardWidth = (w + 'px');
@@ -2813,21 +2939,24 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      *
      */
     showSheets: function() {
+      var loader = this.settings.loader;
       this.tabContainer().children().each(function(i) {
         $(this).show();
-        s.loader.setHidden(i, false);
+        loader.setHidden(i, false);
       });
     },
 
     showSheet: function(sheetIndex) {
+      var loader = this.settings.loader;
       this.tabContainer().children().eq(sheetIndex).show();
-      s.loader.setHidden(sheetIndex, false);
+      loader.setHidden(sheetIndex, false);
 
     },
 
     hideSheet: function(sheetIndex) {
+      var loader = this.settings.loader;
       this.tabContainer().children().eq(sheetIndex).hide();
-      s.loader.setHidden(sheetIndex, true);
+      loader.setHidden(sheetIndex, true);
     },
 
     /**
@@ -2864,6 +2993,8 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {String} [v] value to look for within a cell, if not supplied, a prompt is given
      */
     cellFind:function (v) {
+      var settings = this.settings,
+          msg = this.msg;
       function find (v) {
         var trs = this.table()
             .children('tbody')
@@ -2882,20 +3013,20 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
           o = o.eq(0);
           if (o.length > 0) {
-            this.cellEdit(o);
+            this.cellEdit(o._cell);
           } else {
-            s.alert(this.msg.cellNoFind);
-          }						   }
+            settings.alert(msg.cellNoFind);
+          }
+        }
       }
       if (!v) {
-        s.prompt(
-            this.msg.cellFind,
+        settings.prompt(
+            msg.cellFind,
             find
         );
       } else {
         find(v);
       }
-
     },
 
     /**
@@ -2926,7 +3057,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
                 if (this.td !== null
                     && self.cellLast !== null
                     && this.td !== self.cellLast.td) {
-                  self.cellEdit(self.td, false, true);
+                  self.cellEdit(self.td._cell, false, true);
                 }
                 break;
               default: //stay at initial cell
@@ -2936,7 +3067,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
                 if (this.td !== null
                     && self.cellLast !== null
                     && this.td !== self.cellLast.td) {
-                  self.cellEdit(this.td, false, true);
+                  self.cellEdit(this.td._cell, false, true);
                 }
                 break;
             }
@@ -3349,14 +3480,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         case 'TD':
           i = highlighted.length - 1;
           do {
-            obj.unshift(cells ? highlighted[i].jSCell : highlighted[i]);
+            obj.unshift(cells ? highlighted[i]._cell : highlighted[i]);
           } while (i-- > 0);
           break;
         case 'TR':
           i = highlighted.length - 1;
           do {
             if (highlighted[i].tds) {
-              obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds);
+              obj = obj.concat(cells ? highlighted[i]._cells : highlighted[i].tds);
             }
           } while(i-- > 0);
           break;
@@ -3365,12 +3496,12 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           i = highlighted.length - 1;
           do {
             if (highlighted[i].tds) {
-              obj = obj.concat(cells ? highlighted[i].jSCells : highlighted[i].tds);
+              obj = obj.concat(cells ? highlighted[i]._cells : highlighted[i].tds);
             }
           } while(i-- > 0);
           break;
         case 'TABLE':
-          obj = (cells ? tag.jSCells : tag.tds);
+          obj = (cells ? tag._cells : tag.tds);
           break;
       }
 
@@ -3387,7 +3518,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
         i = this.i;
       }
 
-      return s.loader.size(i);
+      return this.settings.loader.size(i);
     },
 
     sortVerticalSelectAscending:function() {
@@ -3533,7 +3664,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           pane = this.pane(),
           table = pane.table,
           tdSibling = selected[0].td,
-          cell = tdSibling.jSCell,
+          cell = tdSibling._cell,
           tdSiblingIndex = cell.cellIndex,
           colGroup = table.colGroup,
           size = this.sheetSize().rows,
@@ -3603,9 +3734,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
           tr.insertBefore(td, tr.children[tdSiblingIndex]);
           td.col = colGroup.children[vals.length + td.cellIndex - 1];
           td.barTop = td.col.bar;
-          cell.value = td.jSCell.value;
+          cell.value = td._cell.value;
           this.spreadsheets[this.i][tr.rowIndex].splice(td.cellIndex, 0, cell[0]);
-          this.resolveCell(cell, true);
+          this.resolveCell(cell);
         }
       }
       this.undo.createCells(selected);
@@ -3688,22 +3819,23 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param replacementTables
      */
     toggleState:function (replacementTables) {
-      if (s.allowToggleState) {
+      var settings = this.settings;
+      if (settings.allowToggleState) {
         var tables = replacementTables || this.tables();
-        if (s.editable) {
+        if (settings.editable) {
           this.evt.cellEditAbandon();
           this.trigger('sheetSave', [tables]);
         }
         this.setDirty(false);
         this.setChanged(true);
-        s.editable = !s.editable;
+        settings.editable = !settings.editable;
 
         this.kill();
 
-        s.parent
+        settings.element
             .html(tables)
-            .sheet(s);
-        s = null;
+            .sheet(settings);
+        settings = null;
       }
     },
 
@@ -3720,7 +3852,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
 
       var self = this,
           td = this.tdActive(),
-          cell = td.jSCell;
+          cell = td._cell;
 
       if (ref) {
         setRef(ref);
@@ -3861,16 +3993,14 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * Destroy all spreadsheets loaded
      */
     killAll:function () {
-      if ($.sheet) {
-        var instance = WickedGrid.instance;
-        if (instance) {
-          for (var i = 0; i< instance.length; i++) {
-            if (instance[i] && instance[i].kill) {
-              instance[i].kill();
-            }
+      var instances = WickedGrid.instances;
+      if (instances) {
+        for (var i = 0; i< instances.length; i++) {
+          if (instances[i] && instances[i].kill) {
+            instances[i].kill();
           }
-          WickedGrid.instance = [];
         }
+        WickedGrid.instances = [];
       }
     },
 
@@ -3879,15 +4009,15 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @param {Number} I instance index
      */
     scrollLocker:function (I) {
-      var instance = WickedGrid.instance;
-      instance[I].panes().each(function (i) {
+      var instances = WickedGrid.instances;
+      instances[I].panes().each(function (i) {
         var me;
         $(me = this.scrollUI).scroll(function (e) {
-          var j = instance.length - 1,
+          var j = instances.length - 1,
               scrollUI;
           if (j > -1) {
             do {
-              scrollUI = instance[j].controls.enclosures[i].scrollUI;
+              scrollUI = instances[j].controls.enclosures[i].scrollUI;
 
               if (this !== scrollUI) {
                 scrollUI.scrollLeft = me.scrollLeft;

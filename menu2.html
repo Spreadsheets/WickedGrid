@@ -8,7 +8,7 @@
     transform: rotate(45deg);
   }
 </style>
-<div>
+<div style="padding-left: 1em; height: 45px;">
   <!--div class="btn-group ">
     <div class="btn-group">
       <button data-toggle="dropdown" class="btn navbar-btn btn-default dropdown-toggle fa">File <span class="caret"></span></button>
@@ -136,8 +136,8 @@
     <button class="btn btn-default fa" title="un-merge cells"><span class="fa fa-expand fa-rotate-45"></span></button>
   </div>
 
-  <div class="btn-group">
-    <button class="btn navbar-btn btn-default fa fa-arrows-alt" title="toggle full screen"></button>
+  <div class="btn-group float-right">
+    <button class="btn navbar-btn btn-default fa fa-arrows-alt" title="toggle full screen" onclick="wickedGrid.toggleFullscreen()"></button>
   </div>
 </div>
   <!--a href="#" onclick="wickedGrid.cellStyleToggle('styleLeft', 'styleCenter styleRight'); return false;" title="Align Left">
@@ -183,7 +183,7 @@
   </span>
   <a href="#" onclick="
           var jS = jS,
-              cell = ((wickedGrid.tdActive()[0] || {}).jSCell || {}),
+              cell = ((wickedGrid.tdActive()[0] || {})._cell || {}),
               url = prompt('Enter Web Address', 'http://www.visop-dev.com/'),
               args = [],
               doubleQuote = String.fromCharCode(34);

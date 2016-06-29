@@ -142,7 +142,8 @@ WickedGrid.sheetUI = function(wickedGrid, ui, i) {
     $pane
         .disableSelectionSpecial()
         .bind('cellEdit', function(e) {
-          return wickedGrid.cellEvents.edit(e);
+          if (!e.target._cell) return;
+          return wickedGrid.cellEvents.edit(e.target._cell);
         });
   }
 

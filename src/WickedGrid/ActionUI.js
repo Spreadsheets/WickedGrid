@@ -68,8 +68,8 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 						columnIndex = (that.visibleColumns === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]),
 						oldTd;
 
-					if (typeof td.jSCell === 'object' && td.jSCell !== null) {
-						td.jSCell.td = null;
+					if (typeof td._cell === 'object' && td._cell !== null) {
+						td._cell.td = null;
 					}
 
 					var cell = wickedGrid.getCell(wickedGrid.i, rowIndex, columnIndex);
@@ -91,7 +91,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 					}
 
 					cell.td = td;
-					td.jSCell = cell;
+					td._cell = cell;
 					loader.setupTD(cell, td);
 					cell.updateValue();
 				},

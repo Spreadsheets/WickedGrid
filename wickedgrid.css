@@ -31,6 +31,10 @@
 	border-bottom-right-radius: 0;
 }
 
+.wg-header-menu {
+  width: 100%;
+}
+
 .wg-element .wg-header img {
 	border: none;
 }
@@ -227,6 +231,7 @@
 }
 
 .wg-element .wg-edit-pane {
+  position: relative;
 	overflow: hidden;
 	background-image: none ! important;
 	border-width: 0 ! important;
@@ -323,9 +328,10 @@
 	overflow: visible ! important;
 }
 
-.wg-in-place-edit {
+textarea.wg-in-place-edit {
 	position: absolute;
 	background-image: none ! important;
+  padding: 0;
 }
 
 .colorPickers * {

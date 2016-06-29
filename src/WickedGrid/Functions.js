@@ -1726,7 +1726,7 @@ WickedGrid.functions = (function(r) {
 
 				select.onmouseup = function() {
 					if (this.cell.td !== null) {
-						wickedGrid.cellEdit(this.cell.td);
+						wickedGrid.cellEdit(this.cell);
 					}
 				};
 				select.onchange = function () {
@@ -1805,7 +1805,7 @@ WickedGrid.functions = (function(r) {
 				html.className = 'wg-radio';
 				html.onmousedown = function () {
 					if (this.cell.td !== null) {
-						wickedGrid.cellEdit(cell.td);
+						wickedGrid.cellEdit(cell);
 					}
 				};
 				html.cell = cell;
@@ -1933,7 +1933,7 @@ WickedGrid.functions = (function(r) {
 				html.appendChild(document.createElement('br'));
 				html.onmousedown = function () {
 					if (this.cell.td !== null) {
-						wickedGrid.cellEdit(this.cell.td);
+						wickedGrid.cellEdit(this.cell);
 					}
 				};
 				html.cell = cell;

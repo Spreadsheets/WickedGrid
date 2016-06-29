@@ -1,45 +1,35 @@
 WickedGrid.FullScreen = (function() {
   var $body = $('body'),
       $window = $(window);
-
-
-
+  
   function Fullscreen(wickedGrid) {
-    this.wickeGrid = wickedGrid;
-    this.active = false;
-    var element = this.element = document.createElement('div');
-
     wickedGrid.cellEvents.done();
-    var fullScreen = wickedGrid.fullScreen(),
-        pane = wickedGrid.pane();
-
-    if (fullScreen.is(':visible')) {
-
-    } else { //here we make a full screen
-
-    }
+    this.wickedGrid = wickedGrid;
+    this.active = false;
+    this.container = document.createElement('div');
   }
 
   Fullscreen.prototype = {
     toggle: function() {
       if (this.active) {
-        return this.deactivate();
+        this.deactivate();
+      } else {
+        this.activate();
       }
-      return this.activate();
     },
     activate: function() {
       var wickedGrid = this.wickedGrid,
-          pane = wickedGrid.pane();
+          pane = wickedGrid.pane(),
+          element = wickedGrid.settings.element,
+          events = $._data(element[0], 'events'),
+          container = this.container;
 
       $body.addClass('body-no-scroll');
 
-      events = $._data(s.parent[0], 'events');
+      container.className = wickedGrid.cl.fullScreen + ' ' + wickedGrid.theme.fullScreen + ' ' + wickedGrid.cl.element;
 
-      fullScreen.className = wickedGrid.cl.fullScreen + ' ' + wickedGrid.theme.fullScreen + ' ' + wickedGrid.cl.element;
-
-      fullScreen.origParent = parent;
-      s.parent = this.controls.fullScreen = $(fullScreen)
-          .append(parent.children())
+      $(container)
+          .append(element.children())
           .appendTo($body);
 
       $window
@@ -47,11 +37,9 @@ WickedGrid.FullScreen = (function() {
             $window.trigger('wg-resize');
           })
           .bind('wg-resize', function () {
-            this.w = $window.width();
-            this.h = $window.height();
-            s.parent
-                .width(this.w)
-                .height(this.h);
+            container
+                .width(window.innerWidth)
+                .height(window.innerHeight);
 
             wickedGrid.sheetSyncSize();
             if (pane.inPlaceEdit) {
@@ -60,29 +48,36 @@ WickedGrid.FullScreen = (function() {
           })
           .trigger('wg-resize');
 
-      parent.trigger('sheetFullScreen', [true]);
+      element.trigger('sheetFullScreen', [true]);
 
       for (var event in events) {
+        if (!events.hasOwnProperty(event)) continue;
+
         for (var i = 0; i < events[event].length; i++) {
-          s.parent.bind(event, events[event][i].handler);
+          element.bind(event, events[event][i].handler);
         }
       }
     },
     deactivate: function() {
-      var wickedGrid = this.wickedGrid;
-      $window.unbind('wg-resize');
-      $('body').removeClass('body-no-scroll');
-      this.element = fullScreen[0].origElement;
-      this.$element = fillScreen[0].$origElement;
-      this.$element.prepend(fullScreen.children());
+      var wickedGrid = this.wickedGrid,
+          pane = this.pane(),
+          element = wickedGrid.settings.element,
+          container = this.container;
 
-      fullScreen.remove();
+      $window.unbind('wg-resize');
+      $body.removeClass('body-no-scroll');
+
+      element.prepend(container.children);
+      container.detach();
 
       wickedGrid.sheetSyncSize();
       if (pane.inPlaceEdit) {
         pane.inPlaceEdit.goToTd();
       }
-      this.trigger('sheetFullScreen', [false]);
+
+      $window.unbind('resize wg-resize');
+
+      wickedGrid.trigger('sheetFullScreen', [false]);
     }
   };
 

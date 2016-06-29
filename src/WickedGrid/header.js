@@ -6,14 +6,9 @@ WickedGrid.header = function(wickedGrid) {
 
   var s = wickedGrid.settings,
       header = document.createElement('div'),
-      secondRow,
-      secondRowTr,
       title = document.createElement('h4'),
-      label,
       menu,
-      $menu,
-      formula,
-      formulaParent;
+      $menu;
 
   header.className = wickedGrid.cl.header + ' ' + wickedGrid.theme.control;
 
@@ -49,77 +44,7 @@ WickedGrid.header = function(wickedGrid) {
       });
     }
 
-    label = document.createElement('td');
-    label.className = wickedGrid.cl.label + ' ' + wickedGrid.theme.control;
-    wickedGrid.controls.label = $(label);
-
-    //Edit box menu
-    formula = document.createElement('textarea');
-    formula.className = wickedGrid.cl.formula + ' ' + wickedGrid.theme.controlTextBox;
-    formula.onkeydown = function (e) {
-      return wickedGrid.formulaEvents.keydown(e);
-    };
-    formula.onkeyup = function () {
-      wickedGrid.inPlaceEdit().value = this.value;
-    };
-    formula.onchange = function () {
-      wickedGrid.inPlaceEdit().value = this.value;
-    };
-    formula.onpaste = function (e) {
-      return wickedGrid.pasteOverCells(e);
-    };
-    formula.onfocus = function () {
-      wickedGrid.setNav(false);
-    };
-    formula.onfocusout = function () {
-      wickedGrid.setNav(true);
-    };
-    formula.onblur = function () {
-      wickedGrid.setNav(true);
-    };
-    wickedGrid.controls.formula = $(formula);
-
-    // resizable formula area - a bit hard to grab the handle but is there!
-    var formulaResize = document.createElement('span');
-    formulaResize.appendChild(formula);
-
-    secondRow = document.createElement('table');
-    secondRowTr = document.createElement('tr');
-    secondRow.appendChild(secondRowTr);
-
-    header.appendChild(secondRow);
-
-    formulaParent = document.createElement('td');
-    formulaParent.className = this.cl.formulaParent;
-    formulaParent.appendChild(formulaResize);
-    secondRowTr.appendChild(label);
-    secondRowTr.appendChild(formulaParent);
-
-    //spacer
-    secondRowTr.appendChild(document.createElement('td'));
-
-    wickedGrid.resizableSheet($(formulaResize), {
-      minHeight:wickedGrid.controls.formula.height(),
-      maxHeight:78,
-      handles:'s',
-      resize:function (e, ui) {
-        wickedGrid.controls.formula.height(ui.size.height);
-      },
-      stop: function() {
-        wickedGrid.sheetSyncSize();
-      }
-    });
-
-    var instance = WickedGrid.instance;
-    for(var i = 0; i < instance.length; i++) {
-      (instance || {}).nav = false;
-    }
-
-    wickedGrid.setNav(true);
-
-    $(document).keydown(function(e) {
-      return wickedGrid.documentEvents.keydown(e);
-    });
+    WickedGrid.formulaEditor(wickedGrid, header);
   }
 
   return header;

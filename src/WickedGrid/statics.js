@@ -1,37 +1,79 @@
+/**
+ */
 WickedGrid.event = {};
+/**
+ */
 WickedGrid.loader = {};
+/**
+ */
 WickedGrid.plugin = {};
+/**
+ */
 WickedGrid.calcStack = 0;
 /**
- * Array of instances of jQuery.sheet, generally short-handed to jS
+ * Array of instances of WickedGrid
  */
-WickedGrid.instance = [];
+WickedGrid.instances = [];
+/**
+ */
 WickedGrid.defaultTheme = 0;
+/**
+ */
 WickedGrid.themeRollerTheme = 0;
+/**
+ */
 WickedGrid.bootstrapTheme = 1;
+/**
+ */
 WickedGrid.customTheme = 2;
 
+/**
+ */
 WickedGrid.excelSelectModel = 0;
+/**
+ */
 WickedGrid.googleDriveSelectModel = 1;
+/**
+ */
 WickedGrid.openOfficeSelectModel = 2;
 
+/**
+ */
 WickedGrid.defaultColumnWidth = 120;
+/**
+ */
 WickedGrid.defaultRowHeight = 20;
 
+/**
+ */
 WickedGrid.domRows = 40;
+/**
+ */
 WickedGrid.domColumns = 35;
 
+/**
+ */
 WickedGrid.formulaParserUrl = '../parser/formula/formula.js';
+/**
+ */
 WickedGrid.threadScopeUrl = '../Sheet/threadScope.js';
-
+/**
+ */
 WickedGrid.defaultFormulaParser = null;
-
+/**
+ */
 WickedGrid.spareFormulaParsers = [];
-
+/**
+ */
 WickedGrid.cornerEntity = 'corner';
+/**
+ */
 WickedGrid.columnEntity = 'column';
+/**
+ */
 WickedGrid.rowEntity = 'row';
-
+/**
+ */
 WickedGrid.events = [
   'sheetAddRow',
   'sheetAddColumn',

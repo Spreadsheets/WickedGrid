@@ -1,44 +1,51 @@
 WickedGrid.Undo = (function() {
-  function Undo() {}
+  function empty() {}
+  function Undo(wickedGrid) {
+    this.wickedGrid = wickedGrid;
+    this.cells =[];
+    this.id = -1;
+
+    if (typeof UndoManager !== 'undefined') {
+      this.undoManager = new UndoManager();
+    } else {
+      this.undoManager = {
+        add: empty,
+        undo: empty,
+        redo: empty,
+        register: empty
+      };
+    }
+  }
 
   Undo.prototype = {
-    manager:(
-        window.UndoManager
-            ? new UndoManager()
-            : {
-          undo: empty,
-          redo: empty,
-          register: empty
-        }),
-        cells:[],
-      id:-1,
-      createCells: function(cells, fn, id) {
-    if (id === u) {
-      jS.undo.id++;
-      id = jS.undo.id;
-    }
-
-    var before = (new WickedGrid.CellRange(cells)).clone().cells,
-        after = (fn !== u ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
-
-    before.id = id;
-    after.id = id;
-
-    jS.undo.manager.add({
-      undo: function() {
-        jS.undo.removeCells(before, id);
-      },
-      redo: function() {
-        jS.undo.createCells(after, null, id);
+    createCells: function(cells, fn, id) {
+      if (typeof id === 'undefined') {
+        this.id++;
+        id = this.id;
       }
-    });
 
-    if (id !== jS.undo.id) {
-      jS.undo.draw(after);
-    }
+      var self = this,
+          before = (new WickedGrid.CellRange(cells)).clone().cells,
+          after = (typeof fn === 'undefined' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
 
-    return true;
-  },
+      before.id = id;
+      after.id = id;
+
+      this.undoManager.add({
+        undo: function() {
+          self.removeCells(before, id);
+        },
+        redo: function() {
+          self.createCells(after, null, id);
+        }
+      });
+
+      if (id !== this.id) {
+        this.draw(after);
+      }
+
+      return true;
+    },
     removeCells: function(cells, id) {
       var i = 0, index = -1;
       if (cells.id === id) {
@@ -46,21 +53,23 @@ WickedGrid.Undo = (function() {
       }
 
       if (index !== -1) {
-        jS.undo.cells.splice(index, 1);
+        this.cells.splice(index, 1);
       }
-      jS.undo.draw(cells);
+
+      this.draw(cells);
     },
     draw: function(clones) {
       var i,
           td,
           clone,
           cell,
-          loc;
+          loc,
+          wickedGrid = this.wickedGrid;
 
       for (i = 0; i < clones.length; i++) {
         clone = clones[i];
-        loc = jS.getTdLocation(clone.td);
-        cell = jS.spreadsheets[clone.sheetIndex][loc.row][loc.col];
+        loc = wickedGrid.getTdLocation(clone.td);
+        cell = wickedGrid.spreadsheets[clone.sheetIndex][loc.row][loc.col];
 
         //TODO add clone method to WickedGrid.Cell
         cell.value = clone.value;
@@ -82,5 +91,6 @@ WickedGrid.Undo = (function() {
       }
     }
   };
+
   return Undo;
 })();

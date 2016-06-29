@@ -1,11 +1,11 @@
 /**
  * @namespace
- * @type {Object}
- * @name jQuery
+ * @type {Object|Function}
+ * @name jQuery.fn
  */
 $.fn.extend({
   /**
-   * @memberOf jQuery
+   * @memberof jQuery.fn
    * @function
    * @returns {jQuery}
    * @description
@@ -378,32 +378,33 @@ $.fn.extend({
 
     $(this).each(function () {
       var element = this,
-        me = $(this),
-        instance = me.getWickedGrid();
+        $element = $(this),
+        instance = $element.getWickedGrid();
 
       settings.useStack = (window.thaw === undefined ? false : settings.useStack);
       settings.useMultiThreads = (window.operative === undefined ? false : settings.useMultiThreads);
 
       //destroy already existing spreadsheet
       if (instance) {
-        var tables = me.children().detach();
+        var tables = $element.children().detach();
         instance.kill();
-        me.html(tables);
+        $element.html(tables);
 
-        WickedGrid.events.forEach(me.unbind);
+        WickedGrid.events.forEach($element.unbind);
       }
 
       settings.element = element;
+      settings.$element = $element;
 
       if ((this.className || '').match(/\bnot-editable\b/i) != null) {
         settings.editable = false;
       }
 
       WickedGrid.events.forEach(function(event) {
-          me.bind(event, settings[event]);
+        $element.bind(event, settings[event]);
       });
 
-      me.children().each(function(i) {
+      $element.children().each(function(i) {
         //override frozenAt settings with table's data-frozenatrow and data-frozenatcol
         var frozenAtRow = this.getAttribute('data-frozenatrow') * 1,
             frozenAtCol = this.getAttribute('data-frozenatcol') * 1;
@@ -426,7 +427,7 @@ $.fn.extend({
   },
 
   /**
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    * @method
    * @returns {HTMLElement}
    */
@@ -442,14 +443,14 @@ $.fn.extend({
   },
 
   /**
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    * @returns {WickedGrid}
    */
   getWickedGrid:function () {
     var wickedGrid = null;
 
     //detect running instance on parent
-    WickedGrid.instance.forEach(function(_wickedGrid) {
+    WickedGrid.instances.forEach(function(_wickedGrid) {
       if (!wickedGrid && _wickedGrid.parent === parent) {
         wickedGrid = _wickedGrid;
       }
@@ -460,7 +461,7 @@ $.fn.extend({
 
   /**
    * Get cell value
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    * @param {Number} sheetIndex
    * @param {Number} rowIndex
    * @param {Number} colIndex
@@ -484,7 +485,7 @@ $.fn.extend({
 
   /**
    * Set cell value
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    * @param {String|Number} value
    * @param {Number} rowIndex
    * @param {Number} colIndex
@@ -518,7 +519,7 @@ $.fn.extend({
 
   /**
    * Set cell formula
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    * @param {String} formula
    * @param {Number} rowIndex
    * @param {Number} colIndex
@@ -546,7 +547,7 @@ $.fn.extend({
 
   /**
    * Detect if spreadsheet is full screen
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    * @returns {Boolean}
    */
   isSheetFullScreen:function () {
@@ -560,7 +561,7 @@ $.fn.extend({
   /**
    * Get inputs serialized from spreadsheet type_sheet-index_row-index_column-index_instance-index (dropdown_0_1_1_0 = sheet 1, row 1, column A, instance 0
    * @param {Boolean} [isArray] return serialized as array (true) or string (false, default false
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    * @returns {*}
    */
   serializeCellInputs:function (isArray) {
@@ -578,7 +579,7 @@ $.fn.extend({
    * prints the source of a sheet for a user to see
    * @param {Boolean} [pretty] makes html a bit easier for the user to see
    * @returns {String}
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    */
   viewSource:function (pretty) {
     var source = '';
@@ -597,7 +598,7 @@ $.fn.extend({
   /**
    * prints html to 1 line
    * @returns {String}
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    */
   toCompactSource:function () {
     var node = this[0];
@@ -649,7 +650,7 @@ $.fn.extend({
    *  prints html to many lines, formatted for easy viewing
    * @param {String} [prefix]
    * @returns {String}
-   * @memberOf jQuery()
+   * @memberof jQuery.fn
    */
   toPrettySource:function (prefix) {
     var node = this[0],

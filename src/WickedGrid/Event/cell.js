@@ -8,11 +8,12 @@ WickedGrid.event.Cell = (function() {
      * Updates a cell after edit afterward event 'sheetCellEdited' is called w/ params (td, row, col, spreadsheetIndex, sheetIndex)
      * @param {Boolean} [force] if set to true forces a calculation of the selected sheet.evt
      */
-    editDone: function (force) {
+    done: function (force) {
       var wickedGrid = this.wickedGrid,
           inPlaceEdit = wickedGrid.inPlaceEdit(),
           inPlaceEditHasFocus = $(inPlaceEdit).is(':focus'),
           cellLast = wickedGrid.cellLast,
+          $element = wickedGrid.settings.$element,
           cell;
 
       (inPlaceEdit.destroy || empty)();
@@ -33,10 +34,10 @@ WickedGrid.event.Cell = (function() {
 
             if (!cell.edited) {
               cell.edited = true;
-              this.cellsEdited().push(cell);
+              wickedGrid.cellsEdited().push(cell);
             }
 
-            wickedGrid.parent.one('sheetPreCalculation', function () {
+            $element.one('sheetPreCalculation', function () {
               //reset formula to null so it can be re-evaluated
               cell.parsedFormula = null;
               if (v.charAt(0) == '=') {
@@ -271,7 +272,7 @@ WickedGrid.event.Cell = (function() {
 
         //if the td exists, lets go to it
         if (nextCell !== null) {
-          wickedGrid.cellEdit(nextCell.td, null, doNotClearHighlighted);
+          wickedGrid.cellEdit(nextCell, null, doNotClearHighlighted);
           return false;
         }
       }
@@ -342,8 +343,8 @@ WickedGrid.event.Cell = (function() {
       wickedGrid.formula().blur();
       if (e.shiftKey) {
         wickedGrid.getTdRange(e, wickedGrid.formula().val());
-      } else {
-        this.edit(e.target, true);
+      } else if (e.target._cell) {
+        this.edit(e.target._cell, true);
       }
     },
 
@@ -361,13 +362,13 @@ WickedGrid.event.Cell = (function() {
       return true;
     },
 
-    edit: function (td) {
+    edit: function (cell) {
       var wickedGrid = this.wickedGrid;
       if (wickedGrid.isBusy()) {
         return false;
       }
 
-      WickedGrid.inPlaceEdit(wickedGrid, td, true);
+      wickedGrid.cellEdit(cell);
 
       return true;
     },
