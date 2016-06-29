@@ -43,7 +43,7 @@
  *	 </spreadsheet>
  * </spreadsheets></textarea>
  */
-WickedGrid.loader.XML = (function($, document) {
+WickedGrid.loader.XML = (function() {
 	function XML(xml) {
 		if (xml !== undefined) {
 			this.xml = $.parseXML(xml);
@@ -347,7 +347,7 @@ WickedGrid.loader.XML = (function($, document) {
 				rowHasValues = false;
 				jS.i = sheet;
 				jS.evt.cellEditDone();
-				frozenAt = $.extend({}, jS.obj.pane().actionUI.frozenAt);
+				frozenAt = extend({}, jS.obj.pane().actionUI.frozenAt);
 				widths = [];
 
 				spreadsheet = jS.spreadsheets[sheet];
@@ -437,4 +437,4 @@ WickedGrid.loader.XML = (function($, document) {
 	};
 
 	return XML;
-})(jQuery, document);
+})();

@@ -102,7 +102,7 @@ pathify(files, function(file) {
 });
 
 result = fs.readFileSync(inDir + wrapper + '.js', 'utf8').toString()
-	.replace('CODE_HERE', function() {
+	.replace('\'CODE_HERE\'', function() {
 		return temp;
 	});
 

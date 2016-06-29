@@ -2,7 +2,7 @@
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-WickedGrid.Highlighter = (function(document, window, $) {
+WickedGrid.Highlighter = (function() {
 	var Constructor = function(cssClass, cssClassBars, cssClassTabs, callBack) {
 		this.cssClass = cssClass;
 		this.cssClassBars = cssClassBars;
@@ -166,4 +166,4 @@ WickedGrid.Highlighter = (function(document, window, $) {
 
 	return Constructor;
 
-})(document, window, jQuery);
+})();

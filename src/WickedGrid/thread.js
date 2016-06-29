@@ -1,4 +1,4 @@
-WickedGrid.thread = (function (operative) {
+WickedGrid.thread = (function () {
 	var i = 0,
 		threads = [];
 
@@ -157,4 +157,4 @@ WickedGrid.thread = (function (operative) {
 	};
 
 	return thread;
-})(window.operative);
+})();

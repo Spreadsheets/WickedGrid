@@ -19,7 +19,7 @@
  * @param {Object} settings
  * @constructor
  */
-var WickedGrid = (function($, document, window, Date, String, Number, Boolean, Math, RegExp, Error, undefined) {
+var WickedGrid = (function() {
   'use strict';
 
   function empty() {}
@@ -38,7 +38,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     this.msg = WickedGrid.msg;
 
     this.undo = new WickedGrid.Undo(this);
-    
+
     /**
      * Internal storage array of controls for an instance
      * @memeberof WickedGrid
@@ -235,11 +235,11 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       });
 
     //Extend the calculation engine plugins
-    WickedGrid.fn = $.extend(WickedGrid.functions, settings.formulaFunctions);
+    WickedGrid.fn = extend({}, WickedGrid.functions, settings.formulaFunctions);
 
     //Extend the calculation engine with finance functions
     if (WickedGrid.plugin.finance) {
-      WickedGrid.fn = $.extend(WickedGrid.functions, WickedGrid.plugin.finance);
+      WickedGrid.fn = extend({}, WickedGrid.functions, WickedGrid.plugin.finance);
     }
 
     settings.title = settings.title || element.getAttribute('title') || '';
@@ -1663,7 +1663,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {String}
      */
     makeFormula:function (loc, offset) {
-      offset = $.extend({row:0, col:0}, offset);
+      offset = extend({row:0, col:0}, offset);
 
       //set offsets
       loc.col += offset.col;
@@ -3910,10 +3910,10 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      */
     preLoad:function (path, settings) {
       path = path || '';
-      settings = $.extend({
+      settings = extend({
         skip: ['globalizeCultures'],
         thirdPartyDirectory: 'bower_components/'
-      },settings);
+      }, settings);
 
       var injectionParent = $('script:first'),
           write = function () {
@@ -4114,7 +4114,9 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     }
   };
 
-  CODE_HERE
+  'CODE_HERE'
 
   return WickedGrid;
-})((window.jQuery || {}), document, window, Date, String, Number, Boolean, Math, RegExp, Error);
+})();
+
+if (typeof module !== 'undefined') module.exports = WickedGrid;

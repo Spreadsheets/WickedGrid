@@ -2,7 +2,7 @@
  * @type {Object}
  * @memberof WickedGrid.loader
  */
-WickedGrid.loader.JSON = (function($, document, String) {
+WickedGrid.loader.JSON = (function() {
 	"use strict";
 	function JSONLoader(json) {
 		if (json !== undefined) {
@@ -1343,4 +1343,4 @@ WickedGrid.loader.JSON = (function($, document, String) {
 	JSONLoader.maxStoredDependencies = 100;
 
 	return JSONLoader;
-})(jQuery, document, String);
+})();

@@ -19,6 +19,8 @@ WickedGrid.functions = (function(r) {
 	 * @returns {jQuery|HTMLElement}
 	 */
 	function chart (o) {
+    //if (typeof Raphael === 'undefined') return null;
+
 		var wickedGrid = this.wickedGrid,
 			loader = wickedGrid.settings.loader,
 			chart = document.createElement('div'),
@@ -45,13 +47,13 @@ WickedGrid.functions = (function(r) {
 			return v;
 		}
 
-		o = $.extend({
+		o = extend({}, o, {
 			x:{ legend:"", data:[0]},
 			y:{ legend:"", data:[0]},
 			title:"",
 			data:[0],
 			legend:""
-		}, o);
+		});
 
 		chart.className = WickedGrid.cl.chart;
 		chart.onmousedown = function () {
@@ -2291,4 +2293,4 @@ WickedGrid.functions = (function(r) {
 	};
 
 	return fn;
-})(window.Raphael);
+})();

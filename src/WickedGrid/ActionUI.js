@@ -2,7 +2,7 @@
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
+WickedGrid.ActionUI = (function() {
 	var $document = $(document);
 
 	var ActionUI = function(wickedGrid, enclosure, cl, frozenAt) {
@@ -605,4 +605,4 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 	};
 
 	return ActionUI;
-})(document, window, Math, Number, $);
+})();

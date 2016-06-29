@@ -3,7 +3,7 @@
  * @type {Object|Function}
  * @name jQuery.fn
  */
-$.fn.extend({
+extend($.fn, {
   /**
    * @memberof jQuery.fn
    * @function

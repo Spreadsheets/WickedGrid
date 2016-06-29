@@ -1,4 +1,4 @@
-WickedGrid.loader.HTML = (function($, document, String) {
+WickedGrid.loader.HTML = (function() {
 	"use strict";
 	function HTML(tables) {
 		if (tables !== undefined) {
@@ -778,4 +778,4 @@ WickedGrid.loader.HTML = (function($, document, String) {
 	HTML.maxStoredDependencies = 100;
 
 	return HTML;
-})(jQuery, document, String);
+})();

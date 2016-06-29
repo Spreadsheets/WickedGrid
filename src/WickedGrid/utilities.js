@@ -34,7 +34,7 @@ var key = { /* key objects, makes it easier to develop */
 		Z:					90,
 		UNKNOWN:			229
 	},
-	arrHelpers = window.arrHelpers = {
+	arrHelpers = {
 		math: Math,
 		toNumbers:function (arr) {
 			arr = this.flatten(arr);
@@ -459,7 +459,7 @@ var key = { /* key objects, makes it easier to develop */
 		}
 	},
 
-	times = window.times = {
+	times = {
 		math: Math,
 		fromMath:function (time) {
 			var result = {}, me = this;
@@ -524,7 +524,7 @@ var key = { /* key objects, makes it easier to develop */
 	};
 
 
-$.extend(Math, {
+extend(Math, {
 	log10:function (arg) {
 		// http://kevin.vanzonneveld.net
 		// +   original by: Philip Peterson
@@ -569,13 +569,21 @@ $.extend(Math, {
 /**
  *
  * @param {Object} base
- * @param {Object} extension
  */
-function extend(base, extension) {
-	var i;
-	for(i in extension) if (extension.hasOwnProperty(i)) {
-		base[i] = extension[i];
-	}
+function extend(base) {
+	var property,
+    argument,
+    argumentsIndex = 1;
+
+  for (; argumentsIndex < arguments.length; argumentsIndex++) {
+    argument = arguments[argumentsIndex];
+    for (property in argument) {
+      if (argument.hasOwnProperty(property) && !base.hasOwnProperty(property)) {
+        base[property] = argument[property];
+      }
+    }
+  }
+
 	return base;
 }
 

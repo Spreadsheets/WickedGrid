@@ -19,7 +19,7 @@
  * @param {Object} settings
  * @constructor
  */
-var WickedGrid = (function($, document, window, Date, String, Number, Boolean, Math, RegExp, Error, undefined) {
+var WickedGrid = (function() {
   'use strict';
 
   function empty() {}
@@ -38,7 +38,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
     this.msg = WickedGrid.msg;
 
     this.undo = new WickedGrid.Undo(this);
-    
+
     /**
      * Internal storage array of controls for an instance
      * @memeberof WickedGrid
@@ -235,11 +235,11 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
       });
 
     //Extend the calculation engine plugins
-    WickedGrid.fn = $.extend(WickedGrid.functions, settings.formulaFunctions);
+    WickedGrid.fn = extend({}, WickedGrid.functions, settings.formulaFunctions);
 
     //Extend the calculation engine with finance functions
     if (WickedGrid.plugin.finance) {
-      WickedGrid.fn = $.extend(WickedGrid.functions, WickedGrid.plugin.finance);
+      WickedGrid.fn = extend({}, WickedGrid.functions, WickedGrid.plugin.finance);
     }
 
     settings.title = settings.title || element.getAttribute('title') || '';
@@ -1663,7 +1663,7 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      * @returns {String}
      */
     makeFormula:function (loc, offset) {
-      offset = $.extend({row:0, col:0}, offset);
+      offset = extend({row:0, col:0}, offset);
 
       //set offsets
       loc.col += offset.col;
@@ -3910,10 +3910,10 @@ var WickedGrid = (function($, document, window, Date, String, Number, Boolean, M
      */
     preLoad:function (path, settings) {
       path = path || '';
-      settings = $.extend({
+      settings = extend({
         skip: ['globalizeCultures'],
         thirdPartyDirectory: 'bower_components/'
-      },settings);
+      }, settings);
 
       var injectionParent = $('script:first'),
           write = function () {
@@ -4841,6 +4841,8 @@ WickedGrid.functions = (function(r) {
 	 * @returns {jQuery|HTMLElement}
 	 */
 	function chart (o) {
+    //if (typeof Raphael === 'undefined') return null;
+
 		var wickedGrid = this.wickedGrid,
 			loader = wickedGrid.settings.loader,
 			chart = document.createElement('div'),
@@ -4867,13 +4869,13 @@ WickedGrid.functions = (function(r) {
 			return v;
 		}
 
-		o = $.extend({
+		o = extend({}, o, {
 			x:{ legend:"", data:[0]},
 			y:{ legend:"", data:[0]},
 			title:"",
 			data:[0],
 			legend:""
-		}, o);
+		});
 
 		chart.className = WickedGrid.cl.chart;
 		chart.onmousedown = function () {
@@ -7113,7 +7115,7 @@ WickedGrid.functions = (function(r) {
 	};
 
 	return fn;
-})(window.Raphael);
+})();
 //Creates the control/container for everything above the spreadsheet, removes them if they already exist.controlFactory
 WickedGrid.header = function(wickedGrid) {
   wickedGrid.header().remove();
@@ -7701,7 +7703,7 @@ WickedGrid.tabs = function(wickedGrid) {
 
   return tabContainer;
 };
-WickedGrid.thread = (function (operative) {
+WickedGrid.thread = (function () {
 	var i = 0,
 		threads = [];
 
@@ -7860,7 +7862,7 @@ WickedGrid.thread = (function (operative) {
 	};
 
 	return thread;
-})(window.operative);
+})();
 WickedGrid.ui = function(wickedGrid) {
   var ui = document.createElement('div');
   ui.setAttribute('class',WickedGrid.cl.ui);
@@ -7903,7 +7905,7 @@ var key = { /* key objects, makes it easier to develop */
 		Z:					90,
 		UNKNOWN:			229
 	},
-	arrHelpers = window.arrHelpers = {
+	arrHelpers = {
 		math: Math,
 		toNumbers:function (arr) {
 			arr = this.flatten(arr);
@@ -8328,7 +8330,7 @@ var key = { /* key objects, makes it easier to develop */
 		}
 	},
 
-	times = window.times = {
+	times = {
 		math: Math,
 		fromMath:function (time) {
 			var result = {}, me = this;
@@ -8393,7 +8395,7 @@ var key = { /* key objects, makes it easier to develop */
 	};
 
 
-$.extend(Math, {
+extend(Math, {
 	log10:function (arg) {
 		// http://kevin.vanzonneveld.net
 		// +   original by: Philip Peterson
@@ -8438,13 +8440,21 @@ $.extend(Math, {
 /**
  *
  * @param {Object} base
- * @param {Object} extension
  */
-function extend(base, extension) {
-	var i;
-	for(i in extension) if (extension.hasOwnProperty(i)) {
-		base[i] = extension[i];
-	}
+function extend(base) {
+	var property,
+    argument,
+    argumentsIndex = 1;
+
+  for (; argumentsIndex < arguments.length; argumentsIndex++) {
+    argument = arguments[argumentsIndex];
+    for (property in argument) {
+      if (argument.hasOwnProperty(property) && !base.hasOwnProperty(property)) {
+        base[property] = argument[property];
+      }
+    }
+  }
+
 	return base;
 }
 
@@ -9270,7 +9280,7 @@ WickedGrid.event.Formula = (function() {
 
   return Formula;
 })();
-WickedGrid.loader.HTML = (function($, document, String) {
+WickedGrid.loader.HTML = (function() {
 	"use strict";
 	function HTML(tables) {
 		if (tables !== undefined) {
@@ -10050,13 +10060,13 @@ WickedGrid.loader.HTML = (function($, document, String) {
 	HTML.maxStoredDependencies = 100;
 
 	return HTML;
-})(jQuery, document, String);
+})();
 
 /**
  * @type {Object}
  * @memberof WickedGrid.loader
  */
-WickedGrid.loader.JSON = (function($, document, String) {
+WickedGrid.loader.JSON = (function() {
 	"use strict";
 	function JSONLoader(json) {
 		if (json !== undefined) {
@@ -11397,7 +11407,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
 	JSONLoader.maxStoredDependencies = 100;
 
 	return JSONLoader;
-})(jQuery, document, String);
+})();
 
 /**
  * @type {Object}
@@ -11444,7 +11454,7 @@ WickedGrid.loader.JSON = (function($, document, String) {
  *	 </spreadsheet>
  * </spreadsheets></textarea>
  */
-WickedGrid.loader.XML = (function($, document) {
+WickedGrid.loader.XML = (function() {
 	function XML(xml) {
 		if (xml !== undefined) {
 			this.xml = $.parseXML(xml);
@@ -11748,7 +11758,7 @@ WickedGrid.loader.XML = (function($, document) {
 				rowHasValues = false;
 				jS.i = sheet;
 				jS.evt.cellEditDone();
-				frozenAt = $.extend({}, jS.obj.pane().actionUI.frozenAt);
+				frozenAt = extend({}, jS.obj.pane().actionUI.frozenAt);
 				widths = [];
 
 				spreadsheet = jS.spreadsheets[sheet];
@@ -11838,13 +11848,13 @@ WickedGrid.loader.XML = (function($, document) {
 	};
 
 	return XML;
-})(jQuery, document);
+})();
 
 
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
+WickedGrid.ActionUI = (function() {
 	var $document = $(document);
 
 	var ActionUI = function(wickedGrid, enclosure, cl, frozenAt) {
@@ -12447,7 +12457,7 @@ WickedGrid.ActionUI = (function(document, window, Math, Number, $) {
 	};
 
 	return ActionUI;
-})(document, window, Math, Number, $);
+})();
 WickedGrid.Cell = (function() {
 	var u = undefined;
 
@@ -13981,7 +13991,7 @@ WickedGrid.ColumnContextMenu = (function() {
 /**
  * Creates the scrolling system used by each spreadsheet
  */
-WickedGrid.Highlighter = (function(document, window, $) {
+WickedGrid.Highlighter = (function() {
 	var Constructor = function(cssClass, cssClassBars, cssClassTabs, callBack) {
 		this.cssClass = cssClass;
 		this.cssClassBars = cssClassBars;
@@ -14145,7 +14155,7 @@ WickedGrid.Highlighter = (function(document, window, $) {
 
 	return Constructor;
 
-})(document, window, jQuery);
+})();
 WickedGrid.SpreadsheetUI = (function() {
 	var stack = [];
 
@@ -14431,7 +14441,7 @@ WickedGrid.Undo = (function() {
  * @type {Object|Function}
  * @name jQuery.fn
  */
-$.fn.extend({
+extend($.fn, {
   /**
    * @memberof jQuery.fn
    * @function
@@ -15134,6 +15144,7 @@ $.fn.extend({
     return result;
   }
 });
+
 //This is a fix for Jison
 if (Object.getPrototypeOf === undefined) {
 	Object.getPrototypeOf = function(obj) {
@@ -15153,7 +15164,9 @@ if (Array.prototype.indexOf === undefined) {
 
 
   return WickedGrid;
-})((window.jQuery || {}), document, window, Date, String, Number, Boolean, Math, RegExp, Error);
+})();
+
+if (typeof module !== 'undefined') module.exports = WickedGrid;
 /* parser generated by jison 0.4.15 */
 /*
   Returns a Parser object of the following structure:
