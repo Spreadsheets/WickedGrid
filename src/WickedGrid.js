@@ -654,8 +654,7 @@ var WickedGrid = (function() {
       return this;
     },
     getCells: function(cellReferences, callbackOrSheet, callback) {
-      var self = this,
-          i = 0,
+      var i = 0,
           max = cellReferences.length,
           remaining = max - 1,
           cellReference,
@@ -1939,7 +1938,7 @@ var WickedGrid = (function() {
 
       if (!doNotClearHighlighted) {
         this.highlighter
-            .set(cell.td) //highlight the cell and bars
+            .cell(cell) //highlight the cell and bars
             .setStart(cell)
             .setEnd(cell);
       }

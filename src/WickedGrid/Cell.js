@@ -735,15 +735,15 @@ WickedGrid.Cell = (function() {
 				if (td.classList) {
 					td.classList.add(_class);
 				} else {
-					td.className += ' ' + _class;
+					td.className += (td.className.length > 0 ? ' ' : '') + _class;
 				}
 			}
 
 			if (loadedFrom !== u) {
-				classes = (this.loader.getCellAttribute(loadedFrom, 'class') || '');
+				classes = this.loader.getCellAttribute(loadedFrom, 'class') || '';
 				index = classes.split(' ').indexOf(_class);
 				if (index < 0) {
-					classes += ' ' + _class;
+					classes += (classes.length > 0 ? ' ' : '') + _class;
 					this.loader.setCellAttribute(loadedFrom, 'class', classes);
 				}
 			}

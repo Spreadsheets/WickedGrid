@@ -3,13 +3,13 @@
  * Creates the scrolling system used by each spreadsheet
  */
 WickedGrid.Highlighter = (function() {
-	var Constructor = function(cssClass, cssClassBars, cssClassTabs, callBack) {
-		this.cssClass = cssClass;
-		this.cssClassBars = cssClassBars;
-		this.cssClassTabs = cssClassTabs;
-		this.callBack = callBack || function() {};
+	var Highlighter = function(cellCssClass, barCssClass, tabsCssClass, callBack) {
+		this.cellCssClass = cellCssClass.split(/[\s]/);
+		this.barCssClass = barCssClass.split(/[\s]/);
+		this.tabsCssClass = tabsCssClass.split(/[\s]/);
+		this.callBack = callBack;
 
-		this.last = $([]);
+		this.last = [];
 		this.lastTop = $([]);
 		this.lastLeft = $([]);
 		this.lastTab = $([]);
@@ -19,7 +19,37 @@ WickedGrid.Highlighter = (function() {
 		this.endColumnIndex = 0;
 	};
 
-	Constructor.prototype = {
+  Highlighter.prototype = {
+    /**
+     *
+     * @param {WickedGrid.Cell} cell
+     */
+    cell: function(cell) {
+      this.cellCssClass.forEach(function(_class) {
+        cell.addClass(_class);
+      });
+
+      this.last.push(cell);
+      return this;
+    },
+
+    off: function() {
+      while (this.last.length > 0) {
+        var last = this.last.pop();
+        switch (last.type) {
+          case WickedGrid.Cell:
+            this.cellCssClass.forEach(function(_class) {
+              last.removeClass(_class);
+            });
+            break;
+          default:
+            this.cellCssClass.forEach(function(_class) {
+              last.removeClass(_class);
+            });
+        }
+      }
+      return this;
+    },
 		set: function (objs) {
 			if (objs.parentNode !== undefined) {
 				objs = [objs];
@@ -164,6 +194,5 @@ WickedGrid.Highlighter = (function() {
 		}
 	};
 
-	return Constructor;
-
+	return Highlighter;
 })();
