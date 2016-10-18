@@ -21,19 +21,19 @@ var fs              = require('fs')
 					'statics',
 
 					'autoFiller',
-					'cellTypeHandlers',
+					'CellTypeHandlers',
 					'cl',
-					'columnFreezer',
+					'ColumnFreezer',
 					'columnResizer',
 					'customTab',
 					'defaults',
 					'enclosure',
           'formulaEditor',
-					'functions',
+					'Functions',
 					'header',
 					'inPlaceEdit',
 					'menu',
-					'rowFreezer',
+					'RowFreezer',
 					'rowResizer',
 					'sheetUI',
 					'spreadsheetAdder',
@@ -45,10 +45,10 @@ var fs              = require('fs')
 
 					//children namespaces next
 					{
-						event: ['Cell', 'Document', 'Formula']
+						Event: ['cell', 'document', 'formula']
 					},
 					{
-						loader: ['HTML', 'JSON', 'XML']
+						Loader: ['HTML', 'JSON', 'XML']
 					},
 
 					//constructors next
@@ -57,7 +57,7 @@ var fs              = require('fs')
 					'CellContextMenu',
 					'CellHandler',
 					'CellRange',
-					'ColumnMenu',
+					'columnMenu',
 					'ColumnContextMenu',
 					'Highlighter',
 					'SpreadsheetUI',
@@ -68,7 +68,7 @@ var fs              = require('fs')
 			},
 
 		  //jQuery plugin
-			'jQuery.wickedGrid',
+			'jQuery.WickedGrid',
 
 			//environment correction last
 			'environmentCorrection'

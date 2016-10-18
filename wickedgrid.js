@@ -1938,7 +1938,7 @@ var WickedGrid = (function() {
 
       if (!doNotClearHighlighted) {
         this.highlighter
-            .cell(cell) //highlight the cell and bars
+            .set(cell.td) //highlight the cell and bars
             .setStart(cell)
             .setEnd(cell);
       }
@@ -13191,7 +13191,7 @@ WickedGrid.Cell = (function() {
 				loadedFrom = this.loadedFrom;
 
 			if (td !== u) {
-				if (td.classList ) {
+				if (td.classList) {
 					td.classList.add(_class);
 				} else {
 					td.className += (td.className.length > 0 ? ' ' : '') + _class;
@@ -14061,9 +14061,11 @@ WickedGrid.Highlighter = (function() {
 					obj = objs[i];
 					if (!obj.isHighlighted) {
 						obj.isHighlighted = true;
-						if (!obj.className.match(this.cssClass)) {
-							obj.className += ' ' + this.cssClass;
-						}
+						this.cellCssClass.forEach(function(_class) {
+							if (!obj.className.match(_class)) {
+								obj.className += ' ' + _class;
+							}
+      						});
 					}
 				} while (i-- > 0);
 			}
@@ -14095,7 +14097,9 @@ WickedGrid.Highlighter = (function() {
 					var i = obj.length - 1;
 					do {
 						if (!obj[i].isHighlighted) {
-							obj[i].className = obj[i].className.replace(this.cssClass, '');
+							this.cellCssClass.forEach(function(_class) {
+								obj[i].className = obj[i].className.replace(_class, '');
+							});
 							obj[i].isHighlighted = false;
 						}
 					} while (i-- > 0);
@@ -14397,7 +14401,7 @@ WickedGrid.Undo = (function() {
 
       var self = this,
           before = (new WickedGrid.CellRange(cells)).clone().cells,
-          after = (typeof fn === 'undefined' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
+          after = (typeof fn !== 'undefined' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
 
       before.id = id;
       after.id = id;
