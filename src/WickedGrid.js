@@ -1938,7 +1938,7 @@ var WickedGrid = (function() {
 
       if (!doNotClearHighlighted) {
         this.highlighter
-            .cell(cell) //highlight the cell and bars
+            .set(cell.td) //highlight the cell and bars
             .setStart(cell)
             .setEnd(cell);
       }
