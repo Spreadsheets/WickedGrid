@@ -34,7 +34,7 @@
     "zeroclipboard": "~2.1.6",
     "raphael": "~2.1.2",
     "graphael": "master",
-    "jquery-elastic": "http://jquery-elastic.googlecode.com/files/jquery.elastic-1.6.11.zip",
+    "jquery-elastic": "https://github.com/janjarfalk/jquery-elastic/releases/tag/1.6.10",
     "really-simple-color-picker": "https://github.com/laktek/really-simple-color-picker.git",
     "Javascript-Undo-Manager": "*",
     "ThemeSwitcher": "https://github.com/josephbulger/ThemeSwitcher.git",
