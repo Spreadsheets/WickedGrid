@@ -4328,77 +4328,6 @@ WickedGrid.autoFiller = function(wickedGrid, pane) {
   pane.appendChild(autoFiller);
   return true;
 };
-WickedGrid.cellTypeHandlers = {
-	percent: function (cell, value) {
-		//https://stackoverflow.com/questions/2652319/how-do-you-check-that-a-number-is-nan-in-javascript/16988441#16988441
-		//NaN !== NaN
-		if (value !== value) return 0;
-		var num = (isNaN(value) ? Globalize.parseFloat(value) : value * 1),
-			result;
-
-		if (!isNaN(num)) {//success
-			result = new Number(num);
-			result.html = Globalize.format(num, 'p');
-			return result;
-		}
-
-		return value;
-	},
-	date: function (cell, value) {
-		if (value !== value) return 0;
-		var date = Globalize.parseDate(value);
-		if (date === null) {
-			return value;
-		} else {
-			cell.valueOverride = date;
-			cell.html = Globalize.format(date, 'd');
-			return value;
-		}
-	},
-	time: function (cell, value) {
-		if (value !== value) return 0;
-		var date = Globalize.parseDate(value);
-		if (date === null) {
-			return value;
-		} else {
-			date.html = Globalize.format(date, 't');
-			return date;
-		}
-	},
-	currency: function (cell, value) {
-		if (value !== value) return 0;
-		var num = (isNaN(value) ? Globalize.parseFloat(value) : value * 1),
-			result;
-
-		if (!isNaN(num)) {//success
-			result = new Number(num);
-			result.html = Globalize.format(num, 'c');
-			return result;
-		}
-
-		return value;
-	},
-	number: function (cell, value) {
-		if (value !== value) return 0;
-		var radix, result;
-
-		if (!CellTypeHandlers.endOfNumber) {
-			radix = Globalize.culture().numberFormat['.'];
-			CellTypeHandlers.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
-		}
-
-		if (!isNaN(value)) {//success
-			result = new Number(value);
-			result.html = Globalize.format(value + '', "n10")
-				.replace(CellTypeHandlers.endOfNumber, function (orig, radix, num) {
-					return (num ? radix : '') + (num || '');
-				});
-			return result;
-		}
-
-		return value;
-	}
-};
 /**
  * Internal css classes of objects
  * @memberof WickedGrid
@@ -4452,72 +4381,68 @@ WickedGrid.cl = {
   enclosure: 'wg-enclosure',
   ui: 'wg-ui'
 };
-//Creates the draggable objects for freezing cells
-WickedGrid.columnFreezer = function(wickedGrid) {
-  if (!wickedGrid.settings.freezableCells) return false;
-  if (wickedGrid.isBusy()) return false;
+WickedGrid.ColumnMenu = (function() {
+  function ColumnMenu(wickedGrid, menu) {
+    this.wickedGrid = wickedGrid;
+    this.menu = menu;
+    this.index = -1;
+    this.column = null;
 
-  var pane = wickedGrid.pane(),
-      actionUI = pane.actionUI,
-      tBody = pane.tBody,
-      frozenAt = actionUI.frozenAt,
-      scrolledArea = actionUI.scrolledArea;
+    var self = this,
+        barHelper = this.barHelper = widget(
+          '<div class="' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.columnHelper + '">\
+            <span class="' + wickedGrid.cl.columnButton + ' ' + wickedGrid.theme.columnMenu + ' ' + wickedGrid.theme.columnMenuIcon + '"></span>\
+          </div>'
+        ),
+        button = barHelper.children[0];
 
-  if (!(scrolledArea.col <= (frozenAt.col + 1))) {
-    return false;
+    button.onmousedown = function () {
+      self.showMenu();
+    };
   }
 
-  wickedGrid.barHelper().remove();
-
-  var highlighter,
-      bar = tBody.children[0].children[frozenAt.col + 1],
-      paneRectangle = pane.getBoundingClientRect(),
-      paneTop = paneRectangle.top + document.body.scrollTop,
-      paneLeft = paneRectangle.left + document.body.scrollLeft,
-      handle = document.createElement('div'),
-      $handle = pane.freezeHandleTop = $(handle)
-          .appendTo(pane)
-          .addClass(wickedGrid.theme.columnFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.columnFreezeHandle)
-          .height(bar.clientHeight - 1)
-          .css('left', (bar.offsetLeft - handle.clientWidth) + 'px')
-          .attr('title', wickedGrid.msg.dragToFreezeCol);
-
-  wickedGrid.controls.bar.helper[wickedGrid.i] = wickedGrid.barHelper().add(handle);
-  wickedGrid.controls.bar.x.handleFreeze[wickedGrid.i] = $handle;
-
-  wickedGrid.draggable($handle, {
-    axis:'x',
-    start:function () {
-      wickedGrid.setBusy(true);
-
-      highlighter = $(document.createElement('div'))
-          .css('position', 'absolute')
-          .addClass(wickedGrid.theme.barFreezeIndicator + ' ' + wickedGrid.cl.barHelper)
-          .height(bar.clientHeight - 1)
-          .fadeTo(0,0.33)
-          .appendTo(pane);
-    },
-    drag:function() {
-      var target = $handle.nearest(bar.parentNode.children).prev();
-      if (target.length > 0 && typeof target.position === 'function') {
-        highlighter.width(target.position().left + target.width());
+  ColumnMenu.prototype = {
+    setColumn: function(column, index) {
+      if (this.column !== null) {
+        this.column.classList.remove(this.wickedGrid.cl.columnFocus);
       }
-    },
-    stop:function (e, ui) {
-      highlighter.remove();
-      wickedGrid.setBusy(false);
-      wickedGrid.setDirty(true);
-      var target = $.nearest($handle, bar.parentNode.children);
+      this.hideMenu();
+      this.column = column;
+      this.index = index;
 
-      wickedGrid.barHelper().remove();
-      scrolledArea.col = actionUI.frozenAt.col = Math.max(wickedGrid.getTdLocation(target[0]).col - 1, 0);
-      wickedGrid.autoFillerHide();
+      return this;
     },
-    containment:[paneLeft, paneTop, paneLeft + pane.clientWidth - window.scrollBarSize.width, paneTop]
-  });
+    kill: function() {
+      this.hide();
+      this.column = null;
+      this.index = -1;
+      return this;
+    },
+    show: function() {
+      this.wickedGrid.hideMenus();
 
-  return true;
-};
+      this.column.appendChild(this.barHelper);
+      this.column.classList.add(this.wickedGrid.cl.columnFocus);
+
+      return this;
+    },
+    hide: function() {
+      if (this.barHelper.parentNode === null) return this;
+      this.barHelper.parentNode.removeChild(this.barHelper);
+      return this;
+    },
+    showMenu: function() {
+      this.barHelper.appendChild(this.menu);
+      return this;
+    },
+    hideMenu: function() {
+      if (this.menu.parentNode === null) return this;
+      this.menu.parentNode.removeChild(this.menu);
+      return this;
+    }
+  };
+  return ColumnMenu;
+})();
 WickedGrid.columnResizer = function(wickedGrid, bar) {
   wickedGrid.barTopControls().remove();
   var barController = document.createElement('div'),
@@ -4819,2302 +4744,6 @@ WickedGrid.formulaEditor = function(wickedGrid, header) {
 
   return formula;
 };
-/**
- * The functions container of all functions used in WickedGrid
- * @namespace
- */
-WickedGrid.functions = (function(r) {
-
-	r = r || function() {};
-
-	/**
-	 * Creates a chart, piggybacks g Raphael JS
-	 * @param {Object} o options
-	 * x: { legend: "", data: [0]}, //x data
-	 * y: { legend: "", data: [0]}, //y data
-	 * title: "",
-	 * data: [0], //chart data
-	 * legend: "",
-	 * td: wickedGrid.getTd(this.sheet, this.row, this.col), //td container for cell
-	 * chart: jQuery('<div class="' + WickedGrid.cl.chart + '" />') //chart
-	 * @returns {jQuery|HTMLElement}
-	 */
-	function chart (o) {
-    //if (typeof Raphael === 'undefined') return null;
-
-		var wickedGrid = this.wickedGrid,
-			loader = wickedGrid.settings.loader,
-			chart = document.createElement('div'),
-			td = this.td,
-			gR,
-			body = document.body;
-
-		body.appendChild(chart);
-
-		function sanitize(v, toNum) {
-			if (!v) {
-				if (toNum) {
-					v = 0;
-				} else {
-					v = "";
-				}
-			} else {
-				if (toNum) {
-					v = arrHelpers.toNumbers(v);
-				} else {
-					v = arrHelpers.flatten(v);
-				}
-			}
-			return v;
-		}
-
-		o = extend({}, o, {
-			x:{ legend:"", data:[0]},
-			y:{ legend:"", data:[0]},
-			title:"",
-			data:[0],
-			legend:""
-		});
-
-		chart.className = WickedGrid.cl.chart;
-		chart.onmousedown = function () {
-			$(td).mousedown();
-		};
-		chart.onmousemove = function () {
-			$(td).mousemove();
-			return false;
-		};
-
-		o.data = sanitize(o.data, true);
-		o.x.data = sanitize(o.x.data, true);
-		o.y.data = sanitize(o.y.data, true);
-		o.legend = sanitize(o.legend);
-		o.x.legend = sanitize(o.x.legend);
-		o.y.legend = sanitize(o.y.legend);
-
-		o.legend = (o.legend ? o.legend : o.data);
-
-		var width = loader.getWidth(this.sheetIndex, this.columnIndex),
-			height = loader.getHeight(this.sheetIndex, this.rowIndex),
-			r = Raphael(chart);
-
-		if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
-
-		switch (o.type) {
-			case "bar":
-				gR = r.barchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
-					.hover(function () {
-						this.flag = r.popup(
-							this.bar.x,
-							this.bar.y,
-							this.bar.value || "0"
-						).insertBefore(this);
-					}, function () {
-						this.flag.animate({
-								opacity:0
-							}, 300,
-
-							function () {
-								this.remove();
-							}
-						);
-					});
-				break;
-			case "hbar":
-				gR = r.hbarchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
-					.hover(function () {
-						this.flag = r.popup(this.bar.x, this.bar.y, this.bar.value || "0").insertBefore(this);
-					}, function () {
-						this.flag.animate({
-								opacity:0
-							}, 300,
-							function () {
-								this.remove();
-							}
-						);
-					});
-				break;
-			case "line":
-				gR = r.linechart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, {
-					nostroke:false,
-					axis:"0 0 1 1",
-					symbol:"circle",
-					smooth:true
-				})
-					.hoverColumn(function () {
-						this.tags = r.set();
-						if (this.symbols.length) {
-							for (var i = 0, ii = this.y.length; i < ii; i++) {
-								this.tags.push(
-									r
-										.tag(this.x, this.y[i], this.values[i], 160, 10)
-										.insertBefore(this)
-										.attr([
-											{ fill:"#fff" },
-											{ fill:this.symbols[i].attr("fill") }
-										])
-								);
-							}
-						}
-					}, function () {
-						this.tags && this.tags.remove();
-					});
-
-				break;
-			case "pie":
-				gR = r.piechart(width / 2, height / 2, (width < height ? width : height) / 2, o.data, {legend:o.legend})
-					.hover(function () {
-						this.sector.stop();
-						this.sector.scale(1.1, 1.1, this.cx, this.cy);
-
-						if (this.label) {
-							this.label[0].stop();
-							this.label[0].attr({ r:7.5 });
-							this.label[1].attr({ "font-weight":800 });
-						}
-					}, function () {
-						this.sector.animate({ transform:'s1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
-
-						if (this.label) {
-							this.label[0].animate({ r:5 }, 500, "bounce");
-							this.label[1].attr({ "font-weight":400 });
-						}
-					});
-				break;
-			case "dot":
-				gR = r.dotchart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, o.data, {
-					symbol:"o",
-					max:10,
-					heat:true,
-					axis:"0 0 1 1",
-					axisxstep:o.x.data.length - 1,
-					axisystep:o.y.data.length - 1,
-					axisxlabels:(o.x.legend ? o.x.legend : o.x.data),
-					axisylabels:(o.y.legend ? o.y.legend : o.y.data),
-					axisxtype:" ",
-					axisytype:" "
-				})
-					.hover(function () {
-						this.marker = this.marker || r.tag(this.x, this.y, this.value, 0, this.r + 2).insertBefore(this);
-						this.marker.show();
-					}, function () {
-						this.marker && this.marker.hide();
-					});
-
-				break;
-		}
-
-		gR.mousedown(function () {
-			$(td).mousedown().mouseup();
-		});
-
-		body.removeChild(chart);
-
-		return chart;
-	}
-
-	var fn = {
-		/**
-		 * information function
-		 * @param v
-		 * @returns {Boolean}
-		 * @this Cell
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		ISNUMBER:function (v) {
-			var result;
-			if (!isNaN(v.valueOf())) {
-				result = new Boolean(true);
-				result.html = 'TRUE';
-				return result;
-			}
-			result = new Boolean(false);
-			result.html = 'FALSE'
-			return result;
-		},
-		/**
-		 * information function
-		 * @param v
-		 * @memberof WickedGrid.functions
-		 * @returns {*}
-		 * @this WickedGrid.Cell
-		 */
-		N:function (v) {
-			if (v == null) {
-				return 0;
-			}
-			if (v instanceof Date) {
-				return v.getTime();
-			}
-			if (typeof(v) == 'object') {
-				v = v.toString();
-			}
-			if (typeof(v) == 'string') {
-				v = parseFloat(v.replace(/[\$,\s]/g, ''));
-			}
-			if (isNaN(v)) {
-				return 0;
-			}
-			if (typeof(v) == 'number') {
-				return v;
-			}
-			if (v == true) {
-				return 1;
-			}
-			return 0;
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		ABS:function (v) {
-			return Math.abs(fn.N(v));
-		},
-
-		/**
-		 * math function
-		 * @param value
-		 * @param significance
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		CEILING:function (value, significance) {
-			significance = significance || 1;
-			return (parseInt(value / significance) * significance) + significance;
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		EVEN:function (v) {
-			v = Math.round(v);
-			var even = (v % 2 == 0);
-			if (!even) {
-				if (v > 0) {
-					v++;
-				} else {
-					v--;
-				}
-			}
-			return v;
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		EXP:function (v) {
-			return Math.exp(v);
-		},
-
-		/**
-		 * math function
-		 * @param value
-		 * @param significance
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		FLOOR:function (value, significance) {
-			significance = significance || 1;
-			if (
-				(value < 0 && significance > 0 )
-					|| (value > 0 && significance < 0 )
-				) {
-				var result = new Number(0);
-				result.html = '#NUM';
-				return result;
-			}
-			if (value >= 0) {
-				return Math.floor(value / significance) * significance;
-			} else {
-				return Math.ceil(value / significance) * significance;
-			}
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		INT:function (v) {
-			return Math.floor(fn.N(v));
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		LN:function (v) {
-			return Math.log(v);
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @param n
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		LOG:function (v, n) {
-			n = n || 10;
-			return Math.log(v) / Math.log(n);
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		LOG10:function (v) {
-			return fn.LOG(v);
-		},
-
-		/**
-		 * math function
-		 * @param x
-		 * @param y
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		MOD:function (x, y) {
-			var modulus = x % y;
-			if (y < 0) {
-				modulus *= -1;
-			}
-			return modulus;
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		ODD:function (v) {
-			var gTZ = false;
-			if (v > 0) {
-				v = Math.floor(Math.round(v));
-				gTZ = true;
-			} else {
-				v = Math.ceil(v);
-			}
-
-			var vTemp = Math.abs(v);
-			if ((vTemp % 2) == 0) { //even
-				vTemp++;
-			}
-
-			if (gTZ) {
-				return vTemp;
-			} else {
-				return -vTemp;
-			}
-		},
-
-		/**
-		 * math function
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		PI:function () {
-			return Math.PI;
-		},
-
-		/**
-		 * math function
-		 * @param x
-		 * @param y
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		POWER:function (x, y) {
-			return Math.pow(x, y);
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		SQRT:function (v) {
-			return Math.sqrt(v);
-		},
-
-		/**
-		 * math function
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		RAND:function () {
-			return Math.random();
-		},
-
-		/**
-		 * math function
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		RND:function () {
-			return Math.random();
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @param decimals
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		ROUND:function (v, decimals) {
-			var shift = Math.pow(10, decimals || 0);
-			return Math.round(v * shift) / shift;
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @param decimals
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		ROUNDDOWN:function (v, decimals) {
-			var neg = (v < 0);
-			v = Math.abs(v);
-			decimals = decimals || 0;
-			v = Math.floor(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
-			return (neg ? -v : v);
-		},
-
-		/**
-		 * math function
-		 * @param v
-		 * @param decimals
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		ROUNDUP:function (v, decimals) {
-			var neg = (v < 0);
-			v = Math.abs(v);
-			decimals = decimals || 0;
-			v = Math.ceil(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
-			return (neg ? -v : v);
-		},
-
-		/**
-		 * math function
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		SUM:function () {
-			var sum = 0,
-				values = arrHelpers.flatten(arguments),
-				v,
-				i = 0,
-				max = values.length,
-				_isNaN = isNaN;
-
-			for(; i < max; i++) {
-				v = values[i];
-				if (v === null || v === undefined) continue;
-				v = v.valueOf();
-				if (!_isNaN(v)) {
-					switch (typeof v) {
-						case 'string':
-							sum += (v * 1);
-							break;
-						default:
-							sum += v;
-					}
-				}
-			}
-
-			return sum;
-		},
-
-		/**
-		 * math function
-		 * @param number
-		 * @param digits
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		TRUNC:function (number, digits) {
-			digits = digits || 0;
-			number = number + '';
-
-			if (digits == 0) {
-				return number.split('.').shift();
-			}
-
-			if (number.match('.')) {
-				if (digits == 1) {
-					number = number.substr(0, number.length - 1);
-				} else if (digits == -1) {
-					number = number.split('.').shift();
-					number = number.substr(0, number.length - 1) + '0';
-				}
-			}
-
-			return number;
-		},
-
-
-		/**
-		 * statistical function
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		AVERAGE:function () {
-			return fn.SUM.apply(this, arguments) / fn.COUNT.apply(this, arguments);
-		},
-
-		/**
-		 * statistical function
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		AVG:function () {
-			return fn.AVERAGE.apply(this, arguments);
-		},
-
-		/**
-		 * statistical function
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		COUNT:function () {
-			var count = 0,
-				v = arrHelpers.toNumbers(arguments),
-				i = v.length - 1;
-
-			if (i < 0) {
-				return count;
-			}
-
-			do {
-				if (v[i] !== null) {
-					count++;
-				}
-			} while (i--);
-
-			return count;
-		},
-
-		/**
-		 * statistical function
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		COUNTA:function () {
-			var count = 0,
-				v = arrHelpers.flatten(arguments),
-				i = v.length - 1;
-
-			if (i < 0) {
-				return count;
-			}
-
-			do {
-				if (v[i]) {
-					count++;
-				}
-			} while (i--);
-
-			return count;
-		},
-
-		/**
-		 * statistical function
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		MAX:function () {
-			var v = arrHelpers.toNumbers(arguments),
-				max = v[0],
-				i = v.length - 1;
-
-			if (i < 0) {
-				return 0;
-			}
-
-			do {
-				max = (v[i] > max ? v[i] : max);
-			} while (i--);
-
-			return max;
-		},
-
-		/**
-		 * statistical function
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		MIN:function () {
-			var v = arrHelpers.toNumbers(arguments),
-				min = v[0],
-				i = v.length - 1;
-
-			if (i < 0) {
-				return 0;
-			}
-
-			do {
-				min = (v[i] < min ? v[i] : min);
-			} while (i--);
-
-			return min;
-		},
-
-		/**
-		 * string function
-		 * @param v
-		 * @returns {Number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		ASC:function (v) {
-			return v.charCodeAt(0);
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @returns {string}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		CHAR:function (v) {
-			return String.fromCharCode(v);
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		CLEAN:function (v) {
-			var exp = new RegExp("[\cG\x1B\cL\cJ\cM\cI\cK\x07\x1B\f\n\r\t\v]","g");
-			return v.replace(exp, '');
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		CODE:function (v) {
-			return fn.ASC(v);
-		},
-		/**
-		 * string function
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		CONCATENATE:function () {
-			var arr = arrHelpers.flatten(arguments),
-				result = '',
-				cell = this;
-			jQuery.each(arr, function (i) {
-				result += arr[i];
-			});
-			return result;
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @param decimals
-		 * @param symbol
-		 * @returns {Number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		DOLLAR:function (v, decimals, symbol) {
-			decimals = decimals || 2;
-			symbol = symbol || '$';
-
-			var result = new Number(v),
-				r = fn.FIXED(v, decimals, false);
-
-			if (v >= 0) {
-				result.html = symbol + r;
-			} else {
-				result.html = '(' + symbol + r.slice(1) + ')';
-			}
-			return result;
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @param decimals
-		 * @param noCommas
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		FIXED:function (v, decimals, noCommas) {
-			decimals = (decimals === undefined ? 2 : decimals);
-			var multiplier = Math.pow( 10, decimals),
-				result,
-				v = Math.round( v * multiplier ) / multiplier;
-
-
-
-			result = new String(v.toFixed(decimals));
-			result.html = Globalize.format(v, 'n' + decimals);
-
-			if (noCommas) {
-				result.html = result.html.replace(Globalize.culture().numberFormat[','], '');
-			}
-
-			return result;
-
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @param numberOfChars
-		 * @returns {string}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		LEFT:function (v, numberOfChars) {
-			v = v.valueOf().toString();
-			numberOfChars = numberOfChars || 1;
-			return v.substring(0, numberOfChars);
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		LEN:function (v) {
-			if (!v) {
-				return 0;
-			}
-			return v.length;
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @returns {string}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		LOWER:function (v) {
-			return v.toLowerCase();
-		},
-
-		/**
-		 * string function
-		 * @param v
-		 * @param start
-		 * @param end
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		MID:function (v, start, end) {
-			if (!v || !start || !end) {
-				var result = new Number(0);
-				result.html = 'ERROR';
-				return result;
-			}
-			return v.substring(start - 1, end + start - 1);
-		},
-		/**
-		 * string function
-		 * @param oldText
-		 * @param start
-		 * @param numberOfChars
-		 * @param newText
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		REPLACE:function (oldText, start, numberOfChars, newText) {
-			if (!oldText || !start || !numberOfChars || !newText) {
-				var result = new String('');
-				result.html = 'ERROR';
-				return result;
-			}
-			var result = oldText.split('');
-			result.splice(start - 1, numberOfChars);
-			result.splice(start - 1, 0, newText);
-			return result.join('');
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @param times
-		 * @returns {string}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		REPT:function (v, times) {
-			var result = '';
-			for (var i = 0; i < times; i++) {
-				result += v;
-			}
-			return result;
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @param numberOfChars
-		 * @returns {string}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		RIGHT:function (v, numberOfChars) {
-			numberOfChars = numberOfChars || 1;
-			return v.substring(v.length - numberOfChars, v.length);
-		},
-		/**
-		 * string function
-		 * @param find
-		 * @param body
-		 * @param start
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		SEARCH:function (find, body, start) {
-			start = start || 0;
-			if (start) {
-				body = body.split('');
-				body.splice(0, start - 1);
-				body = body.join('');
-			}
-			var i = body.search(find);
-
-			if (i < 0) {
-				var result = new String('');
-				result.html = '#VALUE!';
-				return result;
-			}
-
-			return start + (start ? 0 : 1) + i;
-		},
-		/**
-		 * string function
-		 * @param text
-		 * @param oldText
-		 * @param newText
-		 * @param nthAppearance
-		 * @returns {string}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		SUBSTITUTE:function (text, oldText, newText, nthAppearance) {
-			nthAppearance = nthAppearance || 0;
-			oldText = new RegExp(oldText, 'g');
-			var i = 1;
-			text = text.replace(oldText, function (match, contents, offset, s) {
-				var result = match;
-				if (nthAppearance) {
-					if (i >= nthAppearance) {
-						result = newText;
-					}
-				} else {
-					result = newText;
-				}
-
-				i++;
-				return result;
-			});
-			return text;
-		},
-		/**
-		 * string function
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		TEXT:function (value, formatText) {
-			//for the time being
-			//TODO: fully implement
-			return value;
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @returns {string}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		UPPER:function (v) {
-			return v.toUpperCase();
-		},
-		/**
-		 * string function
-		 * @param v
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		VALUE:function (v) {
-			if (jQuery.isNumeric(v)) {
-				return v *= 1;
-			} else {
-				var result = new String('');
-				result.html = '#VALUE!';
-				return result;
-			}
-		},
-
-		/**
-		 * date/time function
-		 * @returns {Date}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		NOW:function () {
-			var today = new Date();
-			today.html = dates.toString(today);
-			return today;
-		},
-		/**
-		 * date/time function
-		 * @returns {Number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		TODAY:function () {
-			var today = new Date(),
-				result = new Number(dates.toCentury(today) - 1);
-			result.html = dates.toString(today, 'd');
-			return result;
-		},
-		/**
-		 * date/time function
-		 * @param weeksBack
-		 * @returns {Date}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		WEEKENDING:function (weeksBack) {
-			var date = new Date();
-			date = new Date(
-				date.getFullYear(),
-				date.getMonth(),
-				date.getDate() + 5 - date.getDay() - ((weeksBack || 0) * 7)
-			);
-
-			date.html = dates.toString(date, 'd');
-			return date;
-		},
-		/**
-		 * date/time function
-		 * @param date
-		 * @param returnValue
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		WEEKDAY:function (date, returnValue) {
-			date = dates.get(date);
-			var day = date.getDay();
-
-			returnValue = (returnValue ? returnValue : 1);
-			switch (returnValue) {
-				case 3:
-					switch (day) {
-						case 0:return 7;
-						case 1:return 1;
-						case 2:return 2;
-						case 3:return 3;
-						case 4:return 4;
-						case 5:return 5;
-						case 6:return 6;
-					}
-					break;
-				case 2:
-					switch (day) {
-						case 0:return 6;
-						case 1:return 0;
-						case 2:return 1;
-						case 3:return 2;
-						case 4:return 3;
-						case 5:return 4;
-						case 6:return 5;
-					}
-					break;
-				case 1:
-					day++;
-					break;
-			}
-
-			return day;
-		},
-		/**
-		 * date/time function
-		 * @param date
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		WEEKNUM:function (date) {//TODO: implement week starting
-			date = dates.get(date);
-			return dates.week(date) + 1;
-		},
-		/**
-		 * date/time function
-		 * @param date
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		YEAR:function (date) {
-			date = dates.get(date);
-			return date.getFullYear();
-		},
-		/**
-		 * date/time function
-		 * @param year
-		 * @param month
-		 * @param day
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		DAYSFROM:function (year, month, day) {
-			return Math.floor((new Date() - new Date(year, (month - 1), day)) / dates.dayDiv);
-		},
-		/**
-		 * date/time function
-		 * @param v1
-		 * @param v2
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		DAYS:function (v1, v2) {
-			var date1 = dates.get(v1),
-				date2 = dates.get(v2),
-				ONE_DAY = 1000 * 60 * 60 * 24;
-			return Math.round(Math.abs(date1.getTime() - date2.getTime()) / ONE_DAY);
-		},
-		/**
-		 * date/time function
-		 * @param date
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		DAY:function (date) {
-			date = dates.get(date);
-			return date.getDate();
-		},
-		/**
-		 * date/time function
-		 * @param date1
-		 * @param date2
-		 * @param method
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		DAYS360:function (date1, date2, method) {
-			date1 = dates.get(date1);
-			date2 = dates.get(date2);
-
-			var startDate = date1.getDate(),
-				endDate = date2.getDate(),
-				startIsLastDay = dates.isLastDayOfMonth(date1),
-				endIsLastDay = dates.isLastDayOfMonth(date2),
-				monthCount = dates.diffMonths(date1, date2);
-
-			if (method) {//Euro method
-				startDate = Math.min(startDate, 30);
-				endDate = Math.min(endDate, 30);
-			} else { //Standard
-				if (startIsLastDay) {
-					startDate = 30;
-				}
-				if (endIsLastDay) {
-					if (startDate < 30) {
-						monthCount++;
-						endDate = 1;
-					} else {
-						endDate = 30;
-					}
-				}
-			}
-
-			return (monthCount * 30) + (endDate - startDate);
-		},
-		/**
-		 * date/time function
-		 * @param year
-		 * @param month
-		 * @param day
-		 * @returns {Number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		DATE:function (year, month, day) {
-			var date = new Date(year, month - 1, day),
-				result = new Number(dates.toCentury(date));
-			result.html = dates.toString(date, 'd');
-
-			return result;
-		},
-		/**
-		 * date/time function
-		 * @param date
-		 * @returns {Number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		DATEVALUE:function (date) {
-			date = dates.get(date);
-			var result = new Number(dates.toCentury(date));
-			result.html = dates.toString(date, 'd');
-			return result;
-		},
-		/**
-		 * date/time function
-		 * @param date
-		 * @param months
-		 * @returns {Number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		EDATE:function (date, months) {
-			date = dates.get(date);
-			date.setMonth(date.getMonth() + months);
-			var result = new Number(dates.toCentury(date));
-			result.html = dates.toString(date, 'd');
-			return result;
-		},
-		/**
-		 * date/time function
-		 * @param date
-		 * @param months
-		 * @returns {Number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		EOMONTH:function (date, months) {
-			date = dates.get(date);
-			date.setMonth(date.getMonth() + months + 1);
-			date = new Date(date.getFullYear(), date.getMonth(), 0);
-			var result = new Number(dates.toCentury(date));
-			result.html = dates.toString(date, 'd');
-			return result;
-		},
-		/**
-		 * date/time function
-		 * @param time
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		HOUR:function (time) {
-			time = times.fromMath(time);
-			return time.hour;
-		},
-		/**
-		 * date/time function
-		 * @param time
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		MINUTE:function (time) {
-			return times.fromMath(time).minute;
-		},
-		/**
-		 * date/time function
-		 * @param date
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		MONTH:function (date) {
-			date = dates.get(date);
-			return date.getMonth() + 1;
-		},
-		/**
-		 * date/time function
-		 * @param time
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		SECOND:function (time) {
-			return times.fromMath(time).second;
-		},
-		/**
-		 * date/time function
-		 * @param hour
-		 * @param minute
-		 * @param second
-		 * @returns {number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		TIME:function (hour, minute, second) {
-			second = (second ? second : 0);
-			minute = (minute ? minute : 0);
-			hour = (hour ? hour : 0);
-
-			if (second && second > 60) {
-				var minuteFromSecond = (((second / 60) + '').split('.')[0]) * 1;
-				second = second - (minuteFromSecond * 60);
-				minute += minuteFromSecond;
-			}
-
-			if (minute && minute > 60) {
-				var hourFromMinute = (((minute / 60) + '').split('.')[0]) * 1;
-				minute = minute - (hourFromMinute * 60);
-				hour += hourFromMinute;
-			}
-
-			var millisecond = (hour * 60 * 60 * 1000) + (minute * 60 * 1000) + (second * 1000);
-
-			return millisecond / dates.dayDiv;
-		},
-		/**
-		 * date/time function
-		 * @param time
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		TIMEVALUE:function (time) {
-			if (!isNaN(time)) {
-				return time;
-			}
-			if (/([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm)/.test(time)) {
-				return times.fromString(time, true);
-			} else if (/([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?/.test(time)) {
-				return times.fromString(time);
-			}
-			return 0;
-		},
-		/**
-		 * date/time function
-		 * @param startDate
-		 * @param days
-		 * @param holidays
-		 * @returns {Number}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		WORKDAY:function (startDate, days, holidays) {
-			var workDays = {1:true, 2:true, 3:true, 4:true, 5:true},
-				startDate = dates.get(startDate),
-				days = (days && !isNaN(days) ? days : 0),
-				dayCounter = 0,
-				daysSoFar = 0,
-				workingDate = startDate,
-				result;
-
-			if (holidays) {
-				if (!jQuery.isArray(holidays)) {
-					holidays = [holidays];
-				}
-				holidays = arrHelpers.flatten(holidays);
-				var holidaysTemp = {};
-				jQuery.each(holidays, function (i) {
-					if (holidays[i]) {
-						holidaysTemp[dates.toString(dates.get(holidays[i]), 'd')] = true;
-					}
-				});
-				holidays = holidaysTemp;
-			} else {
-				holidays = {};
-			}
-
-			while (daysSoFar < days) {
-				workingDate = new Date(workingDate.setDate(workingDate.getDate() + 1));
-				if (workDays[workingDate.getDay()]) {
-					if (!holidays[dates.toString(workingDate, 'd')]) {
-						daysSoFar++;
-					}
-				}
-				dayCounter++;
-			}
-
-			result = new Number(dates.toCentury(workingDate));
-			result.html = dates.toString(workingDate, 'd');
-			return result;
-		},
-		/**
-		 * date/time function
-		 * @param startDate
-		 * @param endDate
-		 * @param basis
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		YEARFRAC:function (startDate, endDate, basis) {
-			startDate = dates.get(startDate);
-			endDate = dates.get(endDate);
-
-			if (!startDate || !endDate) {
-				var result = new String('');
-				result.html = '#VALUE!';
-				return result;
-			}
-
-			basis = (basis ? basis : 0);
-			this.html = [];
-
-			var numerator = dates.diff(startDate, endDate, basis),
-				denom = dates.calcAnnualBasis(startDate, endDate, basis);
-			return numerator / denom;
-		},
-
-		/**
-		 * logical function
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		AND:function () {
-			var arg,
-				i = 0,
-				max = arguments.length;
-
-			for (;i < max; i++) {
-				arg = arguments[i];
-				if (arg === undefined || (arg.valueOf !== undefined && arg.valueOf() != true) || arg != true) {
-					return fn.FALSE();
-				}
-			}
-
-			return fn.TRUE();
-		},
-		/**
-		 * logical function
-		 * @returns {Boolean}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		FALSE:function () {
-			var result = new Boolean(false);
-			result.html = 'FALSE';
-			return result;
-		},
-		/**
-		 * logical function
-		 * @param expression
-		 * @param resultTrue
-		 * @param resultFalse
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		IF:function (expression, resultTrue, resultFalse) {
-			var primitiveExpression = expression.valueOf(),
-				str;
-
-			switch (typeof primitiveExpression) {
-				case 'boolean':
-					if (primitiveExpression === true) {
-						return resultTrue;
-					} else {
-						return resultFalse;
-					}
-					break;
-				case 'number':
-					if (primitiveExpression !== 0) {
-						return resultTrue;
-					} else {
-						return resultFalse;
-					}
-					break;
-				case 'string':
-					str = primitiveExpression.toUpperCase();
-					if (str === 'TRUE') {
-						return resultTrue;
-					} else if (str === 'FALSE') {
-						return resultFalse;
-					} else if (str.replace(/ /g, '').length > 0) {
-						return resultTrue;
-					}
-					break;
-			}
-
-			if (primitiveExpression) {
-				return resultTrue;
-			}
-
-			return resultTrue;
-		},
-		/**
-		 * logical function
-		 * @param v
-		 * @returns {Boolean}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		NOT:function (v) {
-			var result;
-			if (!v.valueOf()) {
-				result = new Boolean(true);
-				result.html = 'TRUE';
-			} else {
-				result = new Boolean(false);
-				result.html = 'FALSE';
-			}
-
-			return result;
-		},
-		/**
-		 * logical function
-		 * @returns {Boolean}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		OR:function () {
-			var args = arguments,
-				result,
-				i = args.length - 1,
-				v;
-
-			if (i > -1) {
-				do {
-					v = args[i].valueOf();
-					if (v) {
-						result = new Boolean(true);
-						result.html = 'TRUE';
-						return result;
-					}
-				} while (i--);
-			}
-			result = new Boolean(false);
-			result.html = 'FALSE';
-			return result;
-		},
-		/**
-		 * logical function
-		 * @returns {Boolean}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		TRUE:function () {
-			var result = new Boolean(true);
-			result.html = 'TRUE';
-			return result;
-		},
-		/**
-		 * logical function
-		 * @param left
-		 * @param right
-		 * @returns {Boolean}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		GREATER:function(left, right) {
-			var result;
-
-			if (left > right) {
-				result = new Boolean(true);
-				result.html = 'TRUE';
-			} else {
-				result = new Boolean(false);
-				result.html = 'FALSE';
-			}
-
-			return result;
-		},
-		/**
-		 * logical function
-		 * @param left
-		 * @param right
-		 * @returns {Boolean}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		LESS:function(left, right) {
-			var result;
-
-			if (left < right) {
-				result = new Boolean(true);
-				result.html = 'TRUE';
-			} else {
-				result = new Boolean(false);
-				result.html = 'FALSE';
-			}
-
-			return result;
-		},
-		/**
-		 * logical function
-		 * @param left
-		 * @param right
-		 * @returns {Boolean}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		EQUAL: function(left, right) {
-			var result,
-				leftAsString,
-				rightAsString;
-
-			if (left === undefined || left === null) left = '';
-			if (right === undefined || right === null) right = '';
-
-			//We need to cast, because an internal value may just be a primitive
-			leftAsString = left + '';
-			rightAsString = right + '';
-
-			if (leftAsString == rightAsString) {
-				result = new Boolean(true);
-				result.html = 'TRUE';
-			} else {
-				result = new Boolean(false);
-				result.html = 'FALSE';
-			}
-
-			return result;
-		},
-		/**
-		 * logical function
-		 * @param left
-		 * @param right
-		 * @returns {Boolean}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		GREATER_EQUAL:function(left, right) {
-			var result;
-
-			if (left >= right) {
-				result = new Boolean(true);
-				result.html = 'TRUE';
-			} else {
-				result = new Boolean(false);
-				result.html = 'FALSE';
-			}
-
-			return result;
-		},
-		/**
-		 * logical function
-		 * @param left
-		 * @param right
-		 * @returns {Boolean}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		LESS_EQUAL:function(left, right) {
-			var result;
-
-			if (left <= right) {
-				result = new Boolean(true);
-				result.html = 'TRUE';
-			} else {
-				result = new Boolean(false);
-				result.html = 'FALSE';
-			}
-
-			return result;
-		},
-
-		/**
-		 * html function
-		 * @param v
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		IMG:function (v) {
-			var result = new String('');
-			result.html = $(document.createElement('img'))
-				.attr('src', v);
-			return result;
-		},
-		/**
-		 * html function
-		 * @param v
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		TRIM:function (v) {
-			if (typeof(v) == 'string') {
-				v = $.trim(v);
-			}
-			return v;
-		},
-		/**
-		 * html function
-		 * @param link
-		 * @param [name]
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		HYPERLINK:function (href, name) {
-			name = name || 'LINK';
-			var result = new String(name.valueOf()),
-				link = document.createElement('a');
-			link.setAttribute('href', href);
-			link.setAttribute('target', '_new');
-			link.innerText = link.textContent = name;
-
-			result.html = link;
-
-			return result;
-		},
-		/**
-		 * html function
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		DROPDOWN:function () {
-			var cell = this,
-				wickedGrid = this.wickedGrid,
-				td = this.td,
-				value,
-				v,
-				html,
-				select,
-				id,
-				result,
-				i = 0,
-				max;
-
-			if (td !== null) {
-				$(td).children().detach();
-				html = cell.value.html;
-			}
-
-			if (html === undefined || cell.needsUpdated || html.length < 1) {
-				v = arrHelpers.flatten(arguments);
-				v = arrHelpers.unique(v);
-
-				if (this.id !== null) {
-					id = this.id + '-dropdown';
-				} else if (td !== null) {
-					id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + wickedGrid.I;
-				}
-
-				select = document.createElement('select');
-				select.setAttribute('name', id);
-				select.setAttribute('id', id);
-				select.className = 'wg-dropdown';
-				select.cell = this;
-
-				select.onmouseup = function() {
-					if (this.cell.td !== null) {
-						wickedGrid.cellEdit(this.cell);
-					}
-				};
-				select.onchange = function () {
-					value = new String(this.value);
-					value.html = select;
-					value.cell = cell;
-					cell.value = value;
-					cell.setNeedsUpdated(false);
-					wickedGrid.resolveCell(cell);
-					wickedGrid.trigger('sheetCellEdited', [cell]);
-				};
-
-				max = (v.length <= 50 ? v.length : 50);
-				for (; i < max; i++) {
-					if (v[i]) {
-						var opt = document.createElement('option');
-						opt.setAttribute('value', v[i]);
-						opt.text = opt.innerText = v[i];
-						select.appendChild(opt);
-					}
-				}
-
-				if (!wickedGrid.settings.editable) {
-					select.setAttribute('disabled', true);
-				} else {
-					wickedGrid.settings.$element.bind('sheetKill', function() {
-						td.innerText = td.textContent = cell.value.valueOf();
-					});
-				}
-
-				select.value = cell.value || v[0];
-			}
-
-			if (typeof cell.value !== 'object') {
-				result = new String(cell.value);
-			} else {
-				result = cell.value;
-			}
-
-			result.html = select;
-			return result;
-		},
-		/**
-		 * html function
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		RADIO:function () {
-			var cell = this,
-				wickedGrid = this.wickedGrid,
-				td = this.td,
-				v,
-				value,
-				html,
-				radio,
-				id,
-				result;
-
-			if (td !== null) {
-				html = cell.value.html;
-				$(td).children().detach();
-			}
-
-			if (html === undefined || html.length < 1 || cell.needsUpdated) {
-				v = arrHelpers.flatten(arguments);
-				v = arrHelpers.unique(v);
-
-				if (this.id !== null) {
-					id = this.id + '-radio';
-				} else if (td !== null) {
-					id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + wickedGrid.I;
-				}
-
-				html = document.createElement('span');
-				html.className = 'wg-radio';
-				html.onmousedown = function () {
-					if (this.cell.td !== null) {
-						wickedGrid.cellEdit(cell);
-					}
-				};
-				html.cell = cell;
-
-				for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
-					if (v[i]) {
-						var input = document.createElement('input'),
-							label = document.createElement('span');
-
-						input.setAttribute('type', 'radio');
-						input.setAttribute('name', id);
-						input.className = id;
-						input.value = v[i];
-						if (!wickedGrid.settings.editable) {
-							input.setAttribute('disabled', 'disabled');
-						}
-						input.onchange = function() {
-							value = new String(this.value);
-							value.html = html;
-							value.cell = cell;
-							cell.value = value;
-							cell.setNeedsUpdated(false);
-							wickedGrid.resolveCell(cell);
-							wickedGrid.trigger('sheetCellEdited', [cell]);
-						};
-
-						if (v[i].valueOf() === cell.value.valueOf()) {
-							input.checked = true;
-						}
-						label.textContent = label.innerText = v[i];
-						html.appendChild(input);
-						label.input = input;
-						label.onmousedown = function () {
-							$(this.input).click();
-						};
-						html.appendChild(label);
-						html.appendChild(document.createElement('br'));
-					}
-				}
-
-				wickedGrid.settings.$element.bind('sheetKill', function() {
-					td.textContent = td.innerText = cell.value.valueOf();
-				});
-			}
-
-			if (typeof cell.value !== 'object') {
-				result = new String(cell.value);
-			} else {
-				result = cell.value;
-			}
-
-			result.html = html;
-
-			return result;
-		},
-		/**
-		 * html function
-		 * @param v
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		CHECKBOX:function (v) {
-			if ($.isArray(v)) v = v[0];
-
-			var cell = this,
-				wickedGrid = this.wickedGrid,
-				td = this.td,
-				html,
-				label,
-				checkbox,
-				id,
-				value,
-				result;
-
-			if (td !== null) {
-				html = cell.value.html;
-				$(td).children().detach();
-			}
-
-			if (html === undefined || html.length < 1 || cell.needsUpdated) {
-				if (this.id !== null) {
-					id = this.id + '-checkbox';
-				} else if (td !== null) {
-					id = "checkbox" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + wickedGrid.I;
-				}
-
-				checkbox = document.createElement('input');
-				checkbox.setAttribute('type', 'checkbox');
-				checkbox.setAttribute('name', id);
-				checkbox.setAttribute('id', id);
-				checkbox.className = id;
-				checkbox.value = v;
-				checkbox.onchange = function () {
-					if (this.checked) {
-						value = new String(v);
-					} else {
-						value = new String('');
-					}
-					value.html = html;
-					value.cell = cell;
-					cell.value = value;
-					cell.setNeedsUpdated(false);
-					wickedGrid.resolveCell(cell);
-					wickedGrid.trigger('sheetCellEdited', [cell]);
-				};
-
-				if (!wickedGrid.settings.editable) {
-					checkbox.setAttribute('disabled', 'true');
-				} else {
-					wickedGrid.settings.$element.bind('sheetKill', function() {
-						cell.value = (cell.value == 'true' || checkbox.checked ? v : '');
-						if (cell.td !== null) {
-							cell.td.innerText = cell.td.textContent = cell.value.valueOf();
-						}
-					});
-				}
-
-				html = document.createElement('span');
-				html.className='wg-checkbox';
-				html.appendChild(checkbox);
-				label = document.createElement('span');
-				label.textContent = label.innerText = v;
-				html.appendChild(label);
-				html.appendChild(document.createElement('br'));
-				html.onmousedown = function () {
-					if (this.cell.td !== null) {
-						wickedGrid.cellEdit(this.cell);
-					}
-				};
-				html.cell = cell;
-
-				switch (cell.value.valueOf()) {
-					case v.valueOf():
-					case 'true':
-						checkbox.checked = true;
-				}
-			}
-
-			//when spreadsheet initiates, this will be the value, otherwise we are dependent on the checkbox being checked
-			if (
-				cell.value === 'true'
-				|| checkbox.checked
-			) {
-				result = new String(v);
-			}
-
-			//if no value, than empty string
-			else {
-				result = new String('');
-			}
-
-			result.html = html;
-
-			return result;
-		},
-		/**
-		 * html function
-		 * @param values
-		 * @param legend
-		 * @param title
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		BARCHART:function (values, legend, title) {
-			var result = new String('');
-			result.html = chart.call(this, {
-				type:'bar',
-				data:values,
-				legend:legend,
-				title:title
-			});
-			return result;
-		},
-		/**
-		 * html function
-		 * @param values
-		 * @param legend
-		 * @param title
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		HBARCHART:function (values, legend, title) {
-			var result = new String('');
-			result.html = chart.call(this, {
-				type:'hbar',
-				data:values,
-				legend:legend,
-				title:title
-			});
-			return result;
-		},
-		/**
-		 * html function
-		 * @param valuesX
-		 * @param valuesY
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		LINECHART:function (valuesX, valuesY) {
-			var result = new String('');
-			result.html = chart.call(this, {
-				type:'line',
-				x:{
-					data:valuesX
-				},
-				y:{
-					data:valuesY
-				},
-				title:""
-			});
-			return result;
-		},
-		/**
-		 * html function
-		 * @param values
-		 * @param legend
-		 * @param title
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		PIECHART:function (values, legend, title) {
-			var result = new String('');
-			result.html = chart.call(this, {
-				type:'pie',
-				data:values,
-				legend:legend,
-				title:title
-			});
-			return result;
-		},
-		/**
-		 * html function
-		 * @param valuesX
-		 * @param valuesY
-		 * @param values
-		 * @param legendX
-		 * @param legendY
-		 * @param title
-		 * @returns {String}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		DOTCHART:function (valuesX, valuesY, values, legendX, legendY, title) {
-			var result = new String('');
-			result.html = chart.call(this, {
-				type:'dot',
-				data:(values ? values : valuesX),
-				x:{
-					data:valuesX,
-					legend:legendX
-				},
-				y:{
-					data:(valuesY ? valuesY : valuesX),
-					legend:(legendY ? legendY : legendX)
-				},
-				title:title
-			});
-			return result;
-		},
-		/**
-		 * html function
-		 * @param v
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		CELLREF:function (v) {
-			var wickedGrid = this.wickedGrid;
-			return (wickedGrid.spreadsheets[v] ? wickedGrid.spreadsheets[v] : 'Cell Reference Not Found');
-		},
-
-
-		/**
-		 * cell function
-		 * @param value
-		 * @param range
-		 * @param indexNumber
-		 * @param notExactMatch
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		HLOOKUP:function (value, range, indexNumber, notExactMatch) {
-
-			if (value === undefined) return null;
-
-			var wickedGrid = this.wickedGrid,
-				found,
-				foundCell,
-				result = '',
-				i = 0,
-				max = range.length;
-
-			indexNumber = indexNumber || 1;
-			notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
-
-			if (value !== undefined || ((isNaN(value) && value != '#REF!') || value.length === 0)) {
-
-				for(; i < max; i++) {
-					if (range[i].toString() == value) {
-						found = range[i];
-						break;
-					}
-				}
-
-			} else {
-				arrHelpers.getClosestNum(value, range, function(closest, i) {
-					if (notExactMatch) {
-						found = closest;
-					} else if (closest == value) {
-						found = closest;
-					}
-				});
-			}
-
-			if (found !== undefined) {
-				foundCell = found.cell;
-				foundCell = wickedGrid.getCell(foundCell.sheetIndex, indexNumber, foundCell.columnIndex);
-				if (foundCell !== null) {
-					result = foundCell.updateValue();
-				} else {
-					result = '';
-				}
-			} else {
-				result = new String();
-				result.html = '#N/A';
-			}
-
-			return result;
-		},
-		/**
-		 * cell function
-		 * @param value
-		 * @param range
-		 * @param indexNumber
-		 * @param notExactMatch
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		VLOOKUP:function (value, range, indexNumber, notExactMatch) {
-
-			if (value === undefined) return null;
-
-			var wickedGrid = this.wickedGrid,
-				found,
-				foundCell,
-				result,
-				i = 0,
-				max = range.length;
-
-			notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
-
-
-			if ((isNaN(value) && value != '#REF!') || value.length === 0) {
-				for(; i < max; i++) {
-					if (range[i].toString() == value) {
-						found = range[i];
-						break;
-					}
-				}
-
-			} else {
-				arrHelpers.getClosestNum(value, range, function(closest, i) {
-					if (notExactMatch) {
-						found = closest;
-					} else if (closest == value) {
-						found = closest;
-					}
-				});
-			}
-
-			if (found !== undefined) {
-				foundCell = found.cell;
-				foundCell = wickedGrid.getCell(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
-				if (foundCell !== null) {
-					result = foundCell.value;
-				} else {
-					result = '';
-				}
-			} else {
-				result = new String();
-				result.html = '#N/A';
-			}
-
-			return result;
-		},
-
-		/**
-		 * Gets the adjacent value for the reference array. Ip- reference array
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		TRANSPOSE: function (range) {
-			var i = 0,
-				wickedGrid = this.wickedGrid,
-				sheetIndex = this.sheetIndex,
-				firstValue = range[0],
-				firstCell = firstValue.cell,
-				lastValue = range[range.length - 1],
-				lastCell = lastValue.cell,
-				startRow = firstCell.rowIndex,
-				startColumn = firstCell.columnIndex,
-				rowIndex,
-				columnIndex,
-				cell,
-				cells = [],
-				transposedCell,
-				transposedCells = [],
-				value,
-				max = range.length,
-				error,
-				isOverwrite = false;
-
-			for(;i<max;i++) {
-				value = range[i];
-				cell = value.cell;
-				rowIndex = this.rowIndex + (cell.columnIndex - startColumn);
-				columnIndex = this.columnIndex + (cell.rowIndex - startRow);
-
-				transposedCell = wickedGrid.getCell(this.sheetIndex, rowIndex, columnIndex);
-				if (transposedCell !== null && transposedCell !== this) {
-					if (transposedCell.value != '') {
-						isOverwrite = true;
-					}
-					transposedCells.push(transposedCell);
-					cells.push(cell);
-				}
-			}
-
-			if (isOverwrite) {
-				error = new String('');
-				error.html = '#REF!';
-				return error;
-			}
-
-			i = 0;
-			max = transposedCells.length;
-			for(;i<max;i++) {
-				transposedCell = transposedCells[i];
-				if (transposedCell !== this) {
-					cell = cells[i];
-					transposedCell.setNeedsUpdated();
-					transposedCell.defer = cell;
-					transposedCell.updateValue();
-					transposedCell.addDependency(this);
-				}
-			}
-
-			return firstValue.valueOf();
-		},
-		/**
-		 * cell function
-		 * @param col
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		THISROWCELL:function (col) {
-			var wickedGrid = this.wickedGrid;
-
-			if (isNaN(col)) {
-				col = wickedGrid.cellHandler.columnLabelIndex(col);
-			}
-			return wickedGrid.getCell(this.sheetIndex, this.rowIndex, col).updateValue();
-		},
-		/**
-		 * cell function
-		 * @param row
-		 * @returns {*}
-		 * @memberof WickedGrid.functions
-		 * @this WickedGrid.Cell
-		 */
-		THISCOLCELL:function (row) {
-			var wickedGrid = this.wickedGrid;
-			return wickedGrid.getCell(this.sheetIndex, row, this.columnIndex).updateValue();
-		}
-	};
-
-	return fn;
-})();
 //Creates the control/container for everything above the spreadsheet, removes them if they already exist.controlFactory
 WickedGrid.header = function(wickedGrid) {
   wickedGrid.header().remove();
@@ -7347,74 +4976,6 @@ WickedGrid.menu = function(wickedGrid, menuEntities) {
   }
 
   return menu;
-};
-//Creates the draggable objects for freezing cells
-WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
-  if (wickedGrid.isBusy()) {
-    return false;
-  }
-  var pane = wickedGrid.pane(),
-      actionUI = pane.actionUI,
-      table = pane.table,
-      tBody = pane.tBody,
-      frozenAt = actionUI.frozenAt,
-      scrolledArea = actionUI.scrolledArea;
-
-  if (!(scrolledArea.row <= (frozenAt.row + 1))) {
-    return false;
-  }
-
-  wickedGrid.barHelper().remove();
-
-  var bar = tBody.children[frozenAt.row + 1].children[0],
-      paneRectangle = pane.getBoundingClientRect(),
-      paneTop = paneRectangle.top + document.body.scrollTop,
-      paneLeft = paneRectangle.left + document.body.scrollLeft,
-      handle = document.createElement('div'),
-      $handle = pane.freezeHandleLeft = $(handle)
-          .appendTo(pane)
-          .addClass(wickedGrid.theme.rowFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.rowFreezeHandle)
-          .width(bar.clientWidth)
-          .css('top', (bar.offsetTop - handle.clientHeight + 1) + 'px')
-          .attr('title', wickedGrid.msg.dragToFreezeRow),
-      highlighter;
-
-  wickedGrid.controls.bar.helper[wickedGrid.i] = wickedGrid.barHelper().add(handle);
-  wickedGrid.controls.bar.y.handleFreeze[wickedGrid.i] = $handle;
-
-  wickedGrid.draggable($handle, {
-    axis:'y',
-    start:function () {
-      wickedGrid.setBusy(true);
-
-      highlighter = $(document.createElement('div'))
-          .appendTo(pane)
-          .css('position', 'absolute')
-          .addClass(wickedGrid.theme.barFreezeIndicator + ' ' + wickedGrid.cl.barHelper)
-          .width(handle.clientWidth)
-          .fadeTo(0,0.33);
-    },
-    drag:function() {
-      var target = $handle.nearest(bar.parentNode.parentNode.children).prev();
-      if (target.length && target.position) {
-        highlighter.height(target.position().top + target.height());
-      }
-    },
-    stop:function (e, ui) {
-      highlighter.remove();
-      wickedGrid
-          .setBusy(false)
-          .setDirty(true);
-
-      var target = $.nearest($handle, bar.parentNode.parentNode.children);
-      wickedGrid.barHelper().remove();
-      scrolledArea.row = actionUI.frozenAt.row = Math.max(wickedGrid.getTdLocation(target.children(0)[0]).row - 1, 0);
-      wickedGrid.autoFillerHide();
-    },
-    containment:[paneLeft, paneTop, paneLeft, paneTop + pane.clientHeight - window.scrollBarSize.height]
-  });
-
-  return true;
 };
 WickedGrid.rowResizer = function(wickedGrid, bar, index, pane) {
   wickedGrid.barLeftControls().remove();
@@ -8591,7 +6152,7 @@ WickedGrid.event.Cell = (function() {
 
         if (wickedGrid.isFormulaEditable(td)) {
           //Lets ensure that the cell being edited is actually active
-          if (td !== null && cell.rowIndex > 0 && cell.columnIndex > 0) {
+          if (td !== null && cell.rowIndex > -1 && cell.columnIndex > -1) {
 
             //This should return either a val from textbox or formula, but if fails it tries once more from formula.
             var v = formula.val(),
@@ -9865,15 +7426,16 @@ WickedGrid.loader.HTML = (function() {
 			return cell.getAttribute(attribute);
 		},
 		setCellAttribute: function(cell, attribute, value) {
-			if (attribute === 'value') {
-				cell.innerHTML = value;
-			}
 			cell.setAttribute(attribute, value);
 		},
 		setCellAttributes: function(cell, attributes) {
 			var i;
 			for (i in attributes) if (i !== undefined && attributes.hasOwnProperty(i)) {
-				cell.setAttribute(i, attributes[i]);
+				if (i === 'value') {
+					cell.innerHTML = attributes[i];
+				} else {
+					cell.setAttribute(i, attributes[i]);
+				}
 			}
 
 			return this;
@@ -13892,68 +11454,77 @@ WickedGrid.CellRange = (function() {
 
 	return Constructor;
 })();
-WickedGrid.ColumnMenu = (function() {
-  function ColumnMenu(wickedGrid, menu) {
-    this.wickedGrid = wickedGrid;
-    this.menu = menu;
-    this.index = -1;
-    this.column = null;
+WickedGrid.cellTypeHandlers = {
+	percent: function (cell, value) {
+		//https://stackoverflow.com/questions/2652319/how-do-you-check-that-a-number-is-nan-in-javascript/16988441#16988441
+		//NaN !== NaN
+		if (value !== value) return 0;
+		var num = (isNaN(value) ? Globalize.parseFloat(value) : value * 1),
+			result;
 
-    var self = this,
-        barHelper = this.barHelper = widget(
-          '<div class="' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.columnHelper + '">\
-            <span class="' + wickedGrid.cl.columnButton + ' ' + wickedGrid.theme.columnMenu + ' ' + wickedGrid.theme.columnMenuIcon + '"></span>\
-          </div>'
-        ),
-        button = barHelper.children[0];
+		if (!isNaN(num)) {//success
+			result = new Number(num);
+			result.html = Globalize.format(num, 'p');
+			return result;
+		}
 
-    button.onmousedown = function () {
-      self.showMenu();
-    };
-  }
+		return value;
+	},
+	date: function (cell, value) {
+		if (value !== value) return 0;
+		var date = Globalize.parseDate(value);
+		if (date === null) {
+			return value;
+		} else {
+			cell.valueOverride = date;
+			cell.html = Globalize.format(date, 'd');
+			return value;
+		}
+	},
+	time: function (cell, value) {
+		if (value !== value) return 0;
+		var date = Globalize.parseDate(value);
+		if (date === null) {
+			return value;
+		} else {
+			date.html = Globalize.format(date, 't');
+			return date;
+		}
+	},
+	currency: function (cell, value) {
+		if (value !== value) return 0;
+		var num = (isNaN(value) ? Globalize.parseFloat(value) : value * 1),
+			result;
 
-  ColumnMenu.prototype = {
-    setColumn: function(column, index) {
-      if (this.column !== null) {
-        this.column.classList.remove(this.wickedGrid.cl.columnFocus);
-      }
-      this.hideMenu();
-      this.column = column;
-      this.index = index;
+		if (!isNaN(num)) {//success
+			result = new Number(num);
+			result.html = Globalize.format(num, 'c');
+			return result;
+		}
 
-      return this;
-    },
-    kill: function() {
-      this.hide();
-      this.column = null;
-      this.index = -1;
-      return this;
-    },
-    show: function() {
-      this.wickedGrid.hideMenus();
+		return value;
+	},
+	number: function (cell, value) {
+		if (value !== value) return 0;
+		var radix, result;
 
-      this.column.appendChild(this.barHelper);
-      this.column.classList.add(this.wickedGrid.cl.columnFocus);
+		if (!CellTypeHandlers.endOfNumber) {
+			radix = Globalize.culture().numberFormat['.'];
+			CellTypeHandlers.endOfNumber = new RegExp("([" + (radix == '.' ? "\." : radix) + "])([0-9]*?[1-9]+)?(0)*$");
+		}
 
-      return this;
-    },
-    hide: function() {
-      if (this.barHelper.parentNode === null) return this;
-      this.barHelper.parentNode.removeChild(this.barHelper);
-      return this;
-    },
-    showMenu: function() {
-      this.barHelper.appendChild(this.menu);
-      return this;
-    },
-    hideMenu: function() {
-      if (this.menu.parentNode === null) return this;
-      this.menu.parentNode.removeChild(this.menu);
-      return this;
-    }
-  };
-  return ColumnMenu;
-})();
+		if (!isNaN(value)) {//success
+			result = new Number(value);
+			result.html = Globalize.format(value + '', "n10")
+				.replace(CellTypeHandlers.endOfNumber, function (orig, radix, num) {
+					return (num ? radix : '') + (num || '');
+				});
+			return result;
+		}
+
+		return value;
+	}
+};
 WickedGrid.ColumnContextMenu = (function() {
   function ColumnContextMenu(wickedGrid, menu) {
     this.wickedGrid = wickedGrid;
@@ -13988,6 +11559,2368 @@ WickedGrid.ColumnContextMenu = (function() {
     }
   };
   return ColumnContextMenu;
+})();
+//Creates the draggable objects for freezing cells
+WickedGrid.columnFreezer = function(wickedGrid) {
+  if (!wickedGrid.settings.freezableCells) return false;
+  if (wickedGrid.isBusy()) return false;
+
+  var pane = wickedGrid.pane(),
+      actionUI = pane.actionUI,
+      tBody = pane.tBody,
+      frozenAt = actionUI.frozenAt,
+      scrolledArea = actionUI.scrolledArea;
+
+  if (!(scrolledArea.col <= (frozenAt.col + 1))) {
+    return false;
+  }
+
+  wickedGrid.barHelper().remove();
+
+  var highlighter,
+      bar = tBody.children[0].children[frozenAt.col + 1],
+      paneRectangle = pane.getBoundingClientRect(),
+      paneTop = paneRectangle.top + document.body.scrollTop,
+      paneLeft = paneRectangle.left + document.body.scrollLeft,
+      handle = document.createElement('div'),
+      $handle = pane.freezeHandleTop = $(handle)
+          .appendTo(pane)
+          .addClass(wickedGrid.theme.columnFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.columnFreezeHandle)
+          .height(bar.clientHeight - 1)
+          .css('left', (bar.offsetLeft - handle.clientWidth) + 'px')
+          .attr('title', wickedGrid.msg.dragToFreezeCol);
+
+  wickedGrid.controls.bar.helper[wickedGrid.i] = wickedGrid.barHelper().add(handle);
+  wickedGrid.controls.bar.x.handleFreeze[wickedGrid.i] = $handle;
+
+  wickedGrid.draggable($handle, {
+    axis:'x',
+    start:function () {
+      wickedGrid.setBusy(true);
+
+      highlighter = $(document.createElement('div'))
+          .css('position', 'absolute')
+          .addClass(wickedGrid.theme.barFreezeIndicator + ' ' + wickedGrid.cl.barHelper)
+          .height(bar.clientHeight - 1)
+          .fadeTo(0,0.33)
+          .appendTo(pane);
+    },
+    drag:function() {
+      var target = $handle.nearest(bar.parentNode.children).prev();
+      if (target.length > 0 && typeof target.position === 'function') {
+        highlighter.width(target.position().left + target.width());
+      }
+    },
+    stop:function (e, ui) {
+      highlighter.remove();
+      wickedGrid.setBusy(false);
+      wickedGrid.setDirty(true);
+      var target = $.nearest($handle, bar.parentNode.children);
+
+      wickedGrid.barHelper().remove();
+      scrolledArea.col = actionUI.frozenAt.col = Math.max(wickedGrid.getTdLocation(target[0]).col - 1, 0);
+      wickedGrid.autoFillerHide();
+    },
+    containment:[paneLeft, paneTop, paneLeft + pane.clientWidth - window.scrollBarSize.width, paneTop]
+  });
+
+  return true;
+};
+/**
+ * The functions container of all functions used in WickedGrid
+ * @namespace
+ */
+WickedGrid.functions = (function(r) {
+
+	r = r || function() {};
+
+	/**
+	 * Creates a chart, piggybacks g Raphael JS
+	 * @param {Object} o options
+	 * x: { legend: "", data: [0]}, //x data
+	 * y: { legend: "", data: [0]}, //y data
+	 * title: "",
+	 * data: [0], //chart data
+	 * legend: "",
+	 * td: wickedGrid.getTd(this.sheet, this.row, this.col), //td container for cell
+	 * chart: jQuery('<div class="' + WickedGrid.cl.chart + '" />') //chart
+	 * @returns {jQuery|HTMLElement}
+	 */
+	function chart (o) {
+    //if (typeof Raphael === 'undefined') return null;
+
+		var wickedGrid = this.wickedGrid,
+			loader = wickedGrid.settings.loader,
+			chart = document.createElement('div'),
+			td = this.td,
+			gR,
+			body = document.body;
+
+		body.appendChild(chart);
+
+		function sanitize(v, toNum) {
+			if (!v) {
+				if (toNum) {
+					v = 0;
+				} else {
+					v = "";
+				}
+			} else {
+				if (toNum) {
+					v = arrHelpers.toNumbers(v);
+				} else {
+					v = arrHelpers.flatten(v);
+				}
+			}
+			return v;
+		}
+
+		o = extend({}, o, {
+			x:{ legend:"", data:[0]},
+			y:{ legend:"", data:[0]},
+			title:"",
+			data:[0],
+			legend:""
+		});
+
+		chart.className = WickedGrid.cl.chart;
+		chart.onmousedown = function () {
+			$(td).mousedown();
+		};
+		chart.onmousemove = function () {
+			$(td).mousemove();
+			return false;
+		};
+
+		o.data = sanitize(o.data, true);
+		o.x.data = sanitize(o.x.data, true);
+		o.y.data = sanitize(o.y.data, true);
+		o.legend = sanitize(o.legend);
+		o.x.legend = sanitize(o.x.legend);
+		o.y.legend = sanitize(o.y.legend);
+
+		o.legend = (o.legend ? o.legend : o.data);
+
+		var width = loader.getWidth(this.sheetIndex, this.columnIndex),
+			height = loader.getHeight(this.sheetIndex, this.rowIndex),
+			r = Raphael(chart);
+
+		if (o.title) r.text(width / 2, 10, o.title).attr({"font-size":20});
+
+		switch (o.type) {
+			case "bar":
+				gR = r.barchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
+					.hover(function () {
+						this.flag = r.popup(
+							this.bar.x,
+							this.bar.y,
+							this.bar.value || "0"
+						).insertBefore(this);
+					}, function () {
+						this.flag.animate({
+								opacity:0
+							}, 300,
+
+							function () {
+								this.remove();
+							}
+						);
+					});
+				break;
+			case "hbar":
+				gR = r.hbarchart(width / 8, height / 8, width * 0.8, height * 0.8, o.data, o.legend)
+					.hover(function () {
+						this.flag = r.popup(this.bar.x, this.bar.y, this.bar.value || "0").insertBefore(this);
+					}, function () {
+						this.flag.animate({
+								opacity:0
+							}, 300,
+							function () {
+								this.remove();
+							}
+						);
+					});
+				break;
+			case "line":
+				gR = r.linechart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, {
+					nostroke:false,
+					axis:"0 0 1 1",
+					symbol:"circle",
+					smooth:true
+				})
+					.hoverColumn(function () {
+						this.tags = r.set();
+						if (this.symbols.length) {
+							for (var i = 0, ii = this.y.length; i < ii; i++) {
+								this.tags.push(
+									r
+										.tag(this.x, this.y[i], this.values[i], 160, 10)
+										.insertBefore(this)
+										.attr([
+											{ fill:"#fff" },
+											{ fill:this.symbols[i].attr("fill") }
+										])
+								);
+							}
+						}
+					}, function () {
+						this.tags && this.tags.remove();
+					});
+
+				break;
+			case "pie":
+				gR = r.piechart(width / 2, height / 2, (width < height ? width : height) / 2, o.data, {legend:o.legend})
+					.hover(function () {
+						this.sector.stop();
+						this.sector.scale(1.1, 1.1, this.cx, this.cy);
+
+						if (this.label) {
+							this.label[0].stop();
+							this.label[0].attr({ r:7.5 });
+							this.label[1].attr({ "font-weight":800 });
+						}
+					}, function () {
+						this.sector.animate({ transform:'s1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
+
+						if (this.label) {
+							this.label[0].animate({ r:5 }, 500, "bounce");
+							this.label[1].attr({ "font-weight":400 });
+						}
+					});
+				break;
+			case "dot":
+				gR = r.dotchart(width / 8, height / 8, width * 0.8, height * 0.8, o.x.data, o.y.data, o.data, {
+					symbol:"o",
+					max:10,
+					heat:true,
+					axis:"0 0 1 1",
+					axisxstep:o.x.data.length - 1,
+					axisystep:o.y.data.length - 1,
+					axisxlabels:(o.x.legend ? o.x.legend : o.x.data),
+					axisylabels:(o.y.legend ? o.y.legend : o.y.data),
+					axisxtype:" ",
+					axisytype:" "
+				})
+					.hover(function () {
+						this.marker = this.marker || r.tag(this.x, this.y, this.value, 0, this.r + 2).insertBefore(this);
+						this.marker.show();
+					}, function () {
+						this.marker && this.marker.hide();
+					});
+
+				break;
+		}
+
+		gR.mousedown(function () {
+			$(td).mousedown().mouseup();
+		});
+
+		body.removeChild(chart);
+
+		return chart;
+	}
+
+	var fn = {
+		/**
+		 * information function
+		 * @param v
+		 * @returns {Boolean}
+		 * @this Cell
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		ISNUMBER:function (v) {
+			var result;
+			if (!isNaN(v.valueOf())) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+				return result;
+			}
+			result = new Boolean(false);
+			result.html = 'FALSE'
+			return result;
+		},
+		/**
+		 * information function
+		 * @param v
+		 * @memberof WickedGrid.functions
+		 * @returns {*}
+		 * @this WickedGrid.Cell
+		 */
+		N:function (v) {
+			if (v == null) {
+				return 0;
+			}
+			if (v instanceof Date) {
+				return v.getTime();
+			}
+			if (typeof(v) == 'object') {
+				v = v.toString();
+			}
+			if (typeof(v) == 'string') {
+				v = parseFloat(v.replace(/[\$,\s]/g, ''));
+			}
+			if (isNaN(v)) {
+				return 0;
+			}
+			if (typeof(v) == 'number') {
+				return v;
+			}
+			if (v == true) {
+				return 1;
+			}
+			return 0;
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		ABS:function (v) {
+			return Math.abs(fn.N(v));
+		},
+
+		/**
+		 * math function
+		 * @param value
+		 * @param significance
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		CEILING:function (value, significance) {
+			significance = significance || 1;
+			return (parseInt(value / significance) * significance) + significance;
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		EVEN:function (v) {
+			v = Math.round(v);
+			var even = (v % 2 == 0);
+			if (!even) {
+				if (v > 0) {
+					v++;
+				} else {
+					v--;
+				}
+			}
+			return v;
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		EXP:function (v) {
+			return Math.exp(v);
+		},
+
+		/**
+		 * math function
+		 * @param value
+		 * @param significance
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		FLOOR:function (value, significance) {
+			significance = significance || 1;
+			if (
+				(value < 0 && significance > 0 )
+					|| (value > 0 && significance < 0 )
+				) {
+				var result = new Number(0);
+				result.html = '#NUM';
+				return result;
+			}
+			if (value >= 0) {
+				return Math.floor(value / significance) * significance;
+			} else {
+				return Math.ceil(value / significance) * significance;
+			}
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		INT:function (v) {
+			return Math.floor(fn.N(v));
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		LN:function (v) {
+			return Math.log(v);
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @param n
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		LOG:function (v, n) {
+			n = n || 10;
+			return Math.log(v) / Math.log(n);
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		LOG10:function (v) {
+			return fn.LOG(v);
+		},
+
+		/**
+		 * math function
+		 * @param x
+		 * @param y
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		MOD:function (x, y) {
+			var modulus = x % y;
+			if (y < 0) {
+				modulus *= -1;
+			}
+			return modulus;
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		ODD:function (v) {
+			var gTZ = false;
+			if (v > 0) {
+				v = Math.floor(Math.round(v));
+				gTZ = true;
+			} else {
+				v = Math.ceil(v);
+			}
+
+			var vTemp = Math.abs(v);
+			if ((vTemp % 2) == 0) { //even
+				vTemp++;
+			}
+
+			if (gTZ) {
+				return vTemp;
+			} else {
+				return -vTemp;
+			}
+		},
+
+		/**
+		 * math function
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		PI:function () {
+			return Math.PI;
+		},
+
+		/**
+		 * math function
+		 * @param x
+		 * @param y
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		POWER:function (x, y) {
+			return Math.pow(x, y);
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		SQRT:function (v) {
+			return Math.sqrt(v);
+		},
+
+		/**
+		 * math function
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		RAND:function () {
+			return Math.random();
+		},
+
+		/**
+		 * math function
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		RND:function () {
+			return Math.random();
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @param decimals
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		ROUND:function (v, decimals) {
+			var shift = Math.pow(10, decimals || 0);
+			return Math.round(v * shift) / shift;
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @param decimals
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		ROUNDDOWN:function (v, decimals) {
+			var neg = (v < 0);
+			v = Math.abs(v);
+			decimals = decimals || 0;
+			v = Math.floor(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
+			return (neg ? -v : v);
+		},
+
+		/**
+		 * math function
+		 * @param v
+		 * @param decimals
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		ROUNDUP:function (v, decimals) {
+			var neg = (v < 0);
+			v = Math.abs(v);
+			decimals = decimals || 0;
+			v = Math.ceil(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
+			return (neg ? -v : v);
+		},
+
+		/**
+		 * math function
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		SUM:function () {
+			var sum = 0,
+				values = arrHelpers.flatten(arguments),
+				v,
+				i = 0,
+				max = values.length,
+				_isNaN = isNaN;
+
+			for(; i < max; i++) {
+				v = values[i];
+				if (v === null || v === undefined) continue;
+				v = v.valueOf();
+				if (!_isNaN(v)) {
+					switch (typeof v) {
+						case 'string':
+							sum += (v * 1);
+							break;
+						default:
+							sum += v;
+					}
+				}
+			}
+
+			return sum;
+		},
+
+		/**
+		 * math function
+		 * @param number
+		 * @param digits
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		TRUNC:function (number, digits) {
+			digits = digits || 0;
+			number = number + '';
+
+			if (digits == 0) {
+				return number.split('.').shift();
+			}
+
+			if (number.match('.')) {
+				if (digits == 1) {
+					number = number.substr(0, number.length - 1);
+				} else if (digits == -1) {
+					number = number.split('.').shift();
+					number = number.substr(0, number.length - 1) + '0';
+				}
+			}
+
+			return number;
+		},
+
+
+		/**
+		 * statistical function
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		AVERAGE:function () {
+			return fn.SUM.apply(this, arguments) / fn.COUNT.apply(this, arguments);
+		},
+
+		/**
+		 * statistical function
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		AVG:function () {
+			return fn.AVERAGE.apply(this, arguments);
+		},
+
+		/**
+		 * statistical function
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		COUNT:function () {
+			var count = 0,
+				v = arrHelpers.toNumbers(arguments),
+				i = v.length - 1;
+
+			if (i < 0) {
+				return count;
+			}
+
+			do {
+				if (v[i] !== null) {
+					count++;
+				}
+			} while (i--);
+
+			return count;
+		},
+
+		/**
+		 * statistical function
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		COUNTA:function () {
+			var count = 0,
+				v = arrHelpers.flatten(arguments),
+				i = v.length - 1;
+
+			if (i < 0) {
+				return count;
+			}
+
+			do {
+				if (v[i]) {
+					count++;
+				}
+			} while (i--);
+
+			return count;
+		},
+
+		/**
+		 * statistical function
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		MAX:function () {
+			var v = arrHelpers.toNumbers(arguments),
+				max = v[0],
+				i = v.length - 1;
+
+			if (i < 0) {
+				return 0;
+			}
+
+			do {
+				max = (v[i] > max ? v[i] : max);
+			} while (i--);
+
+			return max;
+		},
+
+		/**
+		 * statistical function
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		MIN:function () {
+			var v = arrHelpers.toNumbers(arguments),
+				min = v[0],
+				i = v.length - 1;
+
+			if (i < 0) {
+				return 0;
+			}
+
+			do {
+				min = (v[i] < min ? v[i] : min);
+			} while (i--);
+
+			return min;
+		},
+
+		/**
+		 * string function
+		 * @param v
+		 * @returns {Number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		ASC:function (v) {
+			return v.charCodeAt(0);
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @returns {string}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		CHAR:function (v) {
+			return String.fromCharCode(v);
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		CLEAN:function (v) {
+			var exp = new RegExp("[\cG\x1B\cL\cJ\cM\cI\cK\x07\x1B\f\n\r\t\v]","g");
+			return v.replace(exp, '');
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		CODE:function (v) {
+			return fn.ASC(v);
+		},
+		/**
+		 * string function
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		CONCATENATE:function () {
+			var arr = arrHelpers.flatten(arguments),
+				result = '',
+				cell = this;
+			jQuery.each(arr, function (i) {
+				result += arr[i];
+			});
+			return result;
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @param decimals
+		 * @param symbol
+		 * @returns {Number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		DOLLAR:function (v, decimals, symbol) {
+			decimals = decimals || 2;
+			symbol = symbol || '$';
+
+			var result = new Number(v),
+				r = fn.FIXED(v, decimals, false);
+
+			if (v >= 0) {
+				result.html = symbol + r;
+			} else {
+				result.html = '(' + symbol + r.slice(1) + ')';
+			}
+			return result;
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @param decimals
+		 * @param noCommas
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		FIXED:function (v, decimals, noCommas) {
+			decimals = (decimals === undefined ? 2 : decimals);
+			var multiplier = Math.pow( 10, decimals),
+				result,
+				v = Math.round( v * multiplier ) / multiplier;
+
+
+
+			result = new String(v.toFixed(decimals));
+			result.html = Globalize.format(v, 'n' + decimals);
+
+			if (noCommas) {
+				result.html = result.html.replace(Globalize.culture().numberFormat[','], '');
+			}
+
+			return result;
+
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @param numberOfChars
+		 * @returns {string}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		LEFT:function (v, numberOfChars) {
+			v = v.valueOf().toString();
+			numberOfChars = numberOfChars || 1;
+			return v.substring(0, numberOfChars);
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		LEN:function (v) {
+			if (!v) {
+				return 0;
+			}
+			return v.length;
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @returns {string}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		LOWER:function (v) {
+			return v.toLowerCase();
+		},
+
+		/**
+		 * string function
+		 * @param v
+		 * @param start
+		 * @param end
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		MID:function (v, start, end) {
+			if (!v || !start || !end) {
+				var result = new Number(0);
+				result.html = 'ERROR';
+				return result;
+			}
+			return v.substring(start - 1, end + start - 1);
+		},
+		/**
+		 * string function
+		 * @param oldText
+		 * @param start
+		 * @param numberOfChars
+		 * @param newText
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		REPLACE:function (oldText, start, numberOfChars, newText) {
+			if (!oldText || !start || !numberOfChars || !newText) {
+				var result = new String('');
+				result.html = 'ERROR';
+				return result;
+			}
+			var result = oldText.split('');
+			result.splice(start - 1, numberOfChars);
+			result.splice(start - 1, 0, newText);
+			return result.join('');
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @param times
+		 * @returns {string}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		REPT:function (v, times) {
+			var result = '';
+			for (var i = 0; i < times; i++) {
+				result += v;
+			}
+			return result;
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @param numberOfChars
+		 * @returns {string}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		RIGHT:function (v, numberOfChars) {
+			numberOfChars = numberOfChars || 1;
+			return v.substring(v.length - numberOfChars, v.length);
+		},
+		/**
+		 * string function
+		 * @param find
+		 * @param body
+		 * @param start
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		SEARCH:function (find, body, start) {
+			start = start || 0;
+			if (start) {
+				body = body.split('');
+				body.splice(0, start - 1);
+				body = body.join('');
+			}
+			var i = body.search(find);
+
+			if (i < 0) {
+				var result = new String('');
+				result.html = '#VALUE!';
+				return result;
+			}
+
+			return start + (start ? 0 : 1) + i;
+		},
+		/**
+		 * string function
+		 * @param text
+		 * @param oldText
+		 * @param newText
+		 * @param nthAppearance
+		 * @returns {string}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		SUBSTITUTE:function (text, oldText, newText, nthAppearance) {
+			nthAppearance = nthAppearance || 0;
+			oldText = new RegExp(oldText, 'g');
+			var i = 1;
+			text = text.replace(oldText, function (match, contents, offset, s) {
+				var result = match;
+				if (nthAppearance) {
+					if (i >= nthAppearance) {
+						result = newText;
+					}
+				} else {
+					result = newText;
+				}
+
+				i++;
+				return result;
+			});
+			return text;
+		},
+		/**
+		 * string function
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		TEXT:function (value, formatText) {
+			//for the time being
+			//TODO: fully implement
+			return value;
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @returns {string}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		UPPER:function (v) {
+			return v.toUpperCase();
+		},
+		/**
+		 * string function
+		 * @param v
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		VALUE:function (v) {
+			if (jQuery.isNumeric(v)) {
+				return v *= 1;
+			} else {
+				var result = new String('');
+				result.html = '#VALUE!';
+				return result;
+			}
+		},
+
+		/**
+		 * date/time function
+		 * @returns {Date}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		NOW:function () {
+			var today = new Date();
+			today.html = dates.toString(today);
+			return today;
+		},
+		/**
+		 * date/time function
+		 * @returns {Number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		TODAY:function () {
+			var today = new Date(),
+				result = new Number(dates.toCentury(today) - 1);
+			result.html = dates.toString(today, 'd');
+			return result;
+		},
+		/**
+		 * date/time function
+		 * @param weeksBack
+		 * @returns {Date}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		WEEKENDING:function (weeksBack) {
+			var date = new Date();
+			date = new Date(
+				date.getFullYear(),
+				date.getMonth(),
+				date.getDate() + 5 - date.getDay() - ((weeksBack || 0) * 7)
+			);
+
+			date.html = dates.toString(date, 'd');
+			return date;
+		},
+		/**
+		 * date/time function
+		 * @param date
+		 * @param returnValue
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		WEEKDAY:function (date, returnValue) {
+			date = dates.get(date);
+			var day = date.getDay();
+
+			returnValue = (returnValue ? returnValue : 1);
+			switch (returnValue) {
+				case 3:
+					switch (day) {
+						case 0:return 7;
+						case 1:return 1;
+						case 2:return 2;
+						case 3:return 3;
+						case 4:return 4;
+						case 5:return 5;
+						case 6:return 6;
+					}
+					break;
+				case 2:
+					switch (day) {
+						case 0:return 6;
+						case 1:return 0;
+						case 2:return 1;
+						case 3:return 2;
+						case 4:return 3;
+						case 5:return 4;
+						case 6:return 5;
+					}
+					break;
+				case 1:
+					day++;
+					break;
+			}
+
+			return day;
+		},
+		/**
+		 * date/time function
+		 * @param date
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		WEEKNUM:function (date) {//TODO: implement week starting
+			date = dates.get(date);
+			return dates.week(date) + 1;
+		},
+		/**
+		 * date/time function
+		 * @param date
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		YEAR:function (date) {
+			date = dates.get(date);
+			return date.getFullYear();
+		},
+		/**
+		 * date/time function
+		 * @param year
+		 * @param month
+		 * @param day
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		DAYSFROM:function (year, month, day) {
+			return Math.floor((new Date() - new Date(year, (month - 1), day)) / dates.dayDiv);
+		},
+		/**
+		 * date/time function
+		 * @param v1
+		 * @param v2
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		DAYS:function (v1, v2) {
+			var date1 = dates.get(v1),
+				date2 = dates.get(v2),
+				ONE_DAY = 1000 * 60 * 60 * 24;
+			return Math.round(Math.abs(date1.getTime() - date2.getTime()) / ONE_DAY);
+		},
+		/**
+		 * date/time function
+		 * @param date
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		DAY:function (date) {
+			date = dates.get(date);
+			return date.getDate();
+		},
+		/**
+		 * date/time function
+		 * @param date1
+		 * @param date2
+		 * @param method
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		DAYS360:function (date1, date2, method) {
+			date1 = dates.get(date1);
+			date2 = dates.get(date2);
+
+			var startDate = date1.getDate(),
+				endDate = date2.getDate(),
+				startIsLastDay = dates.isLastDayOfMonth(date1),
+				endIsLastDay = dates.isLastDayOfMonth(date2),
+				monthCount = dates.diffMonths(date1, date2);
+
+			if (method) {//Euro method
+				startDate = Math.min(startDate, 30);
+				endDate = Math.min(endDate, 30);
+			} else { //Standard
+				if (startIsLastDay) {
+					startDate = 30;
+				}
+				if (endIsLastDay) {
+					if (startDate < 30) {
+						monthCount++;
+						endDate = 1;
+					} else {
+						endDate = 30;
+					}
+				}
+			}
+
+			return (monthCount * 30) + (endDate - startDate);
+		},
+		/**
+		 * date/time function
+		 * @param year
+		 * @param month
+		 * @param day
+		 * @returns {Number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		DATE:function (year, month, day) {
+			var date = new Date(year, month - 1, day),
+				result = new Number(dates.toCentury(date));
+			result.html = dates.toString(date, 'd');
+
+			return result;
+		},
+		/**
+		 * date/time function
+		 * @param date
+		 * @returns {Number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		DATEVALUE:function (date) {
+			date = dates.get(date);
+			var result = new Number(dates.toCentury(date));
+			result.html = dates.toString(date, 'd');
+			return result;
+		},
+		/**
+		 * date/time function
+		 * @param date
+		 * @param months
+		 * @returns {Number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		EDATE:function (date, months) {
+			date = dates.get(date);
+			date.setMonth(date.getMonth() + months);
+			var result = new Number(dates.toCentury(date));
+			result.html = dates.toString(date, 'd');
+			return result;
+		},
+		/**
+		 * date/time function
+		 * @param date
+		 * @param months
+		 * @returns {Number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		EOMONTH:function (date, months) {
+			date = dates.get(date);
+			date.setMonth(date.getMonth() + months + 1);
+			date = new Date(date.getFullYear(), date.getMonth(), 0);
+			var result = new Number(dates.toCentury(date));
+			result.html = dates.toString(date, 'd');
+			return result;
+		},
+		/**
+		 * date/time function
+		 * @param time
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		HOUR:function (time) {
+			time = times.fromMath(time);
+			return time.hour;
+		},
+		/**
+		 * date/time function
+		 * @param time
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		MINUTE:function (time) {
+			return times.fromMath(time).minute;
+		},
+		/**
+		 * date/time function
+		 * @param date
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		MONTH:function (date) {
+			date = dates.get(date);
+			return date.getMonth() + 1;
+		},
+		/**
+		 * date/time function
+		 * @param time
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		SECOND:function (time) {
+			return times.fromMath(time).second;
+		},
+		/**
+		 * date/time function
+		 * @param hour
+		 * @param minute
+		 * @param second
+		 * @returns {number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		TIME:function (hour, minute, second) {
+			second = (second ? second : 0);
+			minute = (minute ? minute : 0);
+			hour = (hour ? hour : 0);
+
+			if (second && second > 60) {
+				var minuteFromSecond = (((second / 60) + '').split('.')[0]) * 1;
+				second = second - (minuteFromSecond * 60);
+				minute += minuteFromSecond;
+			}
+
+			if (minute && minute > 60) {
+				var hourFromMinute = (((minute / 60) + '').split('.')[0]) * 1;
+				minute = minute - (hourFromMinute * 60);
+				hour += hourFromMinute;
+			}
+
+			var millisecond = (hour * 60 * 60 * 1000) + (minute * 60 * 1000) + (second * 1000);
+
+			return millisecond / dates.dayDiv;
+		},
+		/**
+		 * date/time function
+		 * @param time
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		TIMEVALUE:function (time) {
+			if (!isNaN(time)) {
+				return time;
+			}
+			if (/([0]?[1-9]|1[0-2])[:][0-5][0-9]([:][0-5][0-9])?[ ]?(AM|am|aM|Am|PM|pm|pM|Pm)/.test(time)) {
+				return times.fromString(time, true);
+			} else if (/([0]?[0-9]|1[0-9]|2[0-3])[:][0-5][0-9]([:][0-5][0-9])?/.test(time)) {
+				return times.fromString(time);
+			}
+			return 0;
+		},
+		/**
+		 * date/time function
+		 * @param startDate
+		 * @param days
+		 * @param holidays
+		 * @returns {Number}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		WORKDAY:function (startDate, days, holidays) {
+			var workDays = {1:true, 2:true, 3:true, 4:true, 5:true},
+				startDate = dates.get(startDate),
+				days = (days && !isNaN(days) ? days : 0),
+				dayCounter = 0,
+				daysSoFar = 0,
+				workingDate = startDate,
+				result;
+
+			if (holidays) {
+				if (!jQuery.isArray(holidays)) {
+					holidays = [holidays];
+				}
+				holidays = arrHelpers.flatten(holidays);
+				var holidaysTemp = {};
+				jQuery.each(holidays, function (i) {
+					if (holidays[i]) {
+						holidaysTemp[dates.toString(dates.get(holidays[i]), 'd')] = true;
+					}
+				});
+				holidays = holidaysTemp;
+			} else {
+				holidays = {};
+			}
+
+			while (daysSoFar < days) {
+				workingDate = new Date(workingDate.setDate(workingDate.getDate() + 1));
+				if (workDays[workingDate.getDay()]) {
+					if (!holidays[dates.toString(workingDate, 'd')]) {
+						daysSoFar++;
+					}
+				}
+				dayCounter++;
+			}
+
+			result = new Number(dates.toCentury(workingDate));
+			result.html = dates.toString(workingDate, 'd');
+			return result;
+		},
+		/**
+		 * date/time function
+		 * @param startDate
+		 * @param endDate
+		 * @param basis
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		YEARFRAC:function (startDate, endDate, basis) {
+			startDate = dates.get(startDate);
+			endDate = dates.get(endDate);
+
+			if (!startDate || !endDate) {
+				var result = new String('');
+				result.html = '#VALUE!';
+				return result;
+			}
+
+			basis = (basis ? basis : 0);
+			this.html = [];
+
+			var numerator = dates.diff(startDate, endDate, basis),
+				denom = dates.calcAnnualBasis(startDate, endDate, basis);
+			return numerator / denom;
+		},
+
+		/**
+		 * logical function
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		AND:function () {
+			var arg,
+				i = 0,
+				max = arguments.length;
+
+			for (;i < max; i++) {
+				arg = arguments[i];
+				if (arg === undefined || (arg.valueOf !== undefined && arg.valueOf() != true) || arg != true) {
+					return fn.FALSE();
+				}
+			}
+
+			return fn.TRUE();
+		},
+		/**
+		 * logical function
+		 * @returns {Boolean}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		FALSE:function () {
+			var result = new Boolean(false);
+			result.html = 'FALSE';
+			return result;
+		},
+		/**
+		 * logical function
+		 * @param expression
+		 * @param resultTrue
+		 * @param resultFalse
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		IF:function (expression, resultTrue, resultFalse) {
+			var primitiveExpression = expression.valueOf(),
+				str;
+
+			switch (typeof primitiveExpression) {
+				case 'boolean':
+					if (primitiveExpression === true) {
+						return resultTrue;
+					} else {
+						return resultFalse;
+					}
+					break;
+				case 'number':
+					if (primitiveExpression !== 0) {
+						return resultTrue;
+					} else {
+						return resultFalse;
+					}
+					break;
+				case 'string':
+					str = primitiveExpression.toUpperCase();
+					if (str === 'TRUE') {
+						return resultTrue;
+					} else if (str === 'FALSE') {
+						return resultFalse;
+					} else if (str.replace(/ /g, '').length > 0) {
+						return resultTrue;
+					}
+					break;
+			}
+
+			if (primitiveExpression) {
+				return resultTrue;
+			}
+
+			return resultTrue;
+		},
+		/**
+		 * logical function
+		 * @param v
+		 * @returns {Boolean}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		NOT:function (v) {
+			var result;
+			if (!v.valueOf()) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+			}
+
+			return result;
+		},
+		/**
+		 * logical function
+		 * @returns {Boolean}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		OR:function () {
+			var args = arguments,
+				result,
+				i = args.length - 1,
+				v;
+
+			if (i > -1) {
+				do {
+					v = args[i].valueOf();
+					if (v) {
+						result = new Boolean(true);
+						result.html = 'TRUE';
+						return result;
+					}
+				} while (i--);
+			}
+			result = new Boolean(false);
+			result.html = 'FALSE';
+			return result;
+		},
+		/**
+		 * logical function
+		 * @returns {Boolean}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		TRUE:function () {
+			var result = new Boolean(true);
+			result.html = 'TRUE';
+			return result;
+		},
+		/**
+		 * logical function
+		 * @param left
+		 * @param right
+		 * @returns {Boolean}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		GREATER:function(left, right) {
+			var result;
+
+			if (left > right) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+			}
+
+			return result;
+		},
+		/**
+		 * logical function
+		 * @param left
+		 * @param right
+		 * @returns {Boolean}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		LESS:function(left, right) {
+			var result;
+
+			if (left < right) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+			}
+
+			return result;
+		},
+		/**
+		 * logical function
+		 * @param left
+		 * @param right
+		 * @returns {Boolean}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		EQUAL: function(left, right) {
+			var result,
+				leftAsString,
+				rightAsString;
+
+			if (left === undefined || left === null) left = '';
+			if (right === undefined || right === null) right = '';
+
+			//We need to cast, because an internal value may just be a primitive
+			leftAsString = left + '';
+			rightAsString = right + '';
+
+			if (leftAsString == rightAsString) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+			}
+
+			return result;
+		},
+		/**
+		 * logical function
+		 * @param left
+		 * @param right
+		 * @returns {Boolean}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		GREATER_EQUAL:function(left, right) {
+			var result;
+
+			if (left >= right) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+			}
+
+			return result;
+		},
+		/**
+		 * logical function
+		 * @param left
+		 * @param right
+		 * @returns {Boolean}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		LESS_EQUAL:function(left, right) {
+			var result;
+
+			if (left <= right) {
+				result = new Boolean(true);
+				result.html = 'TRUE';
+			} else {
+				result = new Boolean(false);
+				result.html = 'FALSE';
+			}
+
+			return result;
+		},
+
+		/**
+		 * html function
+		 * @param v
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		IMG:function (v) {
+			var result = new String('');
+			result.html = $(document.createElement('img'))
+				.attr('src', v);
+			return result;
+		},
+		/**
+		 * html function
+		 * @param v
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		TRIM:function (v) {
+			if (typeof(v) == 'string') {
+				v = $.trim(v);
+			}
+			return v;
+		},
+		/**
+		 * html function
+		 * @param link
+		 * @param [name]
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		HYPERLINK:function (href, name) {
+			name = name || 'LINK';
+			var result = new String(name.valueOf()),
+				link = document.createElement('a');
+			link.setAttribute('href', href);
+			link.setAttribute('target', '_new');
+			link.innerText = link.textContent = name;
+
+			result.html = link;
+
+			return result;
+		},
+		/**
+		 * html function
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		DROPDOWN:function () {
+			var cell = this,
+				wickedGrid = this.wickedGrid,
+				td = this.td,
+				value,
+				v,
+				html,
+				select,
+				id,
+				result,
+				i = 0,
+				max;
+
+			if (td !== null) {
+				$(td).children().detach();
+				html = cell.value.html;
+			}
+
+			if (html === undefined || cell.needsUpdated || html.length < 1) {
+				v = arrHelpers.flatten(arguments);
+				v = arrHelpers.unique(v);
+
+				if (this.id !== null) {
+					id = this.id + '-dropdown';
+				} else if (td !== null) {
+					id = "dropdown" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + wickedGrid.I;
+				}
+
+				select = document.createElement('select');
+				select.setAttribute('name', id);
+				select.setAttribute('id', id);
+				select.className = 'wg-dropdown';
+				select.cell = this;
+
+				select.onmouseup = function() {
+					if (this.cell.td !== null) {
+						wickedGrid.cellEdit(this.cell);
+					}
+				};
+				select.onchange = function () {
+					value = new String(this.value);
+					value.html = select;
+					value.cell = cell;
+					cell.value = value;
+					cell.setNeedsUpdated(false);
+					wickedGrid.resolveCell(cell);
+					wickedGrid.trigger('sheetCellEdited', [cell]);
+				};
+
+				max = (v.length <= 50 ? v.length : 50);
+				for (; i < max; i++) {
+					if (v[i]) {
+						var opt = document.createElement('option');
+						opt.setAttribute('value', v[i]);
+						opt.text = opt.innerText = v[i];
+						select.appendChild(opt);
+					}
+				}
+
+				if (!wickedGrid.settings.editable) {
+					select.setAttribute('disabled', true);
+				} else {
+					wickedGrid.settings.$element.bind('sheetKill', function() {
+						td.innerText = td.textContent = cell.value.valueOf();
+					});
+				}
+
+				select.value = cell.value || v[0];
+			}
+
+			if (typeof cell.value !== 'object') {
+				result = new String(cell.value);
+			} else {
+				result = cell.value;
+			}
+
+			result.html = select;
+			return result;
+		},
+		/**
+		 * html function
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		RADIO:function () {
+			var cell = this,
+				wickedGrid = this.wickedGrid,
+				td = this.td,
+				v,
+				value,
+				html,
+				radio,
+				id,
+				result;
+
+			if (td !== null) {
+				html = cell.value.html;
+				$(td).children().detach();
+			}
+
+			if (html === undefined || html.length < 1 || cell.needsUpdated) {
+				v = arrHelpers.flatten(arguments);
+				v = arrHelpers.unique(v);
+
+				if (this.id !== null) {
+					id = this.id + '-radio';
+				} else if (td !== null) {
+					id = "radio" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + wickedGrid.I;
+				}
+
+				html = document.createElement('span');
+				html.className = 'wg-radio';
+				html.onmousedown = function () {
+					if (this.cell.td !== null) {
+						wickedGrid.cellEdit(cell);
+					}
+				};
+				html.cell = cell;
+
+				for (var i = 0; i < (v.length <= 25 ? v.length : 25); i++) {
+					if (v[i]) {
+						var input = document.createElement('input'),
+							label = document.createElement('span');
+
+						input.setAttribute('type', 'radio');
+						input.setAttribute('name', id);
+						input.className = id;
+						input.value = v[i];
+						if (!wickedGrid.settings.editable) {
+							input.setAttribute('disabled', 'disabled');
+						}
+						input.onchange = function() {
+							value = new String(this.value);
+							value.html = html;
+							value.cell = cell;
+							cell.value = value;
+							cell.setNeedsUpdated(false);
+							wickedGrid.resolveCell(cell);
+							wickedGrid.trigger('sheetCellEdited', [cell]);
+						};
+
+						if (v[i].valueOf() === cell.value.valueOf()) {
+							input.checked = true;
+						}
+						label.textContent = label.innerText = v[i];
+						html.appendChild(input);
+						label.input = input;
+						label.onmousedown = function () {
+							$(this.input).click();
+						};
+						html.appendChild(label);
+						html.appendChild(document.createElement('br'));
+					}
+				}
+
+				wickedGrid.settings.$element.bind('sheetKill', function() {
+					td.textContent = td.innerText = cell.value.valueOf();
+				});
+			}
+
+			if (typeof cell.value !== 'object') {
+				result = new String(cell.value);
+			} else {
+				result = cell.value;
+			}
+
+			result.html = html;
+
+			return result;
+		},
+		/**
+		 * html function
+		 * @param v
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		CHECKBOX:function (v) {
+			if ($.isArray(v)) v = v[0];
+
+			var cell = this,
+				wickedGrid = this.wickedGrid,
+				td = this.td,
+				html,
+				label,
+				checkbox,
+				id,
+				value,
+				result;
+
+			if (td !== null) {
+				html = cell.value.html;
+				$(td).children().detach();
+			}
+
+			if (html === undefined || html.length < 1 || cell.needsUpdated) {
+				if (this.id !== null) {
+					id = this.id + '-checkbox';
+				} else if (td !== null) {
+					id = "checkbox" + this.sheetIndex + "_" + this.rowIndex + "_" + this.columnIndex + '_' + wickedGrid.I;
+				}
+
+				checkbox = document.createElement('input');
+				checkbox.setAttribute('type', 'checkbox');
+				checkbox.setAttribute('name', id);
+				checkbox.setAttribute('id', id);
+				checkbox.className = id;
+				checkbox.value = v;
+				checkbox.onchange = function () {
+					if (this.checked) {
+						value = new String(v);
+					} else {
+						value = new String('');
+					}
+					value.html = html;
+					value.cell = cell;
+					cell.value = value;
+					cell.setNeedsUpdated(false);
+					wickedGrid.resolveCell(cell);
+					wickedGrid.trigger('sheetCellEdited', [cell]);
+				};
+
+				if (!wickedGrid.settings.editable) {
+					checkbox.setAttribute('disabled', 'true');
+				} else {
+					wickedGrid.settings.$element.bind('sheetKill', function() {
+						cell.value = (cell.value == 'true' || checkbox.checked ? v : '');
+						if (cell.td !== null) {
+							cell.td.innerText = cell.td.textContent = cell.value.valueOf();
+						}
+					});
+				}
+
+				html = document.createElement('span');
+				html.className='wg-checkbox';
+				html.appendChild(checkbox);
+				label = document.createElement('span');
+				label.textContent = label.innerText = v;
+				html.appendChild(label);
+				html.appendChild(document.createElement('br'));
+				html.onmousedown = function () {
+					if (this.cell.td !== null) {
+						wickedGrid.cellEdit(this.cell);
+					}
+				};
+				html.cell = cell;
+
+				switch (cell.value.valueOf()) {
+					case v.valueOf():
+					case 'true':
+						checkbox.checked = true;
+				}
+			}
+
+			//when spreadsheet initiates, this will be the value, otherwise we are dependent on the checkbox being checked
+			if (
+				cell.value === 'true'
+				|| checkbox.checked
+			) {
+				result = new String(v);
+			}
+
+			//if no value, than empty string
+			else {
+				result = new String('');
+			}
+
+			result.html = html;
+
+			return result;
+		},
+		/**
+		 * html function
+		 * @param values
+		 * @param legend
+		 * @param title
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		BARCHART:function (values, legend, title) {
+			var result = new String('');
+			result.html = chart.call(this, {
+				type:'bar',
+				data:values,
+				legend:legend,
+				title:title
+			});
+			return result;
+		},
+		/**
+		 * html function
+		 * @param values
+		 * @param legend
+		 * @param title
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		HBARCHART:function (values, legend, title) {
+			var result = new String('');
+			result.html = chart.call(this, {
+				type:'hbar',
+				data:values,
+				legend:legend,
+				title:title
+			});
+			return result;
+		},
+		/**
+		 * html function
+		 * @param valuesX
+		 * @param valuesY
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		LINECHART:function (valuesX, valuesY) {
+			var result = new String('');
+			result.html = chart.call(this, {
+				type:'line',
+				x:{
+					data:valuesX
+				},
+				y:{
+					data:valuesY
+				},
+				title:""
+			});
+			return result;
+		},
+		/**
+		 * html function
+		 * @param values
+		 * @param legend
+		 * @param title
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		PIECHART:function (values, legend, title) {
+			var result = new String('');
+			result.html = chart.call(this, {
+				type:'pie',
+				data:values,
+				legend:legend,
+				title:title
+			});
+			return result;
+		},
+		/**
+		 * html function
+		 * @param valuesX
+		 * @param valuesY
+		 * @param values
+		 * @param legendX
+		 * @param legendY
+		 * @param title
+		 * @returns {String}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		DOTCHART:function (valuesX, valuesY, values, legendX, legendY, title) {
+			var result = new String('');
+			result.html = chart.call(this, {
+				type:'dot',
+				data:(values ? values : valuesX),
+				x:{
+					data:valuesX,
+					legend:legendX
+				},
+				y:{
+					data:(valuesY ? valuesY : valuesX),
+					legend:(legendY ? legendY : legendX)
+				},
+				title:title
+			});
+			return result;
+		},
+		/**
+		 * html function
+		 * @param v
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		CELLREF:function (v) {
+			var wickedGrid = this.wickedGrid;
+			return (wickedGrid.spreadsheets[v] ? wickedGrid.spreadsheets[v] : 'Cell Reference Not Found');
+		},
+
+
+		/**
+		 * cell function
+		 * @param value
+		 * @param range
+		 * @param indexNumber
+		 * @param notExactMatch
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		HLOOKUP:function (value, range, indexNumber, notExactMatch) {
+
+			if (value === undefined) return null;
+
+			var wickedGrid = this.wickedGrid,
+				found,
+				foundCell,
+				result = '',
+				i = 0,
+				max = range.length;
+
+			indexNumber = indexNumber || 1;
+			notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
+
+			if (value !== undefined || ((isNaN(value) && value != '#REF!') || value.length === 0)) {
+
+				for(; i < max; i++) {
+					if (range[i].toString() == value) {
+						found = range[i];
+						break;
+					}
+				}
+
+			} else {
+				arrHelpers.getClosestNum(value, range, function(closest, i) {
+					if (notExactMatch) {
+						found = closest;
+					} else if (closest == value) {
+						found = closest;
+					}
+				});
+			}
+
+			if (found !== undefined) {
+				foundCell = found.cell;
+				foundCell = wickedGrid.getCell(foundCell.sheetIndex, indexNumber, foundCell.columnIndex);
+				if (foundCell !== null) {
+					result = foundCell.updateValue();
+				} else {
+					result = '';
+				}
+			} else {
+				result = new String();
+				result.html = '#N/A';
+			}
+
+			return result;
+		},
+		/**
+		 * cell function
+		 * @param value
+		 * @param range
+		 * @param indexNumber
+		 * @param notExactMatch
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		VLOOKUP:function (value, range, indexNumber, notExactMatch) {
+
+			if (value === undefined) return null;
+
+			var wickedGrid = this.wickedGrid,
+				found,
+				foundCell,
+				result,
+				i = 0,
+				max = range.length;
+
+			notExactMatch = notExactMatch !== undefined ? notExactMatch : true;
+
+
+			if ((isNaN(value) && value != '#REF!') || value.length === 0) {
+				for(; i < max; i++) {
+					if (range[i].toString() == value) {
+						found = range[i];
+						break;
+					}
+				}
+
+			} else {
+				arrHelpers.getClosestNum(value, range, function(closest, i) {
+					if (notExactMatch) {
+						found = closest;
+					} else if (closest == value) {
+						found = closest;
+					}
+				});
+			}
+
+			if (found !== undefined) {
+				foundCell = found.cell;
+				foundCell = wickedGrid.getCell(foundCell.sheetIndex, foundCell.rowIndex, indexNumber);
+				if (foundCell !== null) {
+					result = foundCell.value;
+				} else {
+					result = '';
+				}
+			} else {
+				result = new String();
+				result.html = '#N/A';
+			}
+
+			return result;
+		},
+
+		/**
+		 * Gets the adjacent value for the reference array. Ip- reference array
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		TRANSPOSE: function (range) {
+			var i = 0,
+				wickedGrid = this.wickedGrid,
+				sheetIndex = this.sheetIndex,
+				firstValue = range[0],
+				firstCell = firstValue.cell,
+				lastValue = range[range.length - 1],
+				lastCell = lastValue.cell,
+				startRow = firstCell.rowIndex,
+				startColumn = firstCell.columnIndex,
+				rowIndex,
+				columnIndex,
+				cell,
+				cells = [],
+				transposedCell,
+				transposedCells = [],
+				value,
+				max = range.length,
+				error,
+				isOverwrite = false;
+
+			for(;i<max;i++) {
+				value = range[i];
+				cell = value.cell;
+				rowIndex = this.rowIndex + (cell.columnIndex - startColumn);
+				columnIndex = this.columnIndex + (cell.rowIndex - startRow);
+
+				transposedCell = wickedGrid.getCell(this.sheetIndex, rowIndex, columnIndex);
+				if (transposedCell !== null && transposedCell !== this) {
+					if (transposedCell.value != '') {
+						isOverwrite = true;
+					}
+					transposedCells.push(transposedCell);
+					cells.push(cell);
+				}
+			}
+
+			if (isOverwrite) {
+				error = new String('');
+				error.html = '#REF!';
+				return error;
+			}
+
+			i = 0;
+			max = transposedCells.length;
+			for(;i<max;i++) {
+				transposedCell = transposedCells[i];
+				if (transposedCell !== this) {
+					cell = cells[i];
+					transposedCell.setNeedsUpdated();
+					transposedCell.defer = cell;
+					transposedCell.updateValue();
+					transposedCell.addDependency(this);
+				}
+			}
+
+			return firstValue.valueOf();
+		},
+		/**
+		 * cell function
+		 * @param col
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		THISROWCELL:function (col) {
+			var wickedGrid = this.wickedGrid;
+
+			if (isNaN(col)) {
+				col = wickedGrid.cellHandler.columnLabelIndex(col);
+			}
+			return wickedGrid.getCell(this.sheetIndex, this.rowIndex, col).updateValue();
+		},
+		/**
+		 * cell function
+		 * @param row
+		 * @returns {*}
+		 * @memberof WickedGrid.functions
+		 * @this WickedGrid.Cell
+		 */
+		THISCOLCELL:function (row) {
+			var wickedGrid = this.wickedGrid;
+			return wickedGrid.getCell(this.sheetIndex, row, this.columnIndex).updateValue();
+		}
+	};
+
+	return fn;
 })();
 
 /**
@@ -14277,6 +14210,74 @@ WickedGrid.RowContextMenu = (function() {
 
   return RowContextMenu;
 })();
+//Creates the draggable objects for freezing cells
+WickedGrid.rowFreezer = function(wickedGrid, index, pane) {
+  if (wickedGrid.isBusy()) {
+    return false;
+  }
+  var pane = wickedGrid.pane(),
+      actionUI = pane.actionUI,
+      table = pane.table,
+      tBody = pane.tBody,
+      frozenAt = actionUI.frozenAt,
+      scrolledArea = actionUI.scrolledArea;
+
+  if (!(scrolledArea.row <= (frozenAt.row + 1))) {
+    return false;
+  }
+
+  wickedGrid.barHelper().remove();
+
+  var bar = tBody.children[frozenAt.row + 1].children[0],
+      paneRectangle = pane.getBoundingClientRect(),
+      paneTop = paneRectangle.top + document.body.scrollTop,
+      paneLeft = paneRectangle.left + document.body.scrollLeft,
+      handle = document.createElement('div'),
+      $handle = pane.freezeHandleLeft = $(handle)
+          .appendTo(pane)
+          .addClass(wickedGrid.theme.rowFreezeHandle + ' ' + wickedGrid.cl.barHelper + ' ' + wickedGrid.cl.rowFreezeHandle)
+          .width(bar.clientWidth)
+          .css('top', (bar.offsetTop - handle.clientHeight + 1) + 'px')
+          .attr('title', wickedGrid.msg.dragToFreezeRow),
+      highlighter;
+
+  wickedGrid.controls.bar.helper[wickedGrid.i] = wickedGrid.barHelper().add(handle);
+  wickedGrid.controls.bar.y.handleFreeze[wickedGrid.i] = $handle;
+
+  wickedGrid.draggable($handle, {
+    axis:'y',
+    start:function () {
+      wickedGrid.setBusy(true);
+
+      highlighter = $(document.createElement('div'))
+          .appendTo(pane)
+          .css('position', 'absolute')
+          .addClass(wickedGrid.theme.barFreezeIndicator + ' ' + wickedGrid.cl.barHelper)
+          .width(handle.clientWidth)
+          .fadeTo(0,0.33);
+    },
+    drag:function() {
+      var target = $handle.nearest(bar.parentNode.parentNode.children).prev();
+      if (target.length && target.position) {
+        highlighter.height(target.position().top + target.height());
+      }
+    },
+    stop:function (e, ui) {
+      highlighter.remove();
+      wickedGrid
+          .setBusy(false)
+          .setDirty(true);
+
+      var target = $.nearest($handle, bar.parentNode.parentNode.children);
+      wickedGrid.barHelper().remove();
+      scrolledArea.row = actionUI.frozenAt.row = Math.max(wickedGrid.getTdLocation(target.children(0)[0]).row - 1, 0);
+      wickedGrid.autoFillerHide();
+    },
+    containment:[paneLeft, paneTop, paneLeft, paneTop + pane.clientHeight - window.scrollBarSize.height]
+  });
+
+  return true;
+};
 WickedGrid.Theme = (function() {
 	function Theme(theme) {
 		theme = theme || WickedGrid.defaultTheme;
