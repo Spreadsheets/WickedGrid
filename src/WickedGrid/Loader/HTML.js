@@ -589,7 +589,11 @@ WickedGrid.loader.HTML = (function() {
 		setCellAttributes: function(cell, attributes) {
 			var i;
 			for (i in attributes) if (i !== undefined && attributes.hasOwnProperty(i)) {
-				cell.setAttribute(i, attributes[i]);
+				if (i === 'value') {
+					cell.innerHTML = attributes[i];
+				} else {
+					cell.setAttribute(i, attributes[i]);
+				}
 			}
 
 			return this;

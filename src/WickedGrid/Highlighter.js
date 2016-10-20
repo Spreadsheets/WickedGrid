@@ -130,16 +130,21 @@ WickedGrid.Highlighter = (function() {
 		 * @param {HTMLElement} td index of bar
 		 */
 		setBar:function (direction, td) {
+			var self = this;
 			switch (direction) {
 				case 'top':
-					this.lastTop
-						.removeClass(this.cssClassBars);
-					this.lastTop = $(td).addClass(this.cssClassBars);
+					this.barCssClass.forEach(function(_class) {
+						self.lastTop
+							.removeClass(_class);
+						self.lastTop = $(td).addClass(_class);
+					});
 					break;
 				case 'left':
-					this.lastLeft
-						.removeClass(this.cssClassBars);
-					this.lastLeft = $(td).addClass(this.cssClassBars);
+					this.barCssClass.forEach(function(_class) {
+						self.lastLeft
+							.removeClass(_class);
+						self.lastLeft = $(td).addClass(_class);
+					});
 					break;
 			}
 
@@ -150,12 +155,14 @@ WickedGrid.Highlighter = (function() {
 		 * Clears bars from being active
 		 */
 		clearBar:function () {
-			this.lastTop
-				.removeClass(this.cssClassBars);
+			var self = this;
+			this.barCssClass.forEach(function(_class) {
+				self.lastTop
+					.removeClass(_class);
+				self.lastLeft
+					.removeClass(_class);
+			});
 			this.lastTop = $([]);
-
-			this.lastLeft
-				.removeClass(this.cssClassBars);
 			this.lastLeft = $([]);
 
 			return this;
@@ -167,8 +174,11 @@ WickedGrid.Highlighter = (function() {
 		 * Sets a tab to be active
 		 */
 		setTab:function (tab) {
+			var self = this;
 			this.clearTab();
-			this.lastTab = tab.addClass(this.cssClassTabs);
+			this.tabsCssClass.forEach(function(_class) {
+				self.lastTab = tab.addClass(_class);
+			});
 
 			return this;
 		},
@@ -177,8 +187,11 @@ WickedGrid.Highlighter = (function() {
 		 * Clears a tab from being active
 		 */
 		clearTab:function () {
-			this.lastTab
-				.removeClass(this.cssClassTabs);
+			var self = this;
+			this.tabsCssClass.forEach(function(_class) {
+				self.lastTab
+					.removeClass(_class);
+			});
 
 			return this;
 		},
