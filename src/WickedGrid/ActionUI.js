@@ -65,7 +65,7 @@ WickedGrid.ActionUI = (function() {
 				element: pane,
 				updateCell: this._updateCell = function(rowVisibleIndex, columnVisibleIndex, td) {
 					var rowIndex = (that.visibleRows.length === 0 ? rowVisibleIndex : that.visibleRows[rowVisibleIndex]),
-						columnIndex = (that.visibleColumns === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]),
+						columnIndex = (that.visibleColumns.length === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]),
 						oldTd;
 
 					if (typeof td._cell === 'object' && td._cell !== null) {

@@ -848,6 +848,11 @@ var WickedGrid = (function() {
 
       loader.addRow(this.i, rowIndex, row);
 
+      // Splice and if needed Increament visible columns
+      pane.actionUI.visibleRows.splice(rowIndex, 0, rowIndex);
+      for (var i=rowIndex+1; i<pane.actionUI.visibleRows.length; i++) {
+        pane.actionUI.visibleRows[i]+=1;
+      }
       pane.actionUI.redrawRows();
 
       if (skipEvent !== true) {
@@ -890,6 +895,11 @@ var WickedGrid = (function() {
 
       loader.addColumn(this.i, columnIndex, column);
 
+      // Splice and if needed Increament visible columns
+      pane.actionUI.visibleColumns.splice(columnIndex, 0, columnIndex);
+      for (var i=columnIndex+1; i<pane.actionUI.visibleColumns.length; i++) {
+        pane.actionUI.visibleColumns[i]+=1;
+      }
       pane.actionUI.redrawColumns();
 
       if (skipEvent !== true) {
@@ -6962,10 +6972,10 @@ WickedGrid.loader.HTML = (function() {
 				);
 			}
 
-			if (rowIndex === undefined) {
+			if (rowIndex === rowsMax) {
 				tBody.appendChild(row);
 			} else if (rowIndex < rowsMax) {
-				tBody.insertBefore(row, rows[rowIndex + 1]);
+				tBody.insertBefore(row, rows[rowIndex]);
 			}
 
 			return this;
@@ -6986,19 +6996,19 @@ WickedGrid.loader.HTML = (function() {
 			tBody = table.querySelector('tBody');
 			rows = tBody.children;
 
-			if (columnIndex === undefined) {
+			if (columnIndex === columnMax) {
 				for (; rowIndex < rowMax; rowIndex++) {
 					row = rows[rowIndex];
 					td = document.createElement('td');
 					spreadsheetCells[rowIndex].loadedFrom = td;
-					row.append(td);
+					row.appendChild(td);
 				}
 			} else if (columnIndex < columnMax) {
 				for (; rowIndex < rowMax; rowIndex++) {
 					row = rows[rowIndex];
 					td = document.createElement('td');
 					spreadsheetCells[rowIndex].loadedFrom = td;
-					row.insertBefore(td, row.children[columnIndex + 1]);
+					row.insertBefore(td, row.children[columnIndex]);
 				}
 			}
 
@@ -9481,7 +9491,7 @@ WickedGrid.ActionUI = (function() {
 				element: pane,
 				updateCell: this._updateCell = function(rowVisibleIndex, columnVisibleIndex, td) {
 					var rowIndex = (that.visibleRows.length === 0 ? rowVisibleIndex : that.visibleRows[rowVisibleIndex]),
-						columnIndex = (that.visibleColumns === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]),
+						columnIndex = (that.visibleColumns.length === 0 ? columnVisibleIndex : that.visibleColumns[columnVisibleIndex]),
 						oldTd;
 
 					if (typeof td._cell === 'object' && td._cell !== null) {
