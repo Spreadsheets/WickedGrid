@@ -24,7 +24,7 @@ WickedGrid.event.Cell = (function() {
 
         if (wickedGrid.isFormulaEditable(td)) {
           //Lets ensure that the cell being edited is actually active
-          if (td !== null && cell.rowIndex > 0 && cell.columnIndex > 0) {
+          if (td !== null && cell.rowIndex > -1 && cell.columnIndex > -1) {
 
             //This should return either a val from textbox or formula, but if fails it tries once more from formula.
             var v = formula.val(),
@@ -260,8 +260,8 @@ WickedGrid.event.Cell = (function() {
       }
 
       //we check here and make sure all values are above 0, so that we get a selected cell
-      loc.columnIndex = loc.columnIndex || 1;
-      loc.rowIndex = loc.rowIndex || 1;
+      //loc.columnIndex = loc.columnIndex || 1;
+      //loc.rowIndex = loc.rowIndex || 1;
 
       //to get the td could possibly make keystrokes slow, we prevent it here so the user doesn't even know we are listening ;)
       if (!cell.isEdit || overrideIsEdit) {

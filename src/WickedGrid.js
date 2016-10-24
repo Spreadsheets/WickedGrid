@@ -848,6 +848,11 @@ var WickedGrid = (function() {
 
       loader.addRow(this.i, rowIndex, row);
 
+      // Splice and if needed Increament visible columns
+      pane.actionUI.visibleRows.splice(rowIndex, 0, rowIndex);
+      for (var i=rowIndex+1; i<pane.actionUI.visibleRows.length; i++) {
+        pane.actionUI.visibleRows[i]+=1;
+      }
       pane.actionUI.redrawRows();
 
       if (skipEvent !== true) {
@@ -890,6 +895,11 @@ var WickedGrid = (function() {
 
       loader.addColumn(this.i, columnIndex, column);
 
+      // Splice and if needed Increament visible columns
+      pane.actionUI.visibleColumns.splice(columnIndex, 0, columnIndex);
+      for (var i=columnIndex+1; i<pane.actionUI.visibleColumns.length; i++) {
+        pane.actionUI.visibleColumns[i]+=1;
+      }
       pane.actionUI.redrawColumns();
 
       if (skipEvent !== true) {
@@ -1938,7 +1948,7 @@ var WickedGrid = (function() {
 
       if (!doNotClearHighlighted) {
         this.highlighter
-            .cell(cell) //highlight the cell and bars
+            .set(cell.td) //highlight the cell and bars
             .setStart(cell)
             .setEnd(cell);
       }

@@ -26,7 +26,7 @@ WickedGrid.Undo = (function() {
 
       var self = this,
           before = (new WickedGrid.CellRange(cells)).clone().cells,
-          after = (typeof fn === 'undefined' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
+          after = (typeof fn !== 'undefined' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
 
       before.id = id;
       after.id = id;

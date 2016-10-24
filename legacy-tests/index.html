@@ -3,16 +3,20 @@
 <head>
 	<title>({{pass}}|{{fail}}) {{title}} · Testify Suite</title>
 	<meta charset="utf-8" />
+	<link rel="stylesheet" type="text/css" href="../wickedgrid.css">
+    <link rel="stylesheet" type="text/css" href="../bower_components/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../bower_components/bootstrap/dist/css/bootstrap-theme.css">
+
 	<script src="../bower_components/testify.js/Testify.js"></script>
 	<script src="../bower_components/vue/dist/vue.js"></script>
-	<script src="../bower_components/jquery-legacy/dist/jquery.js"></script>
-	<script src="../jquery.sheet.js"></script>
+	<script src="../bower_components/megatable.js/megatable.js"></script>
+	<script src="../bower_components/jquery/dist/jquery.js"></script>
+	<script src="../bower_components/MouseWheel/MouseWheel.js"></script>
+	<script src="../bower_components/infiniscroll.js/infiniscroll.js"></script>
+	<script src="../bower_components/thaw.js/thaw.js"></script>
+	<script src="../wickedgrid.js"></script>
 	<script src="../utilities/tableify.js"></script>
 	<script>
-		$.sheet.preLoad('../');
-		$.sheet.defaults.useMultiThreads = false;
-		$.sheet.defaults.useStack = false;
-
 		var tf = new Testify("jQuery.sheet / Sheet");
 	</script>
 
@@ -31,7 +35,12 @@
 	<script src="sheet.instantiation.js"></script-->
 
 </head>
-<body></body>
+<body>
+	<div class="test">
+		<div id="sheet" style="height: 450px;"></div>
+	</div>
+</body>
+
 <script>
 	$(function() {
 		tf.run();

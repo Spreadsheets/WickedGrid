@@ -120,10 +120,10 @@ WickedGrid.loader.HTML = (function() {
 				);
 			}
 
-			if (rowIndex === undefined) {
+			if (rowIndex === rowsMax) {
 				tBody.appendChild(row);
 			} else if (rowIndex < rowsMax) {
-				tBody.insertBefore(row, rows[rowIndex + 1]);
+				tBody.insertBefore(row, rows[rowIndex]);
 			}
 
 			return this;
@@ -144,19 +144,19 @@ WickedGrid.loader.HTML = (function() {
 			tBody = table.querySelector('tBody');
 			rows = tBody.children;
 
-			if (columnIndex === undefined) {
+			if (columnIndex === columnMax) {
 				for (; rowIndex < rowMax; rowIndex++) {
 					row = rows[rowIndex];
 					td = document.createElement('td');
 					spreadsheetCells[rowIndex].loadedFrom = td;
-					row.append(td);
+					row.appendChild(td);
 				}
 			} else if (columnIndex < columnMax) {
 				for (; rowIndex < rowMax; rowIndex++) {
 					row = rows[rowIndex];
 					td = document.createElement('td');
 					spreadsheetCells[rowIndex].loadedFrom = td;
-					row.insertBefore(td, row.children[columnIndex + 1]);
+					row.insertBefore(td, row.children[columnIndex]);
 				}
 			}
 
@@ -589,7 +589,11 @@ WickedGrid.loader.HTML = (function() {
 		setCellAttributes: function(cell, attributes) {
 			var i;
 			for (i in attributes) if (i !== undefined && attributes.hasOwnProperty(i)) {
-				cell.setAttribute(i, attributes[i]);
+				if (i === 'value') {
+					cell.innerHTML = attributes[i];
+				} else {
+					cell.setAttribute(i, attributes[i]);
+				}
 			}
 
 			return this;
