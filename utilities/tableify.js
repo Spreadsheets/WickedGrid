@@ -15,11 +15,12 @@ var tableify = (function(document, TSV) {
 			col;
 
 		table.setAttribute('title', title);
+		tbody = table.appendChild(document.createElement('tbody'))
 
 		while (data.length) {
 			row = data.shift();
 			tr = document.createElement('tr');
-			table.appendChild(tr);
+			tbody.appendChild(tr);
 			while (row.length) {
 				col = row.shift();
 				td = document.createElement('td');
