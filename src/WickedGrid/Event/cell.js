@@ -116,35 +116,35 @@ WickedGrid.event.Cell = (function() {
       var wickedGrid = this.wickedGrid,
           grid = wickedGrid.orderedGrid(wickedGrid.highlighter),
           size = wickedGrid.sheetSize(),
-          cellActive = wickedGrid.cellActive,
+          cellActive = wickedGrid.cellActive(),
           highlighter = wickedGrid.highlighter;
 
       if (cellActive === null) return false;
 
       switch (e.keyCode) {
         case key.UP:
-          if (grid.startRowIndex < cellActive.rowIndex) {
-            grid.startRowIndex--;
-            grid.startRowIndex = grid.startRowIndex > 0 ? grid.startRowIndex : 1;
+          if (grid.endRowIndex > cellActive.rowIndex) {
+            grid.endRowIndex--;
+            grid.endRowIndex = grid.endRowIndex > 0 ? grid.endRowIndex : 0;
             break;
           }
 
-          grid.endRowIndex--;
-          grid.endRowIndex = grid.endRowIndex > 0 ? grid.endRowIndex : 1;
+          grid.startRowIndex--;
+          grid.startRowIndex = grid.startRowIndex > 0 ? grid.startRowIndex : 0;
 
           break;
         case key.DOWN:
           //just beginning the highlight
           if (grid.startRowIndex === grid.endRowIndex) {
-            grid.startRowIndex++;
-            grid.startRowIndex = grid.startRowIndex < size.rows ? grid.startRowIndex : size.rows;
+            grid.endRowIndex++;
+            grid.endRowIndex = grid.endRowIndex < size.rows ? grid.endRowIndex : size.rows;
             break;
           }
 
           //if the highlight is above the active cell, then we have selected up and need to move down
-          if (grid.startRowIndex < cell.rowIndex) {
+          if (grid.startRowIndex < cellActive.rowIndex) {
             grid.startRowIndex++;
-            grid.startRowIndex = grid.startRowIndex > 0 ? grid.startRowIndex : 1;
+            grid.startRowIndex = grid.startRowIndex < size.rows ? grid.startRowIndex : size.rows;
             break;
           }
 
@@ -154,18 +154,18 @@ WickedGrid.event.Cell = (function() {
 
           break;
         case key.LEFT:
-          if (grid.startColumnIndex < cell.columnIndex) {
-            grid.startColumnIndex--;
-            grid.startColumnIndex = grid.startColumnIndex > 0 ? grid.startColumnIndex : 1;
+          if (grid.endColumnIndex > cellActive.columnIndex) {
+            grid.endColumnIndex--;
+            grid.endColumnIndex = grid.endColumnIndex > 0 ? grid.endColumnIndex : 0;
             break;
           }
 
-          grid.endColumnIndex--;
-          grid.endColumnIndex = grid.endColumnIndex > 0 ? grid.endColumnIndex : 1;
+          grid.startColumnIndex--;
+          grid.startColumnIndex = grid.startColumnIndex > 0 ? grid.startColumnIndex : 0;
 
           break;
         case key.RIGHT:
-          if (grid.startColumnIndex < cell.columnIndex) {
+          if (grid.startColumnIndex < cellActive.columnIndex) {
             grid.startColumnIndex++;
             grid.startColumnIndex = grid.startColumnIndex < size.cols ? grid.startColumnIndex : size.cols;
             break;
