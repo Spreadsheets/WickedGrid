@@ -2300,7 +2300,7 @@ var WickedGrid = (function() {
           .setChanged(true);
 
         cell.updateValue(function() {
-          if (cb) cb(cell);
+          if (typeof cb === 'function') cb(cell);
 
           self.trigger('sheetCalculation', [
             {which:'cell', cell: cell}
@@ -2332,7 +2332,7 @@ var WickedGrid = (function() {
         .setChanged(true);
 
       cell.updateValue(function() {
-        if (cb) cb(cell);
+        if (typeof cb === 'function') cb(cell);
 
         self.trigger('sheetCalculation', [
           {which:'cell', cell: cell}
@@ -2458,6 +2458,7 @@ var WickedGrid = (function() {
           cell,
           columnMax = row.length,
           loader = this.settings.loader;
+          rowMax = loader.size(this.i).rows;
 
       this.setChanged(true);
 
@@ -2521,7 +2522,7 @@ var WickedGrid = (function() {
 
       loader.deleteColumn(this.i, columnIndex);
 
-      for (;rowIndex < rowMax; rowIndex++) {
+      for (;rowIndex < rowMax.rows; rowIndex++) {
         cell = rows[rowIndex].splice(columnIndex, 1)[0];
 
         cell.setNeedsUpdated(false);
@@ -2535,7 +2536,14 @@ var WickedGrid = (function() {
       if (pane.inPlaceEdit) {
         pane.inPlaceEdit.goToTd();
       }
+      
+      // Splice and if needed Decrement visible columns
+      pane.actionUI.visibleColumns.splice(columnIndex, 1);
+      for (var i=columnIndex; i<pane.actionUI.visibleColumns.length; i++) {
+        pane.actionUI.visibleColumns[i]-=1;
+      }
 
+      pane.actionUI.megaTable.removeColumn(columnIndex);
       this.trigger('sheetDeleteColumn', columnIndex);
     },
 
@@ -7062,7 +7070,7 @@ WickedGrid.loader.HTML = (function() {
 				row = rows[rowIndex];
 				columns = row.children;
 
-				if (columnIndex.length > columnIndex) {
+				if (columns.length > columnIndex) {
 					row.removeChild(columns[columnIndex]);
 				}
 			}
