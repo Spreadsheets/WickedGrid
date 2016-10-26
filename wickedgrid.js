@@ -2543,7 +2543,7 @@ var WickedGrid = (function() {
         pane.actionUI.visibleColumns[i]-=1;
       }
 
-      pane.actionUI.megaTable.removeColumn(columnIndex);
+      pane.actionUI.redrawColumns();
       this.trigger('sheetDeleteColumn', columnIndex);
     },
 
