@@ -1,4 +1,4 @@
-WickedGrid.customTab = function(wickedGrid) {
+WickedGrid.customTab = function(wickedGrid, title) {
   var tab = document.createElement('span'),
       $tab = $(tab).appendTo(wickedGrid.tabContainer());
 

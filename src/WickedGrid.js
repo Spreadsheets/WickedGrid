@@ -843,12 +843,19 @@ var WickedGrid = (function() {
       for(;columnIndex < columnMax; columnIndex++) {
         row.push(new WickedGrid.Cell(sheetIndex, null, this));
       }
+      
+      if (columnIndex === 0) {
+        row.push(new WickedGrid.Cell(sheetIndex, null, this));
+      }
 
       spreadsheet.splice(rowIndex, 0, row);
 
       loader.addRow(this.i, rowIndex, row);
 
       // Splice and if needed Increament visible columns
+      if (pane.actionUI.visibleColumns.length === 0) {
+        pane.actionUI.visibleColumns[0] = 0;
+      }
       pane.actionUI.visibleRows.splice(rowIndex, 0, rowIndex);
       for (var i=rowIndex+1; i<pane.actionUI.visibleRows.length; i++) {
         pane.actionUI.visibleRows[i]+=1;
@@ -886,6 +893,10 @@ var WickedGrid = (function() {
         columnIndex++;
       }
 
+      if (rowMax === 0) {
+        return this.addRow(true);
+      }
+
       for(;rowIndex < rowMax; rowIndex++) {
         cell = new WickedGrid.Cell(sheetIndex, null, this);
         column.push(cell);
@@ -896,6 +907,9 @@ var WickedGrid = (function() {
       loader.addColumn(this.i, columnIndex, column);
 
       // Splice and if needed Increament visible columns
+      if (pane.actionUI.visibleRows.length === 0) {
+        pane.actionUI.visibleColumns[0] = 0;
+      }
       pane.actionUI.visibleColumns.splice(columnIndex, 0, columnIndex);
       for (var i=columnIndex+1; i<pane.actionUI.visibleColumns.length; i++) {
         pane.actionUI.visibleColumns[i]+=1;
@@ -1125,9 +1139,9 @@ var WickedGrid = (function() {
      * @param {Number} i index of spreadsheet within instance
      */
     switchSheet:function (i) {
-      if (n(i)) {
-        return false;
-      }
+      //if (n(i)) {
+      //  return false;
+      //}
 
       if (i == -1) {
         this.addSheet();
@@ -2356,7 +2370,7 @@ var WickedGrid = (function() {
       this.setActiveSheet(this.sheetCount);
 
       this.sheetCount++;
-
+      this.spreadsheets.push([]);
       this.sheetSyncSize();
 
       var pane = this.pane();
@@ -2829,15 +2843,16 @@ var WickedGrid = (function() {
               return;
             }
 
-            tab = WickedGrid.customTab(loader.title(i))
+            var title = loader.title(i) || self.msg.sheetTitleDefault.replace(/[{]index[}]/gi, i + 1);
+            tab = WickedGrid.customTab(self, title)
                 .mousedown(function () {
                   showSpreadsheet();
-                  this.tab().insertBefore(this);
+                  self.tab().insertBefore(this);
                   $(this).remove();
                   return false;
                 });
 
-            if (s.loader.isHidden(i)) {
+            if (self.loader.isHidden(i)) {
               tab.hide();
             }
           };
@@ -2873,7 +2888,7 @@ var WickedGrid = (function() {
      * creates a new sheet from size from prompt
      */
     newSheet:function () {
-      this.settings.element
+      this.settings.$element
         .html(this.makeTable())
         .sheet(this.settings);
     },

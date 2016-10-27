@@ -119,6 +119,13 @@ WickedGrid.loader.HTML = (function() {
 					spreadsheetRow[columnIndex].loadedFrom = document.createElement('td')
 				);
 			}
+			
+			if (columnIndex === 0) {
+        row.appendChild(
+					spreadsheetRow[columnIndex].loadedFrom = document.createElement('td')
+				);
+      }
+
 
 			if (rowIndex === rowsMax) {
 				tBody.appendChild(row);
@@ -573,6 +580,14 @@ WickedGrid.loader.HTML = (function() {
 		},
 		addSpreadsheet: function(table, atIndex) {
 			table = table || document.createElement('table');
+			
+			// Add tbody
+			if (!$(table).find('tbody').length) {
+				var tbody = document.createElement('tbody');
+				$(tbody).html($(table).html());
+				$(table).html($(tbody));
+			}
+
 			if (atIndex === undefined) {
 				this.tables.push(table);
 			} else {

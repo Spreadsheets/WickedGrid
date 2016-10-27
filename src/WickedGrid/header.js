@@ -31,11 +31,11 @@ WickedGrid.header = function(wickedGrid) {
     if (s.headerMenu) {
       menu = document.createElement('div');
       $menu = $(menu);
-      menu.className = wickedGrid.cl.headerMenu + ' ' + wickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed;
+      menu.className = wickedGrid.cl.headerMenu + ' ' + wickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed + ' ' + wickedGrid.cl.menu;
       header.appendChild(menu);
 
       wickedGrid.controls.headerMenu[wickedGrid.i] = $menu
-          .append(s.headerMenu)
+          .append(s.headerMenu(wickedGrid))
           .children()
           .addClass(wickedGrid.theme.menuFixed);
 
