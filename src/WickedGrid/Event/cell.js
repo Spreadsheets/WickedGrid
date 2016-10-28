@@ -50,7 +50,7 @@ WickedGrid.event.Cell = (function() {
                 if ((loadedFrom = cell.loadedFrom) !== null) {
                   loader.setCellAttributes(loadedFrom, {
                     'cache': u,
-                    'formula': '',
+                    'data-formula': '',
                     'value': v,
                     'parsedFormula': null
                   });

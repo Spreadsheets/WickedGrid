@@ -769,7 +769,7 @@ var WickedGrid = (function() {
         if (qty > 0) {
 
           for (;i < qty; i++) {
-            self.addColumn(rowIndex, isAfter, true);
+            self.addRows(rowIndex, isAfter, true);
           }
 
           self.trigger('sheetAddRow', [rowIndex, isAfter, qty]);
@@ -3327,8 +3327,8 @@ var WickedGrid = (function() {
       }
 
       return {
-        col: td.cellIndex,
-        row: td.parentNode.rowIndex + rowOffset
+        col: td.cellIndex === 0 ? 0 : td.cellIndex-1,
+        row: td.parentNode.rowIndex === 0 ? 0 + rowOffset : td.parentNode.rowIndex+ rowOffset-1
       };
     },
 
@@ -6215,7 +6215,7 @@ WickedGrid.event.Cell = (function() {
                 if ((loadedFrom = cell.loadedFrom) !== null) {
                   loader.setCellAttributes(loadedFrom, {
                     'cache': u,
-                    'formula': '',
+                    'data-formula': '',
                     'value': v,
                     'parsedFormula': null
                   });
@@ -6618,7 +6618,7 @@ WickedGrid.event.Document = (function() {
      */
     redo:function (e) {
       if (e.ctrlKey && !this.wickedGrid.cellLast.isEdit) {
-        this.wickedGrid.undo.manager.redo();
+        this.wickedGrid.undo.undoManager.redo();
         return false;
       }
       return true;
@@ -6631,7 +6631,7 @@ WickedGrid.event.Document = (function() {
      */
     undo:function (e) {
       if (e.ctrlKey && !this.wickedGrid.cellLast.isEdit) {
-        this.wickedGrid.undo.manager.undo();
+        this.wickedGrid.undo.undoManager.undo();
         return false;
       }
       return true;
@@ -10260,7 +10260,7 @@ WickedGrid.Cell = (function() {
 						cell.loader
 							.setCellAttributes(cell.loadedFrom, {
 								'cache': (typeof cache !== 'object' ? cache : null),
-								'formula': cell.formula,
+								'data-formula': cell.formula,
 								'parsedFormula': cell.parsedFormula,
 								'value': cell.value + '',
 								'cellType': cell.cellType,
@@ -14470,7 +14470,7 @@ WickedGrid.Undo = (function() {
 
       var self = this,
           before = (new WickedGrid.CellRange(cells)).clone().cells,
-          after = (typeof fn !== 'undefined' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
+          after = (typeof fn === 'function' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
 
       before.id = id;
       after.id = id;
@@ -14513,26 +14513,15 @@ WickedGrid.Undo = (function() {
       for (i = 0; i < clones.length; i++) {
         clone = clones[i];
         loc = wickedGrid.getTdLocation(clone.td);
-        cell = wickedGrid.spreadsheets[clone.sheetIndex][loc.row][loc.col];
-
-        //TODO add clone method to WickedGrid.Cell
-        cell.value = clone.value;
-        cell.formula = clone.formula;
-        td = cell.td = clone.td;
-        cell.dependencies = clone.dependencies;
-        cell.needsUpdated = clone.needsUpdated;
-        cell.calcCount = clone.calcCount;
-        cell.sheetIndex = clone.sheetIndex;
-        cell.rowIndex = loc.row;
-        cell.columnIndex = loc.col;
-        cell.state = clone.state;
-        cell.jS = clone.jS;
-        td.setAttribute('style', clone.style);
-        td.setAttribute('class', clone.cl);
+        cell = clone.clone(); 
+        wickedGrid.spreadsheets[clone.sheetIndex][loc.row][loc.col] = cell;
 
         cell.setNeedsUpdated();
         cell.updateValue();
       }
+      
+      wickedGrid.pane().actionUI.redrawColumns();
+      wickedGrid.pane().actionUI.redrawRows();
     }
   };
 

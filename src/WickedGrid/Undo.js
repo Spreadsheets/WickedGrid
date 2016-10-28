@@ -26,7 +26,7 @@ WickedGrid.Undo = (function() {
 
       var self = this,
           before = (new WickedGrid.CellRange(cells)).clone().cells,
-          after = (typeof fn !== 'undefined' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
+          after = (typeof fn === 'function' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
 
       before.id = id;
       after.id = id;
@@ -69,26 +69,15 @@ WickedGrid.Undo = (function() {
       for (i = 0; i < clones.length; i++) {
         clone = clones[i];
         loc = wickedGrid.getTdLocation(clone.td);
-        cell = wickedGrid.spreadsheets[clone.sheetIndex][loc.row][loc.col];
-
-        //TODO add clone method to WickedGrid.Cell
-        cell.value = clone.value;
-        cell.formula = clone.formula;
-        td = cell.td = clone.td;
-        cell.dependencies = clone.dependencies;
-        cell.needsUpdated = clone.needsUpdated;
-        cell.calcCount = clone.calcCount;
-        cell.sheetIndex = clone.sheetIndex;
-        cell.rowIndex = loc.row;
-        cell.columnIndex = loc.col;
-        cell.state = clone.state;
-        cell.jS = clone.jS;
-        td.setAttribute('style', clone.style);
-        td.setAttribute('class', clone.cl);
+        cell = clone.clone(); 
+        wickedGrid.spreadsheets[clone.sheetIndex][loc.row][loc.col] = cell;
 
         cell.setNeedsUpdated();
         cell.updateValue();
       }
+      
+      wickedGrid.pane().actionUI.redrawColumns();
+      wickedGrid.pane().actionUI.redrawRows();
     }
   };
 

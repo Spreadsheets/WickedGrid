@@ -769,7 +769,7 @@ var WickedGrid = (function() {
         if (qty > 0) {
 
           for (;i < qty; i++) {
-            self.addColumn(rowIndex, isAfter, true);
+            self.addRows(rowIndex, isAfter, true);
           }
 
           self.trigger('sheetAddRow', [rowIndex, isAfter, qty]);
@@ -3327,8 +3327,8 @@ var WickedGrid = (function() {
       }
 
       return {
-        col: td.cellIndex,
-        row: td.parentNode.rowIndex + rowOffset
+        col: td.cellIndex === 0 ? 0 : td.cellIndex-1,
+        row: td.parentNode.rowIndex === 0 ? 0 + rowOffset : td.parentNode.rowIndex+ rowOffset-1
       };
     },
 

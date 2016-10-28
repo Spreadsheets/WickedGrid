@@ -45,7 +45,7 @@ WickedGrid.event.Document = (function() {
      */
     redo:function (e) {
       if (e.ctrlKey && !this.wickedGrid.cellLast.isEdit) {
-        this.wickedGrid.undo.manager.redo();
+        this.wickedGrid.undo.undoManager.redo();
         return false;
       }
       return true;
@@ -58,7 +58,7 @@ WickedGrid.event.Document = (function() {
      */
     undo:function (e) {
       if (e.ctrlKey && !this.wickedGrid.cellLast.isEdit) {
-        this.wickedGrid.undo.manager.undo();
+        this.wickedGrid.undo.undoManager.undo();
         return false;
       }
       return true;
