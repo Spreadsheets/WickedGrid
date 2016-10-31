@@ -10179,8 +10179,8 @@ WickedGrid.Cell = (function() {
 					}
 					this.value = new String(this.value);
 					this.value.cell = this;
-					this.needsUpdated = false;
 					this.updateDependencies();
+          //this.needsUpdated = false;
 
 					if (callback !== u) {
 						callback.call(this, this.value);
@@ -10430,6 +10430,7 @@ WickedGrid.Cell = (function() {
 			if (this.dependencies.length === 0) {
 				this.dependencies = dependencies;
 			}
+
 		},
 
 		/**
@@ -11281,9 +11282,9 @@ WickedGrid.CellHandler = (function(Math) {
 			if (cachedRange !== u) {
 				useCache = true;
 				max = cachedRange.length;
-				for (i = 0; i < max; i++) {
-					if (cachedRange[i].needsUpdated) {
-						useCache = false
+				for (var k = 0; k < max; k++) {
+					if (cachedRange[k].cell.needsUpdated) {
+						useCache = false;
 					}
 				}
 

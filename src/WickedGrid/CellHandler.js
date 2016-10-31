@@ -362,9 +362,9 @@ WickedGrid.CellHandler = (function(Math) {
 			if (cachedRange !== u) {
 				useCache = true;
 				max = cachedRange.length;
-				for (i = 0; i < max; i++) {
-					if (cachedRange[i].needsUpdated) {
-						useCache = false
+				for (var k = 0; k < max; k++) {
+					if (cachedRange[k].cell.needsUpdated) {
+						useCache = false;
 					}
 				}
 
