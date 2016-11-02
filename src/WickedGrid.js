@@ -769,7 +769,7 @@ var WickedGrid = (function() {
         if (qty > 0) {
 
           for (;i < qty; i++) {
-            self.addRows(rowIndex, isAfter, true);
+            self.addRow(rowIndex, isAfter, true);
           }
 
           self.trigger('sheetAddRow', [rowIndex, isAfter, qty]);
@@ -3027,9 +3027,10 @@ var WickedGrid = (function() {
      */
     cellFind:function (v) {
       var settings = this.settings,
-          msg = this.msg;
+          msg = this.msg,
+          self = this;
       function find (v) {
-        var trs = this.table()
+        var trs = $(self.tables()[self.i])
             .children('tbody')
             .children('tr');
 
@@ -3046,7 +3047,7 @@ var WickedGrid = (function() {
 
           o = o.eq(0);
           if (o.length > 0) {
-            this.cellEdit(o._cell);
+            self.cellEdit(o._cell);
           } else {
             settings.alert(msg.cellNoFind);
           }
@@ -3405,7 +3406,7 @@ var WickedGrid = (function() {
      * @returns {jQuery|Element}
      */
     tables:function (tables, useActualTables) {
-      tables = tables || this.tables();
+      tables = tables || this.loader.tables;
       var clonedTables = [],
           i = tables.length - 1,
           j,
@@ -3442,8 +3443,7 @@ var WickedGrid = (function() {
         clonedTables[i] = table;
       } while (i-- > 0);
 
-      //TODO: remove sheetDecorateRemove
-      return this.sheetDecorateRemove(false, $(clonedTables));
+      return clonedTables;
     },
 
     /**
