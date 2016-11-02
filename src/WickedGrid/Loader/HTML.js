@@ -210,7 +210,7 @@ WickedGrid.loader.HTML = (function() {
 				row = rows[rowIndex];
 				columns = row.children;
 
-				if (columnIndex.length > columnIndex) {
+				if (columns.length > columnIndex) {
 					row.removeChild(columns[columnIndex]);
 				}
 			}
