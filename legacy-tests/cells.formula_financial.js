@@ -1,13 +1,15 @@
 tf.test('Formula Financial: FV', function() {
+	$('#sheet').html("");
 	var table = tableify('=FV(7.5%/12, 2*12, -250, -5000, 1)'),
-		div = $('<div>')
-			.append(table)
-			.sheet(),
-		jS = div.getSheet(),
-		A1 = jS.getCell(0, 1, 1);
+		div = $('#sheet')
+			.append(table),
+		td,
+		headers,
+		wg = setup(div[0]),
+		cell = wg.getCell(0, 0, 0);
 
-	A1.updateValue();
+	cell.updateValue();
 
-	tf.assertEquals(A1.value.valueOf().toFixed(2), "12298.46", 'Correct value');
-	div.getSheet().kill();
+	tf.assertEquals(cell.value.valueOf().toFixed(2), "12298.46", 'Correct value');
+	wg.kill();
 });

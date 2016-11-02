@@ -103,8 +103,8 @@ WickedGrid.Cell = (function() {
 					}
 					this.value = new String(this.value);
 					this.value.cell = this;
-					this.needsUpdated = false;
 					this.updateDependencies();
+          //this.needsUpdated = false;
 
 					if (callback !== u) {
 						callback.call(this, this.value);
@@ -184,7 +184,7 @@ WickedGrid.Cell = (function() {
 						cell.loader
 							.setCellAttributes(cell.loadedFrom, {
 								'cache': (typeof cache !== 'object' ? cache : null),
-								'formula': cell.formula,
+								'data-formula': cell.formula,
 								'parsedFormula': cell.parsedFormula,
 								'value': cell.value + '',
 								'cellType': cell.cellType,
@@ -354,6 +354,7 @@ WickedGrid.Cell = (function() {
 			if (this.dependencies.length === 0) {
 				this.dependencies = dependencies;
 			}
+
 		},
 
 		/**

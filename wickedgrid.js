@@ -769,7 +769,7 @@ var WickedGrid = (function() {
         if (qty > 0) {
 
           for (;i < qty; i++) {
-            self.addColumn(rowIndex, isAfter, true);
+            self.addRow(rowIndex, isAfter, true);
           }
 
           self.trigger('sheetAddRow', [rowIndex, isAfter, qty]);
@@ -843,12 +843,19 @@ var WickedGrid = (function() {
       for(;columnIndex < columnMax; columnIndex++) {
         row.push(new WickedGrid.Cell(sheetIndex, null, this));
       }
+      
+      if (columnIndex === 0) {
+        row.push(new WickedGrid.Cell(sheetIndex, null, this));
+      }
 
       spreadsheet.splice(rowIndex, 0, row);
 
       loader.addRow(this.i, rowIndex, row);
 
       // Splice and if needed Increament visible columns
+      if (pane.actionUI.visibleColumns.length === 0) {
+        pane.actionUI.visibleColumns[0] = 0;
+      }
       pane.actionUI.visibleRows.splice(rowIndex, 0, rowIndex);
       for (var i=rowIndex+1; i<pane.actionUI.visibleRows.length; i++) {
         pane.actionUI.visibleRows[i]+=1;
@@ -886,6 +893,10 @@ var WickedGrid = (function() {
         columnIndex++;
       }
 
+      if (rowMax === 0) {
+        return this.addRow(true);
+      }
+
       for(;rowIndex < rowMax; rowIndex++) {
         cell = new WickedGrid.Cell(sheetIndex, null, this);
         column.push(cell);
@@ -896,6 +907,9 @@ var WickedGrid = (function() {
       loader.addColumn(this.i, columnIndex, column);
 
       // Splice and if needed Increament visible columns
+      if (pane.actionUI.visibleRows.length === 0) {
+        pane.actionUI.visibleColumns[0] = 0;
+      }
       pane.actionUI.visibleColumns.splice(columnIndex, 0, columnIndex);
       for (var i=columnIndex+1; i<pane.actionUI.visibleColumns.length; i++) {
         pane.actionUI.visibleColumns[i]+=1;
@@ -1125,14 +1139,15 @@ var WickedGrid = (function() {
      * @param {Number} i index of spreadsheet within instance
      */
     switchSheet:function (i) {
-      if (n(i)) {
-        return false;
-      }
+      //if (n(i)) {
+      //  return false;
+      //}
 
       if (i == -1) {
         this.addSheet();
       } else if (i != this.i) {
         this.setActiveSheet(i);
+        this.sheetSyncSize()
         if (this.loader === null) {
           this.calc(i);
         }
@@ -2356,7 +2371,7 @@ var WickedGrid = (function() {
       this.setActiveSheet(this.sheetCount);
 
       this.sheetCount++;
-
+      this.spreadsheets.push([]);
       this.sheetSyncSize();
 
       var pane = this.pane();
@@ -2829,15 +2844,16 @@ var WickedGrid = (function() {
               return;
             }
 
-            tab = WickedGrid.customTab(loader.title(i))
+            var title = loader.title(i) || self.msg.sheetTitleDefault.replace(/[{]index[}]/gi, i + 1);
+            tab = WickedGrid.customTab(self, title)
                 .mousedown(function () {
                   showSpreadsheet();
-                  this.tab().insertBefore(this);
+                  self.tab().insertBefore(this);
                   $(this).remove();
                   return false;
                 });
 
-            if (s.loader.isHidden(i)) {
+            if (self.loader.isHidden(i)) {
               tab.hide();
             }
           };
@@ -2873,7 +2889,7 @@ var WickedGrid = (function() {
      * creates a new sheet from size from prompt
      */
     newSheet:function () {
-      this.settings.element
+      this.settings.$element
         .html(this.makeTable())
         .sheet(this.settings);
     },
@@ -3011,9 +3027,10 @@ var WickedGrid = (function() {
      */
     cellFind:function (v) {
       var settings = this.settings,
-          msg = this.msg;
+          msg = this.msg,
+          self = this;
       function find (v) {
-        var trs = this.table()
+        var trs = $(self.tables()[self.i])
             .children('tbody')
             .children('tr');
 
@@ -3030,7 +3047,7 @@ var WickedGrid = (function() {
 
           o = o.eq(0);
           if (o.length > 0) {
-            this.cellEdit(o._cell);
+            self.cellEdit(o._cell);
           } else {
             settings.alert(msg.cellNoFind);
           }
@@ -3312,8 +3329,8 @@ var WickedGrid = (function() {
       }
 
       return {
-        col: td.cellIndex,
-        row: td.parentNode.rowIndex + rowOffset
+        col: td.cellIndex === 0 ? 0 : td.cellIndex-1,
+        row: td.parentNode.rowIndex === 0 ? 0 + rowOffset : td.parentNode.rowIndex+ rowOffset-1
       };
     },
 
@@ -3389,7 +3406,7 @@ var WickedGrid = (function() {
      * @returns {jQuery|Element}
      */
     tables:function (tables, useActualTables) {
-      tables = tables || this.tables();
+      tables = tables || this.loader.tables;
       var clonedTables = [],
           i = tables.length - 1,
           j,
@@ -3426,8 +3443,7 @@ var WickedGrid = (function() {
         clonedTables[i] = table;
       } while (i-- > 0);
 
-      //TODO: remove sheetDecorateRemove
-      return this.sheetDecorateRemove(false, $(clonedTables));
+      return clonedTables;
     },
 
     /**
@@ -4503,7 +4519,7 @@ WickedGrid.columnResizer = function(wickedGrid, bar) {
   handle = barController.children[0];
   handle.style.height = bar.clientHeight + 'px';
 };
-WickedGrid.customTab = function(wickedGrid) {
+WickedGrid.customTab = function(wickedGrid, title) {
   var tab = document.createElement('span'),
       $tab = $(tab).appendTo(wickedGrid.tabContainer());
 
@@ -4795,11 +4811,11 @@ WickedGrid.header = function(wickedGrid) {
     if (s.headerMenu) {
       menu = document.createElement('div');
       $menu = $(menu);
-      menu.className = wickedGrid.cl.headerMenu + ' ' + wickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed;
+      menu.className = wickedGrid.cl.headerMenu + ' ' + wickedGrid.cl.menuFixed + ' ' + wickedGrid.theme.menuFixed + ' ' + wickedGrid.cl.menu;
       header.appendChild(menu);
 
       wickedGrid.controls.headerMenu[wickedGrid.i] = $menu
-          .append(s.headerMenu)
+          .append(s.headerMenu(wickedGrid))
           .children()
           .addClass(wickedGrid.theme.menuFixed);
 
@@ -4820,7 +4836,11 @@ WickedGrid.header = function(wickedGrid) {
  * @param {Boolean} selected selects the text in the inline editor.controlFactory
  */
 WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
-  td = td || wickedGrid.cellActive().td || null;
+  if (wickedGrid.cellActive()) {
+    td = td || wickedGrid.cellActive().td || null;
+  } else {
+    td = td || null;
+  }
 
   if (td === null) {
     td = wickedGrid.rowTds(null, 1)[1];
@@ -6196,7 +6216,7 @@ WickedGrid.event.Cell = (function() {
                 if ((loadedFrom = cell.loadedFrom) !== null) {
                   loader.setCellAttributes(loadedFrom, {
                     'cache': u,
-                    'formula': '',
+                    'data-formula': '',
                     'value': v,
                     'parsedFormula': null
                   });
@@ -6599,7 +6619,7 @@ WickedGrid.event.Document = (function() {
      */
     redo:function (e) {
       if (e.ctrlKey && !this.wickedGrid.cellLast.isEdit) {
-        this.wickedGrid.undo.manager.redo();
+        this.wickedGrid.undo.undoManager.redo();
         return false;
       }
       return true;
@@ -6612,7 +6632,7 @@ WickedGrid.event.Document = (function() {
      */
     undo:function (e) {
       if (e.ctrlKey && !this.wickedGrid.cellLast.isEdit) {
-        this.wickedGrid.undo.manager.undo();
+        this.wickedGrid.undo.undoManager.undo();
         return false;
       }
       return true;
@@ -6979,6 +6999,13 @@ WickedGrid.loader.HTML = (function() {
 					spreadsheetRow[columnIndex].loadedFrom = document.createElement('td')
 				);
 			}
+			
+			if (columnIndex === 0) {
+        row.appendChild(
+					spreadsheetRow[columnIndex].loadedFrom = document.createElement('td')
+				);
+      }
+
 
 			if (rowIndex === rowsMax) {
 				tBody.appendChild(row);
@@ -7433,6 +7460,14 @@ WickedGrid.loader.HTML = (function() {
 		},
 		addSpreadsheet: function(table, atIndex) {
 			table = table || document.createElement('table');
+			
+			// Add tbody
+			if (!$(table).find('tbody').length) {
+				var tbody = document.createElement('tbody');
+				$(tbody).html($(table).html());
+				$(table).html($(tbody));
+			}
+
 			if (atIndex === undefined) {
 				this.tables.push(table);
 			} else {
@@ -10145,8 +10180,8 @@ WickedGrid.Cell = (function() {
 					}
 					this.value = new String(this.value);
 					this.value.cell = this;
-					this.needsUpdated = false;
 					this.updateDependencies();
+          //this.needsUpdated = false;
 
 					if (callback !== u) {
 						callback.call(this, this.value);
@@ -10226,7 +10261,7 @@ WickedGrid.Cell = (function() {
 						cell.loader
 							.setCellAttributes(cell.loadedFrom, {
 								'cache': (typeof cache !== 'object' ? cache : null),
-								'formula': cell.formula,
+								'data-formula': cell.formula,
 								'parsedFormula': cell.parsedFormula,
 								'value': cell.value + '',
 								'cellType': cell.cellType,
@@ -10396,6 +10431,7 @@ WickedGrid.Cell = (function() {
 			if (this.dependencies.length === 0) {
 				this.dependencies = dependencies;
 			}
+
 		},
 
 		/**
@@ -11247,9 +11283,9 @@ WickedGrid.CellHandler = (function(Math) {
 			if (cachedRange !== u) {
 				useCache = true;
 				max = cachedRange.length;
-				for (i = 0; i < max; i++) {
-					if (cachedRange[i].needsUpdated) {
-						useCache = false
+				for (var k = 0; k < max; k++) {
+					if (cachedRange[k].cell.needsUpdated) {
+						useCache = false;
 					}
 				}
 
@@ -14436,7 +14472,7 @@ WickedGrid.Undo = (function() {
 
       var self = this,
           before = (new WickedGrid.CellRange(cells)).clone().cells,
-          after = (typeof fn !== 'undefined' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
+          after = (typeof fn === 'function' ? (new WickedGrid.CellRange(fn(cells)).clone()).cells : before);
 
       before.id = id;
       after.id = id;
@@ -14479,26 +14515,15 @@ WickedGrid.Undo = (function() {
       for (i = 0; i < clones.length; i++) {
         clone = clones[i];
         loc = wickedGrid.getTdLocation(clone.td);
-        cell = wickedGrid.spreadsheets[clone.sheetIndex][loc.row][loc.col];
-
-        //TODO add clone method to WickedGrid.Cell
-        cell.value = clone.value;
-        cell.formula = clone.formula;
-        td = cell.td = clone.td;
-        cell.dependencies = clone.dependencies;
-        cell.needsUpdated = clone.needsUpdated;
-        cell.calcCount = clone.calcCount;
-        cell.sheetIndex = clone.sheetIndex;
-        cell.rowIndex = loc.row;
-        cell.columnIndex = loc.col;
-        cell.state = clone.state;
-        cell.jS = clone.jS;
-        td.setAttribute('style', clone.style);
-        td.setAttribute('class', clone.cl);
+        cell = clone.clone(); 
+        wickedGrid.spreadsheets[clone.sheetIndex][loc.row][loc.col] = cell;
 
         cell.setNeedsUpdated();
         cell.updateValue();
       }
+      
+      wickedGrid.pane().actionUI.redrawColumns();
+      wickedGrid.pane().actionUI.redrawRows();
     }
   };
 

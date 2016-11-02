@@ -5,7 +5,11 @@
  * @param {Boolean} selected selects the text in the inline editor.controlFactory
  */
 WickedGrid.inPlaceEdit = function(wickedGrid, td, selected) {
-  td = td || wickedGrid.cellActive().td || null;
+  if (wickedGrid.cellActive()) {
+    td = td || wickedGrid.cellActive().td || null;
+  } else {
+    td = td || null;
+  }
 
   if (td === null) {
     td = wickedGrid.rowTds(null, 1)[1];
