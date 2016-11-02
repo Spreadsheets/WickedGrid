@@ -1147,6 +1147,7 @@ var WickedGrid = (function() {
         this.addSheet();
       } else if (i != this.i) {
         this.setActiveSheet(i);
+        this.sheetSyncSize()
         if (this.loader === null) {
           this.calc(i);
         }

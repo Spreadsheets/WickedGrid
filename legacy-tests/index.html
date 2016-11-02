@@ -15,6 +15,9 @@
 	<script src="../bower_components/infiniscroll.js/infiniscroll.js"></script>
 	<script src="../bower_components/thaw.js/thaw.js"></script>
 	<script src="../wickedgrid.js"></script>
+	<!--Finance-->
+	<script src="../src/WickedGrid/Plugin/finance.js"></script>
+	<script src="../parser/formula/formula.js"></script>
 	<script src="../utilities/tableify.js"></script>
 	<!--Nearest-->
 	<script src="../bower_components/jquery-nearest/src/jquery.nearest.min.js"></script>
@@ -30,24 +33,24 @@
 
 	<!-- tests -->
 	<script src="cells.adding.js"></script>
-	<script src="cells.highlighting.js"></script>
-	<!--script src="cells.deleting.js"></script>
+	<script src="formula.functions.js"></script>
+	<!--<script src="cells.highlighting.js"></script>
 	<script src="cells.formula_financial.js"></script>
 	<script src="cells.formula_shifting.js"></script>
+	<script src="cells.deleting.js"></script>
 	<script src="cells.disappearing_dependency.js"></script>
 	<script src="cells.hidden.js"></script>
 	<script src="cells.inputs.js"></script>
 	<script src="cells.types.js"></script>
 	<script src="cells.value_behaviour.js"></script>
 	<script src="formula.js"></script>
-	<script src="formula.functions.js"></script>
 	<script src="loader.json.js"></script>
 	<script src="sheet.instantiation.js"></script-->
 
 </head>
 <body>
 	<div >
-	<div id="sheet" style="height: 450px;"></div>		
+		<div id="sheet" style="height: 450px;"></div>		
 	</div>
 </body>
 
@@ -57,7 +60,47 @@
 
 		document.body.innerHTML = Testify.report.html.ui;
 		Testify.report.html(tf);
-
 	});
+
+			function setup(element) {
+			var settings = {};
+			for (var p in WickedGrid.defaults) {
+				if (WickedGrid.defaults.hasOwnProperty(p)) {
+				settings[p] = settings.hasOwnProperty(p) ? settings[p] : WickedGrid.defaults[p];
+				}
+			}
+
+			var $element = $(element),
+				instance = $element.getWickedGrid();
+			settings.useStack = false;
+			settings.useMultiThreads = false;
+
+			settings.element = element;
+			settings.$element = $element;
+
+				WickedGrid.events.forEach(function(event) {
+				$element.bind(event, settings[event]);
+			});
+
+			$element.children().each(function(i) {
+				//override frozenAt settings with table's data-frozenatrow and data-frozenatcol
+				var frozenAtRow = this.getAttribute('data-frozenatrow') * 1,
+					frozenAtCol = this.getAttribute('data-frozenatcol') * 1;
+
+				if (!settings.frozenAt[i]) {
+					settings.frozenAt[i] = {row:0, col:0};
+				}
+				if (frozenAtRow) {
+					settings.frozenAt[wickedGrid.i].row = frozenAtRow;
+				}
+				if (frozenAtCol) {
+					settings.frozenAt[wickedGrid.i].col = frozenAtCol;
+				}
+			});
+
+
+			var wickedGrid = new WickedGrid(settings);
+			return wickedGrid;
+		}
 </script>
 </html>
