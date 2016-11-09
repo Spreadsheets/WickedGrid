@@ -252,7 +252,7 @@ WickedGrid.loader.HTML = (function() {
 				columnIndex = cell.columnIndex,
 				nextCell;
 
-			if (htmlCell.hasAttribute('class')) td.className = cell.className;
+			if (htmlCell.hasAttribute('class')) td.className = htmlCell.className;
 			if (htmlCell.hasAttribute('style')) td.setAttribute('style', htmlCell.getAttribute('style'));
 
 			if (htmlCell.hasAttribute('rowspan')) {

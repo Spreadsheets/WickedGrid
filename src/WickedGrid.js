@@ -2139,7 +2139,7 @@ var WickedGrid = (function() {
           $td = $(td);
 
           if (removeClass) {//If there is a class that conflicts with this one, we remove it first
-            $td.removeClass(removeClass);
+            $td._cell.removeClass(removeClass);
           }
 
           //Now lets add some style
