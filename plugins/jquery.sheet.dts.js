@@ -104,7 +104,7 @@
 							if (column['style']) td.attr('style', column['style'] || '');
 							if (column['formula']) td.attr('data-formula', (column['formula'] ? '=' + column['formula'] : ''));
 							if (column['cellType']) td.attr('data-celltype', column['cellType'] || '');
-							if (column['value']) td.html(column['value'] || '');
+							if (column['value']) td.text(column['value'] || '');
 							if (column['rowspan']) td.attr('rowspan', column['rowspan'] || '');
 							if (column['colspan']) td.attr('colspan', column['colspan'] || '');
 						}
