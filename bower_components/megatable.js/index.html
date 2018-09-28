@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+	<link href="//maxcdn.bootstrapcdn.com/bootswatch/3.3.4/cyborg/bootstrap.min.css" rel="stylesheet">
+	<meta charset="UTF-8">
+	<title>MegaTable.js</title>
+</head>
+<body style="margin: auto; width: 500px;">
+<h1 class="text-center">MegaTable.js</h1>
+<blockquote class="text-center">Wicked fast & fat html tables!</blockquote>
+<div id="mega"></div>
+<hr>
+<p class="text-center">
+	<span>Written by <a href="https://github.com/robertleeplummerjr/">Robert Lee Plummer Jr.</a></span>
+</p>
+<p class="text-center">
+	MIT licensed
+</p>
+<a href="https://github.com/robertleeplummerjr/megaTable.js"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/52760788cde945287fbb584134c4cbc2bc36f904/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f77686974655f6666666666662e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_white_ffffff.png"></a>
+</body>
+<script src="megatable.js"></script>
+<script>
+	function randColor(){
+		return '#' + (Math.random().toString(16) + '0000000').slice(2, 8);
+	}
+	var
+			i = 0,
+			r = 0,
+			c = 0,
+			bgColor = randColor(),
+			fgColor = randColor(),
+			mt = new MegaTable({
+				element: document.getElementById('mega'),
+				updateCell: function(row, column, td) {
+					while (td.firstChild) {
+						td.removeChild(td.firstChild);
+					}
+
+					var frag = document.createTextNode(i++);
+					td.style.color = fgColor;
+					td.style.backgroundColor = bgColor;
+					td.appendChild(frag);
+				},
+				updateRowHeader: function(i, header) {
+					header.innerHTML = i;
+				},
+				updateColumnHeader: function(i, header) {
+					header.innerHTML = i;
+				}
+			});
+
+	var int = setInterval(function() {
+		bgColor = randColor();
+		fgColor = randColor();
+		mt.update(r, c);
+		r++;
+		c++;
+	}, 1);
+</script>
+</html>

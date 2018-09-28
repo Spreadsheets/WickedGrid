@@ -1,0 +1,33 @@
+{
+  "name": "MouseWheel",
+  "main": "MouseWheel.js",
+  "version": "1.0.0",
+  "homepage": "https://github.com/robertleeplummerjr/MouseWheel",
+  "authors": [
+    "Robert Plummer <RobertLeePlummerJr@Gmail.com>"
+  ],
+  "description": "A zero dependency ridiculous fast mousewheel handler",
+  "keywords": [
+    "mouse",
+    "wheel",
+    "fast",
+    "mousewheel"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "_release": "1.0.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.0.0",
+    "commit": "cc8a5a7d43d7a71b55720c8c62094a803782a6a0"
+  },
+  "_source": "https://github.com/robertleeplummerjr/MouseWheel.git",
+  "_target": "~1.0.0",
+  "_originalSource": "MouseWheel"
+}

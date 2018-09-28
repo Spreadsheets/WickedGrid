@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>		
+		<title>Demo - Elastic</title>
+		<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+		<link href="dependencies/screen.css" type="text/css" rel="stylesheet" />				
+	</head>
+	<body>
+	
+		<div class="full-width-hack">
+			<textarea class="input" style="max-height: 100px;">This textarea is going to grow when you fill it with text. Just type a few more words in it and you will see.</textarea>
+		</div>
+
+		<script src="dependencies/jquery.js" type="text/javascript" charset="utf-8"></script>
+		<script src="jquery.elastic.source.js" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript">
+			// <![CDATA[
+			jQuery.noConflict();
+			jQuery(document).ready(function(){			
+				jQuery('textarea').elastic();
+				jQuery('textarea').trigger('update');
+			});	
+			// ]]>
+		</script>
+		
+	</body>
+</html>
